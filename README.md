@@ -4,3 +4,4 @@ This is the repository for the new ASPC website.
 
 ### Software Developer Team:
 Haram Yoon
+Vadym Musiienko
