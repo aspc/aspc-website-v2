@@ -58,6 +58,22 @@ router.post('/login', async (req: Request, res: Response) => {
 
     });
 
+// Logout
+router.post('/logout', async (req: Request, res: Response) => {
+    if (req.session) {
+        req.session.destroy(err => {
+            if (err) {
+                res.status(500).json({ message: 'Unable to log out' });
+            } else {
+                res.status(200).json({ message: 'Logout successful' });
+            }
+        })
+    } else {
+        res.status(400).json({ message: 'You are already logged out'});
+    };
+
+});
+
 
 // Get current user
 router.get('/current_user', async (req: Request, res: Response) => {
