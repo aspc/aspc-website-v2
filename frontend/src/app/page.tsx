@@ -27,6 +27,7 @@ export default function HomePage() {
           <p className="text-center mb-20">
             Backend Status: {message || 'Connecting...'}
           </p>
+          
 
          
         </div>
