@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import Loading from '@/components/Loading'
 import { useAuth } from '@/hooks/useAuth'
+import { useRouter } from 'next/navigation'
 
 interface PageContent {
   id: string;
@@ -13,6 +14,7 @@ export default function Dashboard() {
   const { user, loading } = useAuth(true); // Pass true to require admin
   const [selectedPage, setSelectedPage] = useState<string>('')
   const [content, setContent] = useState<string>('')
+  const router = useRouter();
 
   // Example static pages that can be edited
   const staticPages = [
@@ -23,6 +25,11 @@ export default function Dashboard() {
   ]
 
   const handlePageSelect = async (pageId: string) => {
+    if (pageId === 'senate') {
+      // Navigate to the Senate Editor page
+      router.push('/senator');
+      return;
+    }
     setSelectedPage(pageId)
     // Here you would fetch the current content for the selected page
     // For now using placeholder
