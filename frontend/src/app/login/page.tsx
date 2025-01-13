@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 
 export default function LoginPage() {
@@ -8,6 +9,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,9 +38,8 @@ export default function LoginPage() {
       }
 
       alert('Login successful! Redirecting...');
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 1500);
+      router.push('/');
+      setTimeout(() => window.location.reload(), 1000);
 
     } catch (error) {
       alert('Login failed. Please try again.');
