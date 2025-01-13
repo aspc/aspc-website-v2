@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useRouter } from 'next/navigation'
 import Loading from '@/components/Loading'
 import { Editor } from '@tinymce/tinymce-react'
 
@@ -10,6 +11,7 @@ export default function Dashboard() {
   const { user, loading } = useAuth(true)
   const [selectedPage, setSelectedPage] = useState<string>('')
   const [content, setContent] = useState<string>('')
+  const router = useRouter();
 
   const staticPages = [
     { id: 'home', name: 'Home Page' },
@@ -19,6 +21,11 @@ export default function Dashboard() {
   ]
 
   const handlePageSelect = async (pageId: string) => {
+    if (pageId === 'senate') {
+      // Navigate to the Senate Editor page
+      router.push('/senator');
+      return;
+    }
     setSelectedPage(pageId)
     // TODO: Fetch content for selected page
     setContent(`<h2>This is a heading</h2><p>This is <b>bold</b> and this is <i>italic</i> text.</p>`)
