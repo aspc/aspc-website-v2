@@ -3,10 +3,10 @@
 This is the repository for the new ASPC website. 
 
 ### Software Developer Team:
-Haram Yoon
-Cole Uyematsu
-Vadym Musiienko
-
+Haram Yoon,
+Cole Uyematsu,
+Vadym Musiienko,
+Kartika Santoso
 
 
 
