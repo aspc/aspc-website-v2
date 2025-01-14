@@ -6,7 +6,7 @@ This is the repository for the new ASPC website.
 Haram Yoon,
 Cole Uyematsu,
 Vadym Musiienko,
-Kartika Santoso,
+Kartika Santoso
 
 
 
