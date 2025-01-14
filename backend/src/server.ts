@@ -34,7 +34,7 @@ mongoose.connect(MONGODB_URI)
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/admin/pages', adminRoutes);
+app.use('/api/admin/pages', adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

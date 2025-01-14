@@ -1,46 +1,136 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useRouter } from 'next/navigation'
 import Loading from '@/components/Loading'
 import { Editor } from '@tinymce/tinymce-react'
+import { PageContent } from '@/types'
 
-
-export default function Dashboard() {
-
+const Dashboard = () => {
   const { user, loading } = useAuth(true)
+  const [pages, setPages] = useState<PageContent[]>([])
   const [selectedPage, setSelectedPage] = useState<string>('')
   const [content, setContent] = useState<string>('')
-  const router = useRouter();
+  const [isCreatingNew, setIsCreatingNew] = useState(false)
+  const [newPageId, setNewPageId] = useState('')
+  const [newPageName, setNewPageName] = useState('')
+  const router = useRouter()
 
-  const staticPages = [
-    { id: 'home', name: 'Home Page' },
-    { id: 'about', name: 'About ASPC' },
-    { id: 'senate', name: 'Senate Page' },
-    { id: 'committees', name: 'Committees' },
-  ]
+  // Fetch available pages on component mount
+  useEffect(() => {
+    const fetchPages = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/admin/pages');
+        if (response.ok) {
+          const data = await response.json();
+          setPages(data);
+        }
+      } catch (error) {
+        console.error('Error fetching pages:', error);
+      }
+    };
+
+    fetchPages();
+  }, []);
 
   const handlePageSelect = async (pageId: string) => {
-    if (pageId === 'senate') {
-      // Navigate to the Senate Editor page
-      router.push('/senator');
+    if (pageId === 'new') {
+      setIsCreatingNew(true);
+      setContent('<p>Add your content here...</p>');
+      setSelectedPage('');
       return;
     }
-    setSelectedPage(pageId)
-    // TODO: Fetch content for selected page
-    setContent(`<h2>This is a heading</h2><p>This is <b>bold</b> and this is <i>italic</i> text.</p>`)
+    if (pageId == 'senate') {
+      router.push('/senator');
+      setSelectedPage('');
+      return;
+    }
+
+    setIsCreatingNew(false);
+    setSelectedPage(pageId);
+    
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/pages/${pageId}`);
+      
+      if (response.ok) {
+        const pageData: PageContent = await response.json();
+        setContent(pageData.content);
+      } else {
+        throw new Error('Failed to fetch page content');
+      }
+    } catch (error) {
+      console.error('Error fetching page content:', error);
+      alert('Error loading page content');
+    }
   }
 
   const handleContentSave = async () => {
-    if (!selectedPage || !content) return
-    
     try {
-      // TODO: Save content to database
-      console.log(`Saving HTML content for ${selectedPage}:`, content)
-      alert('Content saved successfully!')
+      if (isCreatingNew) {
+        if (!newPageId || !newPageName || !content) {
+          alert('Please fill in all fields');
+          return;
+        }
+
+        const createResponse = await fetch('http://localhost:5000/api/admin/pages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: newPageId,
+            name: newPageName,
+            content: content,
+          }),
+        });
+
+        if (!createResponse.ok) {
+          if (createResponse.headers.get("content-type")?.includes("application/json")) {
+            const errorData = await createResponse.json();
+            throw new Error(errorData.message);
+          }
+          throw new Error(`Server error: ${createResponse.status}`);
+        }
+
+        // Refresh page list
+        const pagesResponse = await fetch('/api/admin/pages');
+        if (pagesResponse.ok) {
+          const data = await pagesResponse.json();
+          setPages(data);
+        }
+
+        setIsCreatingNew(false);
+        setNewPageId('');
+        setNewPageName('');
+        alert('New page created successfully!');
+
+      } else {
+        if (!selectedPage || !content) return;
+
+        const updateResponse = await fetch(`http://localhost:5000/api/admin/pages/${selectedPage}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            content: content
+          }),
+        });
+
+        if (!updateResponse.ok) {
+          if (updateResponse.headers.get("content-type")?.includes("application/json")) {
+            const errorData = await updateResponse.json();
+            throw new Error(errorData.message);
+          }
+          throw new Error(`Server error: ${updateResponse.status}`);
+        }
+
+        alert('Content saved successfully!');
+        setTimeout(() => window.location.reload(), 1000);
+      }
     } catch (error) {
-      console.error('Error saving content:', error)
-      alert('Error saving content')
+      console.error('Error saving content:', error);
+      alert(error instanceof Error ? error.message : 'Error saving content');
     }
   }
 
@@ -55,43 +145,75 @@ export default function Dashboard() {
             <h2 className="text-xl font-semibold mb-4">Edit Page Content</h2>
             <select 
               className="w-full p-2 border rounded mb-4"
-              value={selectedPage}
+              value={isCreatingNew ? 'new' : selectedPage}
               onChange={(e) => handlePageSelect(e.target.value)}
             >
               <option value="">Select a page to edit</option>
-              {staticPages.map((page) => (
+              <option value="senate">Senate</option>
+
+              {pages.map((page) => (
                 <option key={page.id} value={page.id}>
                   {page.name}
                 </option>
               ))}
+              <option value="new">+ Create New Page</option>
             </select>
+
+            {isCreatingNew && (
+              <div className="space-y-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Page ID
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded"
+                    value={newPageId}
+                    onChange={(e) => setNewPageId(e.target.value)}
+                    placeholder="e.g., about-us"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Page Name
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full p-2 border rounded"
+                    value={newPageName}
+                    onChange={(e) => setNewPageName(e.target.value)}
+                    placeholder="e.g., About Us"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
-          {selectedPage && (
+          {(selectedPage || isCreatingNew) && (
             <div>
               <Editor
                 apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
                 value={content}
                 onEditorChange={(content: string) => setContent(content)}
                 init={{
-                height: 500,
-                menubar: false,
-                plugins: [
-                  'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
-                  'preview', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                  'insertdatetime', 'table', 'code', 'help', 'wordcount'
-                ],
-                toolbar: 'undo redo | blocks | ' +
-                  'bold italic forecolor | alignleft aligncenter ' +
-                  'alignright alignjustify | bullist numlist outdent indent | ' +
-                  'removeformat | help',
+                  height: 500,
+                  menubar: false,
+                  plugins: [
+                    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
+                    'preview', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                    'insertdatetime', 'table', 'code', 'help', 'wordcount'
+                  ],
+                  toolbar: 'undo redo | blocks | ' +
+                    'bold italic forecolor | alignleft aligncenter ' +
+                    'alignright alignjustify | bullist numlist outdent indent | ' +
+                    'removeformat | help',
                 }}
               />
               <button
-              onClick={handleContentSave}
-              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                onClick={handleContentSave}
+                className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
               >
-              Save Changes
+                {isCreatingNew ? 'Create Page' : 'Save Changes'}
               </button>
             </div>
           )}
@@ -100,3 +222,5 @@ export default function Dashboard() {
     </div>
   )
 }
+
+export default Dashboard;
