@@ -53,7 +53,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen bg-gray-50">
       <div className="w-full max-w-md m-auto bg-white rounded-lg shadow-md p-8">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">
-          Login to Dashboard
+          Login to ASPC
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">

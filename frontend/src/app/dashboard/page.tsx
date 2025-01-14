@@ -103,6 +103,7 @@ const Dashboard = () => {
         setNewPageId('');
         setNewPageName('');
         alert('New page created successfully!');
+        setTimeout(() => window.location.reload(), 1000);
 
       } else {
         if (!selectedPage || !content) return;
