@@ -3,6 +3,16 @@ import PageContent from '../models/PageContent';
 
 const router = express.Router();
 
+// Get all pages
+router.get('/', async (req: Request, res: Response) => {
+    try {
+        const pages = await PageContent.find({}, 'id name');
+        res.json(pages);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error'});
+    }
+});
+
 // Get the page by id
 router.get('/:id', async (req: Request, res: Response) => {
     try {
