@@ -26,9 +26,7 @@ export function useAuth(requireAdmin: boolean = false) {
             return;
           }
           setUser(data.user);
-        } else {
-          router.push('/login');
-        }
+        } 
       } catch (error) {
         console.error('Auth check error:', error);
         router.push('/login');
@@ -49,7 +47,6 @@ export function useAuth(requireAdmin: boolean = false) {
 
       if (response.ok) {
         setUser(null);
-        router.push('/login');
       }
     } catch (error) {
       console.error('Logout error:', error);
