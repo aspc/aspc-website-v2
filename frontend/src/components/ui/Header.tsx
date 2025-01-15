@@ -10,12 +10,15 @@ import Image from 'next/image';
 
 interface HeaderProps {}
 
+const groups: String[] = ["Staff", "Senate", "Software"];
+
 const Header: React.FC<HeaderProps> = () => {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [pages, setPages] = useState<PageContent[]>([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [loadingPages, setLoadingPages] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchPages = async () => {
@@ -33,86 +36,284 @@ const Header: React.FC<HeaderProps> = () => {
     fetchPages();
   }, []);
 
+  const handleDropdownClick = (dropdownName: string) => {
+    setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdown && !(event.target as Element).closest('.dropdown-container')) {
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openDropdown]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
+
   if (loading) {
     return <Loading />;
   }
 
   return (
-    <header className="bg-blue-900 shadow text-white">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center">
-              <span className="text-xl font-bold">ASPC</span>
-              <Image src="/logo4.png" alt="ASPC Logo" width={50} height={50} className="ml-2" />
-            </Link>
+    <>
+      {/* Desktop Header */}
+      <header className="bg-blue-900 shadow text-white">
+        <div className="px-4 lg:px-16">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <Link href="/" className="flex items-center">
+                <Image src="/logo4.png" alt="ASPC Logo" width={50} height={50} className="ml-2" />
+              </Link>
+            </div>
+
+            {/* Desktop Navigation */}
+
+            {/* ASPC*/}
+            <nav className="hidden md:flex items-center space-x-6">
+              <div className="relative dropdown-container">
+                <button
+                  className="flex items-center space-x-1 hover:text-blue-500"
+                  onClick={() => handleDropdownClick('aspc')}
+                >
+                  <span>ASPC</span>
+                </button>
+                
+                {/* ASPC Static Pages Dropdown */}
+                {openDropdown === 'aspc' && (
+                  <div className="absolute top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                    {loadingPages ? (
+                      <div className="px-4 py-2 text-gray-700">Loading pages...</div>
+                    ) : (
+                      pages.map((page) => (
+                        <Link
+                          key={page.id}
+                          href={`/aspc/${page.id}`}
+                          className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                        >
+                          {page.name}
+                        </Link>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+                
+              {/* Members */}
+              <div className="relative dropdown-container">
+                <button
+                  className="flex items-center space-x-1 hover:text-blue-500"
+                  onClick={() => handleDropdownClick('people')}
+                >
+                  <span>Members</span>
+                </button>
+                            
+                {/* ASPC Goups Dropdown */}            
+                {openDropdown === 'people' && (
+                  <div className="absolute top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                    {groups.map((group, index) => (
+                      <Link
+                        key={index}
+                        href={`/people/${group.toLowerCase()}`}
+                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                      >
+                        {group}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              {/* Campus */}
+              <Link href="/campus" className="hover:text-blue-500">
+                Campus
+              </Link>
+
+              {/* Courses */}
+              <Link href="/courses" className="hover:text-blue-500">
+                Courses
+              </Link>
+
+              {/* Events */}
+              <Link href="/events" className="hover:text-blue-500">
+                Events
+              </Link>
+
+              {user ? (
+                <>
+                  {user.isAdmin && (
+                    <Link href="/dashboard" className="text-yellow-400 hover:text-blue-500">
+                      Dashboard
+                    </Link>
+                  )}
+                  <button
+                    onClick={logout}
+                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => router.push('/login')}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                >
+                  Sign In
+                </button>
+              )}
+            </nav>
+
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden p-2"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <div className="space-y-1.5">
+                <div className="w-6 h-0.5 bg-white"></div>
+                <div className="w-6 h-0.5 bg-white"></div>
+                <div className="w-6 h-0.5 bg-white"></div>
+              </div>
+            </button>
           </div>
+        </div>
+      </header>
 
-          <nav className="flex items-center space-x-6">
-            <div className="relative">
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 bg-blue-900 z-50 md:hidden">
+          <div className="flex flex-col h-full">
+            {/* Mobile Menu Header */}
+            <div className="flex items-center justify-between p-4">
+              <div className="flex items-center">
+                <Image src="/logo4.png" alt="ASPC Logo" width={50} height={50} className="ml-2" />
+              </div>
               <button
-                className="flex items-center space-x-1 hover:text-blue-500"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-white p-2"
               >
-                <span>ASPC</span> 
+                <h1 className="text-2xl">X</h1>
               </button>
+            </div>
 
-              {isDropdownOpen && (
-                <div className="absolute top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                  <Link href="/aspc/senate" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"> About ASPC </Link>
+            {/* Mobile Menu Links */}
+            <nav className="flex flex-col p-4 space-y-6 text-white">
+                <div className="relative dropdown-container">
+                <button
+                  className="text-lg flex items-center space-x-1"
+                  onClick={() => handleDropdownClick('aspc')}
+                >
+                  <span>ASPC</span>
+                </button>
+                {openDropdown === 'aspc' && (
+                  <div className="absolute top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                   {loadingPages ? (
                     <div className="px-4 py-2 text-gray-700">Loading pages...</div>
                   ) : (
                     pages.map((page) => (
-                      <Link
-                        key={page.id}
-                        href={`/aspc/${page.id}`}
-                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                      >
-                        {page.name}
-                      </Link>
+                    <Link
+                      key={page.id}
+                      href={`/aspc/${page.id}`}
+                      className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {page.name}
+                    </Link>
                     ))
                   )}
+                  </div>
+                )}
                 </div>
-              )}
-            </div>
-
-            <Link href="/campus" className="hover:text-blue-500">
-              Campus
-            </Link>
-            <Link href="/courses" className="hover:text-blue-500">
-              Courses
-            </Link>
-            <Link href="/events" className="hover:text-blue-500">
-              Events
-            </Link>
-
-            {user ? (
-              <>
-                {user.isAdmin && (
-                  <Link href="/dashboard" className="text-yellow-400 hover:text-blue-500">
+                <div className="relative dropdown-container">
+                <button
+                  className="text-lg flex items-center space-x-1"
+                  onClick={() => handleDropdownClick('people')}
+                >
+                  <span>Members</span>
+                </button>
+                {openDropdown === 'people' && (
+                  <div className="absolute top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                  {groups.map((group, index) => (
+                    <Link
+                    key={index}
+                    href={`/people/${group.toLowerCase()}`}
+                    className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                    {group}
+                    </Link>
+                  ))}
+                  </div>
+                )}
+                </div>
+                <Link 
+                  href="/campus" 
+                  className="text-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Campus
+                </Link>
+                <Link 
+                  href="/courses" 
+                  className="text-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Courses
+                </Link>
+                <Link 
+                  href="/events" 
+                  className="text-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Events
+                </Link>
+                {user?.isAdmin && (
+                  <Link 
+                    href="/dashboard" 
+                    className="text-lg text-yellow-400"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
                     Dashboard
                   </Link>
                 )}
+              {user ? (
                 <button
-                  onClick={logout}
-                  className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                  onClick={() => {
+                    logout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 w-fit"
                 >
                   Logout
                 </button>
-              </>
-            ) : (
-              <button
-                onClick={() => router.push('/login')}
-                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-              >
-                Sign In
-              </button>
-            )}
-          </nav>
+              ) : (
+                <button
+                  onClick={() => {
+                    router.push('/login');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 w-fit"
+                >
+                  Sign In
+                </button>
+              )}
+            </nav>
+          </div>
         </div>
-      </div>
-    </header>
+      )}
+    </>
   );
 };
 

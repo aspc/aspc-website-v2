@@ -5,3 +5,17 @@ export interface PageContent {
   }
 
 
+export interface Member {
+  id: string;
+  name: string;
+  position: string;
+  aboutMe: string;
+  profilePicture: string;
+  group: string;
+}
+
+export interface PageProps {
+  params: Promise<{
+    slug: string;
+  }>;
+}
