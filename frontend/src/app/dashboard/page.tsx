@@ -40,8 +40,8 @@ const Dashboard = () => {
       setSelectedPage('');
       return;
     }
-    if (pageId == 'senate') {
-      router.push('/senator');
+    if (pageId == 'staff') {
+      router.push('/staff');
       setSelectedPage('');
       return;
     }
@@ -150,7 +150,7 @@ const Dashboard = () => {
               onChange={(e) => handlePageSelect(e.target.value)}
             >
               <option value="">Select a page to edit</option>
-              <option value="senate">Senate</option>
+              <option value="staff">Staff</option>
 
               {pages.map((page) => (
                 <option key={page.id} value={page.id}>
