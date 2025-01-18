@@ -31,20 +31,20 @@ router.get('/:id', async (req: Request, res: Response) => {
       return;
     }
     res.json(staff);
-    
+
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
 });
 
 // Get staff info by group
-router.get('/:group', async (req: Request, res: Response) => {
+router.get('/group/:group', async (req: Request, res: Response) => {
   try {
     const { group } = req.params;
     const staff = await Staff.find({ group: group });
 
     if (!staff) {
-      res.status(404).json({ message: 'Member not found' });
+      res.status(404).json({ message: 'Members not found' });
       return;
     }
     res.json(staff);
