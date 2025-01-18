@@ -6,7 +6,7 @@ interface IStaff extends Document {
     position: string;
     bio: string;
     group: string;
-    profilePic: mongoose.Types.ObjectId;
+    profilePic: mongoose.Types.ObjectId; // Id of picture after uploading to GridFS
 }
 
 const StaffSchema = new Schema<IStaff>({

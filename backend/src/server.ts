@@ -39,8 +39,9 @@ mongoose.connect(MONGODB_URI)
       throw new Error('Database connection is not ready');
     }
 
+    // Create GridFS bucket for uploads
     bucket = new GridFSBucket(db, {
-      bucketName: 'uploads', // Default bucket name, you can change it if needed
+      bucketName: 'uploads', 
     });
     console.log('Uploads bucket created')
   })

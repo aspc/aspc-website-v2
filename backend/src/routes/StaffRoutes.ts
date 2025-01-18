@@ -13,7 +13,7 @@ const upload = multer({ storage: storage });
 // Get all ids and names
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const staff = await Staff.find();
+    const staff = await Staff.find({}, {id: 1, name: 1});
     res.json(staff);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
@@ -53,7 +53,7 @@ router.get('/group/:group', async (req: Request, res: Response) => {
   }
 });
 
-// Post request to add a staff
+// Create staff member
 router.post('/', upload.single('file'), async (req: Request, res: Response) => {
   if (!req.file) {
     res.status(400).send('No file uploaded');
@@ -69,7 +69,7 @@ router.post('/', upload.single('file'), async (req: Request, res: Response) => {
     uploadStream.end(req.file.buffer);
 
     uploadStream.on('finish', async () => {
-      // After uploading the file, create a new member with the file reference
+      // After uploading the file, create a new member with the picture's file id
       const memberData = {
         id: req.body.id,
         name: req.body.name,
@@ -90,7 +90,7 @@ router.post('/', upload.single('file'), async (req: Request, res: Response) => {
   }
 });
 
-// Change staff info
+// Update staff info
 router.put('/:id', upload.single('file'), async (req: Request, res: Response) => {
   try {
     if (!req.file && !req.body) {
