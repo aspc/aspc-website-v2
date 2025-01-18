@@ -3,13 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { notFound } from 'next/navigation';
 import Loading from '@/components/Loading';
-import { PageContent } from '@/types';
+import { PageContent, PageProps } from '@/types';
 
-interface PageProps {
-  params: Promise<{
-    slug: string;
-  }>;
-}
 
 const Page: React.FC<PageProps> = ({ params }) => {
   const resolvedParams = React.use(params);
@@ -46,8 +41,8 @@ const Page: React.FC<PageProps> = ({ params }) => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className=" px-12">
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="border-b p-6">
-            <h1 className="text-3xl font-bold text-gray-900">{page.name}</h1>
+          <div className="border-b border-blue-400 p-6">
+            <h1 className="text-3xl font-bold text-gray-90 text-center">{page.name}</h1>
           </div>
           <div className="p-6">
             <div 
