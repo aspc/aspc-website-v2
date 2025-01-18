@@ -30,14 +30,8 @@ router.get('/:id', async (req: Request, res: Response) => {
       res.status(404).json({ message: 'Member not found' });
       return;
     }
-    // res.json(staff);
-
-    // TO VIEW FILE
-    const downloadStream = bucket.openDownloadStream(staff.profilePic);
-    res.setHeader('Content-Type', 'image/jpeg');
-    downloadStream.pipe(res);
-
-
+    res.json(staff);
+    
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
