@@ -6,14 +6,8 @@ interface IStaff extends Document {
     position: string;
     bio: string;
     group: string;
-    profilePic: mongoose.Schema.Types.ObjectId;
+    profilePic: mongoose.Types.ObjectId;
 }
-
-const FileSchema = new Schema({
-    filename: { type: String },
-    fileId: { type: mongoose.Schema.Types.ObjectId },
-    contentType: { type: String },
-});
 
 const StaffSchema = new Schema<IStaff>({
     id: {
@@ -30,13 +24,16 @@ const StaffSchema = new Schema<IStaff>({
         required: true
     },
     bio: {
-        type: String
+        type: String,
+        default: "",
     },
     group: {
-        type: String
+        type: String, 
+        required: true
     },
     profilePic: { 
-        type: FileSchema
+        type: mongoose.Schema.Types.ObjectId,
+        required: true
     }
 }, {
     timestamps: true
