@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Loading from '@/components/Loading'
 import { Editor } from '@tinymce/tinymce-react'
 import { PageContent } from '@/types'
+import StaffPage from '@/app/staff/page'
 
 const Dashboard = () => {
   const { user, loading } = useAuth(true)
@@ -15,6 +16,7 @@ const Dashboard = () => {
   const [newPageId, setNewPageId] = useState('')
   const [newPageName, setNewPageName] = useState('')
   const router = useRouter()
+  const [activeTab, setActiveTab] = useState<'pages' | 'staff'>('pages')
 
   // Fetch available pages on component mount
   useEffect(() => {
@@ -40,11 +42,7 @@ const Dashboard = () => {
       setSelectedPage('');
       return;
     }
-    if (pageId == 'staff') {
-      router.push('/staff');
-      setSelectedPage('');
-      return;
-    }
+    
 
     setIsCreatingNew(false);
     setSelectedPage(pageId);
@@ -140,17 +138,36 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="p-8">
-        <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+      <div className="flex space-x-4 mb-6">
+      <button
+        onClick={() => setActiveTab('pages')}
+        className={`px-4 py-2 rounded ${
+          activeTab === 'pages' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+        }`}
+      >
+        Edit Pages
+      </button>
+      <button
+        onClick={() => setActiveTab('staff')}
+        className={`px-4 py-2 rounded ${
+          activeTab === 'staff' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+        }`}
+      >
+        Edit Staff
+      </button>
+    </div>
+
         <div className="bg-white rounded-lg shadow p-6">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">Edit Page Content</h2>
+        {activeTab === 'pages' && (
+        <>
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Edit Page</h2>
             <select 
               className="w-full p-2 border rounded mb-4"
               value={isCreatingNew ? 'new' : selectedPage}
               onChange={(e) => handlePageSelect(e.target.value)}
             >
               <option value="">Select a page to edit</option>
-              <option value="staff">Staff</option>
 
               {pages.map((page) => (
                 <option key={page.id} value={page.id}>
@@ -219,9 +236,51 @@ const Dashboard = () => {
               </button>
             </div>
           )}
-        </div>
+          </>
+        )}
+          {activeTab === 'staff' && (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Edit Staff</h2>
+            {!selectedPage && (
+              <div className="flex flex-col space-y-4">
+                {}
+                <button
+                  onClick={() => setSelectedPage('staff')}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  Add Staff Member
+                </button>
+
+                {}
+                <button
+                  onClick={() => {
+                    // TODO: Add functionality for editing existing staff
+                    alert('Edit Existing Staff functionality is not implemented yet.');
+                  }}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  Edit Existing Staff
+                </button>
+              </div>
+            )}
+
+            {selectedPage === 'staff' && (
+              <div>
+                <button
+                  onClick={() => setSelectedPage('')}
+                  className="bg-gray-200 text-gray-900 px-4 py-2 rounded hover:bg-gray-300 mb-4"
+                >
+                  Back to Edit Staff
+                </button>
+
+                <StaffPage />
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
+  /</div>
   )
 }
 
