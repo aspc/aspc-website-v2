@@ -136,7 +136,7 @@ const Dashboard = () => {
   if (loading) return <Loading />
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 text-gray-900">
       <div className="p-8">
       <div className="flex space-x-4 mb-6">
       <button
