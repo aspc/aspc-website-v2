@@ -10,7 +10,7 @@ import Image from 'next/image';
 
 interface HeaderProps {}
 
-const groups: String[] = ["Staff", "Senate", "Software"];
+const groups: String[] = ["Senate", "Finance", "StudentAffairs", "AcademicAffairs", "Software"];
 
 const Header: React.FC<HeaderProps> = () => {
   const { user, loading, logout } = useAuth();
@@ -116,18 +116,18 @@ const Header: React.FC<HeaderProps> = () => {
               <div className="relative dropdown-container">
                 <button
                   className="flex items-center space-x-1 hover:text-blue-500"
-                  onClick={() => handleDropdownClick('people')}
+                  onClick={() => handleDropdownClick('staff')}
                 >
                   <span>Members</span>
                 </button>
                             
                 {/* ASPC Goups Dropdown */}            
-                {openDropdown === 'people' && (
+                {openDropdown === 'staff' && (
                   <div className="absolute top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                     {groups.map((group, index) => (
                       <Link
                         key={index}
-                        href={`/people/${group.toLowerCase()}`}
+                        href={`/staff/${group}`}
                         className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
                       >
                         {group}
@@ -239,16 +239,16 @@ const Header: React.FC<HeaderProps> = () => {
                 <div className="relative dropdown-container">
                 <button
                   className="text-lg flex items-center space-x-1"
-                  onClick={() => handleDropdownClick('people')}
+                  onClick={() => handleDropdownClick('staff')}
                 >
                   <span>Members</span>
                 </button>
-                {openDropdown === 'people' && (
+                {openDropdown === 'staff' && (
                   <div className="absolute top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                   {groups.map((group, index) => (
                     <Link
                     key={index}
-                    href={`/people/${group.toLowerCase()}`}
+                    href={`/staff/${group}`}
                     className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
                     onClick={() => setIsMobileMenuOpen(false)}
                     >

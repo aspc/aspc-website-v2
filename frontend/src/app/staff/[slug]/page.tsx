@@ -6,6 +6,14 @@ import Loading from '@/components/Loading';
 import { StaffMember, PageProps } from '@/types';
 import Image from 'next/image';
 
+const groupSlugMap: { [key: string]: string } = {
+    'Senate': 'senate',
+    'AcademicAffairs': 'academicAffairs',
+    'StudentAffairs': 'studentAffairs',
+    'Finance': 'finance',
+    'Communications': 'communications',
+    'Software': 'software',
+};
 
 
 const SenatePage: React.FC<PageProps> = ({ params }) => {
@@ -20,7 +28,7 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
                 setIsLoading(true);
                 
                 // Fetch members by group
-                const res = await fetch(`http://localhost:5000/api/members/group/${resolvedParams.slug}`);
+                const res = await fetch(`http://localhost:5000/api/members/group/${groupSlugMap[resolvedParams.slug]}`);
                 
                 if (!res.ok) {
                     throw new Error('Failed to fetch members');
@@ -49,6 +57,12 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
             <h1 className="text-3xl font-bold text-gray-900 mb-8">ASPC {resolvedParams.slug}</h1>
 
             {/* Senator Cards */}
+
+            {members.length === 0 ? (
+                    <div className="text-center text-gray-600">
+                        No members found in this group.
+                    </div>
+                ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {members.map((member) => (
                 <div key={member.id} className="bg-white rounded-lg shadow overflow-hidden">
@@ -81,7 +95,7 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
                 </div>
             ))}
             </div>
-
+            )}
         </div>
         </div>
     );
