@@ -5,12 +5,12 @@ export interface PageContent {
   }
 
 
-export interface Member {
+export interface StaffMember {
   id: string;
   name: string;
   position: string;
-  aboutMe: string;
-  profilePicture: string;
+  bio: string;
+  profilePic: string;
   group: string;
 }
 

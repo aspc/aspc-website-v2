@@ -145,4 +145,36 @@ router.put('/:id', upload.single('file'), async (req: Request, res: Response) =>
 });
 
 
+// Get profile picture by id
+router.get('/profile-pic/:id', async (req: Request, res: Response) => {
+  try {
+    const fileId = new ObjectId(req.params.id);
+    
+    // Check if file exists
+    const files = await bucket.find({ _id: fileId }).toArray();
+    if (!files.length) {
+      res.status(404).json({ message: 'Profile picture not found' });
+      return;
+    }
+
+    // Set appropriate headers
+    res.set('Content-Type', files[0].contentType);
+
+
+    // Create download stream
+    const downloadStream = bucket.openDownloadStream(fileId);
+
+    // Pipe the file to the response
+    downloadStream.pipe(res);
+    
+    downloadStream.on('error', () => {
+      res.status(404).json({ message: 'Error retrieving profile picture' });
+    });
+
+  } catch (error) {
+    res.status(400).json({ message: 'Invalid profile picture ID' });
+  }
+});
+
+
 export default router;

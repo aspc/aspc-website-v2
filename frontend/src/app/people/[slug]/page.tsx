@@ -3,65 +3,43 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Loading from '@/components/Loading';
-import { Member, PageProps } from '@/types';
+import { StaffMember, PageProps } from '@/types';
 import Image from 'next/image';
 
 
-// Mock data
-const MOCK_SENATORS: Member[] = [
-  {
-    id: '1',
-    name: 'Jane Smith',
-    position: 'President',
-    aboutMe: 'Junior studying Politics. Passionate about student advocacy and campus sustainability.',
-    profilePicture: '',
-    group: 'ASPC'
-  },
-  {
-    id: '2',
-    name: 'Alex Johnson',
-    position: 'Vice President',
-    aboutMe: 'Senior in Economics. Focused on improving student life and academic resources.',
-    profilePicture: '',
-    group: 'ASPC'
-  },
-  {
-    id: '3',
-    name: 'Sam Rodriguez',
-    position: 'Treasurer',
-    aboutMe: 'Sophomore studying Math. Interested in transparent budgeting and club funding.',
-    profilePicture: '',
-    group: 'ASPC'
-  }
-];
 
 const SenatePage: React.FC<PageProps> = ({ params }) => {
     const resolvedParams = React.use(params);
     const { loading } = useAuth();
-    const [members, setMembers] = useState<Member[]>([]);
+    const [members, setMembers] = useState<StaffMember[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
-        try {
-            setIsLoading(true);
-            // TODO: Replace with actual API calls
-            // const res = await fetch(`http://localhost:5000/api/members/${resolvedParams.slug}`);
-            // if (!res.ok) throw new Error('Failed to fetch data');
-            // const data: Member[] = await res.json();
-            const data: Member[] = MOCK_SENATORS;
-            setMembers(data);
+            try {
+                setIsLoading(true);
+                
+                // Fetch members by group
+                const res = await fetch(`http://localhost:5000/api/members/group/${resolvedParams.slug}`);
+                
+                if (!res.ok) {
+                    throw new Error('Failed to fetch members');
+                }
+                
+                const data = await res.json();
+                setMembers(data);
 
-
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        } finally {
-            setIsLoading(false);
-        }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            } finally {
+                setIsLoading(false);
+            }
         };
 
-        fetchData();
-    }, []);
+        if (resolvedParams.slug) {
+            fetchData();
+        }
+    }, [resolvedParams.slug]);
 
     if (loading || isLoading) return <Loading />;
 
@@ -76,13 +54,18 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
                 <div key={member.id} className="bg-white rounded-lg shadow overflow-hidden">
                 <div className="p-4">
                     <div className="flex items-center space-x-4 mb-4">
-                    <Image
-                        src={member.profilePicture || '/cecil.jpg'}
-                        alt={'No Pfp'}
-                        width={96}
-                        height={96}
-                        className="rounded-full object-cover"
-                    />
+                    <div className="w-24 h-24 relative"> 
+                        <Image
+                            src={`http://localhost:5000/api/members/profile-pic/${member.profilePic}`}
+                            alt={member.name}
+                            fill
+                            className="rounded-full object-cover"
+                            onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/cecil.jpg';  // Direct src replacement
+                            }}
+                        />
+                    </div>
                     <div>
                         <h2 className="text-xl font-semibold text-gray-900">{member.name}</h2>
                         <p className="text-gray-600">{member.position}</p>
@@ -91,7 +74,7 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
                     <div className="space-y-4">
                     <div>
                         <h3 className="font-medium text-gray-900 mb-2">About Me</h3>
-                        <p className="text-gray-700 line-clamp-3">{member.aboutMe}</p>
+                        <p className="text-gray-700">{member.bio}</p>
                     </div>
                     </div>
                 </div>
