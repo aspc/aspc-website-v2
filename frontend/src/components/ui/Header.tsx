@@ -95,6 +95,9 @@ const Header: React.FC<HeaderProps> = () => {
                 {/* ASPC Static Pages Dropdown */}
                 {openDropdown === 'aspc' && (
                   <div className="absolute top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+
+                  <Link href='https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0'
+                  className='block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0'>Chirp Guide</Link>
                     {loadingPages ? (
                       <div className="px-4 py-2 text-gray-700">Loading pages...</div>
                     ) : (
