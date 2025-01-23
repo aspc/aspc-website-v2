@@ -26,7 +26,7 @@ app.get('/api/test', (req: Request, res: Response) => {
 });
 
 // Connect to MongoDB
-const MONGODB_URI =  'mongodb://localhost:27017/school-platform';
+const MONGODB_URI = process.env.MONGODB_URI ||  'mongodb://localhost:27017/school-platform';
 
 let bucket: GridFSBucket;
 
