@@ -8,9 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { PageContent } from "@/types";
 import Image from "next/image";
 
-interface HeaderProps {}
 
-const groups: String[] = [
+const groups: string[] = [
     "Senate",
     "Finance",
     "StudentAffairs",
@@ -18,7 +17,7 @@ const groups: String[] = [
     "Software",
 ];
 
-const Header: React.FC<HeaderProps> = () => {
+const Header = () => {
     const { user, loading, logout } = useAuth();
     const router = useRouter();
     const [pages, setPages] = useState<PageContent[]>([]);

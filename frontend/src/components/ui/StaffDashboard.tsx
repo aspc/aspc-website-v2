@@ -1,12 +1,12 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Loading from "@/components/Loading";
 import { StaffMember } from "@/types";
+import Image from "next/image";
 
 const StaffDashboard = () => {
-    const { user, loading } = useAuth();
+    const { loading } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [existingMembers, setExistingMembers] = useState<StaffMember[]>([]);
     const [selectedMemberId, setSelectedMemberId] = useState<string>("");
@@ -62,9 +62,9 @@ const StaffDashboard = () => {
                     // If there's a profile picture, set its URL
                     setProfilePictureURL(
                         data.profilePic
-                            ? `${process.env.BACKEND_LINK}/api/members/profile-pic/${data.profilePic}`
-                            : ""
-                    );
+                          ? `${process.env.BACKEND_LINK}/api/members/profile-pic/${data.profilePic}`
+                          : ""
+                      );
                 }
             } catch (error) {
                 console.error("Error fetching member data:", error);
@@ -103,9 +103,11 @@ const StaffDashboard = () => {
         try {
             setIsLoading(true);
             const formData = new FormData();
-            profilePicture
-                ? formData.append("file", profilePicture)
-                : formData.append("file", "");
+            if (profilePicture) {
+                formData.append("file", profilePicture);
+            } else {
+                formData.append("file", "");
+            }
             formData.append("id", id);
             formData.append("name", name);
             formData.append("position", position);
@@ -224,11 +226,13 @@ const StaffDashboard = () => {
                 </h2>
                 {profilePictureURL && (
                     <div className="mb-4">
-                        <img
+                        <Image
                             src={profilePictureURL}
                             alt="Profile"
+                            width={128}
+                            height={128}
                             className="w-32 h-32 rounded-full object-cover"
-                            onError={(e) => {
+                            onError={() => {
                                 // If image fails to load, clear the URL
                                 setProfilePictureURL("");
                             }}

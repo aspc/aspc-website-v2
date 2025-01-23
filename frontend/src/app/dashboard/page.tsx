@@ -7,7 +7,7 @@ import PageDashboard from '@/components/ui/PageDashboard'
 import StaffDashboard from '@/components/ui/StaffDashboard'
 
 const Dashboard = () => {
-  const { user, loading } = useAuth(true)
+  const { loading } = useAuth(true)
   const [activeTab, setActiveTab] = useState<'pages' | 'staff'>('pages')
 
   if (loading) return <Loading />
