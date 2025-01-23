@@ -30,7 +30,7 @@ const Header: React.FC<HeaderProps> = () => {
         const fetchPages = async () => {
             try {
                 const response = await fetch(
-                    "${process.env.BackendLink}/api/admin/pages"
+                    `${process.env.BACKEND_LINK}/api/admin/pages`
                 );
                 const data: PageContent[] = await response.json();
                 setPages(data);

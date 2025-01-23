@@ -28,7 +28,7 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
 
                 // Fetch members by group
                 const res = await fetch(
-                    `${process.env.BackendLink}/api/members/group/${
+                    `${process.env.BACKEND_LINK}/api/members/group/${
                         groupSlugMap[resolvedParams.slug]
                     }`
                 );
@@ -77,7 +77,7 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
                                     <div className="flex items-center space-x-4 mb-4">
                                         <div className="w-24 h-24 relative">
                                             <Image
-                                                src={`${process.env.BackendLink}/api/members/profile-pic/${member.profilePic}`}
+                                                src={`${process.env.BACKEND_LINK}/api/members/profile-pic/${member.profilePic}`}
                                                 alt={member.name}
                                                 fill
                                                 className="rounded-full object-cover"

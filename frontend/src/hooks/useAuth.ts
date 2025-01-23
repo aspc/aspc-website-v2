@@ -16,7 +16,7 @@ export function useAuth(requireAdmin: boolean = false) {
         const checkAuth = async () => {
             try {
                 const response = await fetch(
-                    "${process.env.BackendLink}/api/auth/current_user",
+                    `${process.env.BACKEND_LINK}/api/auth/current_user`,
                     {
                         credentials: "include",
                     }
@@ -44,7 +44,7 @@ export function useAuth(requireAdmin: boolean = false) {
     const logout = async () => {
         try {
             const response = await fetch(
-                "${process.env.BackendLink}/api/auth/logout",
+                `${process.env.BACKEND_LINK}/api/auth/logout`,
                 {
                     method: "POST",
                     credentials: "include",

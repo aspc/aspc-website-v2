@@ -18,7 +18,7 @@ const PageDashboard = () => {
         const fetchPages = async () => {
             try {
                 const response = await fetch(
-                    "${process.env.BackendLink}/api/admin/pages"
+                    `${process.env.BACKEND_LINK}/api/admin/pages`
                 );
                 if (response.ok) {
                     const data = await response.json();
@@ -45,7 +45,7 @@ const PageDashboard = () => {
 
         try {
             const response = await fetch(
-                `${process.env.BackendLink}/api/admin/pages/${pageId}`
+                `${process.env.BACKEND_LINK}/api/admin/pages/${pageId}`
             );
 
             if (response.ok) {
@@ -69,7 +69,7 @@ const PageDashboard = () => {
                 }
 
                 const createResponse = await fetch(
-                    "${process.env.BackendLink}/api/admin/pages",
+                    `${process.env.BACKEND_LINK}/api/admin/pages`,
                     {
                         method: "POST",
                         headers: {
@@ -111,7 +111,7 @@ const PageDashboard = () => {
                 if (!selectedPage || !content) return;
 
                 const updateResponse = await fetch(
-                    `${process.env.BackendLink}/api/admin/pages/${selectedPage}`,
+                    `${process.env.BACKEND_LINK}/api/admin/pages/${selectedPage}`,
                     {
                         method: "PUT",
                         headers: {

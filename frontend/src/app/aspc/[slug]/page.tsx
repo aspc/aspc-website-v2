@@ -14,7 +14,7 @@ const Page: React.FC<PageProps> = ({ params }) => {
         const fetchPage = async () => {
             try {
                 const res = await fetch(
-                    `${process.env.BackendLink}/api/admin/pages/${resolvedParams.slug}`
+                    `${process.env.BACKEND_LINK}/api/admin/pages/${resolvedParams.slug}`
                 );
                 if (!res.ok) throw new Error("Failed to fetch page");
                 const data: PageContent = await res.json();

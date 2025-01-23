@@ -26,7 +26,7 @@ const StaffDashboard = () => {
         const fetchMembers = async () => {
             try {
                 const response = await fetch(
-                    "${process.env.BackendLink}/api/members"
+                    `${process.env.BACKEND_LINK}/api/members`
                 );
                 if (response.ok) {
                     const data = await response.json();
@@ -48,7 +48,7 @@ const StaffDashboard = () => {
             try {
                 setIsLoading(true);
                 const response = await fetch(
-                    `${process.env.BackendLink}/api/members/${selectedMemberId}`
+                    `${process.env.BACKEND_LINK}/api/members/${selectedMemberId}`
                 );
 
                 if (response.ok) {
@@ -62,7 +62,7 @@ const StaffDashboard = () => {
                     // If there's a profile picture, set its URL
                     setProfilePictureURL(
                         data.profilePic
-                            ? `${process.env.BackendLink}/api/members/profile-pic/${data.profilePic}`
+                            ? `${process.env.BACKEND_LINK}/api/members/profile-pic/${data.profilePic}`
                             : ""
                     );
                 }
@@ -113,8 +113,8 @@ const StaffDashboard = () => {
             formData.append("group", group);
 
             const url = selectedMemberId
-                ? `${process.env.BackendLink}/api/members/${selectedMemberId}`
-                : "${process.env.BackendLink}/api/members";
+                ? `${process.env.BACKEND_LINK}/api/members/${selectedMemberId}`
+                : `${process.env.BACKEND_LINK}/api/members`;
 
             const method = selectedMemberId ? "PUT" : "POST";
 

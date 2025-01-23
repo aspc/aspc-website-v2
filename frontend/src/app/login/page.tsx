@@ -27,7 +27,7 @@ export default function LoginPage() {
             }
 
             const res = await fetch(
-                "${process.env.BackendLink}/api/auth/login",
+                `${process.env.BACKEND_LINK}/api/auth/login`,
                 {
                     method: "POST",
                     headers: {
