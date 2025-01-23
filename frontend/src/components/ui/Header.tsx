@@ -154,7 +154,7 @@ const Header = () => {
                                                 href={`/staff/${group}`}
                                                 className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
                                             >
-                                                {group}
+                                                {group.replace(/([a-z])([A-Z])/g, '$1 $2')}
                                             </Link>
                                         ))}
                                     </div>

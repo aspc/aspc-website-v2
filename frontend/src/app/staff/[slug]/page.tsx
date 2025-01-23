@@ -57,7 +57,7 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="container mx-auto px-4">
                 <h1 className="text-3xl font-bold text-gray-900 mb-8">
-                    ASPC {resolvedParams.slug}
+                    ASPC {resolvedParams.slug.replace(/([a-z])([A-Z])/g, '$1 $2')}
                 </h1>
 
                 {/* Senator Cards */}
