@@ -1,18 +1,8 @@
 import express, { Request, Response } from 'express';
-import session from 'express-session';
 import User from '../models/User';
 
 const router = express.Router();
 
-// Configure session
-router.use(
-    session({
-        secret: 'test', // Note: Should be a long string in production
-        resave: false,
-        saveUninitialized: false,
-        cookie: { secure: false } // Note: Should be true in production
-    })
-)
 
 router.get('/', async (req: Request, res: Response) => {
     try {

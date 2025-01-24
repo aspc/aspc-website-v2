@@ -16,6 +16,7 @@ export async function middleware(request: NextRequest) {
                 const response = await fetch(
                     `${process.env.BACKEND_LINK}/api/auth/current_user`,
                     {
+                        credentials: "include",
                         headers: {
                             Cookie: `connect.sid=${sessionCookie.value}`,
                         },
