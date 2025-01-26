@@ -217,7 +217,6 @@ const PageDashboard = () => {
                                 "image",
                                 "charmap",
                                 "preview",
-                                "fontsize",
                                 "anchor",
                                 "searchreplace",
                                 "visualblocks",
@@ -232,7 +231,7 @@ const PageDashboard = () => {
                             ],
                             toolbar:
                                 "undo redo | blocks | " +
-                                "bold italic forecolor fontsizeselect | alignleft aligncenter " +
+                                "bold italic forecolor  | alignleft aligncenter " +
                                 "alignright alignjustify | bullist numlist outdent indent | " +
                                 "removeformat | image media table | help",
                             content_style:

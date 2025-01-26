@@ -53,6 +53,7 @@ export function useAuth(requireAdmin: boolean = false) {
 
             if (response.ok) {
                 setUser(null);
+                setTimeout(() => router.push("/login"), 1000);
             }
         } catch (error) {
             console.error("Logout error:", error);
