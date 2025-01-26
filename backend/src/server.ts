@@ -7,6 +7,8 @@ import userRoutes from './routes/UserRoutes';
 import authRoutes from './routes/AuthRoutes';
 import adminRoutes from './routes/AdminRoutes';
 import staffRoutes from './routes/StaffRoutes';
+import session from 'express-session';
+
 
 dotenv.config();
 
@@ -14,11 +16,24 @@ const app: Express = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://aspc-website-v2.vercel.app'],
+  origin: ['http://localhost:3000', 'https://aspc-website-v2.vercel.app','https://pomonastudents.org/'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
 app.use(express.json());
+
+// Session
+app.use(
+  session({
+    secret: 'test',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production', // Required for HTTPS
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Required for cross-origin requests
+    },
+  })
+);
 
 // Test endpoint for frontend
 app.get('/api/test', (req: Request, res: Response) => {
