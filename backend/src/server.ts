@@ -16,7 +16,7 @@ const app: Express = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://aspc-website-v2.vercel.app', 'http://192.168.137.1:3000/'],
+  origin: ['http://localhost:3000', 'https://aspc-website-v2.vercel.app','https://pomonastudents.org/'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
@@ -30,7 +30,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === 'production', // Required for HTTPS
-      sameSite: 'none', // Required for cross-origin requests
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Required for cross-origin requests
     },
   })
 );
