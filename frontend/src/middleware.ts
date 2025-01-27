@@ -8,17 +8,20 @@ export async function middleware(request: NextRequest) {
     // 1. Fix cookie handling
     const authCheck = async () => {
         try {
+            if (!sessionCookie) return null;
+
             const response = await fetch(
                 `${process.env.BACKEND_LINK}/api/auth/current_user`,
                 {
                     credentials: "include",
                     headers: {
-                        // Pass all cookies, not just session
-                        Cookie: request.headers.get("Cookie") || ""
+                        Cookie: request.headers.get("Cookie") || "",
                     },
                     cache: "no-store" // Critical for fresh data
                 }
             );
+
+            console.log(response);
 
             if (!response.ok) return null;
             return await response.json();
@@ -27,30 +30,30 @@ export async function middleware(request: NextRequest) {
         }
     };
 
-    // 2. Handle /dashboard routes
-    if (pathname.startsWith("/dashboard")) {
-        if (!sessionCookie) {
-            return NextResponse.redirect(new URL("/login", request.url));
-        }
+    // // 2. Handle /dashboard routes
+    // if (pathname.startsWith("/dashboard")) {
+    //     if (!sessionCookie) {
+    //         return NextResponse.redirect(new URL("/login", request.url));
+    //     }
 
-        const userData = await authCheck();
+    //     const userData = await authCheck();
         
-        if (!userData) {
-            const loginUrl = new URL("/login", request.url);
-            loginUrl.searchParams.set("from", pathname);
-            return NextResponse.redirect(loginUrl);
-        }
+    //     if (!userData) {
+    //         const loginUrl = new URL("/sucks", request.url);
+    //         loginUrl.searchParams.set("from", pathname);
+    //         return NextResponse.redirect(loginUrl);
+    //     }
 
-        // 3. Proper admin check with 403 response
-        if (!userData.user?.isAdmin) {
-            return new NextResponse("Forbidden", { 
-                status: 403,
-                headers: {
-                    "Content-Type": "text/plain"
-                }
-            });
-        }
-    }
+    //     // 3. Proper admin check with 403 response
+    //     if (!userData.user?.isAdmin) {
+    //         return new NextResponse("Forbidden", { 
+    //             status: 403,
+    //             headers: {
+    //                 "Content-Type": "text/plain"
+    //             }
+    //         });
+    //     }
+    // }
 
     return NextResponse.next();
 }

@@ -7,10 +7,19 @@ import PageDashboard from '@/components/ui/PageDashboard'
 import StaffDashboard from '@/components/ui/StaffDashboard'
 
 const Dashboard = () => {
-  const { loading } = useAuth(true)
+  const { user, loading } = useAuth(true)
   const [activeTab, setActiveTab] = useState<'pages' | 'staff'>('pages')
 
   if (loading) return <Loading />
+
+  if(!user || !user?.isAdmin) {
+    return <div className="min-h-screen bg-gray-100 text-gray-900 flex items-center justify-center">
+      <div className="p-8 bg-white rounded-lg shadow">
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">Forbidden</h2>
+        <p className="text-center">You do not have permission to access this page.</p>
+      </div>
+    </div>
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900">
