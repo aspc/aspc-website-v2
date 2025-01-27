@@ -71,10 +71,10 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
                         {members.map((member) => (
                             <div
                                 key={member.id}
-                                className="bg-white rounded-lg shadow overflow-hidden"
+                                className="bg-white rounded-lg shadow overflow-hidden hover:shadow-xl transition duration-300 ease-in-out min-h-72"
                             >
                                 <div className="p-4">
-                                    <div className="flex items-center space-x-4 mb-4">
+                                    <div className="flex items-center space-x-4 mb-4 ">
                                         <div className="w-24 h-24 relative">
                                             <Image
                                                 src={`${process.env.BACKEND_LINK}/api/members/profile-pic/${member.profilePic}`}
