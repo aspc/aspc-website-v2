@@ -114,8 +114,8 @@ const StaffDashboard = () => {
                 alert('Member deleted successfully!');
                 setTimeout(() => window.location.reload(), 1000);
             } catch (error) {
-                console.error("Error saving staff data:", error);
-                alert("Failed to save staff data");
+                console.error("Error deleting staff data:", error);
+                alert("Failed to delete staff data");
             } finally {
                 setIsLoading(false);
             }
