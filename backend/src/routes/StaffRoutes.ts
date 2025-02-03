@@ -91,7 +91,7 @@ router.post('/', upload.single('file'), async (req: Request, res: Response) => {
 });
 
 // Update staff info
-router.put('/:id', upload.single('file'), async (req: Request, res: Response) => {
+router.patch('/:id', upload.single('file'), async (req: Request, res: Response) => {
   try {
     if (!req.file && !req.body) {
       res.status(400).json({ message: 'Must update at least one field'});
@@ -176,5 +176,18 @@ router.get('/profile-pic/:id', async (req: Request, res: Response) => {
   }
 });
 
+router.delete('/:id' , async (req: Request, res: Response) => {
+  try {
+    const staff = await Staff.findOneAndDelete({id: req.params.id});
+    
+    if (!staff) {
+      res.status(404).json({ message: 'Member not found'})
+    }
+
+    res.status(200).json({ message: 'Member deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 export default router;
