@@ -146,6 +146,38 @@ const PageDashboard = () => {
         }
     };
 
+    const handlePageDelete = async () => {
+        if (!selectedPage) return;
+
+        const confirmDelete = window.confirm(
+            "Are you sure you want to delete this page?"
+        );
+        if (!confirmDelete) return;
+
+        try {
+            setLoading(true);
+
+            const response = await fetch(
+                `${process.env.BACKEND_LINK}/api/admin/pages/${selectedPage}`,
+                {
+                    method: "DELETE",
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Failed to delete the page");
+            }
+
+            alert("Page deleted successfully!");
+            setTimeout(() => window.location.reload(), 1000);
+        } catch (error) {
+            console.error("Error deleting page:", error);
+            alert("Error deleting page");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (loading) return <Loading />;
 
     return (
@@ -238,13 +270,27 @@ const PageDashboard = () => {
                                 "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
                         }}
                     />
-                    <button
-                        onClick={handleContentSave}
-                        disabled={loading}
-                        className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed"
-                    >
-                        {isCreatingNew ? "Create Page" : "Save Changes"}
-                    </button>
+                    <div className="flex">
+                        <button
+                            onClick={handleContentSave}
+                            disabled={loading}
+                            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed mr-2"
+                        >
+                            {isCreatingNew ? "Create Page" : "Save Changes"}
+                        </button>
+                        {/* Delete button */}
+                        {selectedPage && (
+                            <div>
+                                <button
+                                    onClick={handlePageDelete}
+                                    disabled={loading}
+                                    className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 disabled:bg-blue-300 disabled:cursor-not-allowed"
+                                >
+                                    Delete Page
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>
