@@ -169,9 +169,7 @@ const PageDashboard = () => {
             }
 
             alert("Page deleted successfully!");
-            setPages(pages.filter((page) => page.id !== selectedPage));
-            setSelectedPage("");
-            setContent("");
+            setTimeout(() => window.location.reload(), 1000);
         } catch (error) {
             console.error("Error deleting page:", error);
             alert("Error deleting page");
