@@ -91,7 +91,7 @@ router.post('/', upload.single('file'), async (req: Request, res: Response) => {
 });
 
 // Update staff info
-router.put('/:id', upload.single('file'), async (req: Request, res: Response) => {
+router.patch('/:id', upload.single('file'), async (req: Request, res: Response) => {
   try {
     if (!req.file && !req.body) {
       res.status(400).json({ message: 'Must update at least one field'});

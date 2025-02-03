@@ -105,8 +105,6 @@ const StaffDashboard = () => {
             const formData = new FormData();
             if (profilePicture) {
                 formData.append("file", profilePicture);
-            } else {
-                formData.append("file", "");
             }
             formData.append("id", id);
             formData.append("name", name);
@@ -118,7 +116,7 @@ const StaffDashboard = () => {
                 ? `${process.env.BACKEND_LINK}/api/members/${selectedMemberId}`
                 : `${process.env.BACKEND_LINK}/api/members`;
 
-            const method = selectedMemberId ? "PUT" : "POST";
+            const method = selectedMemberId ? "PATCH" : "POST";
 
             const response = await fetch(url, {
                 method,
@@ -243,7 +241,6 @@ const StaffDashboard = () => {
                     type="file"
                     onChange={handlePictureUpload}
                     accept="image/*"
-                    required
                 />
             </div>
 
