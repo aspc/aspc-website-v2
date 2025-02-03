@@ -21,22 +21,22 @@ const StaffDashboard = () => {
     const [id, setId] = useState<string>("");
     const [isLoading, setIsLoading] = useState(false);
 
+    const fetchMembers = async () => {
+        try {
+            const response = await fetch(
+                `${process.env.BACKEND_LINK}/api/members`
+            );
+            if (response.ok) {
+                const data = await response.json();
+                setExistingMembers(data);
+            }
+        } catch (error) {
+            console.error("Error fetching members:", error);
+        }
+    };
+
     // Fetch existing members
     useEffect(() => {
-        const fetchMembers = async () => {
-            try {
-                const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/members`
-                );
-                if (response.ok) {
-                    const data = await response.json();
-                    setExistingMembers(data);
-                }
-            } catch (error) {
-                console.error("Error fetching members:", error);
-            }
-        };
-
         fetchMembers();
     }, []);
 
@@ -95,6 +95,31 @@ const StaffDashboard = () => {
         setProfilePicture(null);
         setProfilePictureURL("");
         setSelectedMemberId("");
+    };
+
+    const handleDelete = async () => {
+        if (window.confirm('Are you sure you want to delete this member?')) {
+            try {
+                setIsLoading(true);
+                const response = await fetch(`${process.env.BACKEND_LINK}/api/members/${selectedMemberId}`, {
+                    method: "DELETE",
+                });    
+                
+                if (!response.ok) {
+                    throw new Error('Failed to delete member');
+                }
+                
+                fetchMembers();
+
+                alert('Member deleted successfully!');
+                setTimeout(() => window.location.reload(), 1000);
+            } catch (error) {
+                console.error("Error saving staff data:", error);
+                alert("Failed to save staff data");
+            } finally {
+                setIsLoading(false);
+            }
+        } 
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -191,16 +216,27 @@ const StaffDashboard = () => {
                         ? "Edit Staff Member"
                         : "Add New Staff Member"}
                 </h1>
-                <button
-                    type="button"
-                    onClick={() => {
-                        setIsEditing(false);
-                        resetForm();
-                    }}
-                    className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-                >
-                    Back
-                </button>
+                <div className="flex space-x-4 mb-6">    
+                    <button
+                        type="button"
+                        onClick={() => {
+                            handleDelete();
+                        }}
+                        className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                    >
+                        Delete Member
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setIsEditing(false);
+                            resetForm();
+                        }}
+                        className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                    >
+                        Back
+                    </button>
+                </div>
             </div>
 
             {/* ID */}
