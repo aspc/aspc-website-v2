@@ -8,7 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { PageContent } from "@/types";
 import Image from "next/image";
 
-
 const groups: string[] = [
     "Senate",
     "Finance",
@@ -154,7 +153,10 @@ const Header = () => {
                                                 href={`/staff/${group}`}
                                                 className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
                                             >
-                                                {group.replace(/([a-z])([A-Z])/g, '$1 $2')}
+                                                {group.replace(
+                                                    /([a-z])([A-Z])/g,
+                                                    "$1 $2"
+                                                )}
                                             </Link>
                                         ))}
                                     </div>
@@ -252,6 +254,7 @@ const Header = () => {
 
                         {/* Mobile Menu Links */}
                         <nav className="flex flex-col p-4 space-y-6 text-white">
+                            {/* ASPC dropdown */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="text-lg flex items-center space-x-1"
@@ -259,18 +262,19 @@ const Header = () => {
                                 >
                                     <span>ASPC</span>
                                 </button>
+
                                 {openDropdown === "aspc" && (
-                                    <div className="absolute top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                                    <div className="ml-2 mt-2">
                                         {loadingPages ? (
-                                            <div className="px-4 py-2 text-gray-700">
+                                            <div className="px-4 py-2">
                                                 Loading pages...
                                             </div>
                                         ) : (
-                                            pages.map((page) => (
+                                            pages.map((page: PageContent) => (
                                                 <Link
                                                     key={page.id}
                                                     href={`/aspc/${page.id}`}
-                                                    className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                                    className="block px-4 py-2 hover:text-yellow-400"
                                                     onClick={() =>
                                                         setIsMobileMenuOpen(
                                                             false
@@ -284,6 +288,8 @@ const Header = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Members dropdown */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="text-lg flex items-center space-x-1"
@@ -291,20 +297,28 @@ const Header = () => {
                                 >
                                     <span>Members</span>
                                 </button>
+
                                 {openDropdown === "staff" && (
-                                    <div className="absolute top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                                        {groups.map((group, index) => (
-                                            <Link
-                                                key={index}
-                                                href={`/staff/${group}`}
-                                                className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                                onClick={() =>
-                                                    setIsMobileMenuOpen(false)
-                                                }
-                                            >
-                                                {group}
-                                            </Link>
-                                        ))}
+                                    <div className="ml-2 mt-2">
+                                        {groups.map(
+                                            (group: string, index: number) => (
+                                                <Link
+                                                    key={index}
+                                                    href={`/staff/${group}`}
+                                                    className="block px-4 py-2 hover:text-yellow-400"
+                                                    onClick={() =>
+                                                        setIsMobileMenuOpen(
+                                                            false
+                                                        )
+                                                    }
+                                                >
+                                                    {group.replace(
+                                                        /([a-z])([A-Z])/g,
+                                                        "$1 $2"
+                                                    )}
+                                                </Link>
+                                            )
+                                        )}
                                     </div>
                                 )}
                             </div>
