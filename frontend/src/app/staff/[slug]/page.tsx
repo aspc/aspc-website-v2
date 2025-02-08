@@ -72,41 +72,36 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
                             <div
                                 key={member.id}
                                 className="bg-white rounded-lg shadow overflow-hidden hover:shadow-xl transition duration-300 ease-in-out min-h-72"
-                            >
+                            >   
                                 <div className="p-4">
-                                    <div className="flex items-center space-x-4 mb-4 ">
-                                        <div className="w-24 h-24 relative">
-                                            <Image
-                                                src={`${process.env.BACKEND_LINK}/api/members/profile-pic/${member.profilePic}`}
-                                                alt={member.name}
-                                                fill
-                                                className="rounded-full object-cover"
-                                                onError={(e) => {
-                                                    const target =
-                                                        e.target as HTMLImageElement;
-                                                    target.src = "/cecil.jpg"; // Direct src replacement
-                                                }}
-                                            />
-                                        </div>
-                                        <div>
-                                            <h2 className="text-xl font-semibold text-gray-900">
-                                                {member.name}
-                                            </h2>
-                                            <p className="text-gray-600">
-                                                {member.position}
-                                            </p>
-                                        </div>
+
+                                <div className="relative w-full h-auto perspective-1000">
+
+                                <div className="flex flex-col space-y-3 mb-4 transition-transform duration-500 transform-style-preserve-3d hover:rotate-y-180">
+                                    <div className="relative" style={{ paddingBottom: '150%' }}>
+                                        <Image
+                                            src={`${process.env.BACKEND_LINK}/api/members/profile-pic/${member.profilePic}`}
+                                            alt={member.name}
+                                            className="object-cover"
+                                            onError={(e) => {
+                                                const target =
+                                                    e.target as HTMLImageElement;
+                                                target.src = "/cecil.jpg"; // Direct src replacement
+                                            }}
+                                            layout="fill"
+                                        />
                                     </div>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <h3 className="font-medium text-gray-900 mb-2">
-                                                About Me
-                                            </h3>
-                                            <p className="text-gray-700">
-                                                {member.bio}
-                                            </p>
-                                        </div>
-                                    </div>
+
+                                    <h2 className="text-xl font-semibold text-gray-900 ml-2">
+                                        {member.name}
+                                    </h2>
+                                    <p className="text-gray-600 ml-2">
+                                        {member.position}
+                                    </p>
+
+                                
+                                </div>
+                                </div>
                                 </div>
                             </div>
                         ))}
