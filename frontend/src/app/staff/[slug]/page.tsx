@@ -20,6 +20,7 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
     const { loading } = useAuth();
     const [members, setMembers] = useState<StaffMember[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [showBio, setShowBio] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -53,6 +54,15 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
 
     if (loading || isLoading) return <Loading />;
 
+    const toggleBio = (name: string) => {
+        if (showBio === name) {
+          setShowBio(null);
+        } else {
+          setShowBio(name); 
+        }
+    };
+    
+
     return (
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="container mx-auto px-4">
@@ -72,40 +82,43 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
                             <div
                                 key={member.id}
                                 className="bg-white rounded-lg shadow overflow-hidden hover:shadow-xl transition duration-300 ease-in-out min-h-72"
-                            >
+                            >   
                                 <div className="p-4">
-                                    <div className="flex items-center space-x-4 mb-4 ">
-                                        <div className="w-24 h-24 relative">
-                                            <Image
-                                                src={`${process.env.BACKEND_LINK}/api/members/profile-pic/${member.profilePic}`}
-                                                alt={member.name}
-                                                fill
-                                                className="rounded-full object-cover"
-                                                onError={(e) => {
-                                                    const target =
-                                                        e.target as HTMLImageElement;
-                                                    target.src = "/cecil.jpg"; // Direct src replacement
-                                                }}
-                                            />
+                                    <div className="flex flex-col space-y-3 mb-4">
+                                        <div className="relative" style={{ paddingBottom: '150%', height: "0", overflow: "hidden"}}>
+                                            {showBio === member.name ? (
+                                            <div className="text-gray-600">
+                                                <p>{member.bio}</p>
+                                            </div>
+                                            ) : (
+                                                <Image
+                                                    src={`${process.env.BACKEND_LINK}/api/members/profile-pic/${member.profilePic}`}
+                                                    alt={member.name}
+                                                    className="object-cover"
+                                                    onError={(e) => {
+                                                        const target =
+                                                            e.target as HTMLImageElement;
+                                                        target.src = "/cecil.jpg"; // Direct src replacement
+                                                    }}
+                                                    layout="fill"
+                                                />
+                                            )}
                                         </div>
-                                        <div>
-                                            <h2 className="text-xl font-semibold text-gray-900">
-                                                {member.name}
-                                            </h2>
-                                            <p className="text-gray-600">
-                                                {member.position}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <h3 className="font-medium text-gray-900 mb-2">
-                                                About Me
-                                            </h3>
-                                            <p className="text-gray-700">
-                                                {member.bio}
-                                            </p>
-                                        </div>
+                                        <h2 className="text-xl font-semibold text-gray-900 ml-2">
+                                            {member.name}
+                                        </h2>
+                                        <p className="text-gray-600 ml-2">
+                                            {member.position}
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                toggleBio(member.name);
+                                            }}
+                                            className="text-blue-500 px-4 py-2 rounded-md hover:bg-blue-500 hover:text-white border-2 border-blue-500 max-w-fit"
+                                        >
+                                            {showBio === member.name ? "Hide biography" : "Biography"}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
