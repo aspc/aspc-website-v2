@@ -7,6 +7,7 @@ import userRoutes from './routes/UserRoutes';
 import authRoutes from './routes/AuthRoutes';
 import adminRoutes from './routes/AdminRoutes';
 import staffRoutes from './routes/StaffRoutes';
+import eventRoutes from './routes/EventsRoutes';
 import session from 'express-session';
 
 
@@ -73,6 +74,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin/pages', adminRoutes);
 app.use('/api/members', staffRoutes);
+app.use('/api/events', eventRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
