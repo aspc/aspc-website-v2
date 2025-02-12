@@ -109,7 +109,7 @@ const Header = () => {
 
                                 {/* ASPC Static Pages Dropdown */}
                                 {openDropdown === "aspc" && (
-                                    <div className="absolute top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         <Link
                                             href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
@@ -146,7 +146,7 @@ const Header = () => {
 
                                 {/* ASPC Goups Dropdown */}
                                 {openDropdown === "staff" && (
-                                    <div className="absolute top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         {groups.map((group, index) => (
                                             <Link
                                                 key={index}
@@ -171,13 +171,42 @@ const Header = () => {
                                 Campus
                             </Link>
 
-                            {/* Courses */}
-                            <Link
-                                href="/courses"
-                                className="hover:text-blue-500"
-                            >
-                                Courses
-                            </Link>
+                            {/* courses */}
+                            <div className="relative dropdown-container">
+                                <button
+                                    className="flex items-center space-x-1 hover:text-blue-500"
+                                    onClick={() => handleDropdownClick("courses")}
+                                >
+                                    <span>Courses</span>
+                                </button>
+
+                                {/* courses Dropdown */}
+                                {openDropdown === "courses" && (
+                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
+                                        <Link
+                                            href="https://hyperschedule.io" target="_blank"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                        >
+                                            Course Planner
+                                        </Link>
+                                        <Link
+                                            href="/campus/course-reviews"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                        >
+                                            Course Reviews
+                                        </Link>
+                                        
+                                        <Link
+                                            href="/campus/instructor-reviews"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                        >
+                                            Instructor Reviews
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
+
+                            
 
                             {/* Events */}
                             <Link

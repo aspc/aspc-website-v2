@@ -34,8 +34,8 @@ export default function HomePage() {
       
 
               <div className="mt-4 space-x-4">
-                <button className="text-blue-500 hover:underline">See more events</button>
-                <button className="text-blue-500 hover:underline">Submit an event</button>
+                <Link href='/events' className="text-blue-500 hover:underline">See more events</Link>
+                <Link href='https://pomona.campuslabs.com/engage/' className="text-blue-500 hover:underline">Submit an event</Link>
               </div>
             </div>
           </section>
@@ -44,7 +44,7 @@ export default function HomePage() {
             <h2 className="text-2xl font-bold mb-6">Latest From ASPC</h2>
             <div className="space-y-6">
               <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="font-medium mb-2">Spring 2024 Funding Request Forms</h3>
+                <h3 className="font-medium mb-2">Spring 2025 Funding Request Forms</h3>
                 <p className="text-gray-600 text-sm">Request funds allocated for conferences, alcohol, and club events from ASPC.</p>
                 <button className="text-blue-500 hover:underline mt-2">Click Here</button>
               </div>
