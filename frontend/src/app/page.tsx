@@ -1,5 +1,6 @@
 'use client';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function HomePage() {
 
@@ -48,9 +49,11 @@ export default function HomePage() {
                 <button className="text-blue-500 hover:underline mt-2">Click Here</button>
               </div>
               <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="font-medium mb-2">COVID-19 Isolation FAQ</h3>
-                <p className="text-gray-600 text-sm">Your COVID isolation questions answered.</p>
-                <button className="text-blue-500 hover:underline mt-2">Click Here</button>
+                <h3 className="font-medium mb-2">The Chirp Guide: ASPC Resource Guide</h3>
+                <p className="text-gray-600 text-sm">All your questions about ASPC answered here</p>
+                <Link href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0" className="text-blue-500 hover:underline mt-2" target="_blank">
+                  Click Here
+                </Link>
               </div>
             </div>
           </section>

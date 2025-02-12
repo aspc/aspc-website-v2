@@ -265,6 +265,12 @@ const Header = () => {
 
                                 {openDropdown === "aspc" && (
                                     <div className="ml-2 mt-2">
+                                        <Link
+                                            href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                        >
+                                            Chirp Guide
+                                        </Link>
                                         {loadingPages ? (
                                             <div className="px-4 py-2">
                                                 Loading pages...

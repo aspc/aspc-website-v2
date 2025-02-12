@@ -19,3 +19,14 @@ export interface PageProps {
     slug: string;
   }>;
 }
+
+export interface Event {
+  name: string;
+  location: string;
+  description: string;
+  host: string;
+  details_url: string;
+  start: Date;
+  end: Date;
+  status: string;
+}
