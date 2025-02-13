@@ -104,9 +104,16 @@ const Header = () => {
                         </div>
 
                         {/* Desktop Navigation */}
-
-                        {/* ASPC*/}
                         <nav className="hidden lg:flex items-center space-x-6">
+
+                            {/*Home*/}
+                            <Link
+                                href="/"
+                                className="hover:text-blue-500">
+                                Home
+                            </Link>
+
+                            {/* ASPC */}    
                             <div className="relative dropdown-container">
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
@@ -291,6 +298,13 @@ const Header = () => {
 
                         {/* Mobile Menu Links */}
                         <nav className="flex flex-col p-4 space-y-6 text-white">
+                            {/*Home*/}
+                            <Link
+                                href="/"
+                                className="hover:text-blue-500">
+                                Home
+                            </Link>
+                            
                             {/* ASPC dropdown */}
                             <div className="relative dropdown-container">
                                 <button
