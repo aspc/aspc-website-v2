@@ -1,8 +1,29 @@
 'use client';
 import Image from 'next/image';
 import Link from 'next/link';
+import {useEffect, useState } from 'react';
+import { Event } from '@/types';
+import HomepageEvents from '@/components/ui/HomepageEvents';
 
 export default function HomePage() {
+  const [events, setEvents] = useState<Event[]>([]);
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch(`${process.env.BACKEND_LINK}/api/events/day`);
+        const data = await response.json();
+        setEvents(data);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      }
+    };
+
+    fetchEvents();
+    setEvents((prevEvents) => 
+      [...prevEvents].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+    );
+  }, []);
+
 
   return (
     <div className="min-h-screen bg-white font-[Lora]">
@@ -29,9 +50,9 @@ export default function HomePage() {
           <section>
             <h2 className="text-2xl font-bold mb-6">Upcoming Events</h2>
             <div className="bg-white rounded-lg shadow p-6">
-      
+              <HomepageEvents events={events} />
 
-              <div className="mt-4 space-x-4">
+              <div className=" space-x-4 border-t-2 border-gray-200 pt-4">
                 <Link href='/events' className="text-blue-500 hover:underline">See more events</Link>
                 <Link href='https://pomona.campuslabs.com/engage/' className="text-blue-500 hover:underline">Submit an event</Link>
               </div>
