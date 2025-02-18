@@ -48,7 +48,7 @@ export default function HomePage() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-2 gap-12">
           <section>
-            <h2 className="text-2xl font-bold mb-6">Upcoming Events</h2>
+            <h2 className="text-2xl font-bold mb-6">Today's Events</h2>
             <div className="bg-white rounded-lg shadow p-6">
               <HomepageEvents events={events} />
 
