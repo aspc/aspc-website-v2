@@ -1,9 +1,73 @@
 import express, { Request, Response } from 'express';
 import User from '../models/User';
+import { initializeSAML } from '../config/samlConfig';
+import { Router } from 'express';
 
-const router = express.Router();
+const router = Router()
+const { idp, sp } = initializeSAML() || {};
 
 
+// Test SAML metadata route
+router.get('/test-saml-metadata', async (req: Request, res: Response) => {
+    try {
+      if (!idp || !sp) {
+        res.status(500).json({ message: 'SAML not initialized' });
+        return;
+      }
+      
+      res.json({
+        idpMetadata: idp.getMetadata(),
+        spMetadata: sp.getMetadata()
+      });
+    } catch (error) {
+      res.status(500).json({ message: 'Error fetching SAML metadata', error });
+    }
+});
+
+// SAML login initiation
+router.get('/login/saml', async (req: Request, res: Response) => {
+    try {
+      if (!idp || !sp) {
+        res.status(500).json({ message: 'SAML not initialized' });
+        return;
+      }
+      const { id, context } = sp.createLoginRequest(idp, 'redirect');
+      (req.session as any).authRequest = id;
+      res.redirect(context);
+    } catch (error) {
+      res.status(500).json({ message: 'SAML login error', error });
+    }
+  });
+  
+  // SAML assertion consumer service
+  router.post('/saml/consume', 
+    express.urlencoded({ extended: false }), 
+    async (req: Request, res: Response) => {
+      try {
+        if (!idp || !sp) {
+          res.status(500).json({ message: 'SAML not initialized' });
+          return;
+        }
+        
+        const { extract } = await sp.parseLoginResponse(idp, 'post', req);
+        console.log('SAML Response:', extract);
+  
+        // Store user in session
+        (req.session as any).user = {
+          email: extract.attributes.emailaddress,
+          name: extract.attributes.name,
+          firstName: extract.attributes.givenname,
+          lastName: extract.attributes.surname
+        };
+  
+        res.redirect('/');
+      } catch (error) {
+        console.error('SAML consume error:', error);
+        res.status(500).json({ message: 'SAML authentication failed', error });
+      }
+  });
+
+// All Users
 router.get('/', async (req: Request, res: Response) => {
     try {
       const users = await User.find().select('-password'); // Exclude password field

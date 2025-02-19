@@ -9,7 +9,9 @@ import adminRoutes from './routes/AdminRoutes';
 import staffRoutes from './routes/StaffRoutes';
 import eventRoutes from './routes/EventsRoutes';
 import session from 'express-session';
-import passport from 'passport';
+import https from 'https';
+import fs from 'fs';
+import { serverConfig } from './config/samlConfig';
 
 dotenv.config();
 
@@ -77,10 +79,8 @@ app.use('/api/members', staffRoutes);
 app.use('/api/events', eventRoutes);
 
 
-app.use(passport.initialize());
-app.use(passport.session());
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+const server = https.createServer(serverConfig.httpsOptions, app);
+server.listen(serverConfig.port, () => {
+  console.log(`Secure server running on port ${serverConfig.port}`);
 });
