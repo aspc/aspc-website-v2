@@ -55,7 +55,7 @@ router.post("/", async (req: Request, res: Response) => {
 router.put("/:id", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, content } = req.body;
+        const { newId, name, content } = req.body;
 
         if (!name && !content) {
             res.status(400).json({
@@ -66,7 +66,7 @@ router.put("/:id", async (req: Request, res: Response) => {
 
         const page = await PageContent.findOneAndUpdate(
             { id },
-            { name, content },
+            { id: newId, name, content },
             { new: true }
         );
 
