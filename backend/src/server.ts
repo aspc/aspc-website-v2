@@ -10,7 +10,6 @@ import staffRoutes from './routes/StaffRoutes';
 import eventRoutes from './routes/EventsRoutes';
 import session from 'express-session';
 import https from 'https';
-import fs from 'fs';
 import { serverConfig } from './config/samlConfig';
 
 dotenv.config();
