@@ -2,6 +2,9 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { IdentityProvider, ServiceProvider } from 'samlify';
+import dotenv from 'dotenv';
+dotenv.config();
+
 
 export const fetchAndSaveMetadata = async () => {
   const metadataUrl = 'https://login.microsoftonline.com/817f5904-3904-4ee8-b3a5-a65d4746ff70/federationmetadata/2007-06/federationmetadata.xml?appid=575ab2e3-b3c2-4fda-8d65-677c84aa374e';
@@ -48,21 +51,19 @@ export const samlConfig: SAMLConfig = {
   };
 
   export const initializeSAML = () => {
-    try {
+    try {  
       const idp = IdentityProvider({
         metadata: fs.readFileSync(path.join(__dirname, '../../idp_metadata.xml')),
         wantAuthnRequestsSigned: true
       });
   
       const sp = ServiceProvider({
-        entityID: process.env.NODE_ENV === 'development' 
-          ? 'https://localhost:5000'
-          : 'https://aspc-website-v2.vercel.app',
+        entityID: 'https://aspc-website-v2.vercel.app',
         assertionConsumerService: [{
           Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
           Location: `${process.env.NODE_ENV === 'development' 
             ? 'https://localhost:5000'
-            : 'https://aspc-website-v2.vercel.app'}/saml/consume`
+            : 'https://aspc-website-v2.vercel.app'}/api/auth/saml/consume`
         }]
       });
   
