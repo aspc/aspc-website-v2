@@ -50,22 +50,78 @@ router.get('/login/saml', async (req: Request, res: Response) => {
         }
         
         const { extract } = await sp.parseLoginResponse(idp, 'post', req);
-        console.log('SAML Response:', extract);
+        const baseLink = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/';
+        // console.log('SAML extract:', extract);
   
         // Store user in session
         (req.session as any).user = {
-          email: extract.attributes.emailaddress,
-          name: extract.attributes.name,
-          firstName: extract.attributes.givenname,
-          lastName: extract.attributes.surname
+          email: extract.attributes[baseLink + 'emailaddress'],
+          firstName: extract.attributes[baseLink + 'givenname'],
+          lastName: extract.attributes[baseLink + 'surname'],
+          sessionIndex: extract.sessionIndex
         };
+        console.log('SAML user:', (req.session as any).user);
   
-        res.redirect('/');
+        req.session.save((err) => {
+          if (err) {
+            console.error('Session save error:', err);
+            res.status(500).json({ message: 'Failed to save session' });
+            return;
+          }
+          
+          // Redirect to your frontend app
+          res.redirect('http://localhost:3000');
+        });
       } catch (error) {
         console.error('SAML consume error:', error);
         res.status(500).json({ message: 'SAML authentication failed', error });
       }
   });
+
+// Add to AuthRoutes.ts
+router.get('/logout/saml', async (req: Request, res: Response) => {
+  try {
+    if (!idp || !sp) {
+      throw new Error('SAML not initialized');
+    }
+
+    const user = (req.session as any).user;
+    if (!user) {
+      res.redirect('/');
+      return;
+    }
+
+    const { id, context } = sp.createLogoutRequest(idp, 'redirect', {
+      sessionIndex: user.samlSessionIndex,
+      nameID: user.nameID
+    });
+
+    // Clear the session
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destruction error:', err);
+      }
+      res.redirect(context);
+    });
+  } catch (error) {
+    console.error('SAML logout error:', error);
+    res.status(500).json({ message: 'Logout failed', error });
+  }
+});
+
+
+// Get current user
+router.get('/current_user', async (req: Request, res: Response) => {
+  if (!(req.session as any).user) {
+      res.status(401).json({ message: 'No user is logged in' });
+      return;
+  }
+
+  res.status(200).json({ user: (req.session as any).user })
+});
+
+
+// ------------------------------
 
 // All Users
 router.get('/', async (req: Request, res: Response) => {
@@ -129,14 +185,6 @@ router.post('/logout', async (req: Request, res: Response) => {
 });
 
 
-// Get current user
-router.get('/current_user', async (req: Request, res: Response) => {
-    if (!(req.session as any).user) {
-        res.status(401).json({ message: 'No user is logged in' });
-        return;
-    }
 
-    res.status(200).json({ user: (req.session as any).user })
-});
 
 export default router;
