@@ -1,13 +1,18 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 interface ISAMLUser extends Document {
-  email: string;
-  name: string;
   id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
   is_admin: boolean;
 }
 
 const SAMLUserSchema = new Schema<ISAMLUser>({
+  id: {
+    type: String,
+    required: true
+  },
   email: {
     type: String,
     required: true,
@@ -15,14 +20,15 @@ const SAMLUserSchema = new Schema<ISAMLUser>({
     trim: true,
     lowercase: true
   },
-  name: {
+  firstName: {
     type: String,
     required: true,
     trim: true
   },
-  id: {
+  lastName: {
     type: String,
-    required: true
+    required: true,
+    trim: true
   },
   is_admin: {
     type: Boolean,
@@ -32,4 +38,4 @@ const SAMLUserSchema = new Schema<ISAMLUser>({
   timestamps: true
 });
 
-export default mongoose.model<ISAMLUser>('User', SAMLUserSchema);
+export default mongoose.model<ISAMLUser>('SAMLUser', SAMLUserSchema);

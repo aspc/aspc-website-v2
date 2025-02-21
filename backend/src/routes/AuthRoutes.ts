@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import User from '../models/User';
 import { initializeSAML } from '../config/samlConfig';
+import SAMLUser from '../models/SAMLUser';
 import { Router } from 'express';
 
 const router = Router()
@@ -55,13 +56,29 @@ router.get('/login/saml', async (req: Request, res: Response) => {
   
         // Store user in session
         (req.session as any).user = {
+          id: extract.attributes['http://schemas.microsoft.com/identity/claims/objectidentifier'],
           email: extract.attributes[baseLink + 'emailaddress'],
           firstName: extract.attributes[baseLink + 'givenname'],
           lastName: extract.attributes[baseLink + 'surname'],
           sessionIndex: extract.sessionIndex
         };
+        
         console.log('SAML user:', (req.session as any).user);
-  
+        const azureId = (req.session as any).user.id;
+        let user = await SAMLUser.findOne({ id: azureId });
+        if (!user) {
+          const userData = {
+            id: azureId,
+            email: (req.session as any).user.email,
+            firstName: (req.session as any).user.firstName,
+            lastName: (req.session as any).user.lastName,
+            is_admin: false // TODO: Change based on staff member's emails
+          }
+          
+          const samlUser = new SAMLUser(userData);
+          await samlUser.save();
+        }
+        
         req.session.save((err) => {
           if (err) {
             console.error('Session save error:', err);
@@ -121,12 +138,12 @@ router.get('/current_user', async (req: Request, res: Response) => {
 });
 
 
-// ------------------------------
+// -------------------------------------------------------------------------------------------------------
 
 // All Users
 router.get('/', async (req: Request, res: Response) => {
     try {
-      const users = await User.find().select('-password'); // Exclude password field
+      const users = await SAMLUser.find();
       res.json(users);
     } catch (error) {
       res.status(500).json({ message: 'Server error' });
@@ -157,7 +174,7 @@ router.post('/login', async (req: Request, res: Response) => {
         (req.session as any).user = {
             email: user.email,
             name: user.name,
-            isAdmin: user.is_admin
+            isAdmin: user.is_admin,
         };
 
         res.status(200).json({ message: 'Login successful'})
