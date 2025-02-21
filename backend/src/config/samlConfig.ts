@@ -4,7 +4,11 @@ import path from 'path';
 import { IdentityProvider, ServiceProvider } from 'samlify';
 import dotenv from 'dotenv';
 dotenv.config();
+import * as samlify from 'samlify';
+import * as validator from '@authenio/samlify-node-xmllint';
 
+
+samlify.setSchemaValidator(validator);
 
 export const fetchAndSaveMetadata = async () => {
   const metadataUrl = 'https://login.microsoftonline.com/817f5904-3904-4ee8-b3a5-a65d4746ff70/federationmetadata/2007-06/federationmetadata.xml?appid=575ab2e3-b3c2-4fda-8d65-677c84aa374e';
