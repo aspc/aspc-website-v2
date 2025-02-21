@@ -87,7 +87,7 @@ router.get('/login/saml', async (req: Request, res: Response) => {
           }
           
           // Redirect to your frontend app
-          res.redirect('http://localhost:3000');
+          res.redirect(process.env.FRONTEND_LINK || 'http://localhost:3000');
         });
       } catch (error) {
         console.error('SAML consume error:', error);
