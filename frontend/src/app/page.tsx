@@ -1,11 +1,26 @@
 'use client';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function HomePage() {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (imageLoaded) {
+      setIsLoading(false);
+    }
+  }, [imageLoaded]);
 
   return (
     <div className="min-h-screen bg-white font-[Lora]">
+      {isLoading && (
+        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-white z-50">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent"></div>
+        </div>
+      )}
       <div className="relative h-screen flex items-center justify-center text-center text-white">
           <Image
             src="/sccSunset.jpg"
@@ -14,6 +29,10 @@ export default function HomePage() {
             className="object-cover"
             priority
             quality={100}
+            onLoadingComplete={() => {
+              setImageLoaded(true);
+              setTimeout(() => setShowFilter(true), 100); // Delay filter slightly for smooth transition
+            }}
           />
           <div className="absolute inset-0 bg-orange-500/30 mix-blend-multiply" />
 
