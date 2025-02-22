@@ -21,12 +21,14 @@ export interface PageProps {
 }
 
 export interface Event {
-  name: string;
-  location: string;
-  description: string;
-  host: string;
-  details_url: string;
-  start: Date;
-  end: Date;
-  status: string;
-}
+  title: string;
+  start: string;
+  end?: string;
+  url?: string;
+  description?: string;  
+  location?: string;     
+  host?: string;       
+}  
+
+declare module 'react-big-calendar';
+
