@@ -44,5 +44,24 @@ export function useAuth(requireAdmin: boolean = false) {
     }, [router, requireAdmin]);
 
 
-    return { user, loading };
+    // const logout = async () => {
+    //     try {
+    //         const response = await fetch(
+    //             `${process.env.BACKEND_LINK}/api/auth/logout`,
+    //             {
+    //                 method: "POST",
+    //                 credentials: "include",
+    //             }
+    //         );
+
+    //         if (response.ok) {
+    //             setUser(null);
+    //             setTimeout(() => router.push("/login"), 1000);
+    //         }
+    //     } catch (error) {
+    //         console.error("Logout error:", error);
+    //     }
+    // };
+
+    return { user, loading};
 }
