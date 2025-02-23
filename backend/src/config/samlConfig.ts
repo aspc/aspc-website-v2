@@ -11,7 +11,11 @@ import * as validator from '@authenio/samlify-node-xmllint';
 samlify.setSchemaValidator(validator);
 
 export const fetchAndSaveMetadata = async () => {
-  const metadataUrl = 'https://login.microsoftonline.com/817f5904-3904-4ee8-b3a5-a65d4746ff70/federationmetadata/2007-06/federationmetadata.xml?appid=575ab2e3-b3c2-4fda-8d65-677c84aa374e';
+  const metadataUrl = process.env.IDP_METADATA_URL;
+  if (!metadataUrl) {
+    console.error('IDP_METADATA_URL not found in environment variables');
+    return null;
+  }
   
   try {
     const response = await axios.get(metadataUrl);
@@ -24,26 +28,6 @@ export const fetchAndSaveMetadata = async () => {
     throw error;
   }
 };
-
-interface SAMLConfig {
-    entityID: string;
-    assertionConsumerService: {
-      Binding: string;
-      Location: string;
-    }[];
-  }
-  
-export const samlConfig: SAMLConfig = {
-    entityID: process.env.NODE_ENV === 'development' 
-      ? 'https://localhost:3000'
-      : 'https://aspc-website-v2.vercel.app',
-    assertionConsumerService: [{
-      Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
-      Location: `${process.env.NODE_ENV === 'development' 
-        ? 'https://localhost:3000'
-        : 'https://aspc-website-v2.vercel.app'}/saml/consume`
-    }]
-  };
 
 
   export const serverConfig = {

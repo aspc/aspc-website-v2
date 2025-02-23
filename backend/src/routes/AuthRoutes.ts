@@ -64,20 +64,6 @@ router.get('/login/saml', async (req: Request, res: Response) => {
         };
         
         console.log('SAML user:', (req.session as any).user);
-        const azureId = (req.session as any).user.id;
-        let user = await SAMLUser.findOne({ id: azureId });
-        if (!user) {
-          const userData = {
-            id: azureId,
-            email: (req.session as any).user.email,
-            firstName: (req.session as any).user.firstName,
-            lastName: (req.session as any).user.lastName,
-            is_admin: false // TODO: Change based on staff member's emails
-          }
-          
-          const samlUser = new SAMLUser(userData);
-          await samlUser.save();
-        }
         
         req.session.save((err) => {
           if (err) {
@@ -95,8 +81,8 @@ router.get('/login/saml', async (req: Request, res: Response) => {
       }
   });
 
-// Add to AuthRoutes.ts
-router.get('/logout/saml', async (req: Request, res: Response) => {
+// Logout Route
+  router.get('/logout/saml', async (req: Request, res: Response) => {
   try {
     if (!idp || !sp) {
       throw new Error('SAML not initialized');
@@ -118,7 +104,7 @@ router.get('/logout/saml', async (req: Request, res: Response) => {
       if (err) {
         console.error('Session destruction error:', err);
       }
-      res.redirect(context);
+      res.redirect(process.env.FRONTEND_LINK || context);
     });
   } catch (error) {
     console.error('SAML logout error:', error);
@@ -133,15 +119,26 @@ router.get('/current_user', async (req: Request, res: Response) => {
       res.status(401).json({ message: 'No user is logged in' });
       return;
   }
-
-  res.status(200).json({ user: (req.session as any).user })
+  const azureId = (req.session as any).user.id;
+  let user = await SAMLUser.findOne({ id: azureId });
+  if (!user) {
+    const userData = {
+      id: azureId,
+      email: (req.session as any).user.email,
+      firstName: (req.session as any).user.firstName,
+      lastName: (req.session as any).user.lastName,
+      isAdmin: false // TODO: Change based on staff member's emails
+    }
+    
+    const samlUser = new SAMLUser(userData);
+    await samlUser.save();
+    res.status(200).json({ user: userData });
+  }
+  res.status(200).json({ user });
 });
 
-
-// -------------------------------------------------------------------------------------------------------
-
 // All Users
-router.get('/', async (req: Request, res: Response) => {
+router.get('/users', async (req: Request, res: Response) => {
     try {
       const users = await SAMLUser.find();
       res.json(users);
@@ -149,6 +146,9 @@ router.get('/', async (req: Request, res: Response) => {
       res.status(500).json({ message: 'Server error' });
     }
   });
+
+// -------------------------------------------------------------------------------------------------------
+
 
 // Login
 router.post('/login', async (req: Request, res: Response) => {

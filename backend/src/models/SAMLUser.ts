@@ -5,7 +5,7 @@ interface ISAMLUser extends Document {
   email: string;
   firstName: string;
   lastName: string;
-  is_admin: boolean;
+  isAdmin: boolean;
 }
 
 const SAMLUserSchema = new Schema<ISAMLUser>({
@@ -30,7 +30,7 @@ const SAMLUserSchema = new Schema<ISAMLUser>({
     required: true,
     trim: true
   },
-  is_admin: {
+  isAdmin: {
     type: Boolean,
     default: false
   }
