@@ -1,12 +1,18 @@
 'use client';
+import { useState } from "react";
 import Image from 'next/image';
 import Link from 'next/link';
 import {useEffect, useState } from 'react';
 import { Event } from '@/types';
-import HomepageEvents from '@/components/ui/HomepageEvents';
+import HomepageEvents from '@/components/ui/HomepageEvents
+import Loading from "@/components/Loading";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function HomePage() {
+  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
+  
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -24,9 +30,12 @@ export default function HomePage() {
     );
   }, []);
 
-
+  if (authLoading) {
+    return <Loading />
+  }
   return (
     <div className="min-h-screen bg-white font-[Lora]">
+      {loading && <Loading />}
       <div className="relative h-screen flex items-center justify-center text-center text-white">
           <Image
             src="/sccSunset.jpg"
@@ -35,6 +44,9 @@ export default function HomePage() {
             className="object-cover"
             priority
             quality={100}
+            onLoadingComplete={() => {
+              setTimeout(() => setLoading(false), 400); 
+            }}
           />
           <div className="absolute inset-0 bg-orange-500/30 mix-blend-multiply" />
 
@@ -81,5 +93,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-
