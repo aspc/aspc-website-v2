@@ -1,10 +1,9 @@
 'use client';
-import { useState } from "react";
 import Image from 'next/image';
 import Link from 'next/link';
 import {useEffect, useState } from 'react';
 import { Event } from '@/types';
-import HomepageEvents from '@/components/ui/HomepageEvents
+import HomepageEvents from '@/components/ui/HomepageEvents';
 import Loading from "@/components/Loading";
 import { useAuth } from "@/hooks/useAuth";
 
