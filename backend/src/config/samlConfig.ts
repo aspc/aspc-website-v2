@@ -4,10 +4,9 @@ import path from 'path';
 import { IdentityProvider, ServiceProvider } from 'samlify';
 import dotenv from 'dotenv';
 dotenv.config();
+
 import * as samlify from 'samlify';
 import * as validator from '@authenio/samlify-node-xmllint';
-
-
 samlify.setSchemaValidator(validator);
 
 export const fetchAndSaveMetadata = async () => {
@@ -32,10 +31,19 @@ export const fetchAndSaveMetadata = async () => {
 
   export const serverConfig = {
     port: process.env.PORT || 5000,
-    httpsOptions: {
-      key: fs.readFileSync(path.join(__dirname, '../../certs/localhost.key')),
-      cert: fs.readFileSync(path.join(__dirname, '../../certs/localhost.crt'))
-    }
+    httpsOptions: (process.env.NODE_ENV === 'development' )
+      ? {
+        key: fs.readFileSync(path.join(__dirname, '../../certs/localhost.key')),
+        cert: fs.readFileSync(path.join(__dirname, '../../certs/localhost.crt'))
+      }
+      : {
+        key: process.env.SSL_KEY 
+          ? Buffer.from(process.env.SSL_KEY, 'base64').toString() 
+          : fs.readFileSync('/app/certs/server.key'),
+        cert: process.env.SSL_CERT 
+          ? Buffer.from(process.env.SSL_CERT, 'base64').toString() 
+          : fs.readFileSync('/app/certs/server.crt')
+      }
   };
 
   export const initializeSAML = () => {

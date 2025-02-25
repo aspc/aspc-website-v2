@@ -1,11 +1,29 @@
 import express, { Request, Response } from 'express';
 import User from '../models/User';
-import { initializeSAML } from '../config/samlConfig';
+import { initializeSAML, fetchAndSaveMetadata } from '../config/samlConfig';
+import fs from 'fs';
+import path from 'path';
 import SAMLUser from '../models/SAMLUser';
 import { Router } from 'express';
+import { IdentityProvider } from 'samlify/types/src/entity-idp';
+import { ServiceProvider } from 'samlify/types/src/entity-sp';
 
 const router = Router()
-const { idp, sp } = initializeSAML() || {};
+
+let idp: IdentityProvider | undefined;
+let sp: ServiceProvider | undefined;
+
+// check if metadata file exists, if not fetch and save it
+const metadataPath = path.join(__dirname, '../../idp_metadata.xml');
+(!fs.existsSync(metadataPath) 
+  ? fetchAndSaveMetadata().then(() => initializeSAML()) 
+  : Promise.resolve(initializeSAML())
+).then(result => {
+  if (result) {
+    idp = result.idp;
+    sp = result.sp;
+  }
+});
 
 
 // Test SAML metadata route
