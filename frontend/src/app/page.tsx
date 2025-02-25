@@ -1,27 +1,38 @@
 'use client';
+import { useState } from "react";
 import Image from 'next/image';
 import Link from 'next/link';
+import Loading from "@/components/Loading";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function HomePage() {
+  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth();
+
+  if (authLoading) {
+    return <Loading />
+  }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="relative bg-blue-800 text-white py-16 h-72">
-        <div className="absolute inset-0 z-0">
+    <div className="min-h-screen bg-white font-[Lora]">
+      {loading && <Loading />}
+      <div className="relative h-screen flex items-center justify-center text-center text-white">
           <Image
-            src="/scc.webp"
+            src="/sccSunset.jpg"
             alt="Smith Campus Center"
             fill
             className="object-cover"
             priority
             quality={100}
+            onLoadingComplete={() => {
+              setTimeout(() => setLoading(false), 400); 
+            }}
           />
-          <div className="absolute inset-0 bg-blue-800/70" />
-        </div>
+          <div className="absolute inset-0 bg-orange-500/30 mix-blend-multiply" />
 
-        <div className="container mx-auto pt-10 px-4 relative z-10">
-          <h1 className="text-4xl text-center">
-            Associated Student of Pomona College
+        <div className="relative z-10 px-6">
+          <h1 className="text-6xl font-extrabold tracking-wider leading-snug font-[Playfair Display]">
+            Associated Students <br /> of Pomona College
           </h1>
         </div>
       </div>
@@ -62,5 +73,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-

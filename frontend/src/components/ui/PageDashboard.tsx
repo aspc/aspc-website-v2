@@ -10,8 +10,8 @@ const PageDashboard = () => {
     const [selectedPage, setSelectedPage] = useState<string>("");
     const [content, setContent] = useState<string>("");
     const [isCreatingNew, setIsCreatingNew] = useState(false);
-    const [newPageId, setNewPageId] = useState("");
-    const [newPageName, setNewPageName] = useState("");
+    const [pageId, setPageId] = useState("");
+    const [pageName, setPageName] = useState("");
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -50,6 +50,8 @@ const PageDashboard = () => {
 
             if (response.ok) {
                 const pageData: PageContent = await response.json();
+                setPageId(pageData.id);
+                setPageName(pageData.name);
                 setContent(pageData.content);
             } else {
                 throw new Error("Failed to fetch page content");
@@ -63,7 +65,7 @@ const PageDashboard = () => {
     const handleContentSave = async () => {
         try {
             if (isCreatingNew) {
-                if (!newPageId || !newPageName || !content) {
+                if (!pageId || !pageName || !content) {
                     alert("Please fill in all fields");
                     return;
                 }
@@ -76,8 +78,8 @@ const PageDashboard = () => {
                             "Content-Type": "application/json",
                         },
                         body: JSON.stringify({
-                            id: newPageId,
-                            name: newPageName,
+                            id: pageId,
+                            name: pageName,
                             content: content,
                         }),
                     }
@@ -103,8 +105,8 @@ const PageDashboard = () => {
                 }
 
                 setIsCreatingNew(false);
-                setNewPageId("");
-                setNewPageName("");
+                setPageId("");
+                setPageName("");
                 alert("New page created successfully!");
                 setTimeout(() => window.location.reload(), 1000);
             } else {
@@ -118,6 +120,8 @@ const PageDashboard = () => {
                             "Content-Type": "application/json",
                         },
                         body: JSON.stringify({
+                            newId: pageId,
+                            name: pageName,
                             content: content,
                         }),
                     }
@@ -134,7 +138,9 @@ const PageDashboard = () => {
                     }
                     throw new Error(`Server error: ${updateResponse.status}`);
                 }
-
+                
+                setPageId("");
+                setPageName("");
                 alert("Content saved successfully!");
                 setTimeout(() => window.location.reload(), 1000);
             }
@@ -207,8 +213,8 @@ const PageDashboard = () => {
                             <input
                                 type="text"
                                 className="w-full p-2 border rounded"
-                                value={newPageId}
-                                onChange={(e) => setNewPageId(e.target.value)}
+                                value={pageId}
+                                onChange={(e) => setPageId(e.target.value)}
                                 placeholder="e.g., about-us"
                                 required
                             />
@@ -220,8 +226,8 @@ const PageDashboard = () => {
                             <input
                                 type="text"
                                 className="w-full p-2 border rounded"
-                                value={newPageName}
-                                onChange={(e) => setNewPageName(e.target.value)}
+                                value={pageName}
+                                onChange={(e) => setPageName(e.target.value)}
                                 placeholder="e.g., About Us"
                                 required
                             />
@@ -229,6 +235,37 @@ const PageDashboard = () => {
                     </div>
                 )}
             </div>
+
+            {selectedPage && (
+                <div className="space-y-4 mb-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Page ID
+                        </label>
+                        <input
+                            type="text"
+                            className="w-full p-2 border rounded"
+                            value={pageId}
+                            onChange={(e) => setPageId(e.target.value)}
+                            placeholder="e.g., about-us"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Page Name
+                        </label>
+                        <input
+                            type="text"
+                            className="w-full p-2 border rounded"
+                            value={pageName}
+                            onChange={(e) => setPageName(e.target.value)}
+                            placeholder="e.g., About Us"
+                            required
+                        />
+                    </div>
+                </div>
+            )}
 
             {(selectedPage || isCreatingNew) && (
                 <div>

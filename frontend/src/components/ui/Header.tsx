@@ -80,35 +80,43 @@ const Header = () => {
     return (
         <>
             {/* Desktop Header */}
-            <header className="bg-blue-900 shadow text-white">
+            <header className="bg-blue-900 backdrop-blur-sm shadow text-white sticky top-0 left-0 w-full z-50">
                 <div className="px-4 lg:px-16">
-                    <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center">
-                            <Link href="/" className="flex items-center">
+                    <div className="flex items-wrap justify-between h-16">
+                        <div className="flex items-center space-x-2 sm:space-x-3">
+                            <Link href="/" className="flex items-center space-x-2 group">
                                 <Image
                                     src="/logo4.png"
                                     alt="ASPC Logo"
                                     width={50}
                                     height={50}
-                                    className="ml-2"
+                                    className="ml-2 transition duration-200 group-hover:opacity-80"
                                 />
+                               <div className="flex flex-col leading-tight text-white text-lg font-semibold whitespace-nowrap">
+                                    <span className="text-white group-hover:text-blue-400 transition duration-200">
+                                        Associated Students 
+                                    </span>
+                                    <span className="text-white group-hover:text-blue-400 transition duration-200">
+                                        of Pomona College
+                                    </span>
+                                </div>
                             </Link>
                         </div>
 
                         {/* Desktop Navigation */}
+                        <nav className="hidden lg:flex items-center space-x-6">
 
-                        {/* ASPC*/}
-                        <nav className="hidden md:flex items-center space-x-6">
+                            {/* ASPC */}    
                             <div className="relative dropdown-container">
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
-                                    onClick={() => handleDropdownClick("aspc")}
+                                    onClick={() => handleDropdownClick("About")}
                                 >
-                                    <span>ASPC</span>
+                                    <span>About</span>
                                 </button>
 
                                 {/* ASPC Static Pages Dropdown */}
-                                {openDropdown === "aspc" && (
+                                {openDropdown === "About" && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         <Link
                                             href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0"
@@ -245,7 +253,7 @@ const Header = () => {
 
                         {/* Mobile Menu Button */}
                         <button
-                            className="md:hidden p-2"
+                            className="lg:hidden p-2"
                             onClick={() => setIsMobileMenuOpen(true)}
                         >
                             <div className="space-y-1.5">
@@ -260,7 +268,7 @@ const Header = () => {
 
             {/* Mobile Menu Overlay */}
             {isMobileMenuOpen && (
-                <div className="fixed inset-0 bg-blue-900 z-50 md:hidden">
+                <div className="fixed inset-0 bg-blue-900 z-50 lg:hidden">
                     <div className="flex flex-col h-full">
                         {/* Mobile Menu Header */}
                         <div className="flex items-center justify-between p-4">
@@ -283,16 +291,17 @@ const Header = () => {
 
                         {/* Mobile Menu Links */}
                         <nav className="flex flex-col p-4 space-y-6 text-white">
+                            
                             {/* ASPC dropdown */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="text-lg flex items-center space-x-1"
-                                    onClick={() => handleDropdownClick("aspc")}
+                                    onClick={() => handleDropdownClick("About")}
                                 >
-                                    <span>ASPC</span>
+                                    <span>About</span>
                                 </button>
 
-                                {openDropdown === "aspc" && (
+                                {openDropdown === "About" && (
                                     <div className="ml-2 mt-2">
                                         <Link
                                             href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0"
