@@ -76,14 +76,16 @@ export default function HomePage() {
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="font-medium mb-2">Spring 2025 Funding Request Forms</h3>
                 <p className="text-gray-600 text-sm">Request funds allocated for conferences, alcohol, and club events from ASPC.</p>
-                <button className="text-blue-500 hover:underline mt-2">Click Here</button>
+                  <Link href="https://nam10.safelinks.protection.outlook.com/?url=https%3A%2F%2Fpomona.campuslabs.com%2Fengage%2Fsubmitter%2Fform%2Fstart%2F653080&data=05%7C02%7Cljbq2023%40MYMAIL.POMONA.EDU%7Cc07c5cd7ae9d494a99b508dd39cd4f56%7C817f590439044ee8b3a5a65d4746ff70%7C0%7C0%7C638730276335182605%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=b75f55nnL5fmR5bgW7b4rBMMQknhGr5dSGhaV7IWdfo%3D&reserved=0" className="text-blue-500 hover:underline mt-2" target="_blank">
+                    Click Here
+                  </Link>
               </div>
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="font-medium mb-2">The Chirp Guide: ASPC Resource Guide</h3>
                 <p className="text-gray-600 text-sm">All your questions about ASPC answered here</p>
-                <Link href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0" className="text-blue-500 hover:underline mt-2" target="_blank">
-                  Click Here
-                </Link>
+                  <Link href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0" className="text-blue-500 hover:underline mt-2" target="_blank">
+                    Click Here
+                  </Link>
               </div>
             </div>
           </section>
