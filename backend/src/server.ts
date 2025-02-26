@@ -1,5 +1,6 @@
 import express, { Express, Request, Response } from 'express';
 import mongoose from 'mongoose';
+import MongoStore from 'connect-mongo';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { GridFSBucket } from 'mongodb';
@@ -27,15 +28,23 @@ app.use(express.json());
 
 app.set('trust proxy', 1); // Required for secure cookies
 
+// Connect to MongoDB
+const MONGODB_URI = process.env.MONGODB_URI ||  'mongodb://localhost:27017/school-platform';
+
 // Session
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'secretlongpassword',
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: MONGODB_URI,
+      ttl: 24 * 60 * 60, // = 1 day (in seconds)
+      autoRemove: 'native', // Use MongoDB's TTL index
+    }),
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // Required for HTTPS
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Required for cross-origin requests,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
@@ -47,8 +56,7 @@ app.get('/api/test', (req: Request, res: Response) => {
   res.json({ message: 'ASPC API is running!' });
 });
 
-// Connect to MongoDB
-const MONGODB_URI = process.env.MONGODB_URI ||  'mongodb://localhost:27017/school-platform';
+
 
 let bucket: GridFSBucket;
 
