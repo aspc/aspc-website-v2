@@ -78,7 +78,8 @@ router.get('/login/saml', async (req: Request, res: Response) => {
           email: extract.attributes[baseLink + 'emailaddress'],
           firstName: extract.attributes[baseLink + 'givenname'],
           lastName: extract.attributes[baseLink + 'surname'],
-          sessionIndex: extract.sessionIndex
+          sessionIndex: extract.sessionIndex,
+          nameID: extract.nameID
         };
         
         console.log('SAML user:', (req.session as any).user);
@@ -111,9 +112,9 @@ router.get('/login/saml', async (req: Request, res: Response) => {
       res.redirect('/');
       return;
     }
-
+    console.log('SAML user logged out:', user.nameID);
     const { id, context } = sp.createLogoutRequest(idp, 'redirect', {
-      sessionIndex: user.samlSessionIndex,
+      sessionIndex: user.sessionIndex.sessionIndex,
       nameID: user.nameID
     });
 
