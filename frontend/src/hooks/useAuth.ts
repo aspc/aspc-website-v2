@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface User {
+    id: string;
     email: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     isAdmin: boolean;
 }
 
@@ -41,24 +43,25 @@ export function useAuth(requireAdmin: boolean = false) {
         checkAuth();
     }, [router, requireAdmin]);
 
-    const logout = async () => {
-        try {
-            const response = await fetch(
-                `${process.env.BACKEND_LINK}/api/auth/logout`,
-                {
-                    method: "POST",
-                    credentials: "include",
-                }
-            );
 
-            if (response.ok) {
-                setUser(null);
-                setTimeout(() => router.push("/login"), 1000);
-            }
-        } catch (error) {
-            console.error("Logout error:", error);
-        }
-    };
+    // const logout = async () => {
+    //     try {
+    //         const response = await fetch(
+    //             `${process.env.BACKEND_LINK}/api/auth/logout`,
+    //             {
+    //                 method: "POST",
+    //                 credentials: "include",
+    //             }
+    //         );
 
-    return { user, loading, logout };
+    //         if (response.ok) {
+    //             setUser(null);
+    //             setTimeout(() => router.push("/login"), 1000);
+    //         }
+    //     } catch (error) {
+    //         console.error("Logout error:", error);
+    //     }
+    // };
+
+    return { user, loading};
 }

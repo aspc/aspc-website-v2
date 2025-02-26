@@ -17,7 +17,7 @@ const groups: string[] = [
 ];
 
 const Header = () => {
-    const { user, loading, logout } = useAuth();
+    const { user, loading } = useAuth();
     const router = useRouter();
     const [pages, setPages] = useState<PageContent[]>([]);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -235,19 +235,33 @@ const Header = () => {
                                         </Link>
                                     )}
                                     <button
+                                        onClick={() => window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`}
+                                        className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                                    >
+                                        Logout SSO
+                                    </button>
+                                    {/* <button
                                         onClick={logout}
                                         className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
                                     >
                                         Logout
-                                    </button>
+                                    </button> */}
                                 </>
                             ) : (
+                                <>
                                 <button
-                                    onClick={() => router.push("/login")}
+                                    onClick={() => window.location.href = `${process.env.BACKEND_LINK}/api/auth/login/saml`}
                                     className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
                                 >
-                                    Sign In
+                                    Login SSO
                                 </button>
+                                {/* <button
+                                    onClick={() => router.push('/login')}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                                >
+                                    Login
+                                </button> */}
+                                </>
                             )}
                         </nav>
 
@@ -399,7 +413,8 @@ const Header = () => {
                             {user ? (
                                 <button
                                     onClick={() => {
-                                        logout();
+                                        // Redirect to backend SAML logout route
+                                        window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`;
                                         setIsMobileMenuOpen(false);
                                     }}
                                     className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 w-fit"
@@ -409,12 +424,13 @@ const Header = () => {
                             ) : (
                                 <button
                                     onClick={() => {
-                                        router.push("/login");
+                                        // Redirect to backend SAML login route
+                                        window.location.href = `${process.env.BACKEND_LINK}/api/auth/login/saml`;
                                         setIsMobileMenuOpen(false);
                                     }}
                                     className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 w-fit"
                                 >
-                                    Sign In
+                                    Log in
                                 </button>
                             )}
                         </nav>

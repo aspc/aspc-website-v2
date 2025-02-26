@@ -9,7 +9,9 @@ import adminRoutes from './routes/AdminRoutes';
 import staffRoutes from './routes/StaffRoutes';
 import eventRoutes from './routes/EventsRoutes';
 import session from 'express-session';
-
+import https from 'https';
+import http from 'http';
+import { serverConfig } from './config/samlConfig';
 
 dotenv.config();
 
@@ -17,7 +19,7 @@ const app: Express = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://aspc-website-v2.vercel.app','https://pomonastudents.org'],
+  origin: ['http://localhost:3000', 'https://localhost:3001', 'https://aspc-website-v2.vercel.app','https://pomonastudents.org'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true
 }));
@@ -76,7 +78,19 @@ app.use('/api/admin/pages', adminRoutes);
 app.use('/api/members', staffRoutes);
 app.use('/api/events', eventRoutes);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+
+
+// Check environment to determine server type
+if (process.env.NODE_ENV === 'development') {
+  // Development: HTTPS server with local certificates
+  const server = https.createServer(serverConfig.httpsOptions, app);
+  server.listen(serverConfig.port, () => {
+    console.log(`Secure server (HTTPS) running on port ${serverConfig.port}`);
+  });
+} else {
+  // Production: HTTP server (SSL termination at load balancer)
+  const server = http.createServer(app);
+  server.listen(serverConfig.port, () => {
+    console.log(`Server (HTTP) running on port ${serverConfig.port}`);
+  });
+}
