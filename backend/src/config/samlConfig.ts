@@ -47,12 +47,12 @@ export const fetchAndSaveMetadata = async () => {
       });
   
       const sp = ServiceProvider({
-        entityID: 'https://aspc-website-v2.vercel.app',
+        entityID: process.env.ENTITY_ID,
         assertionConsumerService: [{
           Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
           Location: `${process.env.NODE_ENV === 'development' 
             ? 'https://localhost:5000'
-            : 'https://aspc-website-v2.vercel.app'}/api/auth/saml/consume`
+            : process.env.ENTITY_ID}/api/auth/saml/consume`
         }]
       });
   
