@@ -83,8 +83,8 @@ const PORT = process.env.PORT || 5000;
 // Check environment to determine server type
 if (process.env.NODE_ENV === 'development') {
   const httpsOptions = {
-    key: fs.readFileSync(path.join(__dirname, '../../certs/localhost.key')),
-    cert: fs.readFileSync(path.join(__dirname, '../../certs/localhost.crt'))
+    key: fs.readFileSync(path.join(__dirname, '../certs/localhost.key')),
+    cert: fs.readFileSync(path.join(__dirname, '../certs/localhost.crt'))
   };
   
   // Development: HTTPS server with local certificates
