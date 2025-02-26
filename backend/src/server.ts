@@ -10,6 +10,7 @@ import staffRoutes from './routes/StaffRoutes';
 import eventRoutes from './routes/EventsRoutes';
 import session from 'express-session';
 import https from 'https';
+import http from 'http';
 import { serverConfig } from './config/samlConfig';
 
 dotenv.config();
@@ -79,7 +80,17 @@ app.use('/api/events', eventRoutes);
 
 
 
-const server = https.createServer(serverConfig.httpsOptions, app);
-server.listen(serverConfig.port, () => {
-  console.log(`Secure server running on port ${serverConfig.port}`);
-});
+// Check environment to determine server type
+if (process.env.NODE_ENV === 'development') {
+  // Development: HTTPS server with local certificates
+  const server = https.createServer(serverConfig.httpsOptions, app);
+  server.listen(serverConfig.port, () => {
+    console.log(`Secure server (HTTPS) running on port ${serverConfig.port}`);
+  });
+} else {
+  // Production: HTTP server (SSL termination at load balancer)
+  const server = http.createServer(app);
+  server.listen(serverConfig.port, () => {
+    console.log(`Server (HTTP) running on port ${serverConfig.port}`);
+  });
+}

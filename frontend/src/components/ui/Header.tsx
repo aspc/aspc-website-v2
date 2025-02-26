@@ -235,7 +235,7 @@ const Header = () => {
                                         </Link>
                                     )}
                                     <button
-                                        onClick={() => window.location.href = 'https://localhost:5000/api/auth/logout/saml'}
+                                        onClick={() => window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`}
                                         className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
                                     >
                                         Logout
@@ -243,7 +243,7 @@ const Header = () => {
                                 </>
                             ) : (
                                 <button
-                                    onClick={() => window.location.href = 'https://localhost:5000/api/auth/login/saml'}
+                                    onClick={() => window.location.href = `${process.env.BACKEND_LINK}/api/auth/login/saml`}
                                     className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
                                 >
                                     Login

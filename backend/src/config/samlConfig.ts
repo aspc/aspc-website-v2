@@ -31,19 +31,12 @@ export const fetchAndSaveMetadata = async () => {
 
   export const serverConfig = {
     port: process.env.PORT || 5000,
-    httpsOptions: (process.env.NODE_ENV === 'development' )
-      ? {
+    httpsOptions: 
+      {
         key: fs.readFileSync(path.join(__dirname, '../../certs/localhost.key')),
         cert: fs.readFileSync(path.join(__dirname, '../../certs/localhost.crt'))
       }
-      : {
-        key: process.env.SSL_KEY 
-          ? Buffer.from(process.env.SSL_KEY, 'base64').toString() 
-          : fs.readFileSync('/app/certs/server.key'),
-        cert: process.env.SSL_CERT 
-          ? Buffer.from(process.env.SSL_CERT, 'base64').toString() 
-          : fs.readFileSync('/app/certs/server.crt')
-      }
+      
   };
 
   export const initializeSAML = () => {
