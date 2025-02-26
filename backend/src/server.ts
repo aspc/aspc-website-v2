@@ -11,8 +11,8 @@ import eventRoutes from './routes/EventsRoutes';
 import session from 'express-session';
 import https from 'https';
 import http from 'http';
-import { serverConfig } from './config/samlConfig';
-
+import fs from 'fs';
+import path from 'path';
 dotenv.config();
 
 const app: Express = express();
@@ -78,19 +78,24 @@ app.use('/api/admin/pages', adminRoutes);
 app.use('/api/members', staffRoutes);
 app.use('/api/events', eventRoutes);
 
-
-
+const PORT = process.env.PORT || 5000;
+  
 // Check environment to determine server type
 if (process.env.NODE_ENV === 'development') {
+  const httpsOptions = {
+    key: fs.readFileSync(path.join(__dirname, '../../certs/localhost.key')),
+    cert: fs.readFileSync(path.join(__dirname, '../../certs/localhost.crt'))
+  };
+  
   // Development: HTTPS server with local certificates
-  const server = https.createServer(serverConfig.httpsOptions, app);
-  server.listen(serverConfig.port, () => {
-    console.log(`Secure server (HTTPS) running on port ${serverConfig.port}`);
+  const server = https.createServer(httpsOptions, app);
+  server.listen(PORT, () => {
+    console.log(`Secure server (HTTPS) running on port ${PORT}`);
   });
 } else {
   // Production: HTTP server (SSL termination at load balancer)
   const server = http.createServer(app);
-  server.listen(serverConfig.port, () => {
-    console.log(`Server (HTTP) running on port ${serverConfig.port}`);
+  server.listen(PORT, () => {
+    console.log(`Server (HTTP) running on port ${PORT}`);
   });
 }

@@ -31,11 +31,7 @@ export const fetchAndSaveMetadata = async () => {
 
   export const serverConfig = {
     port: process.env.PORT || 5000,
-    httpsOptions: 
-      {
-        key: fs.readFileSync(path.join(__dirname, '../../certs/localhost.key')),
-        cert: fs.readFileSync(path.join(__dirname, '../../certs/localhost.crt'))
-      }
+    
       
   };
 
