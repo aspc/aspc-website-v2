@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import PageContent from "../models/PageContent";
+import PageContent from "../../models/PageContent";
 
 const router = express.Router();
 
