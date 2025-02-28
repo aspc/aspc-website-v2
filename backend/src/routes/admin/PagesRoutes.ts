@@ -6,7 +6,7 @@ const router = express.Router();
 // Get all pages
 router.get("/", async (req: Request, res: Response) => {
     try {
-        const pages = await PageContent.find({}, "id name");
+        const pages = await PageContent.find({});
         res.json(pages);
     } catch (error) {
         res.status(500).json({ message: "Server error" });
@@ -100,11 +100,9 @@ router.put("/:id", async (req: Request, res: Response) => {
         if (header) updateData.header = header;
         if (link) updateData.link = link;
 
-        const page = await PageContent.findOneAndUpdate(
-            { id },
-            updateData,
-            { new: true }
-        );
+        const page = await PageContent.findOneAndUpdate({ id }, updateData, {
+            new: true,
+        });
 
         if (!page) {
             res.status(404).json("Page not found");
