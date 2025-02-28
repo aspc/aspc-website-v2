@@ -423,6 +423,9 @@ const PageDashboard = () => {
                                             ? "bg-blue-500 text-white"
                                             : "bg-gray-200 text-gray-700"
                                     }`}
+                                    disabled={
+                                        pageType === "link" && !isCreatingNew
+                                    }
                                 >
                                     Content Page
                                 </button>
@@ -434,6 +437,9 @@ const PageDashboard = () => {
                                             ? "bg-blue-500 text-white"
                                             : "bg-gray-200 text-gray-700"
                                     }`}
+                                    disabled={
+                                        pageType === "content" && !isCreatingNew
+                                    }
                                 >
                                     Link Page
                                 </button>
