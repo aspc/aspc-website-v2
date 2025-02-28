@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import multer from 'multer';
 import { ObjectId } from 'mongodb';
-import Staff from '../models/Staff';
+import { Staff } from '../models/People';
 import { bucket } from '../server';
 
 const router = express.Router();
