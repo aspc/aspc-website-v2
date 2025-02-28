@@ -4,10 +4,8 @@ import { useState, useEffect } from "react";
 import { Editor } from "@tinymce/tinymce-react";
 import { PageContent } from "@/types";
 import Loading from "@/components/Loading";
-import { useRouter } from "next/navigation";
 
 const PageDashboard = () => {
-    const router = useRouter();
     const [linkPages, setLinkPages] = useState<PageContent[]>([]);
     const [staticPages, setStaticPages] = useState<PageContent[]>([]);
     const [selectedStaticPage, setSelectedStaticPage] = useState<string>("");
