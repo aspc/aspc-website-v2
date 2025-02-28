@@ -22,34 +22,34 @@ const PageDashboard = () => {
     // Available page sections
     const pageSections = ["about", "members", "resources", "pressroom"];
 
-    useEffect(() => {
-        const fetchPages = async () => {
-            try {
-                setLoading(true);
-                const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/admin/pages`
+    const fetchPages = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(
+                `${process.env.BACKEND_LINK}/api/admin/pages`
+            );
+            if (response.ok) {
+                const data: PageContent[] = await response.json();
+                setLinkPages(
+                    data.filter(
+                        (page) => page.link !== null && page.link !== ""
+                    )
                 );
-                if (response.ok) {
-                    const data: PageContent[] = await response.json();
-                    setLinkPages(
-                        data.filter(
-                            (page) => page.link !== null && page.link !== ""
-                        )
-                    );
-                    setStaticPages(
-                        data.filter(
-                            (page) =>
-                                page.content !== null && page.content !== ""
-                        )
-                    );
-                }
-            } catch (error) {
-                console.error("Error fetching pages:", error);
-            } finally {
-                setLoading(false);
+                setStaticPages(
+                    data.filter(
+                        (page) => page.content !== null && page.content !== ""
+                    )
+                );
             }
-        };
+        } catch (error) {
+            console.error("Error fetching pages:", error);
+            alert("Error fetching pages");
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchPages();
     }, []);
 
@@ -96,11 +96,7 @@ const PageDashboard = () => {
                 setPageName(pageData.name);
                 setContent(pageData.content || "");
                 setPageType("content");
-                // Extract section from page ID if possible
-                const possibleSection = pageData.id.split("-")[0];
-                if (pageSections.includes(possibleSection)) {
-                    setPageSection(possibleSection);
-                }
+                setPageSection(pageData.header);
             } else {
                 throw new Error("Failed to fetch page content");
             }
@@ -134,11 +130,7 @@ const PageDashboard = () => {
                 setPageName(pageData.name);
                 setPageLink(pageData.link || "");
                 setPageType("link");
-                // Extract section from page ID if possible
-                const possibleSection = pageData.id.split("-")[0];
-                if (pageSections.includes(possibleSection)) {
-                    setPageSection(possibleSection);
-                }
+                setPageSection(pageData.header);
             } else {
                 throw new Error("Failed to fetch page content");
             }
@@ -215,7 +207,7 @@ const PageDashboard = () => {
                         body: JSON.stringify({
                             newId: pageId,
                             name: pageName,
-                            header: header, // Use formatted section as header
+                            header: header,
                             content: pageType === "content" ? content : null,
                             link: pageType === "link" ? pageLink : null,
                             section: pageSection,
@@ -238,8 +230,12 @@ const PageDashboard = () => {
                 alert("Page updated successfully!");
             }
 
-            // Refresh the page to show updated data
-            setTimeout(() => window.location.reload(), 1000);
+            // **RESET STATE AFTER SUCCESSFUL EDIT/CREATION**
+            setIsCreatingNew(false);
+            setSelectedStaticPage("");
+            setSelectedLinkPage("");
+            resetForm();
+            fetchPages(); // Re-fetch the data after a successful save (to update the list)
         } catch (error) {
             console.error("Error saving page:", error);
             alert(error instanceof Error ? error.message : "Error saving page");
@@ -272,7 +268,13 @@ const PageDashboard = () => {
             }
 
             alert("Page deleted successfully!");
-            setTimeout(() => window.location.reload(), 1000);
+
+            // **RESET STATE AFTER SUCCESSFUL DELITION**
+            setIsCreatingNew(false);
+            setSelectedStaticPage("");
+            setSelectedLinkPage("");
+            resetForm();
+            fetchPages();
         } catch (error) {
             console.error("Error deleting page:", error);
             alert("Error deleting page");
