@@ -1,9 +1,11 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 interface IPageContent extends Document {
     id: string;
     name: string;
-    content: string;
+    header: string;
+    content?: string;
+    link?: string;
 }
 
 const PageContentSchema = new Schema<IPageContent>({
@@ -18,10 +20,20 @@ const PageContentSchema = new Schema<IPageContent>({
         required: true,
         trim: true,
     },
-    content: {
+    header: {
         type: String,
         required: true,
+        trim: true,
+    },
+    content: {
+        type: String,
+        required: false,
+    },
+    link: {
+        type: String,
+        required: false,
+        trim: true,
     },
 });
 
-export default mongoose.model<IPageContent>('PageContent', PageContentSchema);
+export default mongoose.model<IPageContent>("PageContent", PageContentSchema);
