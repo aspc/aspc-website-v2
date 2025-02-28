@@ -1,5 +1,6 @@
 import express, { Express, Request, Response } from 'express';
 import mongoose from 'mongoose';
+import MongoStore from 'connect-mongo';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { GridFSBucket } from 'mongodb';
@@ -9,15 +10,17 @@ import adminRoutes from './routes/AdminRoutes';
 import staffRoutes from './routes/StaffRoutes';
 import eventRoutes from './routes/EventsRoutes';
 import session from 'express-session';
-
-
+import https from 'https';
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
 dotenv.config();
 
 const app: Express = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://aspc-website-v2.vercel.app','https://pomonastudents.org'],
+  origin: ['http://localhost:3000', 'https://localhost:3001', 'https://aspc-website-v2.vercel.app','https://pomonastudents.org'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   credentials: true
 }));
@@ -25,15 +28,23 @@ app.use(express.json());
 
 app.set('trust proxy', 1); // Required for secure cookies
 
+// Connect to MongoDB
+const MONGODB_URI = process.env.MONGODB_URI ||  'mongodb://localhost:27017/school-platform';
+
 // Session
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'secretlongpassword',
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: MONGODB_URI,
+      ttl: 24 * 60 * 60, // = 1 day (in seconds)
+      autoRemove: 'native', // Use MongoDB's TTL index
+    }),
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // Required for HTTPS
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Required for cross-origin requests,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
@@ -45,8 +56,7 @@ app.get('/api/test', (req: Request, res: Response) => {
   res.json({ message: 'ASPC API is running!' });
 });
 
-// Connect to MongoDB
-const MONGODB_URI = process.env.MONGODB_URI ||  'mongodb://localhost:27017/school-platform';
+
 
 let bucket: GridFSBucket;
 
@@ -77,6 +87,23 @@ app.use('/api/members', staffRoutes);
 app.use('/api/events', eventRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+  
+// Check environment to determine server type
+if (process.env.NODE_ENV === 'development') {
+  const httpsOptions = {
+    key: fs.readFileSync(path.join(__dirname, '../certs/localhost.key')),
+    cert: fs.readFileSync(path.join(__dirname, '../certs/localhost.crt'))
+  };
+  
+  // Development: HTTPS server with local certificates
+  const server = https.createServer(httpsOptions, app);
+  server.listen(PORT, () => {
+    console.log(`Secure server (HTTPS) running on port ${PORT}`);
+  });
+} else {
+  // Production: HTTP server (SSL termination at load balancer)
+  const server = http.createServer(app);
+  server.listen(PORT, () => {
+    console.log(`Server (HTTP) running on port ${PORT}`);
+  });
+}

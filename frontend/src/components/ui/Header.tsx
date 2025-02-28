@@ -17,7 +17,7 @@ const groups: string[] = [
 ];
 
 const Header = () => {
-    const { user, loading, logout } = useAuth();
+    const { user, loading } = useAuth();
     const router = useRouter();
     const [pages, setPages] = useState<PageContent[]>([]);
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -80,7 +80,7 @@ const Header = () => {
     return (
         <>
             {/* Desktop Header */}
-            <header className="bg-blue-900 backdrop-blur-sm shadow text-white fixed top-0 left-0 w-full z-50">
+            <header className="bg-blue-900 backdrop-blur-sm shadow text-white sticky top-0 left-0 w-full z-50">
                 <div className="px-4 lg:px-16">
                     <div className="flex items-wrap justify-between h-16">
                         <div className="flex items-center space-x-2 sm:space-x-3">
@@ -106,24 +106,17 @@ const Header = () => {
                         {/* Desktop Navigation */}
                         <nav className="hidden lg:flex items-center space-x-6">
 
-                            {/*Home*/}
-                            <Link
-                                href="/"
-                                className="hover:text-blue-500">
-                                Home
-                            </Link>
-
                             {/* ASPC */}    
                             <div className="relative dropdown-container">
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
-                                    onClick={() => handleDropdownClick("aspc")}
+                                    onClick={() => handleDropdownClick("About")}
                                 >
-                                    <span>ASPC</span>
+                                    <span>About</span>
                                 </button>
 
                                 {/* ASPC Static Pages Dropdown */}
-                                {openDropdown === "aspc" && (
+                                {openDropdown === "About" && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         <Link
                                             href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0"
@@ -242,19 +235,33 @@ const Header = () => {
                                         </Link>
                                     )}
                                     <button
+                                        onClick={() => window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`}
+                                        className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                                    >
+                                        Logout SSO
+                                    </button>
+                                    {/* <button
                                         onClick={logout}
                                         className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
                                     >
                                         Logout
-                                    </button>
+                                    </button> */}
                                 </>
                             ) : (
+                                <>
                                 <button
-                                    onClick={() => router.push("/login")}
+                                    onClick={() => window.location.href = `${process.env.BACKEND_LINK}/api/auth/login/saml`}
                                     className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
                                 >
-                                    Sign In
+                                    Login SSO
                                 </button>
+                                {/* <button
+                                    onClick={() => router.push('/login')}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                                >
+                                    Login
+                                </button> */}
+                                </>
                             )}
                         </nav>
 
@@ -298,23 +305,17 @@ const Header = () => {
 
                         {/* Mobile Menu Links */}
                         <nav className="flex flex-col p-4 space-y-6 text-white">
-                            {/*Home*/}
-                            <Link
-                                href="/"
-                                className="hover:text-blue-500">
-                                Home
-                            </Link>
                             
                             {/* ASPC dropdown */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="text-lg flex items-center space-x-1"
-                                    onClick={() => handleDropdownClick("aspc")}
+                                    onClick={() => handleDropdownClick("About")}
                                 >
-                                    <span>ASPC</span>
+                                    <span>About</span>
                                 </button>
 
-                                {openDropdown === "aspc" && (
+                                {openDropdown === "About" && (
                                     <div className="ml-2 mt-2">
                                         <Link
                                             href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0"
@@ -412,7 +413,8 @@ const Header = () => {
                             {user ? (
                                 <button
                                     onClick={() => {
-                                        logout();
+                                        // Redirect to backend SAML logout route
+                                        window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`;
                                         setIsMobileMenuOpen(false);
                                     }}
                                     className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 w-fit"
@@ -422,12 +424,13 @@ const Header = () => {
                             ) : (
                                 <button
                                     onClick={() => {
-                                        router.push("/login");
+                                        // Redirect to backend SAML login route
+                                        window.location.href = `${process.env.BACKEND_LINK}/api/auth/login/saml`;
                                         setIsMobileMenuOpen(false);
                                     }}
                                     className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 w-fit"
                                 >
-                                    Sign In
+                                    Log in
                                 </button>
                             )}
                         </nav>
