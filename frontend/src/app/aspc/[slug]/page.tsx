@@ -38,6 +38,11 @@ const Page: React.FC<PageProps> = ({ params }) => {
         return notFound();
     }
 
+    // TODO: Fix this
+    if (!page.content) {
+        return page.link || "It's a link";
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 py-8">
             <div className=" px-12">
