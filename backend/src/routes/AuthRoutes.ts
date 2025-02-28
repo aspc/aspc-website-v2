@@ -1,5 +1,4 @@
 import express, { Request, Response } from 'express';
-// import User from '../models/User';
 import { initializeSAML, fetchAndSaveMetadata } from '../config/samlConfig';
 import fs from 'fs';
 import path from 'path';

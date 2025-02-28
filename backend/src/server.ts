@@ -4,7 +4,6 @@ import MongoStore from 'connect-mongo';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { GridFSBucket } from 'mongodb';
-// import userRoutes from './routes/UserRoutes';
 import authRoutes from './routes/AuthRoutes';
 import adminRoutes from './routes/AdminRoutes';
 import staffRoutes from './routes/StaffRoutes';
@@ -80,7 +79,6 @@ mongoose.connect(MONGODB_URI)
 export { bucket };
 
 // Routes
-// app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin/pages', adminRoutes);
 app.use('/api/members', staffRoutes);
