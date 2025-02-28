@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 import { GridFSBucket } from "mongodb";
 import userRoutes from "./routes/UserRoutes";
 import authRoutes from "./routes/AuthRoutes";
-import adminRoutes from "./routes/admin/PagesRoutes";
+import pageRoutes from "./routes/admin/PagesRoutes";
 import staffRoutes from "./routes/admin/StaffRoutes";
 import eventRoutes from "./routes/EventsRoutes";
 import session from "express-session";
@@ -89,7 +89,7 @@ export { bucket };
 // Routes
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/admin/pages", adminRoutes);
+app.use("/api/admin/pages", pageRoutes);
 app.use("/api/members", staffRoutes);
 app.use("/api/events", eventRoutes);
 

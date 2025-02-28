@@ -33,16 +33,32 @@ router.get("/:id", async (req: Request, res: Response) => {
 // Create a new page
 router.post("/", async (req: Request, res: Response) => {
     try {
-        const { id, name, content } = req.body;
+        const { id, name, content, header, link } = req.body;
 
-        if (!id || !name || !content) {
+        if (!id || !name || !header || (!link && !content)) {
             res.status(400).json({
-                message: "All fields are required (id, name, content)",
+                message:
+                    "id, name, and header are required, and either link or content must be provided",
             });
             return;
         }
 
-        const newPage = new PageContent({ id, name, content });
+        // Make sure only link or content is provided (Either link to a google doc or content for a static page)
+        if (link && content) {
+            res.status(400).json({
+                message:
+                    "Only one of 'link' or 'content' should be provided, not both.",
+            });
+            return;
+        }
+
+        const newPage = new PageContent({
+            id,
+            name,
+            header,
+            content: content ?? null,
+            link: link ?? null,
+        });
         await newPage.save();
 
         res.status(201).json({ message: "Page successfully created" });
@@ -55,18 +71,27 @@ router.post("/", async (req: Request, res: Response) => {
 router.put("/:id", async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { newId, name, content } = req.body;
+        const { newId, name, content, header, link } = req.body;
 
-        if (!name && !content) {
+        if (!name && !content && !header && !link) {
             res.status(400).json({
-                message: "At least one field is required (name or content)",
+                message:
+                    "At least one field is required (name, content, header or link)",
             });
             return;
         }
 
+        // Update only the fields that are provided
+        const updateData: any = {};
+        if (newId) updateData.id = newId;
+        if (name) updateData.name = name;
+        if (content) updateData.content = content;
+        if (header) updateData.header = header;
+        if (link) updateData.link = link;
+
         const page = await PageContent.findOneAndUpdate(
             { id },
-            { id: newId, name, content },
+            updateData,
             { new: true }
         );
 
