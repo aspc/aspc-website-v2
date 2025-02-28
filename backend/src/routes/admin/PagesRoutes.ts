@@ -30,6 +30,17 @@ router.get("/:id", async (req: Request, res: Response) => {
     }
 });
 
+// Get all pages by header
+router.get("/header/:header", async (req: Request, res: Response) => {
+    try {
+        const { header } = req.params;
+        const pages = await PageContent.find({ header });
+        res.json(pages);
+    } catch (error) {
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
 // Create a new page
 router.post("/", async (req: Request, res: Response) => {
     try {
