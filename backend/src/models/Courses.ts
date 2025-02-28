@@ -1,14 +1,14 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 // Courses
-interface ICourse extends Document {
+interface ICourses extends Document {
     id: number;
     code: string;
     name: string;
     code_slug: string;
 }
 
-const CourseSchema = new Schema<ICourse>({
+const CoursesSchema = new Schema<ICourses>({
     id: {
         type: Number,
         required: true,
@@ -31,17 +31,17 @@ const CourseSchema = new Schema<ICourse>({
     }
 });
 
-const Course = mongoose.model<ICourse>('Course', CourseSchema);
+const Courses = mongoose.model<ICourses>('Courses', CoursesSchema);
 
 
 // Departments
-interface IDepartment extends Document {
+interface IDepartments extends Document {
     id: number;
     code: string;
     name: string;
 }
 
-const DepartmentSchema = new Schema<IDepartment>({
+const DepartmentsSchema = new Schema<IDepartments>({
     id: {
         type: Number,
         required: true,
@@ -59,11 +59,11 @@ const DepartmentSchema = new Schema<IDepartment>({
     }
 });
 
-const Department = mongoose.model<IDepartment>('Department', DepartmentSchema);
+const Departments = mongoose.model<IDepartments>('Departments', DepartmentsSchema);
 
 
 // Course Reviews
-interface ICourseReview extends Document {
+interface ICourseReviews extends Document {
     id: number;
     overall_rating: mongoose.Schema.Types.Decimal128;
     challenge_rating: mongoose.Schema.Types.Decimal128;
@@ -76,7 +76,7 @@ interface ICourseReview extends Document {
     user_id: number;
 }
 
-const CourseReviewSchema = new Schema<ICourseReview>({
+const CourseReviewsSchema = new Schema<ICourseReviews>({
     id: {
         type: Number,
         required: true,
@@ -118,7 +118,7 @@ const CourseReviewSchema = new Schema<ICourseReview>({
     }
 });
 
-const CourseReview = mongoose.model<ICourseReview>('CourseReview', CourseReviewSchema);
+const CourseReviews = mongoose.model<ICourseReviews>('CourseReviews', CourseReviewsSchema);
 
 
-export { Course, Department, CourseReview };
+export { Courses, Departments, CourseReviews };

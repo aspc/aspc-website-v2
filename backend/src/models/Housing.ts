@@ -1,14 +1,15 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 // Housing Buildings Schema
-interface IHousingBuilding extends Document {
+interface IHousingBuildings extends Document {
     id: number;
     name: string;
+    campus: string;
     floors: number;
     description?: string;
 }
 
-const HousingBuildingSchema = new Schema<IHousingBuilding>({
+const HousingBuildingsSchema = new Schema<IHousingBuildings>({
     id: {
         type: Number,
         required: true,
@@ -18,6 +19,10 @@ const HousingBuildingSchema = new Schema<IHousingBuilding>({
         type: String,
         required: true,
         unique: true
+    },
+    campus: {
+        type: String,
+        required: true,
     },
     floors: {
         type: Number,
@@ -29,16 +34,16 @@ const HousingBuildingSchema = new Schema<IHousingBuilding>({
     }
 });
 
-export const HousingBuilding = mongoose.model<IHousingBuilding>('HousingBuilding', HousingBuildingSchema);
+const HousingBuildings = mongoose.model<IHousingBuildings>('HousingBuildings', HousingBuildingsSchema);
 
 // Housing Suites Schema
-interface IHousingSuite extends Document {
+interface IHousingSuites extends Document {
     id: number,
     suite_type: number;
     housing_building_id: mongoose.Types.ObjectId;
 }
 
-const HousingSuiteSchema = new Schema<IHousingSuite>({
+const HousingSuitesSchema = new Schema<IHousingSuites>({
     id: {
         type: Number,
         required: true,
@@ -51,16 +56,16 @@ const HousingSuiteSchema = new Schema<IHousingSuite>({
     },
     housing_building_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'HousingBuilding',
+        ref: 'HousingBuildings',
         required: true,
         index: true
     }
 });
 
-export const HousingSuite = mongoose.model<IHousingSuite>('HousingSuite', HousingSuiteSchema);
+const HousingSuites = mongoose.model<IHousingSuites>('HousingSuites', HousingSuitesSchema);
 
 // Housing Rooms Schema
-interface IHousingRoom extends Document {
+interface IHousingRooms extends Document {
     id: number;
     size?: string;
     occupancy_type?: string;
@@ -70,7 +75,7 @@ interface IHousingRoom extends Document {
     room_number: string;
 }
 
-const HousingRoomSchema = new Schema<IHousingRoom>({
+const HousingRoomsSchema = new Schema<IHousingRooms>({
     id: {
         type: Number,
         required: true,
@@ -90,7 +95,7 @@ const HousingRoomSchema = new Schema<IHousingRoom>({
     },
     housing_suite_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'HousingSuite',
+        ref: 'HousingSuites',
         required: true,
         index: true
     },
@@ -101,10 +106,10 @@ const HousingRoomSchema = new Schema<IHousingRoom>({
     }
 });
 
-export const HousingRoom = mongoose.model<IHousingRoom>('HousingRoom', HousingRoomSchema);
+const HousingRooms = mongoose.model<IHousingRooms>('HousingRooms', HousingRoomsSchema);
 
 // Housing Reviews Schema
-interface IHousingReview extends Document {
+interface IHousingReviews extends Document {
     id: number;
     overall_rating?: number;
     quiet_rating?: number;
@@ -115,7 +120,7 @@ interface IHousingReview extends Document {
     user_id: mongoose.Types.ObjectId;
 }
 
-const HousingReviewSchema = new Schema<IHousingReview>({
+const HousingReviewsSchema = new Schema<IHousingReviews>({
     id: {
         type: Number,
         required: true,
@@ -138,16 +143,18 @@ const HousingReviewSchema = new Schema<IHousingReview>({
     },
     housing_room_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'HousingRoom',
+        ref: 'HousingRooms',
         required: true,
         index: true
     },
     user_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'SAMLUser',
         required: true,
         index: true
     }
 });
 
-export const HousingReview = mongoose.model<IHousingReview>('HousingReview', HousingReviewSchema);
+const HousingReviews = mongoose.model<IHousingReviews>('HousingReviews', HousingReviewsSchema);
+
+export { HousingBuildings, HousingRooms, HousingSuites, HousingReviews };
