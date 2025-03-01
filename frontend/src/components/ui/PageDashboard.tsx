@@ -62,17 +62,27 @@ const PageDashboard = () => {
         setPageSection("about");
     };
 
-    // Helper function to format section as header
-    const formatSectionAsHeader = (section: string) => {
-        return section.charAt(0).toUpperCase() + section.slice(1);
-    };
-
     const handleNewPage = () => {
         setIsCreatingNew(true);
         setSelectedStaticPage("");
         setSelectedLinkPage("");
         resetForm();
     };
+
+    // Update page ID when link changes for link-type pages
+    useEffect(() => {
+        if (pageType === "link" && pageLink) {
+            // Create a sanitized version of the link for use as ID
+            // Remove http/https, special chars, and use dashes instead of spaces
+            const sanitizedLink = pageLink
+                .replace(/^https?:\/\//, "")
+                .replace(/[^a-zA-Z0-9\s-]/g, "")
+                .replace(/\s+/g, "-")
+                .toLowerCase();
+
+            setPageId(sanitizedLink);
+        }
+    }, [pageLink, pageType]);
 
     const handleStaticPageSelect = async (pageId: string) => {
         if (!pageId) {
@@ -145,7 +155,7 @@ const PageDashboard = () => {
     const handleSave = async () => {
         // Validate form
         if (
-            !pageId ||
+            (pageType === "content" && !pageId) ||
             !pageName ||
             (pageType === "link" && !pageLink) ||
             (pageType === "content" && !content)
@@ -156,9 +166,6 @@ const PageDashboard = () => {
 
         try {
             setLoading(true);
-
-            // Generate header from section
-            const header = formatSectionAsHeader(pageSection);
 
             if (isCreatingNew) {
                 // Create new page
@@ -172,7 +179,7 @@ const PageDashboard = () => {
                         body: JSON.stringify({
                             id: pageId,
                             name: pageName,
-                            header: header, // Use formatted section as header
+                            header: pageSection,
                             content: pageType === "content" ? content : null,
                             link: pageType === "link" ? pageLink : null,
                             section: pageSection,
@@ -207,7 +214,7 @@ const PageDashboard = () => {
                         body: JSON.stringify({
                             newId: pageId,
                             name: pageName,
-                            header: header,
+                            header: pageSection,
                             content: pageType === "content" ? content : null,
                             link: pageType === "link" ? pageLink : null,
                             section: pageSection,
@@ -230,7 +237,7 @@ const PageDashboard = () => {
                 alert("Page updated successfully!");
             }
 
-            // **RESET STATE AFTER SUCCESSFUL EDIT/CREATION**
+            // RESET STATE AFTER SUCCESSFUL EDIT/CREATION
             setIsCreatingNew(false);
             setSelectedStaticPage("");
             setSelectedLinkPage("");
@@ -269,7 +276,7 @@ const PageDashboard = () => {
 
             alert("Page deleted successfully!");
 
-            // **RESET STATE AFTER SUCCESSFUL DELITION**
+            // RESET STATE AFTER SUCCESSFUL DELETION
             setIsCreatingNew(false);
             setSelectedStaticPage("");
             setSelectedLinkPage("");
@@ -372,25 +379,9 @@ const PageDashboard = () => {
                             </select>
                             <p className="mt-1 text-sm text-gray-500">
                                 This page will be displayed under the{" "}
-                                {formatSectionAsHeader(pageSection)} section
-                            </p>
-                        </div>
-
-                        {/* Page ID */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Page ID
-                            </label>
-                            <input
-                                type="text"
-                                className="w-full p-2 border rounded"
-                                value={pageId}
-                                onChange={(e) => setPageId(e.target.value)}
-                                placeholder="e.g., about-us"
-                                required
-                            />
-                            <p className="mt-1 text-sm text-gray-500">
-                                This will be used in the URL: /pages/{pageId}
+                                {pageSection.charAt(0).toUpperCase() +
+                                    pageSection.slice(1)}{" "}
+                                section
                             </p>
                         </div>
 
@@ -445,6 +436,27 @@ const PageDashboard = () => {
                                 </button>
                             </div>
                         </div>
+
+                        {/* Page ID - only visible for content pages */}
+                        {pageType === "content" && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Page ID
+                                </label>
+                                <input
+                                    type="text"
+                                    className="w-full p-2 border rounded"
+                                    value={pageId}
+                                    onChange={(e) => setPageId(e.target.value)}
+                                    placeholder="e.g., about-us"
+                                    required
+                                />
+                                <p className="mt-1 text-sm text-gray-500">
+                                    This will be used in the URL: /pages/
+                                    {pageSection}/{pageId}
+                                </p>
+                            </div>
+                        )}
 
                         {/* Page Content or Link based on type */}
                         {pageType === "link" ? (
