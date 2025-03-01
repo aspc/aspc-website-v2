@@ -21,6 +21,7 @@ const app: Express = express();
 app.use(cors({
   origin: ['http://localhost:3000', 'https://localhost:3001', 'https://aspc-website-v2.vercel.app','https://pomonastudents.org'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
 app.use(express.json());
@@ -74,9 +75,24 @@ app.use(
   })
 );
 
-// Test endpoint for frontend
-app.get('/api/test', (req: Request, res: Response) => {
-  res.json({ message: 'ASPC API is running!' });
+
+app.get('/test-cookie', (req: Request, res: Response) => {
+  // Set a basic test cookie with SameSite=None
+  res.cookie('test_cookie', 'working', {
+    secure: true,
+    sameSite: 'none',
+    httpOnly: false, // Visible in browser dev tools
+    maxAge: 10 * 60 * 1000
+  });
+  
+  // Check if a previously set cookie exists
+  const hasCookie = req.cookies.test_cookie === 'working';
+  
+  res.json({
+    cookieSet: true,
+    previousCookieFound: hasCookie,
+    userAgent: req.headers['user-agent']
+  });
 });
 
 
