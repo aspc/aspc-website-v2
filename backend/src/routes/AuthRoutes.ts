@@ -6,6 +6,7 @@ import { SAMLUser } from '../models/People';
 import { Router } from 'express';
 import { IdentityProvider } from 'samlify/types/src/entity-idp';
 import { ServiceProvider } from 'samlify/types/src/entity-sp';
+import mongoose from 'mongoose';
 
 const router = Router()
 
@@ -220,6 +221,80 @@ router.post('/logout', async (req: Request, res: Response) => {
 });
 
 
-
+// Debug route for session and cookie troubleshooting
+router.get('/debug-session', (req: Request, res: Response) => {
+  // Extract browser information
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  const isSafari = /^((?!chrome|android).)*safari/i.test(userAgent);
+  const isMobile = /iPhone|iPad|iPod/.test(userAgent);
+  
+  // Get session information
+  const sessionExists = !!req.session.id;
+  const user = (req.session as any).user;
+  
+  // Get request details
+  const protocol = req.protocol;
+  const host = req.headers.host;
+  const origin = req.headers.origin;
+  
+  // Test setting a diagnostic cookie
+  res.cookie('debug_test', 'safari_test', {
+    secure: true,
+    sameSite: 'none',
+    httpOnly: false, // So it's visible in browser dev tools
+    maxAge: 5 * 60 * 1000 // 5 minutes
+  });
+  
+  // Log useful information
+  console.log(`[DEBUG] Session debug requested from ${isSafari ? 'Safari' : 'other browser'}`, {
+    sessionID: req.session.id || 'No session ID',
+    hasUser: !!user,
+    cookies: req.headers.cookie ? 'Present' : 'Not present',
+    userAgent
+  });
+  
+  // Return detailed debug information
+  res.json({
+    timestamp: new Date().toISOString(),
+    browser: {
+      userAgent,
+      isSafari,
+      isMobile
+    },
+    request: {
+      protocol,
+      host,
+      origin,
+      ip: req.ip,
+      headers: {
+        cookie: req.headers.cookie ? 'Present (not shown)' : 'Not present',
+        referer: req.headers.referer || 'Not set'
+      }
+    },
+    session: {
+      exists: sessionExists,
+      id: req.session.id || 'Not set',
+      user: user ? {
+        present: true,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      } : 'Not set',
+      cookie: req.session.cookie ? {
+        maxAge: req.session.cookie.maxAge,
+        secure: req.session.cookie.secure,
+        httpOnly: req.session.cookie.httpOnly,
+        sameSite: req.session.cookie.sameSite,
+        domain: req.session.cookie.domain || 'Not set',
+        path: req.session.cookie.path || 'Not set'
+      } : 'Not available'
+    },
+    instructions: {
+      safari: "Check if the debug_test cookie appears in Safari's developer tools.",
+      checkCookies: "In Safari, go to Preferences > Privacy > Cookies and Website Data and ensure 'Block all cookies' is not selected.",
+      nextSteps: "If session exists but user data is missing, check SAML assertion. If no session exists, check cookie settings."
+    }
+  });
+});
 
 export default router;

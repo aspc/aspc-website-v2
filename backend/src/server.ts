@@ -25,6 +25,30 @@ app.use(cors({
 }));
 app.use(express.json());
 
+
+app.use((req, res, next) => {
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
+});
+
+app.use((req, res, next) => {
+  const originalSetCookie = res.setHeader;
+  res.setHeader = function(name, value) {
+    if (name === 'Set-Cookie' && Array.isArray(value)) {
+      // Safari needs SameSite=None to be properly quoted and formatted
+      value = value.map(cookie => {
+        if (cookie.includes('SameSite=None')) {
+          // Ensure proper formatting for Safari
+          return cookie.replace('SameSite=None', 'SameSite=None; Secure');
+        }
+        return cookie;
+      });
+    }
+    return originalSetCookie.call(this, name, value);
+  };
+  next();
+});
+
 app.set('trust proxy', 1); // Required for secure cookies
 
 // Connect to MongoDB

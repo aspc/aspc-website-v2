@@ -1,6 +1,9 @@
 # Stage 1: Build
 FROM --platform=linux/amd64 node:18-alpine AS build
 
+# Install OpenJDK for Alpine (for stupid auth library)
+RUN apk add --no-cache openjdk17
+
 # Set working directory in docker container
 WORKDIR /app
 
@@ -19,6 +22,8 @@ RUN npm run build
 
 # Stage 2: Run
 FROM node:18-alpine
+
+RUN apk add --no-cache openjdk17
 
 # Creating a clean working directory for the final (prod) container
 WORKDIR /app
