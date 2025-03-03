@@ -54,26 +54,6 @@ app.use(
 );
 
 
-app.get('/test-cookie', (req: Request, res: Response) => {
-  // Set a basic test cookie with SameSite=None
-  res.cookie('test_cookie', 'working', {
-    secure: true,
-    sameSite: 'none',
-    httpOnly: false, // Visible in browser dev tools
-    maxAge: 10 * 60 * 1000
-  });
-  
-  // Check if a previously set cookie exists
-  const hasCookie = req.cookies.test_cookie === 'working';
-  
-  res.json({
-    cookieSet: true,
-    previousCookieFound: hasCookie,
-    userAgent: req.headers['user-agent']
-  });
-});
-
-
 
 let bucket: GridFSBucket;
 

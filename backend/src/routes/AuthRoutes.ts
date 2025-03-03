@@ -6,7 +6,6 @@ import { SAMLUser } from '../models/People';
 import { Router } from 'express';
 import { IdentityProvider } from 'samlify/types/src/entity-idp';
 import { ServiceProvider } from 'samlify/types/src/entity-sp';
-import mongoose from 'mongoose';
 
 const router = Router()
 
