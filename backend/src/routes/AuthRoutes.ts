@@ -50,6 +50,14 @@ router.get('/login/saml', async (req: Request, res: Response) => {
         res.status(500).json({ message: 'SAML not initialized' });
         return;
       }
+      if (typeof document !== 'undefined' && document.hasStorageAccess) {
+        const hasAccess = await document.hasStorageAccess();
+        if (!hasAccess) {
+          // Request storage access if not available
+          await document.requestStorageAccess();
+        }
+      }
+
       const { id, context } = sp.createLoginRequest(idp, 'redirect');
       (req.session as any).authRequest = id;
       res.redirect(context);
@@ -90,7 +98,8 @@ router.get('/login/saml', async (req: Request, res: Response) => {
             res.status(500).json({ message: 'Failed to save session' });
             return;
           }
-          
+          res.set('Activate-Storage-Access', 'load');
+          res.set('Allowed-Origin', process.env.FRONTEND_LINK || 'http://localhost:3000');
           // Redirect to your frontend app
           res.redirect(process.env.FRONTEND_LINK || 'http://localhost:3000');
         });
@@ -99,6 +108,14 @@ router.get('/login/saml', async (req: Request, res: Response) => {
         res.status(500).json({ message: 'SAML authentication failed', error });
       }
   });
+
+  router.get('/check-storage-access', (req: Request, res: Response) => {
+    res.json({
+      hasStorageAccess: typeof document !== 'undefined' && !!document.hasStorageAccess,
+      instructions: "Call document.requestStorageAccess() if needed"
+    });
+  });
+  
 
 // Logout Route
   router.get('/logout/saml', async (req: Request, res: Response) => {

@@ -18,7 +18,7 @@ export function useAuth(requireAdmin: boolean = false) {
         const checkAuth = async () => {
             try {
                 const response = await fetch(
-                    `/api/auth/current_user`,
+                    `${process.env.BACKEND_LINK}/api/auth/current_user`,
                     {
                         credentials: "include",
                     }
