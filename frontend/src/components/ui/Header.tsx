@@ -245,53 +245,40 @@ const Header = () => {
                                 {openDropdown === "Resources" && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         {renderSectionLinks("resources")}
-                                    </div>
-                                )}
-                            </div>
+                                    <Link
+                                        href="/campus"
+                                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                    >
+                                        Campus
+                                    </Link>
 
-                            {/* Campus */}
-                            <Link
-                                href="/campus"
-                                className="hover:text-blue-500"
-                            >
-                                Campus
-                            </Link>
-
-                            {/* Courses */}
-                            <div className="relative dropdown-container">
-                                <button
-                                    className="flex items-center space-x-1 hover:text-blue-500"
-                                    onClick={() =>
-                                        handleDropdownClick("courses")
-                                    }
-                                >
-                                    <span>Courses</span>
-                                </button>
-
-                                {/* courses Dropdown */}
-                                {openDropdown === "courses" && (
-                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        <Link
-                                            href="https://hyperschedule.io"
-                                            target="_blank"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                        >
-                                            Course Planner
-                                        </Link>
-                                        <Link
-                                            href="/campus/course-reviews"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                        >
-                                            Course Reviews
-                                        </Link>
-
-                                        <Link
-                                            href="/campus/instructor-reviews"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                        >
-                                            Instructor Reviews
-                                        </Link>
-                                    </div>
+                                    <Link
+                                        href="https://hyperschedule.io"
+                                        target="_blank"
+                                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                    >
+                                        Course Planner
+                                    </Link>
+                                    <Link
+                                        href="/campus/course-reviews"
+                                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                    >
+                                        Course Reviews
+                                    </Link>
+                                    <Link
+                                        href="/campus/instructor-reviews"
+                                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                    >
+                                        Instructor Reviews
+                                    </Link>
+                                    <Link
+                                        href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0"
+                                        target="_blank"
+                                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                    >
+                                        Chirp Guide
+                                    </Link>
+                                </div>
                                 )}
                             </div>
 
@@ -467,58 +454,23 @@ const Header = () => {
                                 {openDropdown === "ResourcesMobile" && (
                                     <div className="ml-2 mt-2">
                                         {renderSectionLinks("resources", true)}
-                                    </div>
-                                )}
-                            </div>
+                                        <Link href="/campus" className="block px-4 py-2 hover:text-yellow-400">
+                                            Campus
+                                        </Link>
 
-                            <Link
-                                href="/campus"
-                                className="text-lg"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                Campus
-                            </Link>
-
-                            {/* Courses dropdown */}
-                            <div className="relative dropdown-container">
-                                <button
-                                    className="text-lg flex items-center space-x-1"
-                                    onClick={() =>
-                                        handleDropdownClick("CoursesMobile")
-                                    }
-                                >
-                                    <span>Courses</span>
-                                </button>
-
-                                {openDropdown === "CoursesMobile" && (
-                                    <div className="ml-2 mt-2">
-                                        <Link
-                                            href="https://hyperschedule.io"
-                                            target="_blank"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                            onClick={() =>
-                                                setIsMobileMenuOpen(false)
-                                            }
-                                        >
+                                        <Link href="https://hyperschedule.io" target="_blank" className="block px-4 py-2 hover:text-yellow-400">
                                             Course Planner
                                         </Link>
-                                        <Link
-                                            href="/campus/course-reviews"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                            onClick={() =>
-                                                setIsMobileMenuOpen(false)
-                                            }
-                                        >
+                                        <Link href="/campus/course-reviews" className="block px-4 py-2 hover:text-yellow-400">
                                             Course Reviews
                                         </Link>
-                                        <Link
-                                            href="/campus/instructor-reviews"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                            onClick={() =>
-                                                setIsMobileMenuOpen(false)
-                                            }
-                                        >
+                                        <Link href="/campus/instructor-reviews" className="block px-4 py-2 hover:text-yellow-400">
                                             Instructor Reviews
+                                        </Link>
+                                        <Link href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                        >
+                                            Chirp Guide
                                         </Link>
                                     </div>
                                 )}
