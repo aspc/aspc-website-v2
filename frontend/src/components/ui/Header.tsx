@@ -191,12 +191,6 @@ const Header = () => {
                                 {/* About Pages Dropdown */}
                                 {openDropdown === "About" && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        <Link
-                                            href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                        >
-                                            Chirp Guide
-                                        </Link>
                                         {renderSectionLinks("about")}
                                     </div>
                                 )}
@@ -414,15 +408,6 @@ const Header = () => {
 
                                 {openDropdown === "AboutMobile" && (
                                     <div className="ml-2 mt-2">
-                                        <Link
-                                            href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                            onClick={() =>
-                                                setIsMobileMenuOpen(false)
-                                            }
-                                        >
-                                            Chirp Guide
-                                        </Link>
                                         {renderSectionLinks("about", true)}
                                     </div>
                                 )}

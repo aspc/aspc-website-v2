@@ -32,12 +32,12 @@ const PageDashboard = () => {
                 const data: PageContent[] = await response.json();
                 setLinkPages(
                     data.filter(
-                        (page) => page.link !== null && page.link !== ""
+                        (page) => page.link && page.link !== null 
                     )
                 );
                 setStaticPages(
                     data.filter(
-                        (page) => page.content !== null && page.content !== ""
+                        (page) => page.content && page.content !== null 
                     )
                 );
             }
