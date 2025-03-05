@@ -1,9 +1,8 @@
 import express, { Request, Response } from 'express';
-import User from '../models/User';
 import { initializeSAML, fetchAndSaveMetadata } from '../config/samlConfig';
 import fs from 'fs';
 import path from 'path';
-import SAMLUser from '../models/SAMLUser';
+import { SAMLUser } from '../models/People';
 import { Router } from 'express';
 import { IdentityProvider } from 'samlify/types/src/entity-idp';
 import { ServiceProvider } from 'samlify/types/src/entity-sp';
@@ -169,40 +168,40 @@ router.get('/users', async (req: Request, res: Response) => {
 // -------------------------------------------------------------------------------------------------------
 
 
-// Login
-router.post('/login', async (req: Request, res: Response) => {
-    const {email, password} = req.body;
+// // Login
+// router.post('/login', async (req: Request, res: Response) => {
+//     const {email, password} = req.body;
     
-    try {
-        const user = await User.findOne({ email })
+//     try {
+//         const user = await User.findOne({ email })
 
-        // Check if the user exists
-        if (!user) {
-            res.status(401).json({ message: 'The user does not exist' });
-            return;
-        }
+//         // Check if the user exists
+//         if (!user) {
+//             res.status(401).json({ message: 'The user does not exist' });
+//             return;
+//         }
 
-        // Check if the passwords match
-        // Note: in production use bcrypt.compare() to compare hashed passwords
-        if (password != user.password) {
-            res.status(401).json({ message: 'Invalid password' });
-            return;
-        }
+//         // Check if the passwords match
+//         // Note: in production use bcrypt.compare() to compare hashed passwords
+//         if (password != user.password) {
+//             res.status(401).json({ message: 'Invalid password' });
+//             return;
+//         }
 
-        // Save user info in session
-        (req.session as any).user = {
-            email: user.email,
-            name: user.name,
-            isAdmin: user.is_admin,
-        };
+//         // Save user info in session
+//         (req.session as any).user = {
+//             email: user.email,
+//             name: user.name,
+//             isAdmin: user.is_admin,
+//         };
 
-        res.status(200).json({ message: 'Login successful'})
+//         res.status(200).json({ message: 'Login successful'})
 
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+//     } catch (error) {
+//         res.status(500).json({ message: 'Server error' });
+//     }
 
-    });
+//     });
 
 // Logout
 router.post('/logout', async (req: Request, res: Response) => {
