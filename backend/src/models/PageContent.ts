@@ -24,6 +24,7 @@ const PageContentSchema = new Schema<IPageContent>({
         type: String,
         required: true,
         trim: true,
+        default: "about",
     },
     content: {
         type: String,
