@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Loading from "@/components/Loading";
 import { useAuth } from "@/hooks/useAuth";
 import { PageContent } from "@/types";
@@ -18,8 +17,12 @@ const groups: string[] = [
 
 const Header = () => {
     const { user, loading } = useAuth();
-    const router = useRouter();
-    const [pages, setPages] = useState<PageContent[]>([]);
+    const [pagesMap, setPagesMap] = useState<Record<string, PageContent[]>>({
+        about: [],
+        members: [],
+        resources: [],
+        pressroom: [],
+    });
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
     const [loadingPages, setLoadingPages] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -27,11 +30,33 @@ const Header = () => {
     useEffect(() => {
         const fetchPages = async () => {
             try {
+                setLoadingPages(true);
                 const response = await fetch(
                     `${process.env.BACKEND_LINK}/api/admin/pages`
                 );
                 const data: PageContent[] = await response.json();
-                setPages(data);
+
+                // Organize pages by header/section
+                const pagesByHeader: Record<string, PageContent[]> = {
+                    about: [],
+                    members: [],
+                    resources: [],
+                    pressroom: [],
+                };
+
+                data.forEach((page) => {
+                    // Convert header to lowercase to match our section keys
+                    const headerKey = page.header.toLowerCase();
+
+                    // Check if this header exists in our map, if not create it
+                    if (!pagesByHeader[headerKey]) {
+                        pagesByHeader[headerKey] = [];
+                    }
+
+                    pagesByHeader[headerKey].push(page);
+                });
+
+                setPagesMap(pagesByHeader);
             } catch (error) {
                 console.error("Error fetching pages:", error);
             } finally {
@@ -73,6 +98,52 @@ const Header = () => {
         };
     }, [isMobileMenuOpen]);
 
+    // Helper function to render links for a section
+    const renderSectionLinks = (section: string, closeMenuOnClick = false) => {
+        const pages = pagesMap[section.toLowerCase()] || [];
+
+        return (
+            <>
+                {loadingPages ? (
+                    <div className="px-4 py-2 text-gray-700">
+                        Loading pages...
+                    </div>
+                ) : (
+                    pages.map((page) => (
+                        // If page has a link property, use that URL, otherwise use /pages/section/pageId
+                        <Link
+                            key={page.id}
+                            href={
+                                page.link
+                                    ? page.link
+                                    : `/pages/${section.toLowerCase()}/${
+                                          page.id
+                                      }`
+                            }
+                            target={
+                                page.link && page.link.startsWith("http")
+                                    ? "_blank"
+                                    : "_self"
+                            }
+                            className={`block px-4 py-2 ${
+                                closeMenuOnClick
+                                    ? "hover:text-yellow-400"
+                                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                            }`}
+                            onClick={
+                                closeMenuOnClick
+                                    ? () => setIsMobileMenuOpen(false)
+                                    : undefined
+                            }
+                        >
+                            {page.name}
+                        </Link>
+                    ))
+                )}
+            </>
+        );
+    };
+
     if (loading) {
         return <Loading />;
     }
@@ -84,7 +155,10 @@ const Header = () => {
                 <div className="px-4 lg:px-16">
                     <div className="flex items-wrap justify-between h-16">
                         <div className="flex items-center space-x-2 sm:space-x-3">
-                            <Link href="/" className="flex items-center space-x-2 group">
+                            <Link
+                                href="/"
+                                className="flex items-center space-x-2 group"
+                            >
                                 <Image
                                     src="/logo4.png"
                                     alt="ASPC Logo"
@@ -92,9 +166,9 @@ const Header = () => {
                                     height={50}
                                     className="ml-2 transition duration-200 group-hover:opacity-80"
                                 />
-                               <div className="flex flex-col leading-tight text-white text-lg font-semibold whitespace-nowrap">
+                                <div className="flex flex-col leading-tight text-white text-lg font-semibold whitespace-nowrap">
                                     <span className="text-white group-hover:text-blue-400 transition duration-200">
-                                        Associated Students 
+                                        Associated Students
                                     </span>
                                     <span className="text-white group-hover:text-blue-400 transition duration-200">
                                         of Pomona College
@@ -105,8 +179,7 @@ const Header = () => {
 
                         {/* Desktop Navigation */}
                         <nav className="hidden lg:flex items-center space-x-6">
-
-                            {/* ASPC */}    
+                            {/* About Section */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
@@ -115,49 +188,32 @@ const Header = () => {
                                     <span>About</span>
                                 </button>
 
-                                {/* ASPC Static Pages Dropdown */}
+                                {/* About Pages Dropdown */}
                                 {openDropdown === "About" && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        <Link
-                                            href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                        >
-                                            Chirp Guide
-                                        </Link>
-                                        {loadingPages ? (
-                                            <div className="px-4 py-2 text-gray-700">
-                                                Loading pages...
-                                            </div>
-                                        ) : (
-                                            pages.map((page) => (
-                                                <Link
-                                                    key={page.id}
-                                                    href={`/aspc/${page.id}`}
-                                                    className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                                >
-                                                    {page.name}
-                                                </Link>
-                                            ))
-                                        )}
+                                        {renderSectionLinks("about")}
                                     </div>
                                 )}
                             </div>
 
-                            {/* Members */}
+                            {/* Members Section */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
-                                    onClick={() => handleDropdownClick("staff")}
+                                    onClick={() =>
+                                        handleDropdownClick("Members")
+                                    }
                                 >
                                     <span>Members</span>
                                 </button>
 
-                                {/* ASPC Goups Dropdown */}
-                                {openDropdown === "staff" && (
+                                {/* Members Dropdown with ASPC Groups and Pages */}
+                                {openDropdown === "Members" && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
+                                        {/* Senate Groups */}
                                         {groups.map((group, index) => (
                                             <Link
-                                                key={index}
+                                                key={`group-${index}`}
                                                 href={`/staff/${group}`}
                                                 className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
                                             >
@@ -167,6 +223,28 @@ const Header = () => {
                                                 )}
                                             </Link>
                                         ))}
+
+                                        {/* Member Pages */}
+                                        {renderSectionLinks("members")}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Resources Section */}
+                            <div className="relative dropdown-container">
+                                <button
+                                    className="flex items-center space-x-1 hover:text-blue-500"
+                                    onClick={() =>
+                                        handleDropdownClick("Resources")
+                                    }
+                                >
+                                    <span>Resources</span>
+                                </button>
+
+                                {/* Resources Pages Dropdown */}
+                                {openDropdown === "Resources" && (
+                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
+                                        {renderSectionLinks("resources")}
                                     </div>
                                 )}
                             </div>
@@ -179,11 +257,13 @@ const Header = () => {
                                 Campus
                             </Link>
 
-                            {/* courses */}
+                            {/* Courses */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
-                                    onClick={() => handleDropdownClick("courses")}
+                                    onClick={() =>
+                                        handleDropdownClick("courses")
+                                    }
                                 >
                                     <span>Courses</span>
                                 </button>
@@ -192,7 +272,8 @@ const Header = () => {
                                 {openDropdown === "courses" && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         <Link
-                                            href="https://hyperschedule.io" target="_blank"
+                                            href="https://hyperschedule.io"
+                                            target="_blank"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
                                         >
                                             Course Planner
@@ -203,7 +284,7 @@ const Header = () => {
                                         >
                                             Course Reviews
                                         </Link>
-                                        
+
                                         <Link
                                             href="/campus/instructor-reviews"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
@@ -214,7 +295,24 @@ const Header = () => {
                                 )}
                             </div>
 
-                            
+                            {/* Press Room Section */}
+                            <div className="relative dropdown-container">
+                                <button
+                                    className="flex items-center space-x-1 hover:text-blue-500"
+                                    onClick={() =>
+                                        handleDropdownClick("PressRoom")
+                                    }
+                                >
+                                    <span>Press Room</span>
+                                </button>
+
+                                {/* Press Room Pages Dropdown */}
+                                {openDropdown === "PressRoom" && (
+                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
+                                        {renderSectionLinks("pressroom")}
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Events */}
                             <Link
@@ -235,32 +333,24 @@ const Header = () => {
                                         </Link>
                                     )}
                                     <button
-                                        onClick={() => window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`}
+                                        onClick={() =>
+                                            (window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`)
+                                        }
                                         className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
                                     >
                                         Logout SSO
                                     </button>
-                                    {/* <button
-                                        onClick={logout}
-                                        className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-                                    >
-                                        Logout
-                                    </button> */}
                                 </>
                             ) : (
                                 <>
-                                <button
-                                    onClick={() => window.location.href = `${process.env.BACKEND_LINK}/api/auth/login/saml`}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                                >
-                                    Login SSO
-                                </button>
-                                {/* <button
-                                    onClick={() => router.push('/login')}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-                                >
-                                    Login
-                                </button> */}
+                                    <button
+                                        onClick={() =>
+                                            (window.location.href = `${process.env.BACKEND_LINK}/api/auth/login/saml`)
+                                        }
+                                        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                                    >
+                                        Login SSO
+                                    </button>
                                 </>
                             )}
                         </nav>
@@ -304,45 +394,21 @@ const Header = () => {
                         </div>
 
                         {/* Mobile Menu Links */}
-                        <nav className="flex flex-col p-4 space-y-6 text-white">
-                            
-                            {/* ASPC dropdown */}
+                        <nav className="flex flex-col p-4 space-y-6 text-white overflow-y-auto">
+                            {/* About dropdown */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="text-lg flex items-center space-x-1"
-                                    onClick={() => handleDropdownClick("About")}
+                                    onClick={() =>
+                                        handleDropdownClick("AboutMobile")
+                                    }
                                 >
                                     <span>About</span>
                                 </button>
 
-                                {openDropdown === "About" && (
+                                {openDropdown === "AboutMobile" && (
                                     <div className="ml-2 mt-2">
-                                        <Link
-                                            href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                        >
-                                            Chirp Guide
-                                        </Link>
-                                        {loadingPages ? (
-                                            <div className="px-4 py-2">
-                                                Loading pages...
-                                            </div>
-                                        ) : (
-                                            pages.map((page: PageContent) => (
-                                                <Link
-                                                    key={page.id}
-                                                    href={`/aspc/${page.id}`}
-                                                    className="block px-4 py-2 hover:text-yellow-400"
-                                                    onClick={() =>
-                                                        setIsMobileMenuOpen(
-                                                            false
-                                                        )
-                                                    }
-                                                >
-                                                    {page.name}
-                                                </Link>
-                                            ))
-                                        )}
+                                        {renderSectionLinks("about", true)}
                                     </div>
                                 )}
                             </div>
@@ -351,13 +417,16 @@ const Header = () => {
                             <div className="relative dropdown-container">
                                 <button
                                     className="text-lg flex items-center space-x-1"
-                                    onClick={() => handleDropdownClick("staff")}
+                                    onClick={() =>
+                                        handleDropdownClick("MembersMobile")
+                                    }
                                 >
                                     <span>Members</span>
                                 </button>
 
-                                {openDropdown === "staff" && (
+                                {openDropdown === "MembersMobile" && (
                                     <div className="ml-2 mt-2">
+                                        {/* Senate Groups */}
                                         {groups.map(
                                             (group: string, index: number) => (
                                                 <Link
@@ -377,9 +446,31 @@ const Header = () => {
                                                 </Link>
                                             )
                                         )}
+
+                                        {/* Member Pages */}
+                                        {renderSectionLinks("members", true)}
                                     </div>
                                 )}
                             </div>
+
+                            {/* Resources dropdown */}
+                            <div className="relative dropdown-container">
+                                <button
+                                    className="text-lg flex items-center space-x-1"
+                                    onClick={() =>
+                                        handleDropdownClick("ResourcesMobile")
+                                    }
+                                >
+                                    <span>Resources</span>
+                                </button>
+
+                                {openDropdown === "ResourcesMobile" && (
+                                    <div className="ml-2 mt-2">
+                                        {renderSectionLinks("resources", true)}
+                                    </div>
+                                )}
+                            </div>
+
                             <Link
                                 href="/campus"
                                 className="text-lg"
@@ -387,13 +478,70 @@ const Header = () => {
                             >
                                 Campus
                             </Link>
-                            <Link
-                                href="/courses"
-                                className="text-lg"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                Courses
-                            </Link>
+
+                            {/* Courses dropdown */}
+                            <div className="relative dropdown-container">
+                                <button
+                                    className="text-lg flex items-center space-x-1"
+                                    onClick={() =>
+                                        handleDropdownClick("CoursesMobile")
+                                    }
+                                >
+                                    <span>Courses</span>
+                                </button>
+
+                                {openDropdown === "CoursesMobile" && (
+                                    <div className="ml-2 mt-2">
+                                        <Link
+                                            href="https://hyperschedule.io"
+                                            target="_blank"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Course Planner
+                                        </Link>
+                                        <Link
+                                            href="/campus/course-reviews"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Course Reviews
+                                        </Link>
+                                        <Link
+                                            href="/campus/instructor-reviews"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Instructor Reviews
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Press Room dropdown */}
+                            <div className="relative dropdown-container">
+                                <button
+                                    className="text-lg flex items-center space-x-1"
+                                    onClick={() =>
+                                        handleDropdownClick("PressRoomMobile")
+                                    }
+                                >
+                                    <span>Press Room</span>
+                                </button>
+
+                                {openDropdown === "PressRoomMobile" && (
+                                    <div className="ml-2 mt-2">
+                                        {renderSectionLinks("pressroom", true)}
+                                    </div>
+                                )}
+                            </div>
+
                             <Link
                                 href="/events"
                                 className="text-lg"
@@ -401,6 +549,7 @@ const Header = () => {
                             >
                                 Events
                             </Link>
+
                             {user?.isAdmin && (
                                 <Link
                                     href="/dashboard"
@@ -410,6 +559,7 @@ const Header = () => {
                                     Dashboard
                                 </Link>
                             )}
+
                             {user ? (
                                 <button
                                     onClick={() => {

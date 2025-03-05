@@ -1,18 +1,18 @@
-import express, { Express, Request, Response } from 'express';
-import mongoose from 'mongoose';
-import MongoStore from 'connect-mongo';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import { GridFSBucket } from 'mongodb';
-import authRoutes from './routes/AuthRoutes';
-import adminRoutes from './routes/AdminRoutes';
-import staffRoutes from './routes/StaffRoutes';
-import eventRoutes from './routes/EventsRoutes';
-import session from 'express-session';
-import https from 'https';
-import http from 'http';
-import fs from 'fs';
-import path from 'path';
+import express, { Express, Request, Response } from "express";
+import mongoose from "mongoose";
+import MongoStore from "connect-mongo";
+import cors from "cors";
+import dotenv from "dotenv";
+import { GridFSBucket } from "mongodb";
+import authRoutes from "./routes/AuthRoutes";
+import pageRoutes from "./routes/admin/PagesRoutes";
+import staffRoutes from "./routes/admin/StaffRoutes";
+import eventRoutes from "./routes/EventsRoutes";
+import session from "express-session";
+import https from "https";
+import http from "http";
+import fs from "fs";
+import path from "path";
 dotenv.config();
 
 const app: Express = express();
@@ -28,10 +28,11 @@ app.use(express.json());
 
 
 
-app.set('trust proxy', 1); // Required for secure cookies
+app.set("trust proxy", 1); // Required for secure cookies
 
 // Connect to MongoDB
-const MONGODB_URI = process.env.MONGODB_URI ||  'mongodb://localhost:27017/school-platform';
+const MONGODB_URI =
+    process.env.MONGODB_URI || "mongodb://localhost:27017/school-platform";
 
 // Session
 app.use(
@@ -57,49 +58,50 @@ app.use(
 
 let bucket: GridFSBucket;
 
-mongoose.connect(MONGODB_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    const db = mongoose.connection.db;
+mongoose
+    .connect(MONGODB_URI)
+    .then(() => {
+        console.log("Connected to MongoDB");
+        const db = mongoose.connection.db;
 
-    if (!db) {
-      throw new Error('Database connection is not ready');
-    }
+        if (!db) {
+            throw new Error("Database connection is not ready");
+        }
 
-    // Create GridFS bucket for uploads
-    bucket = new GridFSBucket(db, {
-      bucketName: 'uploads', 
-    });
-    console.log('Uploads bucket created')
-  })
-  .catch((err) => console.error('MongoDB connection error:', err));
+        // Create GridFS bucket for uploads
+        bucket = new GridFSBucket(db, {
+            bucketName: "uploads",
+        });
+        console.log("Uploads bucket created");
+    })
+    .catch((err) => console.error("MongoDB connection error:", err));
 
 export { bucket };
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/admin/pages', adminRoutes);
-app.use('/api/members', staffRoutes);
-app.use('/api/events', eventRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/admin/pages", pageRoutes);
+app.use("/api/members", staffRoutes);
+app.use("/api/events", eventRoutes);
 
 const PORT = process.env.PORT || 5000;
-  
+
 // Check environment to determine server type
-if (process.env.NODE_ENV === 'development') {
-  const httpsOptions = {
-    key: fs.readFileSync(path.join(__dirname, '../certs/localhost.key')),
-    cert: fs.readFileSync(path.join(__dirname, '../certs/localhost.crt'))
-  };
-  
-  // Development: HTTPS server with local certificates
-  const server = https.createServer(httpsOptions, app);
-  server.listen(PORT, () => {
-    console.log(`Secure server (HTTPS) running on port ${PORT}`);
-  });
+if (process.env.NODE_ENV === "development") {
+    const httpsOptions = {
+        key: fs.readFileSync(path.join(__dirname, "../certs/localhost.key")),
+        cert: fs.readFileSync(path.join(__dirname, "../certs/localhost.crt")),
+    };
+
+    // Development: HTTPS server with local certificates
+    const server = https.createServer(httpsOptions, app);
+    server.listen(PORT, () => {
+        console.log(`Secure server (HTTPS) running on port ${PORT}`);
+    });
 } else {
-  // Production: HTTP server (SSL termination at load balancer)
-  const server = http.createServer(app);
-  server.listen(PORT, () => {
-    console.log(`Server (HTTP) running on port ${PORT}`);
-  });
+    // Production: HTTP server (SSL termination at load balancer)
+    const server = http.createServer(app);
+    server.listen(PORT, () => {
+        console.log(`Server (HTTP) running on port ${PORT}`);
+    });
 }
