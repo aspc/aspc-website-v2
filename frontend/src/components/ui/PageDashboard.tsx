@@ -69,6 +69,13 @@ const PageDashboard = () => {
         resetForm();
     };
 
+    const handleEditPage = () => {
+        setIsCreatingNew(false);
+        setSelectedStaticPage("");
+        setSelectedLinkPage("");
+        resetForm();
+    };
+
     // Update page ID when link changes for link-type pages
     useEffect(() => {
         if (pageType === "link" && pageLink) {
@@ -296,12 +303,22 @@ const PageDashboard = () => {
         <div className="space-y-8">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold">Page Management</h1>
-                <button
-                    onClick={handleNewPage}
-                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md"
-                >
-                    Add New Page
-                </button>
+                {!isCreatingNew && (
+                    <button
+                        onClick={handleNewPage}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md"
+                    >
+                        Add New Page
+                    </button>
+                )}
+                {isCreatingNew && (
+                    <button
+                        onClick={handleEditPage}
+                        className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md"
+                    >
+                        Back
+                    </button>
+                )}
             </div>
 
             {!isCreatingNew && (
