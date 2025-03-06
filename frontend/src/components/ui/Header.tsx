@@ -246,19 +246,12 @@ const Header = () => {
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         {renderSectionLinks("resources")}
                                     <Link
-                                        href="/campus"
+                                        href="/campus/housing-reviews"
                                         className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
                                     >
-                                        Campus
+                                        Housing Reviews
                                     </Link>
 
-                                    <Link
-                                        href="https://hyperschedule.io"
-                                        target="_blank"
-                                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                    >
-                                        Course Planner
-                                    </Link>
                                     <Link
                                         href="/campus/course-reviews"
                                         className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
@@ -270,13 +263,6 @@ const Header = () => {
                                         className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
                                     >
                                         Instructor Reviews
-                                    </Link>
-                                    <Link
-                                        href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0"
-                                        target="_blank"
-                                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                    >
-                                        Chirp Guide
                                     </Link>
                                 </div>
                                 )}
@@ -454,23 +440,14 @@ const Header = () => {
                                 {openDropdown === "ResourcesMobile" && (
                                     <div className="ml-2 mt-2">
                                         {renderSectionLinks("resources", true)}
-                                        <Link href="/campus" className="block px-4 py-2 hover:text-yellow-400">
-                                            Campus
-                                        </Link>
-
-                                        <Link href="https://hyperschedule.io" target="_blank" className="block px-4 py-2 hover:text-yellow-400">
-                                            Course Planner
+                                        <Link href="/campus/housing-reviews" className="block px-4 py-2 hover:text-yellow-400">
+                                            Housing Reviews
                                         </Link>
                                         <Link href="/campus/course-reviews" className="block px-4 py-2 hover:text-yellow-400">
                                             Course Reviews
                                         </Link>
                                         <Link href="/campus/instructor-reviews" className="block px-4 py-2 hover:text-yellow-400">
                                             Instructor Reviews
-                                        </Link>
-                                        <Link href="https://docs.google.com/document/d/1usryOaKsIwZ6kABFcaYK5ub0TJSku4WBuoKj70OpNw4/edit?tab=t.0"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                        >
-                                            Chirp Guide
                                         </Link>
                                     </div>
                                 )}
