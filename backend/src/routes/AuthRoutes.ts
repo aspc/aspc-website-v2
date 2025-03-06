@@ -1,9 +1,8 @@
 import express, { Request, Response } from 'express';
-import User from '../models/User';
 import { initializeSAML, fetchAndSaveMetadata } from '../config/samlConfig';
 import fs from 'fs';
 import path from 'path';
-import SAMLUser from '../models/SAMLUser';
+import { SAMLUser } from '../models/People';
 import { Router } from 'express';
 import { IdentityProvider } from 'samlify/types/src/entity-idp';
 import { ServiceProvider } from 'samlify/types/src/entity-sp';
@@ -78,7 +77,8 @@ router.get('/login/saml', async (req: Request, res: Response) => {
           email: extract.attributes[baseLink + 'emailaddress'],
           firstName: extract.attributes[baseLink + 'givenname'],
           lastName: extract.attributes[baseLink + 'surname'],
-          sessionIndex: extract.sessionIndex
+          sessionIndex: extract.sessionIndex,
+          nameID: extract.nameID
         };
         
         console.log('SAML user:', (req.session as any).user);
@@ -111,9 +111,9 @@ router.get('/login/saml', async (req: Request, res: Response) => {
       res.redirect('/');
       return;
     }
-
+    console.log('SAML user logged out:', user.nameID);
     const { id, context } = sp.createLogoutRequest(idp, 'redirect', {
-      sessionIndex: user.samlSessionIndex,
+      sessionIndex: user.sessionIndex.sessionIndex,
       nameID: user.nameID
     });
 
@@ -134,11 +134,13 @@ router.get('/login/saml', async (req: Request, res: Response) => {
 // Get current user
 router.get('/current_user', async (req: Request, res: Response) => {
   if (!(req.session as any).user) {
-      res.status(401).json({ message: 'No user is logged in' });
-      return;
+    res.status(401).json({ message: 'No user is logged in' });
+    return;
   }
+  
   const azureId = (req.session as any).user.id;
   let user = await SAMLUser.findOne({ id: azureId });
+  
   if (!user) {
     const userData = {
       id: azureId,
@@ -151,8 +153,9 @@ router.get('/current_user', async (req: Request, res: Response) => {
     const samlUser = new SAMLUser(userData);
     await samlUser.save();
     res.status(200).json({ user: userData });
+  } else {
+    res.status(200).json({ user });
   }
-  res.status(200).json({ user });
 });
 
 // All Users
@@ -168,40 +171,40 @@ router.get('/users', async (req: Request, res: Response) => {
 // -------------------------------------------------------------------------------------------------------
 
 
-// Login
-router.post('/login', async (req: Request, res: Response) => {
-    const {email, password} = req.body;
+// // Login
+// router.post('/login', async (req: Request, res: Response) => {
+//     const {email, password} = req.body;
     
-    try {
-        const user = await User.findOne({ email })
+//     try {
+//         const user = await User.findOne({ email })
 
-        // Check if the user exists
-        if (!user) {
-            res.status(401).json({ message: 'The user does not exist' });
-            return;
-        }
+//         // Check if the user exists
+//         if (!user) {
+//             res.status(401).json({ message: 'The user does not exist' });
+//             return;
+//         }
 
-        // Check if the passwords match
-        // Note: in production use bcrypt.compare() to compare hashed passwords
-        if (password != user.password) {
-            res.status(401).json({ message: 'Invalid password' });
-            return;
-        }
+//         // Check if the passwords match
+//         // Note: in production use bcrypt.compare() to compare hashed passwords
+//         if (password != user.password) {
+//             res.status(401).json({ message: 'Invalid password' });
+//             return;
+//         }
 
-        // Save user info in session
-        (req.session as any).user = {
-            email: user.email,
-            name: user.name,
-            isAdmin: user.is_admin,
-        };
+//         // Save user info in session
+//         (req.session as any).user = {
+//             email: user.email,
+//             name: user.name,
+//             isAdmin: user.is_admin,
+//         };
 
-        res.status(200).json({ message: 'Login successful'})
+//         res.status(200).json({ message: 'Login successful'})
 
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
+//     } catch (error) {
+//         res.status(500).json({ message: 'Server error' });
+//     }
 
-    });
+//     });
 
 // Logout
 router.post('/logout', async (req: Request, res: Response) => {

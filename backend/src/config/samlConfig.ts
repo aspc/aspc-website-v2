@@ -4,9 +4,8 @@ import path from 'path';
 import { IdentityProvider, ServiceProvider } from 'samlify';
 import dotenv from 'dotenv';
 dotenv.config();
-
 import * as samlify from 'samlify';
-import * as validator from '@authenio/samlify-node-xmllint';
+const validator = require('@authenio/samlify-xsd-schema-validator');
 samlify.setSchemaValidator(validator);
 
 export const fetchAndSaveMetadata = async () => {
