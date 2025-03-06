@@ -9,9 +9,7 @@ import Image from "next/image";
 
 const groups: string[] = [
     "Senate",
-    "Finance",
-    "StudentAffairs",
-    "AcademicAffairs",
+    "Staff",
     "Software",
 ];
 

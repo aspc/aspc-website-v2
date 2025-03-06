@@ -339,9 +339,7 @@ const StaffDashboard = () => {
                         required
                     >
                         <option value="senate">Senate</option>
-                        <option value="finance">Finance</option>
-                        <option value="studentAffairs">Student Affairs</option>
-                        <option value="academicAffairs">Academic Affairs</option>
+                        <option value="staff">Staff</option>
                         <option value="software">Software Dev Group</option>
                     </select>
                 </div>
