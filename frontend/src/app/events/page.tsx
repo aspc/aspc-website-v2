@@ -26,12 +26,20 @@ const EventsPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [currentView, setCurrentView] = useState<View>(Views.MONTH);
+  const [currentView, setCurrentView] = useState<View>('month');
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch(`${process.env.BACKEND_LINK}/api/events`);
+        setLoading(true);
+        let endpoint = 'month'; 
+        
+        if (currentView === 'day') {
+          endpoint = 'day';
+        } else if (currentView === 'month') {
+          endpoint = 'month';
+        }
+        const response = await fetch(`${process.env.BACKEND_LINK}/api/events/${endpoint}`);
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
@@ -59,7 +67,7 @@ const EventsPage = () => {
     };
 
     fetchEvents();
-  }, []);
+  }, [currentView]);
 
   const handleSelectEvent = (event: CalendarEvent) => {
     setSelectedEvent(event);
@@ -121,10 +129,10 @@ const EventsPage = () => {
         events={events}
         startAccessor="start"
         endAccessor="end"
-        views={{ month: true, week: true, day: true }}  
+        views={{ month: true, week: false, day: false }}  
         view={currentView} 
         onView={handleViewChange}
-        defaultView={Views.MONTH}
+        defaultView={'month'}
         date={currentDate}
         onNavigate={(newDate: Date) => setCurrentDate(newDate)}
         onSelectEvent={handleSelectEvent}
