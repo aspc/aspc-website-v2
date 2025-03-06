@@ -134,11 +134,13 @@ router.get('/login/saml', async (req: Request, res: Response) => {
 // Get current user
 router.get('/current_user', async (req: Request, res: Response) => {
   if (!(req.session as any).user) {
-      res.status(401).json({ message: 'No user is logged in' });
-      return;
+    res.status(401).json({ message: 'No user is logged in' });
+    return;
   }
+  
   const azureId = (req.session as any).user.id;
   let user = await SAMLUser.findOne({ id: azureId });
+  
   if (!user) {
     const userData = {
       id: azureId,
@@ -151,8 +153,9 @@ router.get('/current_user', async (req: Request, res: Response) => {
     const samlUser = new SAMLUser(userData);
     await samlUser.save();
     res.status(200).json({ user: userData });
+  } else {
+    res.status(200).json({ user });
   }
-  res.status(200).json({ user });
 });
 
 // All Users
