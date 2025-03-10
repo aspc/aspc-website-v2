@@ -1,13 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { User } from '@/types'; 
 
-interface User {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    isAdmin: boolean;
-}
 
 export function useAuth(requireAdmin: boolean = false) {
     const [user, setUser] = useState<User | null>(null);
@@ -18,7 +12,7 @@ export function useAuth(requireAdmin: boolean = false) {
         const checkAuth = async () => {
             try {
                 const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/auth/current_user`,
+                    `/api/auth/current_user`, // Local API route 
                     {
                         credentials: "include",
                     }

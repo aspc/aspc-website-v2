@@ -31,3 +31,11 @@ export interface Event {
     end: Date;
     status: string;
 }
+
+export interface User {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    isAdmin: boolean;
+  }
