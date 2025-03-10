@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        // @ts-ignore - Type issue with Node's https.Agent
+        // @ts-expect-error - Type issue with Node's https.Agent
         agent: httpsAgent
       }
     );
