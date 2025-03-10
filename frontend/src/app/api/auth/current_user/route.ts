@@ -1,42 +1,31 @@
-// app/api/auth/current_user/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import https from 'https';
 
 export async function GET(request: NextRequest) {
   try {
-    // Create a custom agent that ignores certificate errors
-    const httpsAgent = new https.Agent({
-      rejectUnauthorized: false // WARNING: Only use in development!
-    });
+
     
     // Forward the request to your Express backend
-    const backendResponse = await fetch(
+    const response = await fetch(
       `https://aspc-backend-v1.gps54p9mv93tm.us-west-2.cs.amazonlightsail.com/api/auth/current_user`,
       {
         method: 'GET',
         headers: {
           'Cookie': request.headers.get('cookie') || '',
-          'Content-Type': 'application/json',
         },
         credentials: 'include',
-        // @ts-expect-error - Type issue with Node's https.Agent
-        agent: httpsAgent
       }
     );
     
-    // Rest of your code remains the same
-    const data = await backendResponse.json();
+    const data = await response.json();
     
-    const response = NextResponse.json(data, {
-      status: backendResponse.status,
-    });
-    
-    const setCookieHeader = backendResponse.headers.get('set-cookie');
+    // Forward cookies
+    const setCookieHeader = response.headers.get('set-cookie');
+    const nextResponse = NextResponse.json(data);
     if (setCookieHeader) {
-      response.headers.set('Set-Cookie', setCookieHeader);
+      nextResponse.headers.set('Set-Cookie', setCookieHeader);
     }
     
-    return response;
+    return nextResponse;
   } catch (error) {
     console.error('Auth proxy error:', error);
     return NextResponse.json(
