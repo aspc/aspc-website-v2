@@ -18,6 +18,7 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // Get suites in a building
+// NOTE: This route is not used since we don't have data for suites, consider removing
 router.get("/:building/suites", async (req: Request, res: Response) => {
     try {
         // Get building id
@@ -43,33 +44,19 @@ router.get("/:building/suites", async (req: Request, res: Response) => {
     }
 });
 
-// Get all rooms in a building
+// Get all rooms in a building (by building id)
 router.get("/:building/rooms", async (req: Request, res: Response) => {
     try {
         // Get building id
-        const { building } = req.params;
-        const buildingData = await HousingBuildings.findOne({ name: building });
-        const buildingId = buildingData?._id;
+        const { buildingId } = req.params;
         if (!buildingId) {
-            res.status(404).json({ message: "Building not found" });
+            res.status(404).json({ message: "No building id provided" });
             return;
         }
-
-        // Get all suites in the building
-        const suites = await HousingSuites.find({
-            housing_building_id: buildingId,
-        });
-        if (!suites || suites.length === 0) {
-            res.json({ rooms: [] });
-            return;
-        }
-
-        // Get all suite IDs
-        const suiteIds = suites.map((suite) => suite._id);
 
         // Get all rooms in those suites
         const rooms = await HousingRooms.find({
-            housing_suite_id: { $in: suiteIds },
+            housing_building_id: buildingId,
         });
 
         res.json({ rooms });
@@ -83,10 +70,10 @@ router.get("/:building/rooms", async (req: Request, res: Response) => {
 router.get("/:room/reviews", async (req: Request, res: Response) => {
     try {
         // Get room id
-        const { room } = req.params;
+        const { roomId } = req.params;
 
-        // Find the room by room number
-        const roomData = await HousingRooms.findOne({ room_number: room });
+        // Find the room by room id
+        const roomData = await HousingRooms.findOne({ id: roomId });
 
         if (!roomData) {
             res.status(404).json({ message: "Room not found" });
@@ -95,7 +82,7 @@ router.get("/:room/reviews", async (req: Request, res: Response) => {
 
         // Get all reviews for the room
         const reviews = await HousingReviews.find({
-            housing_room_id: roomData._id,
+            housing_room_id: roomId,
         });
 
         // Calculate average ratings
@@ -126,6 +113,7 @@ router.get("/:room/reviews", async (req: Request, res: Response) => {
                 reviewCount: reviews.length,
             };
 
+            // Return reviews and averages as well as the room data itself
             res.json({
                 room: roomData,
                 reviews: reviews,
