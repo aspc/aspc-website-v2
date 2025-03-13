@@ -13,8 +13,10 @@ const getTimeRange = (
 
     switch (type) {
         case "day":
-            start = new Date(now.setHours(0, 0, 0, 0)); // Start at midnight
-            end = new Date(now.setHours(23, 59, 59, 999)); // End at 11:59pm
+            start = new Date(now);
+            start.setHours(0, 0, 0, 0); // Start at midnight
+            end = new Date(now);
+            end.setHours(23, 59, 59, 999); // End at 11:59pm
             break;
         case "week":
             start = new Date(now);
