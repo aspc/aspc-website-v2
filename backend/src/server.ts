@@ -18,19 +18,15 @@ dotenv.config();
 const app: Express = express();
 
 // Middleware
-app.use(
-    cors({
-        origin: [
-            "http://localhost:3000",
-            "https://localhost:3001",
-            "https://aspc-website-v2.vercel.app",
-            "https://pomonastudents.org",
-        ],
-        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-        credentials: true,
-    })
-);
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://localhost:3001', 'https://aspc-website-v2.vercel.app','https://pomonastudents.org'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json());
+
+
 
 app.set("trust proxy", 1); // Required for secure cookies
 
@@ -40,28 +36,25 @@ const MONGODB_URI =
 
 // Session
 app.use(
-    session({
-        secret: process.env.SESSION_SECRET || "secretlongpassword",
-        resave: false,
-        saveUninitialized: false,
-        store: MongoStore.create({
-            mongoUrl: MONGODB_URI,
-            ttl: 24 * 60 * 60, // = 1 day (in seconds)
-            autoRemove: "native", // Use MongoDB's TTL index
-        }),
-        cookie: {
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-            httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        },
-    })
+  session({
+    secret: process.env.SESSION_SECRET || 'secretlongpassword',
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: MONGODB_URI,
+      ttl: 24 * 60 * 60, // = 1 day (in seconds)
+      autoRemove: 'native', // Use MongoDB's TTL index
+    }),
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      sameSite:  process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  })
 );
 
-// Test endpoint for frontend
-app.get("/api/test", (req: Request, res: Response) => {
-    res.json({ message: "ASPC API is running!" });
-});
+
 
 let bucket: GridFSBucket;
 

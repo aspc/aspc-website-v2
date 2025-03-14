@@ -1,13 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { User } from '@/types'; 
 
-interface User {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    isAdmin: boolean;
-}
 
 export function useAuth(requireAdmin: boolean = false) {
     const [user, setUser] = useState<User | null>(null);
@@ -18,7 +12,7 @@ export function useAuth(requireAdmin: boolean = false) {
         const checkAuth = async () => {
             try {
                 const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/auth/current_user`,
+                    `${process.env.BACKEND_LINK}/api/auth/current_user`, // Local API route 
                     {
                         credentials: "include",
                     }
@@ -34,7 +28,6 @@ export function useAuth(requireAdmin: boolean = false) {
                 }
             } catch (error) {
                 console.error("Auth check error:", error);
-                router.push("/login");
             } finally {
                 setLoading(false);
             }
@@ -43,25 +36,6 @@ export function useAuth(requireAdmin: boolean = false) {
         checkAuth();
     }, [router, requireAdmin]);
 
-
-    // const logout = async () => {
-    //     try {
-    //         const response = await fetch(
-    //             `${process.env.BACKEND_LINK}/api/auth/logout`,
-    //             {
-    //                 method: "POST",
-    //                 credentials: "include",
-    //             }
-    //         );
-
-    //         if (response.ok) {
-    //             setUser(null);
-    //             setTimeout(() => router.push("/login"), 1000);
-    //         }
-    //     } catch (error) {
-    //         console.error("Logout error:", error);
-    //     }
-    // };
 
     return { user, loading};
 }
