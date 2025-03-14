@@ -73,13 +73,13 @@ const HousingSuites = mongoose.model<IHousingSuites>(
 // Housing Rooms Schema
 interface IHousingRooms extends Document {
     id: number;
-    size?: number;
-    occupancy_type?: number;
+    size?: string;
+    occupancy_type?: string;
     closet_type?: string;
     bathroom_type?: string;
-    housing_suite_id: mongoose.Schema.Types.ObjectId;
+    housing_suite_id: mongoose.Types.ObjectId;
     housing_building_id: Number;
-    room_number: Number;
+    room_number: string;
 }
 
 const HousingRoomsSchema = new Schema<IHousingRooms>({
@@ -89,10 +89,10 @@ const HousingRoomsSchema = new Schema<IHousingRooms>({
         unique: true,
     },
     size: {
-        type: Number,
+        type: String,
     },
     occupancy_type: {
-        type: Number,
+        type: String,
     },
     closet_type: {
         type: String,
@@ -101,9 +101,9 @@ const HousingRoomsSchema = new Schema<IHousingRooms>({
         type: String,
     },
     housing_suite_id: {
-        type: mongoose.Schema.Types.ObjectId, // This might need to be changed to Number (though there is no data)
+        type: mongoose.Schema.Types.ObjectId,
         ref: "HousingSuites",
-        required: false, // TODO
+        required: true,
         index: true,
     },
     housing_building_id: {
@@ -113,9 +113,9 @@ const HousingRoomsSchema = new Schema<IHousingRooms>({
         index: true,
     },
     room_number: {
-        type: Number,
+        type: String,
         required: true,
-        //unique: true,
+        unique: true,
     },
 });
 
@@ -164,7 +164,7 @@ const HousingReviewsSchema = new Schema<IHousingReviews>({
         index: true,
     },
     user_id: {
-        type: mongoose.Schema.Types.ObjectId, // This might need to be changed to Number (though there is no data)
+        type: mongoose.Schema.Types.ObjectId,
         ref: "SAMLUser",
         required: true,
         index: true,

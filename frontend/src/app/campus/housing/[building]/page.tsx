@@ -7,11 +7,12 @@ interface Room {
     _id: string;
     id: number;
     room_number: string;
-    size?: string;
-    occupancy_type?: string;
-    closet_type?: string;
-    bathroom_type?: string;
-    housing_suite_id: string;
+    size?: number;
+    occupancy_type?: number;
+    closet_type?: string; // No data
+    bathroom_type?: string; // No data
+    housing_suite_id: string; // No data
+    housing_building_id: number;
     averageRating?: number;
     reviewCount?: number;
 }
@@ -24,7 +25,7 @@ interface Review {
     layout_rating?: number;
     temperature_rating?: number;
     comments?: string;
-    housing_room_id: string;
+    housing_room_id: number;
     user_id: string;
 }
 
@@ -37,23 +38,14 @@ interface ReviewAverages {
 }
 
 interface RoomWithReviews {
-    room: {
-        _id: string;
-        id: number;
-        room_number: string;
-        size?: string;
-        occupancy_type?: string;
-        closet_type?: string;
-        bathroom_type?: string;
-        housing_suite_id: string;
-    };
+    room: Room;
     reviews: Review[];
     averages: ReviewAverages;
 }
 
 export default function DynamicRooms() {
     const params = useParams();
-    const { building } = params;
+    const { building } = params; // Pass building id as a parameter in the URL
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [rooms, setRooms] = useState<Room[]>([]);
@@ -61,7 +53,7 @@ export default function DynamicRooms() {
     const [selectedRoom, setSelectedRoom] = useState<RoomWithReviews | null>(
         null
     );
-    const [showModal, setShowModal] = useState(false);
+    const [showModal, setShowModal] = useState(false); // NOTE: Show reviews modal (might be changed to a page)
 
     // Fetch room ratings for all rooms
     const fetchRoomRatings = async (roomsList: Room[]) => {
@@ -69,7 +61,7 @@ export default function DynamicRooms() {
             roomsList.map(async (room) => {
                 try {
                     const response = await fetch(
-                        `${process.env.BACKEND_LINK}/api/campus/housing/${room.room_number}/reviews`
+                        `${process.env.BACKEND_LINK}/api/campus/housing/${room.id}/reviews`
                     );
 
                     if (response.ok) {
@@ -84,7 +76,7 @@ export default function DynamicRooms() {
                     return room;
                 } catch (error) {
                     console.error(
-                        `Error fetching ratings for room ${room.room_number}:`,
+                        `Error fetching ratings for room ${room.id}:`,
                         error
                     );
                     return room;
@@ -110,16 +102,23 @@ export default function DynamicRooms() {
                 }
 
                 const data = await response.json();
-                const roomsData = data.rooms || [];
+                const roomsData: Room[] = data.rooms || [];
 
                 // Get ratings for all rooms
                 const roomsWithRatings = await fetchRoomRatings(roomsData);
                 setRooms(roomsWithRatings);
 
-                // Get building name from URL
-                if (typeof building === "string") {
-                    setBuildingName(decodeURIComponent(building));
+                // Get building name from the backend
+                const buildingResponse = await fetch(
+                    `${process.env.BACKEND_LINK}/api/campus/housing/${building}`
+                );
+                if (!buildingResponse.ok) {
+                    throw new Error(
+                        `Failed to fetch building: ${buildingResponse.status}`
+                    );
                 }
+                const buildingData = await buildingResponse.json();
+                setBuildingName(buildingData.name);
             } catch (error) {
                 console.error("Error fetching rooms:", error);
                 setError("Failed to load rooms. Please try again later.");
@@ -136,7 +135,7 @@ export default function DynamicRooms() {
     const handleViewReviews = async (room: Room) => {
         try {
             const response = await fetch(
-                `${process.env.BACKEND_LINK}/api/campus/housing/${room.room_number}/reviews`
+                `${process.env.BACKEND_LINK}/api/campus/housing/${room.id}/reviews`
             );
 
             if (!response.ok) {
@@ -175,7 +174,7 @@ export default function DynamicRooms() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {rooms.map((room) => (
                     <RoomCard
-                        key={room._id}
+                        key={room.id}
                         buildingName={buildingName}
                         room={room}
                         onViewReviews={() => handleViewReviews(room)}
@@ -227,11 +226,20 @@ interface RoomCardProps {
 const RoomCard = ({ buildingName, room, onViewReviews }: RoomCardProps) => {
     // Generate a descriptive room type label
     const getRoomTypeLabel = () => {
-        const parts = [];
-        if (room.occupancy_type) parts.push(room.occupancy_type);
-        if (room.bathroom_type)
-            parts.push(`with ${room.bathroom_type} bathroom`);
-        return parts.length > 0 ? parts.join(" ") : "Unknown type";
+        if (room.occupancy_type) {
+            switch (room.occupancy_type) {
+                case 1:
+                    return "Single";
+                case 2:
+                    return "Double";
+                case 3:
+                    return "Triple";
+                default:
+                    return room.occupancy_type;
+            }
+        } else {
+            return "Unknown";
+        }
     };
 
     return (
@@ -257,11 +265,8 @@ const RoomCard = ({ buildingName, room, onViewReviews }: RoomCardProps) => {
             <div className="mb-6">
                 <p className="text-lg text-gray-700">{getRoomTypeLabel()}</p>
                 {room.size && (
-                    <p className="text-lg text-gray-700">Size: {room.size}</p>
-                )}
-                {room.closet_type && (
                     <p className="text-lg text-gray-700">
-                        Closet: {room.closet_type}
+                        Size: {room.size} sq. ft.
                     </p>
                 )}
             </div>
