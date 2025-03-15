@@ -23,6 +23,12 @@ const nextConfig: NextConfig = {
                 hostname: "aspc-backend-v1.gps54p9mv93tm.us-west-2.cs.amazonlightsail.com",
                 port: "", 
                 pathname: "/api/members/profile-pic/**",
+            },
+            {
+                protocol: "https",  
+                hostname: "api.pomonastudents.org",
+                port: "", 
+                pathname: "/api/members/profile-pic/**",
             }
         ],
     },
