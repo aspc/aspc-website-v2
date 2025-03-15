@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+    async rewrites() {
+        return [
+          {
+            source: '/:path*',
+            destination: 'https://aspc-backend-v1.gps54p9mv93tm.us-west-2.cs.amazonlightsail.com/:path*',
+          },
+        ];
+      },
     images: {
         remotePatterns: [
             {

@@ -97,8 +97,6 @@ router.get('/login/saml', async (req: Request, res: Response) => {
             res.status(500).json({ message: 'Failed to save session' });
             return;
           }
-          res.set('Activate-Storage-Access', 'load');
-          res.set('Allowed-Origin', process.env.FRONTEND_LINK || 'http://localhost:3000');
           // Redirect to your frontend app
           res.redirect(process.env.FRONTEND_LINK || 'http://localhost:3000');
         });
@@ -185,59 +183,7 @@ router.get('/users', async (req: Request, res: Response) => {
     }
   });
 
-// -------------------------------------------------------------------------------------------------------
 
-
-// // Login
-// router.post('/login', async (req: Request, res: Response) => {
-//     const {email, password} = req.body;
-    
-//     try {
-//         const user = await User.findOne({ email })
-
-//         // Check if the user exists
-//         if (!user) {
-//             res.status(401).json({ message: 'The user does not exist' });
-//             return;
-//         }
-
-//         // Check if the passwords match
-//         // Note: in production use bcrypt.compare() to compare hashed passwords
-//         if (password != user.password) {
-//             res.status(401).json({ message: 'Invalid password' });
-//             return;
-//         }
-
-//         // Save user info in session
-//         (req.session as any).user = {
-//             email: user.email,
-//             name: user.name,
-//             isAdmin: user.is_admin,
-//         };
-
-//         res.status(200).json({ message: 'Login successful'})
-
-//     } catch (error) {
-//         res.status(500).json({ message: 'Server error' });
-//     }
-
-//     });
-
-// Logout
-router.post('/logout', async (req: Request, res: Response) => {
-    if (req.session) {
-        req.session.destroy(err => {
-            if (err) {
-                res.status(500).json({ message: 'Unable to log out' });
-            } else {
-                res.status(200).json({ message: 'Logout successful' });
-            }
-        })
-    } else {
-        res.status(400).json({ message: 'You are already logged out'});
-    };
-
-});
 
 
 // Debug route for session and cookie troubleshooting
