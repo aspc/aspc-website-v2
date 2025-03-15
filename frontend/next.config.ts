@@ -6,13 +6,8 @@ const nextConfig: NextConfig = {
           // Only proxy routes that start with /api/
           {
             source: '/api/:path*',
-            destination: 'https://aspc-backend-v1.gps54p9mv93tm.us-west-2.cs.amazonlightsail.com/:path*',
+            destination: 'https://aspc-backend-v1.gps54p9mv93tm.us-west-2.cs.amazonlightsail.com/api/:path*',
           },
-          // Allow all other routes to be handled by Next.js
-          {
-            source: '/:path*',
-            destination: '/:path*',
-          }
         ];
       },
     images: {
