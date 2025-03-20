@@ -135,6 +135,8 @@ const HousingReviewsSchema = new Schema<IHousingReviews>({
     pictures: [{ 
         type: mongoose.Schema.Types.ObjectId,
     }]
+}, {
+    timestamps: true
 });
 
 const HousingReviews = mongoose.model<IHousingReviews>('HousingReviews', HousingReviewsSchema);
