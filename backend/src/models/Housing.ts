@@ -86,6 +86,7 @@ const HousingRoomsSchema = new Schema<IHousingRooms>({
 
 const HousingRooms = mongoose.model<IHousingRooms>('HousingRooms', HousingRoomsSchema);
 
+
 // Housing Reviews Schema
 interface IHousingReviews extends Document {
     id: number;
@@ -95,8 +96,8 @@ interface IHousingReviews extends Document {
     temperature_rating?: number;
     comments?: string;
     housing_room_id: number; 
-    user_id: mongoose.Types.ObjectId; // TODO
-    pictures: mongoose.Types.ObjectId[]; // Id of picture after uploading to GridFS
+    user_id: mongoose.Types.ObjectId; 
+    pictures: mongoose.Types.ObjectId[]; // list of picture _ids
 }
 
 const HousingReviewsSchema = new Schema<IHousingReviews>({
@@ -127,7 +128,7 @@ const HousingReviewsSchema = new Schema<IHousingReviews>({
         index: true
     },
     user_id: {
-        type: mongoose.Schema.Types.ObjectId, // TODO
+        type: mongoose.Schema.Types.ObjectId,
         ref: 'SAMLUser',
         index: true
     },
