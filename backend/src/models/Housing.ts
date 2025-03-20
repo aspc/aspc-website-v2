@@ -96,7 +96,7 @@ interface IHousingReviews extends Document {
     temperature_rating?: number;
     comments?: string;
     housing_room_id: number; 
-    user_id: mongoose.Types.ObjectId; 
+    user_email: string; 
     pictures: mongoose.Types.ObjectId[]; // list of picture _ids
 }
 
@@ -127,10 +127,9 @@ const HousingReviewsSchema = new Schema<IHousingReviews>({
         required: true,
         index: true
     },
-    user_id: {
-        type: mongoose.Schema.Types.ObjectId,
+    user_email: {
+        type: String,
         ref: 'SAMLUser',
-        index: true
     },
     pictures: [{ 
         type: mongoose.Schema.Types.ObjectId,
