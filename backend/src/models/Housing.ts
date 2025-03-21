@@ -39,47 +39,16 @@ const HousingBuildings = mongoose.model<IHousingBuildings>(
     HousingBuildingsSchema
 );
 
-// Housing Suites Schema
-interface IHousingSuites extends Document {
-    id: number;
-    suite_type: number;
-    housing_building_id: Number;
-}
-
-const HousingSuitesSchema = new Schema<IHousingSuites>({
-    id: {
-        type: Number,
-        required: true,
-        unique: true,
-    },
-    suite_type: {
-        type: Number,
-        default: 0,
-        required: true,
-    },
-    housing_building_id: {
-        type: Number,
-        ref: "HousingBuildings",
-        required: true,
-        index: true,
-    },
-});
-
-const HousingSuites = mongoose.model<IHousingSuites>(
-    "HousingSuites",
-    HousingSuitesSchema
-);
-
 // Housing Rooms Schema
 interface IHousingRooms extends Document {
     id: number;
     size?: number;
     occupancy_type?: number;
-    closet_type?: string;
-    bathroom_type?: string;
-    housing_suite_id: mongoose.Schema.Types.ObjectId;
-    housing_building_id: Number;
-    room_number: Number;
+    closet_type?: number;
+    bathroom_type?: number;
+    housing_suite_id: number; // TODO: DELETE
+    housing_building_id: number;
+    room_number: string;
 }
 
 const HousingRoomsSchema = new Schema<IHousingRooms>({
@@ -95,27 +64,26 @@ const HousingRoomsSchema = new Schema<IHousingRooms>({
         type: Number,
     },
     closet_type: {
-        type: String,
+        type: Number,
     },
     bathroom_type: {
-        type: String,
+        type: Number,
     },
     housing_suite_id: {
-        type: mongoose.Schema.Types.ObjectId, // This might need to be changed to Number (though there is no data)
+        // TODO: DELETE
+        type: Number,
         ref: "HousingSuites",
-        required: false, // TODO
         index: true,
     },
     housing_building_id: {
         type: Number,
-        ref: "HousingBuildings",
         required: true,
+        ref: "HousingBuildings",
         index: true,
     },
     room_number: {
-        type: Number,
+        type: String,
         required: true,
-        //unique: true,
     },
 });
 
@@ -132,48 +100,57 @@ interface IHousingReviews extends Document {
     layout_rating?: number;
     temperature_rating?: number;
     comments?: string;
-    housing_room_id: Number;
-    user_id: mongoose.Types.ObjectId;
+    housing_room_id: number;
+    user_email: string;
+    pictures: mongoose.Types.ObjectId[]; // list of picture _ids
 }
 
-const HousingReviewsSchema = new Schema<IHousingReviews>({
-    id: {
-        type: Number,
-        required: true,
-        unique: true,
+const HousingReviewsSchema = new Schema<IHousingReviews>(
+    {
+        id: {
+            type: Number,
+            required: true,
+            unique: true,
+        },
+        overall_rating: {
+            type: Number,
+        },
+        quiet_rating: {
+            type: Number,
+        },
+        layout_rating: {
+            type: Number,
+        },
+        temperature_rating: {
+            type: Number,
+        },
+        comments: {
+            type: String,
+        },
+        housing_room_id: {
+            type: Number,
+            ref: "HousingRooms",
+            required: true,
+            index: true,
+        },
+        user_email: {
+            type: String,
+            ref: "SAMLUser",
+        },
+        pictures: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+            },
+        ],
     },
-    overall_rating: {
-        type: Number,
-    },
-    quiet_rating: {
-        type: Number,
-    },
-    layout_rating: {
-        type: Number,
-    },
-    temperature_rating: {
-        type: Number,
-    },
-    comments: {
-        type: String,
-    },
-    housing_room_id: {
-        type: Number,
-        ref: "HousingRooms",
-        required: true,
-        index: true,
-    },
-    user_id: {
-        type: mongoose.Schema.Types.ObjectId, // This might need to be changed to Number (though there is no data)
-        ref: "SAMLUser",
-        required: true,
-        index: true,
-    },
-});
+    {
+        timestamps: true,
+    }
+);
 
 const HousingReviews = mongoose.model<IHousingReviews>(
     "HousingReviews",
     HousingReviewsSchema
 );
 
-export { HousingBuildings, HousingRooms, HousingSuites, HousingReviews };
+export { HousingBuildings, HousingRooms, HousingReviews };
