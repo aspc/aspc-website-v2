@@ -202,7 +202,7 @@ const Header = () => {
                                         handleDropdownClick("Members")
                                     }
                                 >
-                                    <span>Members</span>
+                                    <span>Officers</span>
                                 </button>
 
                                 {/* Members Dropdown with ASPC Groups and Pages */}
@@ -227,6 +227,14 @@ const Header = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Elections */}
+                            <Link
+                                href="/elections"
+                                className="hover:text-blue-500"
+                            >
+                                Elections
+                            </Link>
 
                             {/* Resources Section */}
                             <div className="relative dropdown-container">
@@ -351,6 +359,15 @@ const Header = () => {
                         {/* Mobile Menu Header */}
                         <div className="flex items-center justify-between p-4">
                             <div className="flex items-center">
+                                <Link
+                                    href="/"
+                                    className="flex items-center space-x-2 group"
+                                    onClick={() =>
+                                        setIsMobileMenuOpen(
+                                            false
+                                        )
+                                    }
+                                >
                                 <Image
                                     src="/logo4.png"
                                     alt="ASPC Logo"
@@ -358,6 +375,7 @@ const Header = () => {
                                     height={50}
                                     className="ml-2"
                                 />
+                                </Link>
                             </div>
                             <button
                                 onClick={() => setIsMobileMenuOpen(false)}
@@ -395,7 +413,7 @@ const Header = () => {
                                         handleDropdownClick("MembersMobile")
                                     }
                                 >
-                                    <span>Members</span>
+                                    <span>Officers</span>
                                 </button>
 
                                 {openDropdown === "MembersMobile" && (
@@ -426,6 +444,15 @@ const Header = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Elections */}
+                            <Link
+                                href="/elections"
+                                className="text-lg"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                Elections
+                            </Link>
 
                             {/* Resources dropdown */}
                             <div className="relative dropdown-container">
