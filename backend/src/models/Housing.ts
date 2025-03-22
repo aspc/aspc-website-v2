@@ -46,7 +46,7 @@ interface IHousingRooms extends Document {
     occupancy_type?: number;
     closet_type?: number;
     bathroom_type?: number;
-    housing_suite_id: number; // TODO: DELETE
+    // housing_suite_id?: number; // DELETE
     housing_building_id: number;
     room_number: string;
 }
@@ -69,12 +69,11 @@ const HousingRoomsSchema = new Schema<IHousingRooms>({
     bathroom_type: {
         type: Number,
     },
-    housing_suite_id: {
-        // TODO: DELETE
-        type: Number,
-        ref: "HousingSuites",
-        index: true,
-    },
+    // housing_suite_id: { // DELETE
+    //     type: Number,
+    //     ref: 'HousingSuites',
+    //     index: true
+    // },
     housing_building_id: {
         type: Number,
         required: true,
