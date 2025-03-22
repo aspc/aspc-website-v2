@@ -9,9 +9,9 @@ interface Room {
     room_number: string;
     size?: number;
     occupancy_type?: number;
-    closet_type?: string; // No data
-    bathroom_type?: string; // No data
-    housing_suite_id: string; // No data
+    closet_type?: number; // No data
+    bathroom_type?: number; // No data
+    housing_suite_id: number; // TODO: DELETE
     housing_building_id: number;
     averageRating?: number;
     reviewCount?: number;
@@ -26,7 +26,8 @@ interface Review {
     temperature_rating?: number;
     comments?: string;
     housing_room_id: number;
-    user_id: string;
+    user_email: string;
+    pictures?: string[];
 }
 
 interface ReviewAverages {
@@ -48,12 +49,13 @@ export default function DynamicRooms() {
     const { building } = params; // Pass building id as a parameter in the URL
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [buildingNotFound, setBuildingNotFound] = useState(false);
     const [rooms, setRooms] = useState<Room[]>([]);
     const [buildingName, setBuildingName] = useState<string>("");
     const [selectedRoom, setSelectedRoom] = useState<RoomWithReviews | null>(
         null
-    );
-    const [showModal, setShowModal] = useState(false); // NOTE: Show reviews modal (might be changed to a page)
+    ); // TODO: DELETE/REPLACE
+    const [showModal, setShowModal] = useState(false); // TODO: DELETE/REPLACE
 
     // Fetch room ratings for all rooms
     const fetchRoomRatings = async (roomsList: Room[]) => {
@@ -91,34 +93,60 @@ export default function DynamicRooms() {
         const fetchRooms = async () => {
             try {
                 setLoading(true);
+                setBuildingNotFound(false);
+
+                // Validate building parameter is a number
+                const buildingId = Number(building);
+                if (isNaN(buildingId)) {
+                    setBuildingNotFound(true);
+                    setError("Invalid building ID format");
+                    return;
+                }
+
+                // First fetch building info to check if it exists
+                const buildingResponse = await fetch(
+                    `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}`
+                );
+
+                if (!buildingResponse.ok) {
+                    if (buildingResponse.status === 404) {
+                        setBuildingNotFound(true);
+                        setError("Building not found");
+                    } else {
+                        throw new Error(
+                            `Failed to fetch building: ${buildingResponse.status}`
+                        );
+                    }
+                    return;
+                }
+
+                const buildingData = await buildingResponse.json();
+                setBuildingName(buildingData.name);
+
+                // Now fetch rooms for this building
                 const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/${building}/rooms`
+                    `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}/rooms`
                 );
 
                 if (!response.ok) {
-                    throw new Error(
-                        `Failed to fetch rooms: ${response.status}`
-                    );
+                    if (response.status === 404) {
+                        // No rooms but building exists
+                        setRooms([]);
+                    } else {
+                        throw new Error(
+                            `Failed to fetch rooms: ${response.status}`
+                        );
+                    }
+                    return;
                 }
 
                 const data = await response.json();
-                const roomsData: Room[] = data.rooms || [];
+
+                const roomsData: Room[] = data || [];
 
                 // Get ratings for all rooms
                 const roomsWithRatings = await fetchRoomRatings(roomsData);
                 setRooms(roomsWithRatings);
-
-                // Get building name from the backend
-                const buildingResponse = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/${building}`
-                );
-                if (!buildingResponse.ok) {
-                    throw new Error(
-                        `Failed to fetch building: ${buildingResponse.status}`
-                    );
-                }
-                const buildingData = await buildingResponse.json();
-                setBuildingName(buildingData.name);
             } catch (error) {
                 console.error("Error fetching rooms:", error);
                 setError("Failed to load rooms. Please try again later.");
@@ -153,10 +181,27 @@ export default function DynamicRooms() {
     const closeModal = () => {
         setShowModal(false);
         setSelectedRoom(null);
-    };
+    }; // TODO: DELETE/REPLACE
 
     if (loading) {
         return <Loading />;
+    }
+
+    if (buildingNotFound) {
+        return (
+            <div className="flex items-center justify-center min-h-[calc(100vh-12rem)] container mx-auto px-4">
+                <div className="text-center max-w-md w-full p-6 bg-white rounded-lg shadow-sm">
+                    <h1 className="text-3xl font-bold text-red-500">
+                        Building Not Found
+                    </h1>
+                    <p className="text-lg text-gray-700 mt-4">
+                        The building you&apos;re looking for doesn&apos;t exist.
+                        Please check the URL and try again.
+                    </p>
+                    <p className="text-gray-600 mt-2">Error: {error}</p>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -171,18 +216,27 @@ export default function DynamicRooms() {
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {rooms.map((room) => (
-                    <RoomCard
-                        key={room.id}
-                        buildingName={buildingName}
-                        room={room}
-                        onViewReviews={() => handleViewReviews(room)}
-                    />
-                ))}
-            </div>
+            {rooms.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {rooms.map((room) => (
+                        <RoomCard
+                            key={room.id}
+                            buildingName={buildingName}
+                            room={room}
+                            onViewReviews={() => handleViewReviews(room)} // TODO: DELETE/REPLACE
+                        />
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-12 bg-gray-50 rounded-lg">
+                    <p className="text-lg text-gray-700">
+                        No rooms found for this building.
+                    </p>
+                </div>
+            )}
 
             {/* Reviews Modal */}
+            {/* TODO: DELETE/REPLACE */}
             {showModal && selectedRoom && (
                 <ReviewsModal
                     room={selectedRoom.room}
@@ -195,6 +249,8 @@ export default function DynamicRooms() {
         </div>
     );
 }
+
+// Rest of the code remains unchanged
 
 // Star rating component
 const StarRating = ({ rating }: { rating: number }) => {
@@ -271,6 +327,7 @@ const RoomCard = ({ buildingName, room, onViewReviews }: RoomCardProps) => {
                 )}
             </div>
 
+            {/* TODO: DELETE/REPLACE */}
             <button
                 className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors"
                 onClick={onViewReviews}
@@ -281,6 +338,7 @@ const RoomCard = ({ buildingName, room, onViewReviews }: RoomCardProps) => {
     );
 };
 
+// TODO: DELETE/REPLACE everything below this line
 // Reviews Modal Component
 interface ReviewsModalProps {
     room: Room;
