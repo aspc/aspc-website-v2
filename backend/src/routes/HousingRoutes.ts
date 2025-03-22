@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import {
     HousingBuildings,
-    HousingSuites,
+    //TODO: delete HousingSuites,
     HousingRooms,
     HousingReviews,
 } from "../models/Housing";
@@ -21,15 +21,16 @@ router.get("/", async (req: Request, res: Response) => {
 router.get("/:building", async (req: Request, res: Response) => {
     try {
         // Get building id
-        const { building } = req.params;
-        console.log("Building ID:", building);
-        if (!building) {
-            res.status(404).json({ message: "No building id provided" });
+        const buildingId = parseInt(req.params.building, 10);
+
+        // Check if conversion is valid
+        if (isNaN(buildingId)) {
+            res.status(400).json({ message: "Invalid building ID format" });
             return;
         }
 
         // Find building by id
-        const buildingData = await HousingBuildings.findOne({ id: building });
+        const buildingData = await HousingBuildings.findOne({ id: buildingId });
         if (!buildingData) {
             res.status(404).json({ message: "Building not found" });
             return;
@@ -43,48 +44,54 @@ router.get("/:building", async (req: Request, res: Response) => {
 });
 
 // Get suites in a building
-// NOTE: This route is not used since we don't have data for suites, consider removing
-router.get("/:building/suites", async (req: Request, res: Response) => {
-    try {
-        // Get building id
-        const { building } = req.params;
-        if (!building) {
-            res.status(404).json({ message: "No building id provided" });
-            return;
-        }
+// TODO: This route is not used since we don't have data for suites, consider removing
+// router.get("/:building/suites", async (req: Request, res: Response) => {
+//     try {
+//         // Get building id
+//         const { building } = req.params;
+//         if (!building) {
+//             res.status(404).json({ message: "No building id provided" });
+//             return;
+//         }
 
-        // Get suites
-        const suites = await HousingSuites.find({
-            housing_building_id: building,
-        });
-        if (!suites || suites.length === 0) {
-            res.status(404).json({ message: "Suites not found" });
-            return;
-        }
-        res.json(suites);
-    } catch (error) {
-        res.status(500).json({ message: "Server error" });
-    }
-});
+//         // Get suites
+//         const suites = await HousingSuites.find({
+//             housing_building_id: building,
+//         });
+//         if (!suites || suites.length === 0) {
+//             res.status(404).json({ message: "Suites not found" });
+//             return;
+//         }
+//         res.json(suites);
+//     } catch (error) {
+//         res.status(500).json({ message: "Server error" });
+//     }
+// });
 
 // Get all rooms in a building (by building id)
 router.get("/:building/rooms", async (req: Request, res: Response) => {
     try {
         // Get building id
-        const { building } = req.params;
-        if (!building) {
-            res.status(404).json({ message: "No building id provided" });
+        const buildingId = parseInt(req.params.building, 10);
+
+        // Check if conversion is valid
+        if (isNaN(buildingId)) {
+            res.status(400).json({ message: "Invalid building ID format" });
             return;
         }
 
-        // Get all rooms in those suites
+        // Get all rooms in the building
         const rooms = await HousingRooms.find({
-            housing_building_id: building,
+            housing_building_id: buildingId,
         });
 
-        res.json({ rooms });
+        if (!rooms || rooms.length === 0) {
+            res.status(404).json({ message: "Rooms not found" });
+            return;
+        }
+
+        res.json(rooms);
     } catch (error) {
-        console.error("Error fetching rooms:", error);
         res.status(500).json({ message: "Server error" });
     }
 });
@@ -100,6 +107,7 @@ router.get("/:room/reviews", async (req: Request, res: Response) => {
             res.status(400).json({ message: "Invalid room ID format" });
             return;
         }
+
         // Find the room by room id
         const roomData = await HousingRooms.findOne({ id: roomId });
 
@@ -163,7 +171,6 @@ router.get("/:room/reviews", async (req: Request, res: Response) => {
             },
         });
     } catch (error) {
-        console.error("Error fetching reviews:", error);
         res.status(500).json({ message: "Server error" });
     }
 });
