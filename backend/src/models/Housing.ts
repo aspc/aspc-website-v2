@@ -44,7 +44,7 @@ interface IHousingRooms extends Document {
     occupancy_type?: number;
     closet_type?: number;
     bathroom_type?: number;
-    housing_suite_id: number; // DELETE
+    housing_suite_id?: number; // DELETE
     housing_building_id: number;
     room_number: string;
 }
