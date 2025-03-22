@@ -300,9 +300,12 @@ const RoomCard = ({ buildingName, room, onViewReviews }: RoomCardProps) => {
 
     return (
         <div className="w-full border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">
-                {buildingName} : {room.room_number}
-            </h2>
+            <div className="mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">
+                    Room {room.room_number}
+                </h2>
+                <p className="text-sm text-gray-500">{buildingName}</p>
+            </div>
 
             <div className="flex items-center mb-4">
                 <span className="text-gray-600 mr-2">Rating:</span>
