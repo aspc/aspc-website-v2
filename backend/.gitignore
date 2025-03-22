@@ -3,3 +3,4 @@ dist
 .env
 /certs
 idp_metadata.xml
+seed-*
