@@ -7,11 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PageContent } from "@/types";
 import Image from "next/image";
 
-const groups: string[] = [
-    "Senate",
-    "Staff",
-    "Software",
-];
+const groups: string[] = ["Senate", "Staff", "Software"];
 
 const Header = () => {
     const { user, loading } = useAuth();
@@ -20,6 +16,7 @@ const Header = () => {
         members: [],
         resources: [],
         pressroom: [],
+        elections: [], // DELETE AFTER ELECTIONS
     });
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
     const [loadingPages, setLoadingPages] = useState(true);
@@ -40,6 +37,7 @@ const Header = () => {
                     members: [],
                     resources: [],
                     pressroom: [],
+                    elections: [], // DELETE AFTER ELECTIONS
                 };
 
                 data.forEach((page) => {
@@ -228,13 +226,25 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/* Elections */}
-                            <Link
-                                href="/elections"
-                                className="hover:text-blue-500"
-                            >
-                                Elections
-                            </Link>
+                            {/* Elections Section DELETE AFTER ELECTIONS*/}
+                            <div className="relative dropdown-container">
+                                <button
+                                    className="flex items-center space-x-1 hover:text-blue-500"
+                                    onClick={() =>
+                                        handleDropdownClick("Elections")
+                                    }
+                                >
+                                    <span>Elections</span>
+                                </button>
+
+                                {/* Elections Pages Dropdown DELETE AFTER ELECTIONS */}
+                                {openDropdown === "Elections" && (
+                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
+                                        {/* Dynamic Election Pages */}
+                                        {renderSectionLinks("elections")}
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Resources Section */}
                             <div className="relative dropdown-container">
@@ -251,29 +261,28 @@ const Header = () => {
                                 {openDropdown === "Resources" && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         {renderSectionLinks("resources")}
-                                    
 
-                                    <Link
-                                        href="/campus/course-reviews"
-                                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                    >
-                                        Course Reviews
-                                    </Link>
+                                        <Link
+                                            href="/campus/course-reviews"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                        >
+                                            Course Reviews
+                                        </Link>
 
-                                    <Link
-                                        href="/campus/housing"
-                                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                    >
-                                        Housing Reviews
-                                    </Link>
-                                    
-                                    <Link
-                                        href="/campus/instructor-reviews"
-                                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                    >
-                                        Instructor Reviews
-                                    </Link>
-                                </div>
+                                        <Link
+                                            href="/campus/housing"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                        >
+                                            Housing Reviews
+                                        </Link>
+
+                                        <Link
+                                            href="/campus/instructor-reviews"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                        >
+                                            Instructor Reviews
+                                        </Link>
+                                    </div>
                                 )}
                             </div>
 
@@ -362,19 +371,15 @@ const Header = () => {
                                 <Link
                                     href="/"
                                     className="flex items-center space-x-2 group"
-                                    onClick={() =>
-                                        setIsMobileMenuOpen(
-                                            false
-                                        )
-                                    }
+                                    onClick={() => setIsMobileMenuOpen(false)}
                                 >
-                                <Image
-                                    src="/logo4.png"
-                                    alt="ASPC Logo"
-                                    width={50}
-                                    height={50}
-                                    className="ml-2"
-                                />
+                                    <Image
+                                        src="/logo4.png"
+                                        alt="ASPC Logo"
+                                        width={50}
+                                        height={50}
+                                        className="ml-2"
+                                    />
                                 </Link>
                             </div>
                             <button
@@ -445,14 +450,24 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/* Elections */}
-                            <Link
-                                href="/elections"
-                                className="text-lg"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                Elections
-                            </Link>
+                            {/* Elections - Dynamic in Mobile View */}
+                            <div className="relative dropdown-container">
+                                <button
+                                    className="text-lg flex items-center space-x-1"
+                                    onClick={() =>
+                                        handleDropdownClick("ElectionsMobile")
+                                    }
+                                >
+                                    <span>Elections</span>
+                                </button>
+
+                                {openDropdown === "ElectionsMobile" && (
+                                    <div className="ml-2 mt-2">
+                                        {/* Elections links DELETE AFTER ELECTIONS */}
+                                        {renderSectionLinks("elections", true)}
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Resources dropdown */}
                             <div className="relative dropdown-container">
@@ -468,14 +483,32 @@ const Header = () => {
                                 {openDropdown === "ResourcesMobile" && (
                                     <div className="ml-2 mt-2">
                                         {renderSectionLinks("resources", true)}
-                                        
-                                        <Link href="/campus/course-reviews" className="block px-4 py-2 hover:text-yellow-400">
+
+                                        <Link
+                                            href="/campus/course-reviews"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
                                             Course Reviews
                                         </Link>
-                                        <Link href="/campus/housing" className="block px-4 py-2 hover:text-yellow-400">
+                                        <Link
+                                            href="/campus/housing"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
                                             Housing Reviews
                                         </Link>
-                                        <Link href="/campus/instructor-reviews" className="block px-4 py-2 hover:text-yellow-400">
+                                        <Link
+                                            href="/campus/instructor-reviews"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
                                             Instructor Reviews
                                         </Link>
                                     </div>
