@@ -116,4 +116,3 @@ Internet <---------------->| API Gateway/Proxy |
 4. **SAML Authentication**: Integration with college's existing identity system
 5. **GridFS for File Storage**: Storage of binary files (images) directly in MongoDB
 6. **Engage API Integration**: External service for retrieving and displaying campus events
-6. **Engage API Integration**: External service for retrieving and displaying campus events
