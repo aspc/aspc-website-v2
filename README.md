@@ -135,8 +135,10 @@ NODE_ENV=development
 SESSION_SECRET=your_secret_key_here
 ENTITY_ID=<backend_server_url>
 IDP_METADATA_URL=<url_from_ITS>
+ENGAGE_API_URL=<engage_url>
+ENGAGE_API_KEY=<engage key>
 ```
-Note: last two are only needed for authentication, and application can still be run without them.
+Note: last four are only needed for events pulling or authentication, and application can still be run without them.
 
 **Frontend .env**
 ```

@@ -1,125 +1,119 @@
-# High-Level Architecture
+# ASPC Platform Architecture
 
 ## System Overview
 
-The ASPC Student Platform follows a modern web application architecture with clearly separated concerns:
+The ASPC Student Platform is a web application with a client-server architecture that serves Pomona College students. It consists of three primary components:
+
+1. **Next.js Frontend** - Client-side application (pomonastudents.org)
+2. **Express Backend API** - Server-side application (api.pomonastudents.org)
+3. **MongoDB Database** - Data persistence layer
+
+## Architecture Diagram
 
 ```
-+------------------+       +------------------+       +------------------+
-|                  |       |                  |       |                  |
-|  Frontend        |------>|  Backend API     |------>|  Database        |
-|  (Next.js)       |       |  (Express)       |       |  (MongoDB)       |
-|                  |       |                  |       |                  |
-+------------------+       +------------------+       +------------------+
-         |                         |
-         |                         |
-         v                         v
-+------------------+       +------------------+
-|                  |       |                  |
-|  Client Browser  |       |  SAML IdP        |
-|                  |       |  (Pomona ITS)    |
-+------------------+       +------------------+
+                                 +----------------+
+                                 |                |
+                                 |   MongoDB      |
+                                 |   Database     |
+                                 |                |
+                                 +--------+-------+
+                                          ^
+                                          |
+                                          |
++-------------------+          +----------+---------+
+|                   |  HTTP/S  |                    |
+|   Next.js         +--------->+    Express         |
+|   Frontend        |  API     |    Backend         |
+|                   |  Calls   |                    |
++-------------------+          +----------+---------+
+                                          ^
+                                          |
+                                          |
+                                 +--------+-------+
+                                 |                |
+                                 |  Microsoft     |
+                                 |  Entra ID      |
+                                 |  (Pomona ITS)  |
+                                 +----------------+
 ```
 
-## Component Architecture
+## Frontend Architecture
 
-### Frontend (Next.js)
+The frontend is a Next.js React application using the App Router pattern:
 
-The frontend is built with Next.js, a React framework that provides server-side rendering, static site generation, and routing.
+- **Client-side routing** with dynamic page components
+- **Component-based architecture** for UI elements
+- **Server-side data fetching** via API calls to the backend
+- **Responsive design** using Tailwind CSS
 
-**Key Structure:**
-- **Pages**: Route-based views (e.g., home, events, resources)
-- **Components**: Reusable UI elements
-- **Hooks**: State management and API integration
-- **Context**: Global state for user authentication
-- **Services**: API client and helper functions
+## Backend Architecture
 
-### Backend (Express)
+The backend is an Express.js application with a RESTful API architecture:
 
-The backend is an Express.js application that provides RESTful API endpoints and handles authentication.
-
-**Key Structure:**
-- **Routes**: API endpoint definitions
-- **Controllers**: Request handlers
-- **Models**: Data schemas for MongoDB
-- **Middleware**: Authentication, validation, error handling
-- **Services**: Business logic and external integrations
-- **Config**: Environment-specific configuration
-
-### Database (MongoDB)
-
-MongoDB serves as the primary data store with the following collections:
-
-- **Users**: Student and staff accounts
-- **Events**: Calendar events and details
-- **Resources**: Student resources and information
-- **Pages**: Content for static pages
-- **Settings**: System configuration
-
-## Authentication Flow
-
-The system uses SAML authentication with Pomona College's Identity Provider (IdP):
-
-1. User attempts to access protected resource
-2. System redirects to `/login/saml` endpoint
-3. Backend creates SAML request to ITS
-4. User authenticates with college credentials at ITS
-5. ITS sends SAML response with user attributes
-6. Backend validates response and creates session
-7. User is redirected to the original resource
+- **Route-based API organization** for different resources
+- **Controller pattern** for handling business logic
+- **Middleware-based processing** for authentication and validation
+- **Service layer** for external integrations
 
 ## Data Flow
 
-1. **Content Creation**:
-   - Staff creates content (events, resources)
-   - Content is stored in MongoDB
-   - Content becomes available via API
+### Client-Server Communication
 
-2. **Content Consumption**:
-   - User requests page from frontend
-   - Frontend fetches data from backend API
-   - Backend retrieves data from MongoDB
-   - Frontend renders data for user
+1. Frontend makes HTTP requests to backend API endpoints
+2. Backend processes requests, interacts with the database
+3. Backend returns responses to frontend
+4. Frontend renders the data for the user
 
-## System Interfaces
+### External System Integration
 
-### External Interfaces
+- Backend integrates with Pomona College ITS for authentication
+- Backend fetches campus events from the Engage API
+  - Events service (`EngageEventsService.ts`) retrieves, filters, and formats campus events
+  - Provides standardized event data to frontend calendar and homepage displays
+  - Events service (`EngageEventsService.ts`) retrieves, filters, and formats campus events
+  - Provides standardized event data to frontend calendar and homepage displays
 
-- **SAML Integration**: Authentication with Pomona College ITS
-- **Email Service**: Notifications and alerts
-- **File Storage**: Document and image storage
+## Deployment Architecture
 
-### Internal Interfaces
+### Production Environment
 
-- **REST API**: Communication between frontend and backend
-- **MongoDB Client**: Database connectivity
-- **Logger**: System logging and monitoring
+```
+                           +-------------------+
+Internet <---------------->| API Gateway/Proxy |
+                           +--------+----------+
+                                    |
+                                    v
+    +-----------------+    +--------+----------+
+    |                 |    |                   |
+    | Vercel          |    | AWS Lightsail     |
+    | (Frontend)      |    | (Backend)         |
+    |                 |    |                   |
+    +-----------------+    +--------+----------+
+                                    |
+                                    v
+                           +--------+----------+
+                           |                   |
+                           | MongoDB Database  |
+                           |                   |
+                           +-------------------+
+```
 
-## Scalability Considerations
+- **Frontend**: Deployed on Vercel (pomonastudents.org)
+- **Backend**: Deployed on AWS Lightsail (api.pomonastudents.org)
+- **Database**: MongoDB instance
 
-- Containerized deployment with Docker
-- Stateless backend for horizontal scaling
-- Caching for frequently accessed data
-- Optimized database indexing
+### Development Environment
 
-## Security Architecture
+- Local HTTPS-enabled development servers
+- Self-signed SSL certificates for SAML compatibility
+- Docker containerization for consistent environments
 
-- HTTPS for all communications
-- SAML for secure authentication
-- JWT for API authorization
-- Input validation and sanitization
-- CSRF protection
-- Rate limiting
-- Security headers
+## Key Technical Decisions
 
-## Development and Deployment
-
-- Local development with SSL
-- Development, staging, and production environments
-- CI/CD pipeline for automated testing and deployment
-- Docker for containerization
-- Monitoring and logging
-
-
-
-
+1. **Next.js for Frontend**: Provides server-side rendering capabilities and modern React features
+2. **Express for Backend**: Lightweight, flexible Node.js server framework
+3. **MongoDB for Database**: Flexible schema design for evolving requirements
+4. **SAML Authentication**: Integration with college's existing identity system
+5. **GridFS for File Storage**: Storage of binary files (images) directly in MongoDB
+6. **Engage API Integration**: External service for retrieving and displaying campus events
+6. **Engage API Integration**: External service for retrieving and displaying campus events
