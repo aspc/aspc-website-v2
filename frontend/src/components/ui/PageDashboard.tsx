@@ -20,7 +20,13 @@ const PageDashboard = () => {
     const [loading, setLoading] = useState(false);
 
     // Available page sections
-    const pageSections = ["about", "members", "resources", "pressroom"];
+    const pageSections = [
+        "about",
+        "members",
+        "resources",
+        "pressroom",
+        "elections", // DELETE AFTER ELECTIONS
+    ];
 
     const fetchPages = async () => {
         try {
@@ -31,14 +37,10 @@ const PageDashboard = () => {
             if (response.ok) {
                 const data: PageContent[] = await response.json();
                 setLinkPages(
-                    data.filter(
-                        (page) => page.link && page.link !== null 
-                    )
+                    data.filter((page) => page.link && page.link !== null)
                 );
                 setStaticPages(
-                    data.filter(
-                        (page) => page.content && page.content !== null 
-                    )
+                    data.filter((page) => page.content && page.content !== null)
                 );
             }
         } catch (error) {
