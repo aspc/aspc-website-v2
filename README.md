@@ -22,13 +22,13 @@ Frontend: Vercel at pomonastudents.org
 
 This repository includes several documentation files to help you understand and work with the application:
 
-- [Getting Started](./docs/GETTING_STARTED.md) - Instructions for local development and Docker setup
-- [Platform Overview](./docs/PLATFORM_OVERVIEW.md) - Information about the student platform
+- [Platform Overview](./docs/OVERVIEW.md) - Information about the student platform
 - [Architecture](./docs/ARCHITECTURE.md) - High-level design of the application
 - [Authentication](./docs/AUTHENTICATION.md) - Details on the SAML authentication system
 - [Features](./docs/FEATURES.md) - Explanation of application features and functionalities
 
-## Repository Structure
+## Basic Repository Structure 
+ - Detailed can be found at [Repository Structure](./docs/REPOSITORY_STRUCTURE.md)
 
 ```
 project/
