@@ -48,8 +48,9 @@ const Header = () => {
                     if (!pagesByHeader[headerKey]) {
                         pagesByHeader[headerKey] = [];
                     }
-
-                    pagesByHeader[headerKey].push(page);
+                    if(!(!user && page.name === 'Budget')){
+                        pagesByHeader[headerKey].push(page);
+                    }
                 });
 
                 setPagesMap(pagesByHeader);
