@@ -106,12 +106,6 @@ router.get('/login/saml', async (req: Request, res: Response) => {
       }
   });
 
-  router.get('/check-storage-access', (req: Request, res: Response) => {
-    res.json({
-      hasStorageAccess: typeof document !== 'undefined' && !!document.hasStorageAccess,
-      instructions: "Call document.requestStorageAccess() if needed"
-    });
-  });
   
 
 // Logout Route
@@ -154,23 +148,46 @@ router.get('/current_user', async (req: Request, res: Response) => {
   }
   
   const azureId = (req.session as any).user.id;
-  let user = await SAMLUser.findOne({ id: azureId });
-  
-  if (!user) {
-    const userData = {
-      id: azureId,
-      email: (req.session as any).user.email,
-      firstName: (req.session as any).user.firstName,
-      lastName: (req.session as any).user.lastName,
-      isAdmin: false // TODO: Change based on staff member's emails
-    }
+ // In AuthRoutes.ts, /current_user endpoint
+  try {
+    // First try to find user by Azure ID
+    let user = await SAMLUser.findOne({ id: azureId });
     
-    const samlUser = new SAMLUser(userData);
-    await samlUser.save();
-    res.status(200).json({ user: userData });
-  } else {
-    res.status(200).json({ user });
+    if (!user) {
+      // Check by email first before creating
+      user = await SAMLUser.findOne({ email: (req.session as any).user.email });
+      
+      if (!user) {
+        // Only create if no user exists with this email
+        const userData = {
+          id: azureId,
+          email: (req.session as any).user.email,
+          firstName: (req.session as any).user.firstName,
+          lastName: (req.session as any).user.lastName,
+          isAdmin: false
+        }
+        
+        try {
+          const samlUser = new SAMLUser(userData);
+          await samlUser.save();
+          user = samlUser;
+        } catch (err) {
+          // Handle duplicate key errors gracefully
+          if ((err as { code?: number }).code === 11000) {
+            // If creation failed due to race condition, try finding again
+            user = await SAMLUser.findOne({ email: (req.session as any).user.email });
+          } else {
+            throw err;
+          }
+        }
+      }
   }
+  
+  res.status(200).json({ user });
+} catch (error) {
+  console.error("User creation error:", error);
+  res.status(500).json({ message: "Server error" });
+}
 });
 
 // All Users
@@ -184,82 +201,5 @@ router.get('/users', async (req: Request, res: Response) => {
   });
 
 
-
-
-// Debug route for session and cookie troubleshooting
-router.get('/debug-session', (req: Request, res: Response) => {
-  // Extract browser information
-  const userAgent = req.headers['user-agent'] || 'Unknown';
-  const isSafari = /^((?!chrome|android).)*safari/i.test(userAgent);
-  const isMobile = /iPhone|iPad|iPod/.test(userAgent);
-  
-  // Get session information
-  const sessionExists = !!req.session.id;
-  const user = (req.session as any).user;
-  
-  // Get request details
-  const protocol = req.protocol;
-  const host = req.headers.host;
-  const origin = req.headers.origin;
-  
-  // Test setting a diagnostic cookie
-  res.cookie('debug_test', 'safari_test', {
-    secure: true,
-    sameSite: 'none',
-    httpOnly: false, // So it's visible in browser dev tools
-    maxAge: 5 * 60 * 1000 // 5 minutes
-  });
-  
-  // Log useful information
-  console.log(`[DEBUG] Session debug requested from ${isSafari ? 'Safari' : 'other browser'}`, {
-    sessionID: req.session.id || 'No session ID',
-    hasUser: !!user,
-    cookies: req.headers.cookie ? 'Present' : 'Not present',
-    userAgent
-  });
-  
-  // Return detailed debug information
-  res.json({
-    timestamp: new Date().toISOString(),
-    browser: {
-      userAgent,
-      isSafari,
-      isMobile
-    },
-    request: {
-      protocol,
-      host,
-      origin,
-      ip: req.ip,
-      headers: {
-        cookie: req.headers.cookie ? 'Present (not shown)' : 'Not present',
-        referer: req.headers.referer || 'Not set'
-      }
-    },
-    session: {
-      exists: sessionExists,
-      id: req.session.id || 'Not set',
-      user: user ? {
-        present: true,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName
-      } : 'Not set',
-      cookie: req.session.cookie ? {
-        maxAge: req.session.cookie.maxAge,
-        secure: req.session.cookie.secure,
-        httpOnly: req.session.cookie.httpOnly,
-        sameSite: req.session.cookie.sameSite,
-        domain: req.session.cookie.domain || 'Not set',
-        path: req.session.cookie.path || 'Not set'
-      } : 'Not available'
-    },
-    instructions: {
-      safari: "Check if the debug_test cookie appears in Safari's developer tools.",
-      checkCookies: "In Safari, go to Preferences > Privacy > Cookies and Website Data and ensure 'Block all cookies' is not selected.",
-      nextSteps: "If session exists but user data is missing, check SAML assertion. If no session exists, check cookie settings."
-    }
-  });
-});
 
 export default router;
