@@ -58,6 +58,7 @@ app.use(
 
 
 let bucket: GridFSBucket;
+let housingReviewPictures: GridFSBucket;
 
 mongoose
     .connect(MONGODB_URI)
@@ -69,15 +70,21 @@ mongoose
             throw new Error("Database connection is not ready");
         }
 
-        // Create GridFS bucket for uploads
+        // Create GridFS bucket for profile picture uploads
         bucket = new GridFSBucket(db, {
             bucketName: "uploads",
         });
-        console.log("Uploads bucket created");
+        console.log("Profile picture uploads bucket created");
+
+        housingReviewPictures = new GridFSBucket(db, {
+            bucketName: "housingreviewpictures"
+        });
+
+        console.log("Housing review uploads bucket created");
     })
     .catch((err) => console.error("MongoDB connection error:", err));
 
-export { bucket };
+export { bucket, housingReviewPictures };
 
 // Routes
 app.use("/api/auth", authRoutes);
