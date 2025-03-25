@@ -1,6 +1,8 @@
-# Aspc-website-v2
+# ASPC Student Platform
 
-This is the repository for the new ASPC website. 
+## Introduction
+
+This repository contains the ASPC Student Platform, a web application for Pomona College students. The platform provides authentication through Pomona's ITS system using SAML, and serves as a central hub for student resources.
 
 ### Software Developer Team:
 Haram Yoon,
@@ -9,37 +11,205 @@ Vadym Musiienko,
 Kartika Santoso,
 Abrar Yaser
 
+# Deployment Information
 
-### How to run the website locally:
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/yourusername/aspc-website-v2.git
-    cd aspc-website-v2
-    ```
+The application is currently deployed as follows:
 
-2. Navigate to the frontend folder and install dependencies:
-    ```bash
-    cd frontend
-    npm install
-    ```
+Backend: AWS Lightsail at api.pomonastudents.org
+Frontend: Vercel at pomonastudents.org
 
-3. Start the frontend development server:
-    ```bash
-    npm run dev
-    ```
+## Documentation
 
-4. Open a new terminal, navigate to the backend folder and install dependencies:
-    ```bash
-    cd backend
-    npm install
-    ```
+This repository includes several documentation files to help you understand and work with the application:
 
-5. Start the backend server:
-    ```bash
-    npm run dev
-    ```
+- [Platform Overview](./docs/OVERVIEW.md) - Information about the student platform
+- [Architecture](./docs/ARCHITECTURE.md) - High-level design of the application
+- [Authentication](./docs/AUTHENTICATION.md) - Details on the SAML authentication system
+- [Features](./docs/FEATURES.md) - Explanation of application features and functionalities
 
-6. Open your browser and go to `http://localhost:3000` to see the website.
+## Basic Repository Structure 
+ - Detailed can be found at [Repository Structure](./docs/REPOSITORY_STRUCTURE.md)
+
+```
+project/
+├── backend/           # Node.js Express backend
+│   ├── src/
+│   │   ├── config/    # Configuration files including SAML and server config
+│   │   ├── models/    # Database models
+│   │   ├── routes/    # API route handlers
+│   │   ├── services/  # Business logic
+│   │   └── server.ts  # Main server file
+│   ├── certs/         # SSL certificates
+│   └── package.json
+├── frontend/          # Next.js React frontend
+│   ├── certs/         # SSL certificates
+│   └── package.json
+├── docker-compose.yml # Docker configuration
+└── docs/              # Documentation files
+```
+
+
+
+
+
+## Getting Started
+
+See [Getting Started](./docs/GETTING_STARTED.md) for instructions on setting up the application locally or with Docker.
+
+## Contributing
+
+When contributing to this project, please follow the existing code structure and naming conventions. Make sure to test your changes thoroughly before submitting a pull request.
+
+---
+
+# GETTING_STARTED.md
+
+# Getting Started with ASPC Student Platform
+
+This guide provides instructions for setting up the ASPC Student Platform both locally and with Docker. This will hep you setup the backend, frontend, and database components of the application. More details about the application can be found in the folder `docs`.
+
+## Local Development Setup
+
+### Prerequisites
+
+- Node.js (v16 or higher)
+- npm or yarn
+- MongoDB
+- OpenSSL for certificate generation
+
+### SSL Certificate Setup
+
+SSL certificates are required for both frontend and backend due to SAML authentication requirements.
+
+#### Backend Certificates
+
+```bash
+mkdir backend/certs
+cd backend/certs
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout localhost.key -out localhost.crt
+# When prompted:
+# Common Name: localhost
+# Other fields can be left blank
+```
+
+#### Frontend Certificates
+
+```bash
+mkdir frontend/certs
+cp backend/certs/localhost.* frontend/certs/
+```
+
+### Starting the Application Locally
+
+1. **Backend Setup**
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+This will start the backend server at https://localhost:5000
+
+2. **Frontend Setup**
+
+```bash
+cd frontend
+npm install
+# Run Next.js app on HTTP
+npm run dev
+# In another terminal, run the SSL proxy
+npm install -g local-ssl-proxy
+local-ssl-proxy --source 3001 --target 3000
+```
+
+This will make the frontend available at https://localhost:3001
+
+### Environment Variables
+
+Create a `.env` file in both the frontend and backend directories with the following variables:
+
+**Backend .env**
+```
+NODE_ENV=development
+SESSION_SECRET=your_secret_key_here
+ENTITY_ID=<backend_server_url>
+IDP_METADATA_URL=<url_from_ITS>
+ENGAGE_API_URL=<engage_url>
+ENGAGE_API_KEY=<engage key>
+```
+Note: last four are only needed for events pulling or authentication, and application can still be run without them.
+
+**Frontend .env**
+```
+BACKEND_LINK=https://localhost:5000
+```
+
+## Docker Setup
+
+### Prerequisites
+
+- Docker
+- Docker Compose
+
+### Building and Running with Docker
+
+1. Build the images:
+
+```bash
+docker-compose build
+```
+
+2. Start the containers:
+
+```bash
+docker-compose up
+```
+
+This will start the application with the following services:
+- MongoDB on port 27017
+- Backend on port 5000
+- Frontend on port 3001
+
+### Docker Configuration
+
+The Docker setup includes:
+- Volume for MongoDB persistence
+- Volume for certificates
+- Environment variable configuration
+
+### Production Deployment
+
+The application is currently deployed as follows:
+
+- Backend: AWS Lightsail at api.pomonastudents.org
+- Frontend: Vercel at pomonastudents.org
+
+For production deployment:
+
+1. Update environment variables for production
+2. Use proper SSL certificates (not self-signed)
+3. Configure SAML settings for production environment
+
+## Troubleshooting
+
+### Common Issues
+
+1. **SSL Certificate Problems**
+   - Ensure certificates are properly generated
+   - Check that certificate paths are correct in config files
+   - Verify Common Name is set to 'localhost' for local development
+
+2. **SAML Authentication Issues**
+   - Verify IDP metadata is correctly downloaded and saved
+   - Check entity ID and ACS URL configuration
+   - Ensure HTTPS is working correctly on both frontend and backend
+
+3. **Docker Issues**
+   - Check if ports are already in use
+   - Verify environment variables in docker-compose.yml
+   - Ensure MongoDB volume has correct permissions
+
 
 ### How to run the docker container locally:
 

@@ -40,6 +40,7 @@ router.get("/group/:group", async (req: Request, res: Response) => {
     try {
         const { group } = req.params;
         const staff = await Staff.find({ group: group });
+        staff.sort((a, b) => parseInt(a.id) - parseInt(b.id));
 
         if (!staff) {
             res.status(404).json({ message: "Members not found" });
