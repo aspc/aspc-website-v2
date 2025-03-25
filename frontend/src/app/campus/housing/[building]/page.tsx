@@ -4,6 +4,8 @@ import { useParams } from "next/navigation";
 import Loading from "@/components/Loading";
 import Link from "next/link";
 import { Room } from "@/types"
+import { useAuth } from "@/hooks/useAuth";
+import LoginRequired from "@/components/LoginRequired";
 
 
 export default function DynamicRooms() {
@@ -14,6 +16,7 @@ export default function DynamicRooms() {
     const [buildingNotFound, setBuildingNotFound] = useState(false);
     const [rooms, setRooms] = useState<Room[]>([]);
     const [buildingName, setBuildingName] = useState<string>("");
+    const { user, loading: authLoading } = useAuth();
 
     // Fetch room ratings for all rooms
     const fetchRoomRatings = async (roomsList: Room[]) => {
@@ -119,8 +122,12 @@ export default function DynamicRooms() {
         }
     }, [building]);
 
-    if (loading) {
+    if (loading || authLoading) {
         return <Loading />;
+    }
+
+    if (!user) {
+        return <LoginRequired />;
     }
 
     if (buildingNotFound) {

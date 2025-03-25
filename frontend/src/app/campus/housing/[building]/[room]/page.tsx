@@ -4,6 +4,8 @@ import { useParams } from "next/navigation";
 import Loading from "@/components/Loading";
 import { RoomWithReviews } from "@/types";
 import Image from "next/image";
+import { useAuth } from "@/hooks/useAuth";
+import LoginRequired from "@/components/LoginRequired";
 
 const StarRating = ({ rating }: { rating: number }) => {
     const totalStars = 5;
@@ -350,6 +352,8 @@ const RoomPage = () => {
     );
     const [isCreatingNew, setIsCreatingNew] = useState(false);
     const [selectedPicture, setSelectedPicture] = useState<string | null>(null);
+    const { user, loading: authLoading } = useAuth();
+    
 
     const handleAddNewReviewClick = () => {
         if (!isCreatingNew) {
@@ -402,8 +406,11 @@ const RoomPage = () => {
         fetchReviews();
     }, [building, room]);
 
-    if (loading) {
+    if (loading || authLoading) {
         return <Loading />;
+    }
+    if (!user) {
+        return <LoginRequired />;
     }
 
     return (
