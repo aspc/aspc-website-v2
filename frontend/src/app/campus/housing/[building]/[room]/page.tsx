@@ -588,7 +588,7 @@ const RoomPage = () => {
                                                                 key={index}
                                                                 className="picture-item"
                                                             >
-                                                                <img
+                                                                <Image
                                                                     src={`${process.env.BACKEND_LINK}/api/campus/housing/review_pictures/${picture}`}
                                                                     alt={`Review image ${
                                                                         index +
