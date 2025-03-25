@@ -7,10 +7,7 @@ import Image from "next/image";
 
 const groupSlugMap: { [key: string]: string } = {
     Senate: "senate",
-    AcademicAffairs: "academicAffairs",
-    StudentAffairs: "studentAffairs",
-    Finance: "finance",
-    Communications: "communications",
+    Staff: "staff",
     Software: "software",
 };
 

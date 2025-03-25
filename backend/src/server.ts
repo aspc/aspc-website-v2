@@ -20,7 +20,7 @@ const app: Express = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://localhost:3001', 'https://aspc-website-v2.vercel.app','https://pomonastudents.org'],
+  origin: ['http://localhost:3000', 'https://localhost:3001', 'https://aspc-website-v2.vercel.app','https://pomonastudents.org', 'https://api.pomonastudents.org'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -51,6 +51,7 @@ app.use(
       sameSite:  process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      domain: process.env.NODE_ENV === 'production' ? '.pomonastudents.org' : undefined
     },
   })
 );
@@ -58,6 +59,7 @@ app.use(
 
 
 let bucket: GridFSBucket;
+let housingReviewPictures: GridFSBucket;
 
 mongoose
     .connect(MONGODB_URI)
@@ -69,15 +71,22 @@ mongoose
             throw new Error("Database connection is not ready");
         }
 
-        // Create GridFS bucket for uploads
+        // Create GridFS bucket for profile picture uploads
         bucket = new GridFSBucket(db, {
             bucketName: "uploads",
         });
-        console.log("Uploads bucket created");
+        console.log("Profile picture uploads bucket created");
+
+        housingReviewPictures = new GridFSBucket(db, {
+            bucketName: "housingreviewpictures"
+        });
+
+        console.log("Housing review uploads bucket created");
     })
     .catch((err) => console.error("MongoDB connection error:", err));
 
-export { bucket };
+export { bucket, housingReviewPictures };
+
 
 // Routes
 app.use("/api/auth", authRoutes);
