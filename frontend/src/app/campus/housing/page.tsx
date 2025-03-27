@@ -30,7 +30,7 @@ const HousingPage = async () => {
   const client = await MongoClient.connect(process.env.MONGODB_URI!);
   const db = client.db("school-platform");
   const buildings = await db
-    .collection<BuildingDoc>("HousingBuildings")
+    .collection<BuildingDoc>("housingbuildings")
     .find()
     .toArray();
   client.close();
