@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 
 import { MongoClient } from "mongodb";
 import Link from "next/link";
+import Image from "next/image";
 
 // Define types for MongoDB docs and UI data structure
 type BuildingDoc = {
@@ -62,7 +63,6 @@ const HousingPage = async () => {
 
   return (
     <div className="container mx-auto p-6">
-
       {housingData.map((campus, index) => (
         <section key={index} className="mb-12">
           <h2 className="text-3xl font-semibold mb-6 text-gray-700 border-b-2 border-gray-200 pb-2">
@@ -75,9 +75,11 @@ const HousingPage = async () => {
                 href={`/campus/housing/${building.id}`}
                 className="block bg-white shadow-lg rounded-lg overflow-hidden transform transition-transform duration-300 hover:scale-105"
               >
-                <img
+                <Image
                   src={building.image}
                   alt={building.name}
+                  width={800}
+                  height={400}
                   className="w-full h-48 object-cover"
                 />
                 <div className="p-6">

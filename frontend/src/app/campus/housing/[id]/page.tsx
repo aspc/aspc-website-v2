@@ -2,6 +2,7 @@ export const runtime = "nodejs";
 
 import { MongoClient } from "mongodb";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 
 interface BuildingProps {
   params: { id: string };
@@ -20,16 +21,18 @@ async function getBuildingById(id: string) {
     return building;
   }
 
-const BuildingPage = async ({ params }: BuildingProps) => {
-  const building = await getBuildingById(params.id);
+  const BuildingPage = async ({ params }: BuildingProps) => {
+    const building = await getBuildingById(params.id);
   if (!building) return notFound();
   const safeName = building.name.toLowerCase().replace(/\s+/g, "-").replace(/-+/g, "-")
 
   return (
     <div className="container mx-auto p-6">
         <h1 className="text-4xl font-bold mb-4">{building.name}</h1>
-        <img
+        <Image
             src={`/buildings/${safeName}.jpg`}
+            width={800}
+            height={400}
             alt={building.name}
             className="w-full max-h-[500px] object-cover mb-6 rounded-lg"
         />
@@ -39,9 +42,11 @@ const BuildingPage = async ({ params }: BuildingProps) => {
         <div>
             <h2 className="text-2xl font-semibold mb-4 text-gray-800">Floor Plans</h2>
             <div className="grid gap-6 grid-cols-[repeat(auto-fit,_minmax(400px,_1fr))]">                {Array.from({ length: building.floors }).map((_, i) => (
-                <img
+                <Image
                     key={i}
                     src={`/floorplans/${safeName}-floor${i + 1}.jpg`}
+                    width={800}
+                    height={400}
                     alt={`Floor plan ${i + 1}`}
                     className="w-full rounded-lg border border-gray-200 shadow"
                 />

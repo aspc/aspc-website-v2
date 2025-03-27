@@ -33,7 +33,7 @@ const nextConfig: NextConfig = {
         ],
     },
     env: {
-        BACKEND_LINK: process.env.BACKEND_LINK,
+        NEXT_PUBLIC_BACKEND_LINK: process.env.NEXT_PUBLIC_BACKEND_LINK,
         NEXT_PUBLIC_TINYMCE_API_KEY: process.env.NEXT_PUBLIC_TINYMCE_API_KEY,
     },
 };
