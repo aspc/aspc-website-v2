@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 // Housing Buildings Schema
 interface IHousingBuildings extends Document {
@@ -13,12 +13,12 @@ const HousingBuildingsSchema = new Schema<IHousingBuildings>({
     id: {
         type: Number,
         required: true,
-        unique: true
+        unique: true,
     },
     name: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
     },
     campus: {
         type: String,
@@ -27,15 +27,17 @@ const HousingBuildingsSchema = new Schema<IHousingBuildings>({
     floors: {
         type: Number,
         default: 1,
-        required: true
+        required: true,
     },
     description: {
         type: String,
-    }
+    },
 });
 
-const HousingBuildings = mongoose.model<IHousingBuildings>('HousingBuildings', HousingBuildingsSchema);
-
+const HousingBuildings = mongoose.model<IHousingBuildings>(
+    "HousingBuildings",
+    HousingBuildingsSchema
+);
 
 // Housing Rooms Schema
 interface IHousingRooms extends Document {
@@ -44,7 +46,7 @@ interface IHousingRooms extends Document {
     occupancy_type?: number;
     closet_type?: number;
     bathroom_type?: number;
-    // housing_suite_id?: number; // DELETE
+    // housing_suite_id?: number; // TODO: DELETE
     housing_building_id: number;
     room_number: string;
 }
@@ -53,7 +55,7 @@ const HousingRoomsSchema = new Schema<IHousingRooms>({
     id: {
         type: Number,
         required: true,
-        unique: true
+        unique: true,
     },
     size: {
         type: Number,
@@ -67,25 +69,27 @@ const HousingRoomsSchema = new Schema<IHousingRooms>({
     bathroom_type: {
         type: Number,
     },
-    // housing_suite_id: { // DELETE
-    //     type: Number, 
+    // housing_suite_id: { // TODO: DELETE
+    //     type: Number,
     //     ref: 'HousingSuites',
     //     index: true
     // },
     housing_building_id: {
         type: Number,
         required: true,
-        ref: 'HousingBuildings',
-        index: true
+        ref: "HousingBuildings",
+        index: true,
     },
     room_number: {
         type: String,
         required: true,
-    }
+    },
 });
 
-const HousingRooms = mongoose.model<IHousingRooms>('HousingRooms', HousingRoomsSchema);
-
+const HousingRooms = mongoose.model<IHousingRooms>(
+    "HousingRooms",
+    HousingRoomsSchema
+);
 
 // Housing Reviews Schema
 interface IHousingReviews extends Document {
@@ -95,49 +99,57 @@ interface IHousingReviews extends Document {
     layout_rating?: number;
     temperature_rating?: number;
     comments?: string;
-    housing_room_id: number; 
-    user_email: string; 
+    housing_room_id: number;
+    user_email: string;
     pictures: mongoose.Types.ObjectId[]; // list of picture _ids
 }
 
-const HousingReviewsSchema = new Schema<IHousingReviews>({
-    id: {
-        type: Number,
-        required: true,
-        unique: true
+const HousingReviewsSchema = new Schema<IHousingReviews>(
+    {
+        id: {
+            type: Number,
+            required: true,
+            unique: true,
+        },
+        overall_rating: {
+            type: Number,
+        },
+        quiet_rating: {
+            type: Number,
+        },
+        layout_rating: {
+            type: Number,
+        },
+        temperature_rating: {
+            type: Number,
+        },
+        comments: {
+            type: String,
+        },
+        housing_room_id: {
+            type: Number,
+            ref: "HousingRooms",
+            required: true,
+            index: true,
+        },
+        user_email: {
+            type: String,
+            ref: "SAMLUser",
+        },
+        pictures: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+            },
+        ],
     },
-    overall_rating: {
-        type: Number,
-    },
-    quiet_rating: {
-        type: Number,
-    },
-    layout_rating: {
-        type: Number,
-    },
-    temperature_rating: {
-        type: Number,
-    },
-    comments: {
-        type: String,
-    },
-    housing_room_id: {
-        type: Number,
-        ref: 'HousingRooms',
-        required: true,
-        index: true
-    },
-    user_email: {
-        type: String,
-        ref: 'SAMLUser',
-    },
-    pictures: [{ 
-        type: mongoose.Schema.Types.ObjectId,
-    }]
-}, {
-    timestamps: true
-});
+    {
+        timestamps: true,
+    }
+);
 
-const HousingReviews = mongoose.model<IHousingReviews>('HousingReviews', HousingReviewsSchema);
+const HousingReviews = mongoose.model<IHousingReviews>(
+    "HousingReviews",
+    HousingReviewsSchema
+);
 
 export { HousingBuildings, HousingRooms, HousingReviews };

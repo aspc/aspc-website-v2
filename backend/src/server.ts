@@ -8,6 +8,7 @@ import authRoutes from "./routes/AuthRoutes";
 import pageRoutes from "./routes/admin/PagesRoutes";
 import staffRoutes from "./routes/admin/StaffRoutes";
 import eventRoutes from "./routes/EventsRoutes";
+import housingRoutes from "./routes/HousingRoutes";
 import session from "express-session";
 import https from "https";
 import http from "http";
@@ -58,7 +59,7 @@ app.use(
 
 
 let bucket: GridFSBucket;
-let housing_review_pictures: GridFSBucket;
+let housingReviewPictures: GridFSBucket;
 
 mongoose
     .connect(MONGODB_URI)
@@ -76,19 +77,23 @@ mongoose
         });
         console.log("Profile picture uploads bucket created");
 
-        housing_review_pictures = new GridFSBucket(db, {
-            bucketName: "HousingReviewPictures"
+        housingReviewPictures = new GridFSBucket(db, {
+            bucketName: "housingreviewpictures"
         });
+
+        console.log("Housing review uploads bucket created");
     })
     .catch((err) => console.error("MongoDB connection error:", err));
 
-export { bucket, housing_review_pictures };
+export { bucket, housingReviewPictures };
+
 
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin/pages", pageRoutes);
 app.use("/api/members", staffRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/campus/housing", housingRoutes);
 
 const PORT = process.env.PORT || 5000;
 

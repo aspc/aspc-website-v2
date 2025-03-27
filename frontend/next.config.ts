@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
     async rewrites() {
         return [
-          // Only proxy routes that start with /api/
+          // Proxy all API routes to backend
           {
             source: '/api/:path*',
             destination: 'https://aspc-backend-v1.gps54p9mv93tm.us-west-2.cs.amazonlightsail.com/api/:path*',
@@ -16,19 +16,19 @@ const nextConfig: NextConfig = {
                 protocol: "https",
                 hostname: "localhost",
                 port: "5000",
-                pathname: "/api/members/profile-pic/**",
+                pathname: "/api/**",
             },
             {
                 protocol: "https",  
                 hostname: "aspc-backend-v1.gps54p9mv93tm.us-west-2.cs.amazonlightsail.com",
                 port: "", 
-                pathname: "/api/members/profile-pic/**",
+                pathname: "/api/**",
             },
             {
                 protocol: "https",  
                 hostname: "api.pomonastudents.org",
                 port: "", 
-                pathname: "/api/members/profile-pic/**",
+                pathname: "/api/**",
             }
         ],
     },
