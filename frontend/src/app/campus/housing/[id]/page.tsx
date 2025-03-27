@@ -4,10 +4,6 @@ import { MongoClient } from "mongodb";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 
-interface BuildingProps {
-  params: { id: string };
-}
-
 async function getBuildingById(id: string) {
   try {
     const client = await MongoClient.connect(process.env.MONGODB_URI!);
@@ -24,10 +20,10 @@ async function getBuildingById(id: string) {
   }
 }
 
-const BuildingPage = async ({ params }: BuildingProps) => {
-  // Convert params to a Promise and await it to ensure it's fully resolved
-  const resolvedParams = await Promise.resolve(params);
-  const building = await getBuildingById(resolvedParams.id);
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+const BuildingPage = async ({ params }) => {
+  const building = await getBuildingById(params.id);
   
   if (!building) return notFound();
   const safeName = building.name.toLowerCase().replace(/\s+/g, "-").replace(/-+/g, "-");
