@@ -28,7 +28,8 @@ const StarRating = ({ rating }: { rating: number }) => {
 
 const ReviewForm: React.FC = () => {
     const params = useParams();
-    const { building, room } = params;
+    const { id, room } = params;
+    console.log(id, room);
 
     const [ratings, setRatings] = useState({
         overall: 0,
@@ -135,7 +136,7 @@ const ReviewForm: React.FC = () => {
             }
 
             const response = await fetch(
-                `${process.env.BACKEND_LINK}/api/campus/housing/${building}/${room}/reviews`,
+                `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`,
                 {
                     method: "POST",
                     body: formData,
@@ -346,7 +347,7 @@ const PictureModal = ({
 
 const RoomPage = () => {
     const params = useParams();
-    const { building, room } = params;
+    const { id, room } = params;
     const [loading, setLoading] = useState(true);
     const [buildingName, setBuildingName] = useState<string>("");
     const [roomReviews, setRoomReviews] = useState<RoomWithReviews | null>(
@@ -372,7 +373,7 @@ const RoomPage = () => {
 
                 // Fetch building data
                 const buildingResponse = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/${building}`
+                    `${process.env.BACKEND_LINK}/api/campus/housing/${id}`
                 );
 
                 if (!buildingResponse.ok) {
@@ -386,7 +387,7 @@ const RoomPage = () => {
 
                 // Fetch reviews
                 const reviews = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/${building}/${room}/reviews`
+                    `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`
                 );
 
                 if (!reviews.ok) {
@@ -406,7 +407,7 @@ const RoomPage = () => {
         };
 
         fetchReviews();
-    }, [building, room]);
+    }, [id, room]);
 
     if (loading || authLoading) {
         return <Loading />;

@@ -40,6 +40,13 @@ export interface User {
     isAdmin: boolean;
   }
 
+export interface Building {
+    id: number;
+    name: string;
+    campus: string;
+    floors: number;
+    description?: string;
+}
 export interface Room {
     _id: string;
     id: number;
