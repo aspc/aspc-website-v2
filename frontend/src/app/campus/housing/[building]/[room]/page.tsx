@@ -334,8 +334,10 @@ const PictureModal = ({
                 </button>
                 <Image
                     src={`${process.env.BACKEND_LINK}/api/campus/housing/review_pictures/${picture}`}
+                    width={800}
+                    height={800}
                     alt="Review picture"
-                    className="max-w-[80vw] max-h-[80vh] object-contain"
+                    className= "object-contain"
                 />
             </div>
         </div>
@@ -601,6 +603,8 @@ const RoomPage = () => {
                                                                         index +
                                                                         1
                                                                     }`}
+                                                                    width={200}
+                                                                    height={200}
                                                                     className="object-cover"
                                                                     onClick={() =>
                                                                         setSelectedPicture(
