@@ -340,6 +340,7 @@ const StaffDashboard = () => {
                     >
                         <option value="senate">Senate</option>
                         <option value="staff">Staff</option>
+                        <option value="college-staff">College Staff</option>
                         <option value="software">Software Dev Group</option>
                     </select>
                 </div>

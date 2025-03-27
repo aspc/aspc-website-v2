@@ -6,13 +6,15 @@ import { StaffMember, PageProps } from "@/types";
 import Image from "next/image";
 
 const groupSlugMap: { [key: string]: string } = {
-    Senate: "senate",
-    Staff: "staff",
-    Software: "software",
+    "Senate": "senate",
+    "Staff": "staff",
+    "CollegeStaff": "college-staff",
+    "Software": "software",
 };
 
 const SenatePage: React.FC<PageProps> = ({ params }) => {
     const resolvedParams = React.use(params);
+    console.log(resolvedParams.slug);
     const { loading } = useAuth();
     const [members, setMembers] = useState<StaffMember[]>([]);
     const [isLoading, setIsLoading] = useState(true);

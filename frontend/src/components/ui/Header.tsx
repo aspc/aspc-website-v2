@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PageContent } from "@/types";
 import Image from "next/image";
 
-const groups: string[] = ["Senate", "Staff", "Software"];
+const groups: string[] = ["Senate", "Staff", "CollegeStaff", "Software"];
 
 const Header = () => {
     const { user, loading } = useAuth();
@@ -29,7 +29,10 @@ const Header = () => {
                 const response = await fetch(
                     `${process.env.BACKEND_LINK}/api/admin/pages`
                 );
-                const data: PageContent[] = await response.json();
+                let data: PageContent[] = await response.json();
+                if(!user){
+                    data = data.filter(page => page.name !== "Budget");
+                }
 
                 // Organize pages by header/section
                 const pagesByHeader: Record<string, PageContent[]> = {
@@ -48,9 +51,6 @@ const Header = () => {
                     if (!pagesByHeader[headerKey]) {
                         pagesByHeader[headerKey] = [];
                     }
-                    if ((page.name === "Budget" && !user)){
-                        return;
-                    }
                     pagesByHeader[headerKey].push(page);
                 });
 
@@ -63,7 +63,7 @@ const Header = () => {
         };
 
         fetchPages();
-    }, []);
+    }, [user]);
 
     const handleDropdownClick = (dropdownName: string) => {
         setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
