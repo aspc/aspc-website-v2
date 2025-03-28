@@ -60,13 +60,12 @@ class EngageEventsService {
     private formatEvent(event: any): Event {
         // Production environment: subtract 7 hours from start and end times
         if (process.env.NODE_ENV === "production") {
-            // Subtract 7 hours for production environment
+            // Subtract 8 hours for production environment
             const startDateTime = new Date(parseInt(event.startDateTime));
             const endDateTime = new Date(parseInt(event.endDateTime));
 
-            // Subtract 7 hours (7 * 60 * 60 * 1000 milliseconds)
-            startDateTime.setTime(startDateTime.getTime() - 7 * 60 * 60 * 1000);
-            endDateTime.setTime(endDateTime.getTime() - 7 * 60 * 60 * 1000);
+            startDateTime.setTime(startDateTime.getTime() - 8 * 60 * 60 * 1000);
+            endDateTime.setTime(endDateTime.getTime() - 8 * 60 * 60 * 1000);
 
             return {
                 name: event.eventName,
