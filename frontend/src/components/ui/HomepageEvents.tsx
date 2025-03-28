@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Event } from '@/types';
 import { ChevronLeft, ChevronRight, Clock, MapPin } from 'lucide-react';
+import moment from 'moment';
 
 const HomepageEvents: React.FC<{ events: Event[] }> = ({ events = [] }) => {
     const [currentPage, setCurrentPage] = useState(0);
@@ -57,7 +58,7 @@ const HomepageEvents: React.FC<{ events: Event[] }> = ({ events = [] }) => {
                                 <div className="flex items-center text-gray-600 text-sm">
                                     <Clock size={16} className="mr-2" />
                                     <span>
-                                        {new Date(event.start).toLocaleString()} - {new Date(event.end).toLocaleString()}
+                                        {moment(event.start).format('MMMM DD, YYYY hh:mm A')} - {moment(event.end).format('MMMM DD, YYYY hh:mm A')}
                                     </span>
                                     </div>
                             </li>
