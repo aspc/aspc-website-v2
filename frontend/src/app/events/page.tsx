@@ -1,8 +1,8 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Calendar, momentLocalizer, View, Views } from 'react-big-calendar'; // // display events in calendar format
-import moment from 'moment'; // handles data formatting and conversions
-import 'react-big-calendar/lib/css/react-big-calendar.css'; //used to style the calendar
+import { Calendar, momentLocalizer, View, Views } from 'react-big-calendar';
+import moment from 'moment';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 import Loading from '@/components/Loading';
 import { Event } from '@/types';
 
@@ -58,7 +58,13 @@ const EventsPage = () => {
           }
         }));
 
-        setEvents(formattedEvents);
+        // Filter events to only include those that last less than 3 days
+        const filteredEvents = formattedEvents.filter(event => {
+          const durationInDays = moment(event.end).diff(moment(event.start), 'days');
+          return durationInDays < 3;
+        });
+
+        setEvents(filteredEvents);
         setLoading(false);
       } catch (err) {
         console.error('Failed to fetch events:', err);
@@ -107,40 +113,40 @@ const EventsPage = () => {
             <p className="text-gray-700 mb-4">{selectedEvent.resource.description}</p>
 
             <div className="flex justify-between">
-            <a
+              <a
                 href={selectedEvent.resource.details_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-[#3174ad] text-white py-2 px-4 rounded-lg hover:bg-[#255a89] transition"
               >                
-              Event Details
-            </a>
-            <button onClick={closeEventDetails} className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
-              Close
-            </button>
+                Event Details
+              </a>
+              <button onClick={closeEventDetails} className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600">
+                Close
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
-    <div className="bg-white rounded-lg p-4 shadow-md min-h-[600px] h-[calc(100vh-180px)]">
-      <Calendar
-        localizer={localizer}
-        events={events}
-        startAccessor="start"
-        endAccessor="end"
-        views={{ month: true, week: false, day: false }}  
-        view={currentView} 
-        onView={handleViewChange}
-        defaultView={'month'}
-        date={currentDate}
-        onNavigate={(newDate: Date) => setCurrentDate(newDate)}
-        onSelectEvent={handleSelectEvent}
-        popup={true}
-      />
+      <div className="bg-white rounded-lg p-4 shadow-md min-h-[600px] h-[calc(100vh-180px)]">
+        <Calendar
+          localizer={localizer}
+          events={events}
+          startAccessor="start"
+          endAccessor="end"
+          views={{ month: true, week: false, day: false }}  
+          view={currentView} 
+          onView={handleViewChange}
+          defaultView={'month'}
+          date={currentDate}
+          onNavigate={(newDate: Date) => setCurrentDate(newDate)}
+          onSelectEvent={handleSelectEvent}
+          popup={true}
+        />
+      </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default EventsPage;

@@ -58,7 +58,7 @@ class EngageEventsService {
     }
 
     private formatEvent(event: any): Event {
-        // Production environment: subtract 7 hours from start and end times
+        // TODO: TEMPORARY SOLUTION Production environment: subtract 8 hours from start and end times
         if (process.env.NODE_ENV === "production") {
             // Subtract 8 hours for production environment
             const startDateTime = new Date(parseInt(event.startDateTime));
@@ -79,7 +79,7 @@ class EngageEventsService {
             };
         }
 
-        // Non-production environment remains unchanged
+        // Non-production environment
         return {
             name: event.eventName,
             location: event.otherLocation || "N/A",
