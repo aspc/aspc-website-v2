@@ -90,19 +90,9 @@ export interface RoomWithReviews {
     averages: ReviewAverages;
 }
 
-export const getRoomOccupancyType = (occupancy_type: number | undefined) => {
-    if (occupancy_type) {
-        switch (occupancy_type) {
-            case 1:
-                return "Single";
-            case 2:
-                return "Double";
-            case 3:
-                return "Triple";
-            default:
-                return occupancy_type;
-        }
-    } else {
-        return "Unknown";
-    }
-};
+// Room card component
+export interface RoomCardProps {
+    buildingName: string;
+    room: Room;
+  }
+
