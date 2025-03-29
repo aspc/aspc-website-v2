@@ -72,6 +72,8 @@ export interface Review {
     housing_room_id: number;
     user_email: string;
     pictures?: string[];
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface ReviewAverages {
@@ -87,3 +89,20 @@ export interface RoomWithReviews {
     reviews: Review[];
     averages: ReviewAverages;
 }
+
+export const getRoomOccupancyType = (occupancy_type: number | undefined) => {
+    if (occupancy_type) {
+        switch (occupancy_type) {
+            case 1:
+                return "Single";
+            case 2:
+                return "Double";
+            case 3:
+                return "Triple";
+            default:
+                return occupancy_type;
+        }
+    } else {
+        return "Unknown";
+    }
+};

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Loading from "@/components/Loading";
-import { RoomWithReviews } from "@/types";
+import { RoomWithReviews, getRoomOccupancyType } from "@/types";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import LoginRequired from "@/components/LoginRequired";
@@ -412,9 +412,17 @@ const RoomPage = () => {
     if (loading || authLoading) {
         return <Loading />;
     }
+
     if (!user) {
         return <LoginRequired />;
     }
+
+    const formatDate = (date: Date) => {
+        const d = new Date(date);
+        const month = d.toLocaleString('default', { month: 'long' }); 
+        const year = d.getFullYear();  
+        return `${month} ${year}`;  
+      };
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -433,6 +441,13 @@ const RoomPage = () => {
                                     Summary
                                 </h4>
                                 <div className="grid grid-cols-2 gap-4">
+                                    <p className="text-gray-600">Occupancy: {getRoomOccupancyType(roomReviews.room.occupancy_type)}</p>
+                                    
+                                    {roomReviews.room.size && (
+                                        <p className="text-gray-600">
+                                            Size: {roomReviews.room.size} sq. ft.
+                                        </p>
+                                    )}
                                     <div>
                                         <p className="text-gray-600">Overall</p>
                                         <div className="flex items-center">
@@ -522,7 +537,7 @@ const RoomPage = () => {
                                     >
                                         <div className="flex items-center mb-2">
                                             <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                                <span className="ml-2 text-m text-gray-600 mr-2">
+                                                <span className="text-m text-gray-600 mr-2">
                                                     Overall Rating:
                                                 </span>
                                                 <span>
@@ -532,6 +547,9 @@ const RoomPage = () => {
                                                             0
                                                         }
                                                     />
+                                                </span>
+                                                <span className="ml-2">
+                                                    {review.overall_rating || ""}
                                                 </span>
                                             </div>
                                         </div>
@@ -624,8 +642,8 @@ const RoomPage = () => {
                                             </div>
                                         )}
 
+                                        {/* If user clicks a picture, open a popup with enlarged image */}
                                         {selectedPicture && (
-                                            // If user clicks a picture, open a popup with enlarged image
                                             <PictureModal
                                                 isOpen={!!selectedPicture}
                                                 onClose={() =>
@@ -635,10 +653,15 @@ const RoomPage = () => {
                                             />
                                         )}
 
-                                        {/* TODO: Add date */}
-                                        {/* <p className="text-gray-500 mt-3">
-                                            Review written 
-                                        </p> */}
+                                        {/* Date written, last updated */}
+                                        <div className="flex space-x-16">
+                                            <p className="text-gray-500 mt-3">
+                                                Review written {formatDate(review.createdAt)}
+                                            </p>
+                                            <p className="text-gray-500 mt-3">
+                                                Last updated {formatDate(review.updatedAt)}
+                                            </p>
+                                        </div>
                                     </div>
                                 ))}
                             </div>

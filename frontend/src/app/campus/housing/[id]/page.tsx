@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Loading from "@/components/Loading";
 import Link from "next/link";
-import { Room, Building } from "@/types"
+import { Room, Building, getRoomOccupancyType } from "@/types"
 import { useAuth } from "@/hooks/useAuth";
 import LoginRequired from "@/components/LoginRequired";
 
@@ -251,24 +251,6 @@ interface RoomCardProps {
 }
 
 const RoomCard = ({ buildingName, room }: RoomCardProps) => {
-    // Generate a descriptive room type label
-    const getRoomTypeLabel = () => {
-        if (room.occupancy_type) {
-            switch (room.occupancy_type) {
-                case 1:
-                    return "Single";
-                case 2:
-                    return "Double";
-                case 3:
-                    return "Triple";
-                default:
-                    return room.occupancy_type;
-            }
-        } else {
-            return "Unknown";
-        }
-    };
-
     return (
         <div className="w-full border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
             <div className="mb-6">
@@ -293,7 +275,7 @@ const RoomCard = ({ buildingName, room }: RoomCardProps) => {
             </div>
 
             <div className="mb-6">
-                <p className="text-lg text-gray-700">{getRoomTypeLabel()}</p>
+                <p className="text-lg text-gray-700">{getRoomOccupancyType(room.occupancy_type)}</p>
                 {room.size && (
                     <p className="text-lg text-gray-700">
                         Size: {room.size} sq. ft.
