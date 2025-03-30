@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Loading from "@/components/Loading";
-import { RoomWithReviews } from "@/types";
+import { Review, RoomWithReviews } from "@/types";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import LoginRequired from "@/components/LoginRequired";
@@ -16,14 +16,23 @@ const RoomPage = () => {
   const [buildingName, setBuildingName] = useState<string>("");
   const [roomReviews, setRoomReviews] = useState<RoomWithReviews | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [selectedPicture, setSelectedPicture] = useState<string | null>(null);
   const { user, loading: authLoading } = useAuth();
 
   const handleAddNewReviewClick = () => {
-    if (!isCreatingNew) {
-      setIsCreatingNew(true);
-    } else {
+    if (isCreatingNew) {
       setIsCreatingNew(false);
+    } else if (selectedReview) {
+      if (
+        window.confirm(
+          "Are you sure you want to cancel editing this review? All new changes will be lost."
+        )
+      ) {
+        setSelectedReview(null);
+      }
+    } else {
+      setIsCreatingNew(true);
     }
   };
 
@@ -68,6 +77,17 @@ const RoomPage = () => {
     fetchReviews();
   }, [id, room]);
 
+  const targetRef = useRef<HTMLButtonElement | null>(null);
+
+  const scrollToReviewForm = () => {
+    if (targetRef.current) {
+      targetRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+
   if (loading || authLoading) {
     return <Loading />;
   }
@@ -83,6 +103,32 @@ const RoomPage = () => {
     return `${month} ${year}`;
   };
 
+  const handleDelete = async (id: number) => {
+    if (window.confirm("Are you sure you want to delete this review?")) {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `${process.env.BACKEND_LINK}/api/campus/housing/reviews/${id}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to delete review");
+        }
+
+        alert("Review deleted successfully!");
+        setTimeout(() => window.location.reload(), 1000);
+      } catch (error) {
+        console.error("Error deleting review", error);
+        alert("Failed to delete review");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -90,7 +136,7 @@ const RoomPage = () => {
           Reviews for {buildingName} {room}
         </h1>
 
-        <div className="py-4 overflow-y-auto flex-grow">
+        <div className="py-4 flex-grow">
           {roomReviews &&
           roomReviews.averages &&
           roomReviews.averages.reviewCount > 0 ? (
@@ -163,7 +209,7 @@ const RoomPage = () => {
               <div className="space-y-6">
                 {roomReviews.reviews.map((review) => (
                   <div key={review._id} className="border-b pb-4">
-                    <div className="flex items-center mb-2">
+                    <div className="flex justify-between mb-2">
                       <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                         <span className="text-m text-gray-600 mr-2">
                           Overall Rating:
@@ -175,6 +221,28 @@ const RoomPage = () => {
                           {review.overall_rating || ""}
                         </span>
                       </div>
+
+                      {user.email == review.user_email && (
+                        <div className="flex p-2 gap-4">
+                          <button
+                            className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
+                            onClick={() => {
+                              setSelectedReview(review);
+                              scrollToReviewForm();
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="bg-red-500 text-white text-m px-4 rounded-md hover:bg-red-600"
+                            onClick={() => {
+                              handleDelete(review.id);
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 mb-2">
@@ -263,13 +331,14 @@ const RoomPage = () => {
         <button
           className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
           onClick={handleAddNewReviewClick}
+          ref={targetRef}
         >
-          Add a new review
+          {selectedReview ? "Cancel review edit" : "Add new review"}
         </button>
 
-        {isCreatingNew && (
+        {(isCreatingNew || selectedReview) && (
           <div>
-            <ReviewForm />
+            <ReviewForm review={selectedReview} />
           </div>
         )}
       </div>

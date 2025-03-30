@@ -96,3 +96,6 @@ export interface RoomCardProps {
     room: Room;
   }
 
+export interface ReviewFormProps {
+    review: Review | null;
+  }

@@ -1,19 +1,24 @@
 "use client";
 import React from "react";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ReviewFormProps } from "@/types";
 import Image from "next/image";
 
-export const ReviewForm: React.FC = () => {
+export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
   const params = useParams();
   const { id, room } = params;
-  console.log(id, room);
+
+  const [isCreatingNew, setIsCreatingNew] = useState(true);
+  //   if (review) {
+  //     setIsCreatingNew(false);
+  //   }
 
   const [ratings, setRatings] = useState({
-    overall: 0,
-    quiet: 0,
-    layout: 0,
-    temperature: 0,
+    overall: review?.overall_rating || 0,
+    quiet: review?.quiet_rating || 0,
+    layout: review?.layout_rating || 0,
+    temperature: review?.temperature_rating || 0,
   });
 
   const [hoveredStar, setHoveredStar] = useState<{
@@ -47,9 +52,28 @@ export const ReviewForm: React.FC = () => {
   const baseStarClass =
     "text-xl text-gray-300 cursor-pointer transition-colors duration-300";
 
-  const [comments, setComments] = useState("");
+  const [comments, setComments] = useState<string>("");
   const [pictures, setPictures] = useState<FileList | null>(null);
+  const [pictureURLs, setPictureURLs] = useState<string[] | null>(null);
+
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    if (review) {
+      setComments(review.comments || "");
+      // TODO: pictures
+      const urlList: string[] = [];
+
+      if (review.pictures) {
+        for (const picture of review.pictures) {
+          urlList.push(
+            `${process.env.BACKEND_LINK}/api/campus/housing/review_pictures/${picture}`
+          );
+        }
+      }
+      setPictureURLs(urlList);
+    }
+  }, [review]);
 
   const handleCommentsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setComments(e.target.value);
@@ -57,6 +81,14 @@ export const ReviewForm: React.FC = () => {
 
   const handlePicturesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPictures(e.target.files);
+
+    const urlList: string[] = [];
+    if (e.target.files) {
+      for (const file of e.target.files) {
+        urlList.push(URL.createObjectURL(file));
+      }
+    }
+    setPictureURLs(urlList);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,13 +142,16 @@ export const ReviewForm: React.FC = () => {
         });
       }
 
-      const response = await fetch(
-        `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const url = review
+        ? `${process.env.BACKEND_LINK}/api/campus/housing/reviews/${review.id}`
+        : `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`;
+
+      const method = review ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        body: formData,
+      });
 
       if (!response.ok) {
         throw new Error("Error submitting review");
@@ -256,6 +291,26 @@ export const ReviewForm: React.FC = () => {
           onChange={handlePicturesChange}
           className="border rounded p-2 w-full"
         />
+
+        <div className="flex">
+          {pictureURLs &&
+            pictureURLs.length > 0 &&
+            pictureURLs.map((pictureURL, index) => (
+              <div key={index} className="picture-item">
+                <Image
+                  src={pictureURL}
+                  alt={`Review image ${index + 1}`}
+                  width={200}
+                  height={200}
+                  className="object-cover"
+                  style={{
+                    height: "200px",
+                    objectFit: "cover",
+                  }}
+                />
+              </div>
+            ))}
+        </div>
       </div>
 
       {/* Submit Button */}
