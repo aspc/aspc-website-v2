@@ -10,10 +10,10 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
   const { id, room } = params;
 
   const [ratings, setRatings] = useState({
-    overall: review?.overall_rating || 0,
-    quiet: review?.quiet_rating || 0,
-    layout: review?.layout_rating || 0,
-    temperature: review?.temperature_rating || 0,
+    overall: 0,
+    quiet: 0,
+    layout: 0,
+    temperature: 0,
   });
 
   const [hoveredStar, setHoveredStar] = useState<{
@@ -55,6 +55,12 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
 
   useEffect(() => {
     if (review) {
+      setRatings({
+        overall: review.overall_rating || 0,
+        quiet: review.quiet_rating || 0,
+        layout: review.layout_rating || 0,
+        temperature: review.temperature_rating || 0,
+      });
       setComments(review.comments || "");
       const urlList: string[] = [];
 
