@@ -9,11 +9,6 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
   const params = useParams();
   const { id, room } = params;
 
-  const [isCreatingNew, setIsCreatingNew] = useState(true);
-  //   if (review) {
-  //     setIsCreatingNew(false);
-  //   }
-
   const [ratings, setRatings] = useState({
     overall: review?.overall_rating || 0,
     quiet: review?.quiet_rating || 0,
@@ -61,7 +56,6 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
   useEffect(() => {
     if (review) {
       setComments(review.comments || "");
-      // TODO: pictures
       const urlList: string[] = [];
 
       if (review.pictures) {
