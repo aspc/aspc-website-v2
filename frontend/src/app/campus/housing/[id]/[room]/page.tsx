@@ -80,12 +80,14 @@ const RoomPage = () => {
   const targetRef = useRef<HTMLButtonElement | null>(null);
 
   const scrollToReviewForm = () => {
-    if (targetRef.current) {
-      targetRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
+    setTimeout(() => {
+      if (targetRef.current) {
+        targetRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start", 
+        });
+      }
+    }, 0); 
   };
 
   if (loading || authLoading) {
