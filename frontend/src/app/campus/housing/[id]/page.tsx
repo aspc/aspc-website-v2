@@ -177,18 +177,29 @@ export default function DynamicRooms() {
           <h2 className="text-2xl font-semibold mb-4 text-gray-800">
             Floor Plans
           </h2>
-          <div className="grid gap-6 grid-cols-[repeat(auto-fit,_minmax(400px,_1fr))]">
-            {Array.from({ length: building.floors }).map((_, i) => (
-              <Image
-                key={i}
-                src={`/floorplans/${safeName}-floor${i + 1}.jpg`}
-                width={800}
-                height={400}
-                alt={`Floor plan ${i + 1}`}
-                className="w-full rounded-lg border border-gray-200 shadow"
-              />
-            ))}
-          </div>
+          <div className="grid gap-6 pb-6 grid-cols-1 sm:grid-cols-2">
+            {Array.from({ length: building.floors }).map((_, i) => {
+              // If there's only one image, or it's the last image in a set with an odd count
+              // and would otherwise be alone in its row, make it span the full width
+              const isLastInOddSet = building.floors % 2 !== 0 && i === building.floors - 1;
+              const isOnlyOne = building.floors === 1;
+              
+              return (
+                <div 
+                  key={i}
+                  className={`${(isLastInOddSet || isOnlyOne) ? 'sm:col-span-2' : ''}`}
+                >
+                  <Image
+                    src={`/floorplans/${safeName}-floor${i + 1}.jpg`}
+                    width={800}
+                    height={400}
+                    alt={`Floor plan ${i + 1}`}
+                    className="w-full rounded-lg border border-gray-200 shadow"
+                  />
+                </div>
+              );
+            })}
+    </div>
         </div>
       )}
 
