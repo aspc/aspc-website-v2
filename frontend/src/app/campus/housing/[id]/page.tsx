@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Loading from "@/components/Loading";
 import { Room, Building } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +11,7 @@ import { RoomCard } from "@/components/housing/Rooms";
 export default function DynamicRooms() {
   const params = useParams();
   const { id } = params; // Pass building id as a parameter in the URL
-
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [buildingNotFound, setBuildingNotFound] = useState(false);
@@ -153,6 +153,14 @@ export default function DynamicRooms() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Back Button */}
+      <button
+        onClick={() => router.back()} 
+        className="mb-6 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      >
+        Back
+      </button>
+      
       <h1 className="text-4xl font-bold mb-4">{building.name}</h1>
       <Image
         src={`/buildings/${safeName}.jpg`}

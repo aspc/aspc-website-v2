@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Loading from "@/components/Loading";
 import { Review, RoomWithReviews } from "@/types";
 import Image from "next/image";
@@ -12,6 +12,7 @@ import { ReviewForm, PictureModal } from "@/components/housing/Reviews";
 const RoomPage = () => {
   const params = useParams();
   const { id, room } = params;
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [buildingName, setBuildingName] = useState<string>("");
   const [roomReviews, setRoomReviews] = useState<RoomWithReviews | null>(null);
@@ -133,6 +134,14 @@ const RoomPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Back Button */}
+      <button
+        onClick={() => router.back()} 
+        className="mb-6 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      >
+        Back
+      </button>
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">
           Reviews for {buildingName} {room}
