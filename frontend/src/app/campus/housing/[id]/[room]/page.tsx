@@ -256,7 +256,7 @@ const RoomPage = () => {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 mb-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2"> 
                       <div className="text-sm flex items-center mb-2">
                         <span className="text-gray-600 mr-2">Quiet:</span>
                         <span className="inline">
