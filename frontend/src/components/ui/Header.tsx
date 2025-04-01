@@ -128,11 +128,13 @@ const Header = () => {
                                     ? "hover:text-yellow-400"
                                     : "text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
                             }`}
-                            onClick={
-                                closeMenuOnClick
-                                    ? () => setIsMobileMenuOpen(false)
-                                    : undefined
-                            }
+                            onClick={() => {
+                                // Close dropdown menu when link is clicked
+                                setOpenDropdown(null);
+                                if (closeMenuOnClick) {
+                                    setIsMobileMenuOpen(false);
+                                }
+                            }}
                         >
                             {page.name}
                         </Link>
@@ -214,6 +216,7 @@ const Header = () => {
                                                 key={`group-${index}`}
                                                 href={`/staff/${group}`}
                                                 className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                                onClick={() => setOpenDropdown(null)}
                                             >
                                                 {group.replace(
                                                     /([a-z])([A-Z])/g,
@@ -267,6 +270,7 @@ const Header = () => {
                                         <Link
                                             href="/campus/course-reviews"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                            onClick={() => setOpenDropdown(null)}
                                         >
                                             Course Reviews
                                         </Link>
@@ -274,6 +278,7 @@ const Header = () => {
                                         <Link
                                             href="/campus/housing"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                            onClick={() => setOpenDropdown(null)}
                                         >
                                             Housing Reviews
                                         </Link>
@@ -281,6 +286,7 @@ const Header = () => {
                                         <Link
                                             href="/campus/instructor-reviews"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                            onClick={() => setOpenDropdown(null)}
                                         >
                                             Instructor Reviews
                                         </Link>
