@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   // Define public paths that don't need authentication
   const isPublicPath = 
     path === '/' || 
-    path.startsWith('/api/auth/') || 
+    path.startsWith('/api/') || 
     path.includes('/login/saml') ||
     path.includes('/logout/saml');
   
