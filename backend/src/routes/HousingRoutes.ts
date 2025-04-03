@@ -357,7 +357,19 @@ router.patch("/reviews/:id", upload.array("pictures"), async (req: Request, res:
             return;
         }
         
-        let updateData = req.body;
+        // parse review fields from request
+        const { overall, quiet, layout, temperature, comments } = req.body;
+
+        // construct review data
+        let updateData = {
+            overall_rating: overall,
+            quiet_rating: quiet,
+            layout_rating: layout,
+            temperature_rating: temperature,
+            comments: comments,
+            pictures: oldReview.pictures,
+        };
+        
         const pictureIds: ObjectId[] = [];
 
         if (Array.isArray(req.files) && req.files.length > 0) {
@@ -394,7 +406,7 @@ router.patch("/reviews/:id", upload.array("pictures"), async (req: Request, res:
                 });
             }
 
-            updateData = { ...updateData, pictures: pictureIds };
+            updateData.pictures = pictureIds;
         }
 
         const updatedReview = await HousingReviews.findOneAndUpdate(
