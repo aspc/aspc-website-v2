@@ -331,13 +331,22 @@ const Header = () => {
                                             Dashboard
                                         </Link>
                                     )}
-                                    <button
-                                        onClick={() =>
-                                            (window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`)
+                                   <button
+                                    onClick={() => {
+                                        // Clear the cookie in a simpler way
+                                        document.cookie = "connect.sid=; max-age=0; path=/;";
+                                        
+                                        // For production with domain
+                                        if (window.location.hostname.includes('pomonastudents.org')) {
+                                        document.cookie = "connect.sid=; max-age=0; path=/; domain=.pomonastudents.org;";
                                         }
-                                        className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                                        
+                                        // Then redirect to backend logout
+                                        window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`;
+                                    }}
+                                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
                                     >
-                                        Logout SSO
+                                    Logout
                                     </button>
                                 </>
                             ) : (
@@ -560,16 +569,23 @@ const Header = () => {
                             )}
 
                             {user ? (
-                                <button
-                                    onClick={() => {
-                                        // Redirect to backend SAML logout route
-                                        window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`;
-                                        setIsMobileMenuOpen(false);
-                                    }}
-                                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 w-fit"
-                                >
-                                    Logout
-                                </button>
+                               <button
+                               onClick={() => {
+                                 // Clear the cookie in a simpler way
+                                 document.cookie = "connect.sid=; max-age=0; path=/;";
+                                 
+                                 // For production with domain
+                                 if (window.location.hostname.includes('pomonastudents.org')) {
+                                   document.cookie = "connect.sid=; max-age=0; path=/; domain=.pomonastudents.org;";
+                                 }
+                                 
+                                 // Then redirect to backend logout
+                                 window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`;
+                               }}
+                               className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                             >
+                               Logout
+                             </button>
                             ) : (
                                 <button
                                     onClick={() => {
