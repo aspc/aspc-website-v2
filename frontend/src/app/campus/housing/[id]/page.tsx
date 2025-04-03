@@ -181,33 +181,32 @@ export default function DynamicRooms() {
 
       {/* Conditionally render floor plans */}
       {showFloorPlans && (
-        <div>
+        <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4 text-gray-800">
             Floor Plans
           </h2>
           <div className="grid gap-6 pb-6 grid-cols-1 sm:grid-cols-2">
-            {Array.from({ length: building.floors }).map((_, i) => {
-              // If there's only one image, or it's the last image in a set with an odd count
-              // and would otherwise be alone in its row, make it span the full width
+              {Array.from({ length: building.floors }).map((_, i) => {
               const isLastInOddSet = building.floors % 2 !== 0 && i === building.floors - 1;
               const isOnlyOne = building.floors === 1;
-              
+              const shouldSpanAndCenter = isLastInOddSet || isOnlyOne;
               return (
-                <div 
+                <div
                   key={i}
-                  className={`${(isLastInOddSet || isOnlyOne) ? 'sm:col-span-2' : ''}`}
+                  className={`${shouldSpanAndCenter ? 'sm:col-span-2 flex justify-center' : ''}`}
                 >
                   <Image
                     src={`/floorplans/${safeName}-floor${i + 1}.jpg`}
                     width={800}
                     height={400}
                     alt={`Floor plan ${i + 1}`}
-                    className="w-full rounded-lg border border-gray-200 shadow"
+                    className={`w-full h-auto rounded-lg border border-gray-200 shadow ${shouldSpanAndCenter ? 'sm:max-w-2xl' : ''}`}
+                    onError={(e) => { e.currentTarget.src = '/placeholder-floorplan.jpg'; }}
                   />
                 </div>
               );
             })}
-    </div>
+          </div>
         </div>
       )}
 
