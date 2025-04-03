@@ -120,7 +120,6 @@ router.get('/logout/saml', async (req: Request, res: Response) => {
       res.redirect('/');
       return;
     }
-    
     console.log('SAML user logged out:', user.nameID);
     const { id, context } = sp.createLogoutRequest(idp, 'redirect', {
       sessionIndex: user.sessionIndex.sessionIndex,
@@ -133,8 +132,14 @@ router.get('/logout/saml', async (req: Request, res: Response) => {
         console.error('Session destruction error:', err);
       }
       
-      // Clear session cookie explicitly
-      res.clearCookie('connect.sid'); // Replace with your actual cookie name if different
+      // Clear the cookie with the EXACT same settings as when it was created
+      res.clearCookie('connect.sid', {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        domain: process.env.NODE_ENV === 'production' ? '.pomonastudents.org' : undefined
+      });
       
       res.redirect(process.env.FRONTEND_LINK || context);
     });
