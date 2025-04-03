@@ -58,6 +58,28 @@ class EngageEventsService {
     }
 
     private formatEvent(event: any): Event {
+        // TODO: TEMPORARY SOLUTION Production environment: subtract 8 hours from start and end times
+        if (process.env.NODE_ENV === "production") {
+            // Subtract 8 hours for production environment
+            const startDateTime = new Date(parseInt(event.startDateTime));
+            const endDateTime = new Date(parseInt(event.endDateTime));
+
+            startDateTime.setTime(startDateTime.getTime() - 8 * 60 * 60 * 1000);
+            endDateTime.setTime(endDateTime.getTime() - 8 * 60 * 60 * 1000);
+
+            return {
+                name: event.eventName,
+                location: event.otherLocation || "N/A",
+                description: this.sanitizeHtml(event.description),
+                host: event.organizationName,
+                details_url: event.eventUrl,
+                start: startDateTime.toLocaleString(),
+                end: endDateTime.toLocaleString(),
+                status: "approved",
+            };
+        }
+
+        // Non-production environment
         return {
             name: event.eventName,
             location: event.otherLocation || "N/A",
