@@ -9,7 +9,11 @@ export function middleware(request: NextRequest) {
     path === '/' || 
     path.startsWith('/api/') || 
     path.includes('/login/saml') ||
-    path.includes('/logout/saml');
+    path.includes('/logout/saml') ||
+    path.startsWith('/_next/') ||
+    path.includes('.ico') || 
+    path.includes('.png') ||
+    path.includes('.jpg');
   
   // If it's a public path, allow access
   if (isPublicPath) {
