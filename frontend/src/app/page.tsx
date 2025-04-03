@@ -6,11 +6,35 @@ import { Event } from '@/types';
 import HomepageEvents from '@/components/ui/HomepageEvents';
 import Loading from "@/components/Loading";
 import { useAuth } from "@/hooks/useAuth";
+import { useSearchParams } from 'next/navigation';
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const { user, loading: authLoading } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
+  const searchParams = useSearchParams();
+  
+  useEffect(() => {
+    // Check for login required parameter
+    if (searchParams.get('loginRequired') === 'true') {
+      setShowLoginAlert(true);
+      
+      // Remove the query parameter from the URL without refreshing the page
+      // This ensures the parameter can trigger the alert again on future redirects
+      const url = new URL(window.location.href);
+      url.searchParams.delete('loginRequired');
+      window.history.replaceState({}, '', url);
+      
+      // Auto-hide the alert after 5 seconds
+      const timer = setTimeout(() => {
+        setShowLoginAlert(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
+
   
   useEffect(() => {
     const fetchEvents = async () => {
@@ -35,6 +59,21 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white font-[Lora]">
       {loading && <Loading />}
+
+       {/* Login Alert with X button */}
+       {showLoginAlert && (
+        <div className="fixed top-20 left-0 right-0 z-50 mx-auto max-w-md p-4 bg-red-100 border border-red-400 text-red-700 rounded-md shadow-md flex items-center justify-between">
+          <p className='text-center'>You need to be logged in to access any pages on ASPC.</p>
+            <button 
+              className="text-gray-700 hover:text-red-500 font-bold"
+              onClick={() => setShowLoginAlert(false)}
+              aria-label="Close alert"
+            >
+              ✕
+            </button>
+        </div>
+      )}
+
       <div className="relative h-screen flex items-center justify-center text-center text-white">
           <Image
             src="/sccSunset.jpg"
