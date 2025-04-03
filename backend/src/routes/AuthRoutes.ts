@@ -109,7 +109,7 @@ router.get('/login/saml', async (req: Request, res: Response) => {
   
 
 // Logout Route
-  router.get('/logout/saml', async (req: Request, res: Response) => {
+router.get('/logout/saml', async (req: Request, res: Response) => {
   try {
     if (!idp || !sp) {
       throw new Error('SAML not initialized');
@@ -120,6 +120,7 @@ router.get('/login/saml', async (req: Request, res: Response) => {
       res.redirect('/');
       return;
     }
+    
     console.log('SAML user logged out:', user.nameID);
     const { id, context } = sp.createLogoutRequest(idp, 'redirect', {
       sessionIndex: user.sessionIndex.sessionIndex,
@@ -131,6 +132,10 @@ router.get('/login/saml', async (req: Request, res: Response) => {
       if (err) {
         console.error('Session destruction error:', err);
       }
+      
+      // Clear session cookie explicitly
+      res.clearCookie('connect.sid'); // Replace with your actual cookie name if different
+      
       res.redirect(process.env.FRONTEND_LINK || context);
     });
   } catch (error) {

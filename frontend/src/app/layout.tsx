@@ -3,6 +3,8 @@ import Header from '@/components/ui/Header'
 import Footer from '@/components/ui/Footer'
 import './globals.css'
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Suspense } from 'react'
+import LoginAlert from '@/components/ui/LoginAlert'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -41,6 +43,9 @@ export default function RootLayout({
         ) : (
           <>
             <Header />
+            <Suspense fallback={null}>
+              <LoginAlert />
+            </Suspense>
             {children}
             <SpeedInsights />
             <Footer />
