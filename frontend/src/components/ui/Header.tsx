@@ -31,7 +31,7 @@ const Header = () => {
                 );
                 let data: PageContent[] = await response.json();
                 if(!user){
-                    data = data.filter(page => page.name !== "Budget");
+                    data = data.filter(page => page.content !== null);
                 }
 
                 // Organize pages by header/section
