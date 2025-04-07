@@ -104,6 +104,7 @@ const CourseReviewsSchema = new Schema<ICourseReviews>({
     course_id: {
         type: Number,
         required: true,
+        ref: 'Courses',
         index: true
     },
     instructor_id: {
@@ -114,6 +115,7 @@ const CourseReviewsSchema = new Schema<ICourseReviews>({
     user_id: {
         type: Number,
         required: true,
+        ref: 'SAMLUser',
         index: true
     }
 });
