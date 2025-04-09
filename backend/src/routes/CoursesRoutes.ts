@@ -5,13 +5,36 @@ const router = express.Router();
 
 /**
  * @route   GET /api/courses
- * @desc    Get all courses with optional filters
+ * @desc    Get all courses with optional filters (search and department)
  * @access  Public
  */
+// Courses routes
 router.get("/", async (req: Request, res: Response) => {
     try {
-        // TODO: Implement filtering logic based on query parameters
-        const courses = await Courses.find({});
+        const { search, department } = req.query;
+        
+        // Build the query object
+        const query: any = {};
+        
+        // Add search functionality
+        if (search && typeof search === 'string') {
+            // Basic search with regex for case-insensitive matching
+            query.$or = [
+                { code: { $regex: search, $options: 'i' } },
+                { name: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
+        }
+        
+        // Add department filter if provided
+        if (department) {
+            const deptArray = Array.isArray(department) ? department : [department];
+            query.department_names = { $in: deptArray };
+        }
+        
+        // Execute the query
+        const courses = await Courses.find(query).sort({ code: 1 });
+        
         res.json(courses);
     } catch (err) {
         console.error(err);
