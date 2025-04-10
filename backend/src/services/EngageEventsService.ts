@@ -64,8 +64,8 @@ class EngageEventsService {
             const startDateTime = new Date(parseInt(event.startDateTime));
             const endDateTime = new Date(parseInt(event.endDateTime));
 
-            startDateTime.setTime(startDateTime.getTime() - 8 * 60 * 60 * 1000);
-            endDateTime.setTime(endDateTime.getTime() - 8 * 60 * 60 * 1000);
+            startDateTime.setTime(startDateTime.getTime() - 7 * 60 * 60 * 1000);
+            endDateTime.setTime(endDateTime.getTime() - 7 * 60 * 60 * 1000);
 
             return {
                 name: event.eventName,
