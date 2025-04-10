@@ -5,6 +5,40 @@ import { CourseReviews } from "../models/Courses";
 const router: Router = express.Router();
 
 /**
+ * @route   GET /api/instructors
+ * @desc    Get all instructors with optional filters (search )
+ * @access  Public
+ */
+router.get("/", async (req: Request, res: Response) => {
+    try {
+        const { search } = req.query;
+        
+        // Build the query object
+        const query: any = {};
+        
+        // Add search functionality
+        if (search && typeof search === 'string') {
+            // Basic search with regex for case-insensitive matching
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+            ];
+        }
+    
+        
+        // Execute the query
+        const instructors = await Instructors.find(query).sort({ code: 1 });
+        
+        res.json(instructors);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+
+
+
+/**
  * @route   GET /api/instructors/:id
  * @desc    Get instructor information by ID
  * @access  Public
