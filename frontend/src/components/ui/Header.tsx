@@ -31,7 +31,7 @@ const Header = () => {
                 );
                 let data: PageContent[] = await response.json();
                 if(!user){
-                    data = data.filter(page => page.name !== "Budget");
+                    data = data.filter(page => page.content !== null);
                 }
 
                 // Organize pages by header/section
@@ -128,11 +128,13 @@ const Header = () => {
                                     ? "hover:text-yellow-400"
                                     : "text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
                             }`}
-                            onClick={
-                                closeMenuOnClick
-                                    ? () => setIsMobileMenuOpen(false)
-                                    : undefined
-                            }
+                            onClick={() => {
+                                // Close dropdown menu when link is clicked
+                                setOpenDropdown(null);
+                                if (closeMenuOnClick) {
+                                    setIsMobileMenuOpen(false);
+                                }
+                            }}
                         >
                             {page.name}
                         </Link>
@@ -214,6 +216,7 @@ const Header = () => {
                                                 key={`group-${index}`}
                                                 href={`/staff/${group}`}
                                                 className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                                onClick={() => setOpenDropdown(null)}
                                             >
                                                 {group.replace(
                                                     /([a-z])([A-Z])/g,
@@ -267,6 +270,7 @@ const Header = () => {
                                         <Link
                                             href="/campus/course-reviews"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                            onClick={() => setOpenDropdown(null)}
                                         >
                                             Course Reviews
                                         </Link>
@@ -274,6 +278,7 @@ const Header = () => {
                                         <Link
                                             href="/campus/housing"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                            onClick={() => setOpenDropdown(null)}
                                         >
                                             Housing Reviews
                                         </Link>
@@ -281,6 +286,7 @@ const Header = () => {
                                         <Link
                                             href="/campus/instructor-reviews"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                            onClick={() => setOpenDropdown(null)}
                                         >
                                             Instructor Reviews
                                         </Link>
@@ -325,13 +331,22 @@ const Header = () => {
                                             Dashboard
                                         </Link>
                                     )}
-                                    <button
-                                        onClick={() =>
-                                            (window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`)
+                                   <button
+                                    onClick={() => {
+                                        // Clear the cookie in a simpler way
+                                        document.cookie = "connect.sid=; max-age=0; path=/;";
+                                        
+                                        // For production with domain
+                                        if (window.location.hostname.includes('pomonastudents.org')) {
+                                        document.cookie = "connect.sid=; max-age=0; path=/; domain=.pomonastudents.org;";
                                         }
-                                        className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                                        
+                                        // Then redirect to backend logout
+                                        window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`;
+                                    }}
+                                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
                                     >
-                                        Logout SSO
+                                    Logout
                                     </button>
                                 </>
                             ) : (
@@ -554,16 +569,23 @@ const Header = () => {
                             )}
 
                             {user ? (
-                                <button
-                                    onClick={() => {
-                                        // Redirect to backend SAML logout route
-                                        window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`;
-                                        setIsMobileMenuOpen(false);
-                                    }}
-                                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 w-fit"
-                                >
-                                    Logout
-                                </button>
+                               <button
+                               onClick={() => {
+                                 // Clear the cookie in a simpler way
+                                 document.cookie = "connect.sid=; max-age=0; path=/;";
+                                 
+                                 // For production with domain
+                                 if (window.location.hostname.includes('pomonastudents.org')) {
+                                   document.cookie = "connect.sid=; max-age=0; path=/; domain=.pomonastudents.org;";
+                                 }
+                                 
+                                 // Then redirect to backend logout
+                                 window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`;
+                               }}
+                               className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                             >
+                               Logout
+                             </button>
                             ) : (
                                 <button
                                     onClick={() => {

@@ -11,6 +11,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const { user, loading: authLoading } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
+
   
   useEffect(() => {
     const fetchEvents = async () => {
@@ -35,6 +36,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white font-[Lora]">
       {loading && <Loading />}
+
       <div className="relative h-screen flex items-center justify-center text-center text-white">
           <Image
             src="/sccSunset.jpg"

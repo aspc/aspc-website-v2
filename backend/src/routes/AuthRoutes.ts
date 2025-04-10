@@ -109,7 +109,7 @@ router.get('/login/saml', async (req: Request, res: Response) => {
   
 
 // Logout Route
-  router.get('/logout/saml', async (req: Request, res: Response) => {
+router.get('/logout/saml', async (req: Request, res: Response) => {
   try {
     if (!idp || !sp) {
       throw new Error('SAML not initialized');
@@ -131,6 +131,16 @@ router.get('/login/saml', async (req: Request, res: Response) => {
       if (err) {
         console.error('Session destruction error:', err);
       }
+      
+      // Clear the cookie with the EXACT same settings as when it was created
+      res.clearCookie('connect.sid', {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        domain: process.env.NODE_ENV === 'production' ? '.pomonastudents.org' : undefined
+      });
+      
       res.redirect(process.env.FRONTEND_LINK || context);
     });
   } catch (error) {
