@@ -72,6 +72,8 @@ export interface Review {
     housing_room_id: number;
     user_email: string;
     pictures?: string[];
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface ReviewAverages {
@@ -87,3 +89,13 @@ export interface RoomWithReviews {
     reviews: Review[];
     averages: ReviewAverages;
 }
+
+// Room card component
+export interface RoomCardProps {
+    buildingName: string;
+    room: Room;
+  }
+
+export interface ReviewFormProps {
+    review: Review | null;
+  }
