@@ -74,7 +74,7 @@ interface ICourseReviews extends Document {
     comments: string;
     course_id: number;
     instructor_id: number;
-    user_id: string;
+    user_email: string;
 }
 
 const CourseReviewsSchema = new Schema<ICourseReviews>({
@@ -114,9 +114,8 @@ const CourseReviewsSchema = new Schema<ICourseReviews>({
         required: true,
         index: true
     },
-    user_id: {
+    user_email: {
         type: String,
-        required: true,
         ref: 'SAMLUser',
         index: true
     },
