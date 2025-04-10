@@ -53,6 +53,7 @@ const CoursesSchema = new Schema<ICourses>({
     },
     all_instructor_ids: [{
         type: Number,
+        ref: 'Instructors',
     }],
 },
     {
@@ -73,7 +74,7 @@ interface ICourseReviews extends Document {
     comments: string;
     course_id: number;
     instructor_id: number;
-    user_id: number;
+    user_id: string;
 }
 
 const CourseReviewsSchema = new Schema<ICourseReviews>({
@@ -109,15 +110,19 @@ const CourseReviewsSchema = new Schema<ICourseReviews>({
     },
     instructor_id: {
         type: Number,
+        ref: 'Instructors',
         required: true,
         index: true
     },
     user_id: {
-        type: Number,
+        type: String,
         required: true,
         ref: 'SAMLUser',
         index: true
-    }
+    },
+},
+{
+    timestamps: true,
 });
 
 const CourseReviews = mongoose.model<ICourseReviews>('CourseReviews', CourseReviewsSchema);
