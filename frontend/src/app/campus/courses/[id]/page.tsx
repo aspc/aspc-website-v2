@@ -3,11 +3,9 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Loading from "@/components/Loading";
 import { CourseWithReviews, Course, CourseReview } from "@/types";
-import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import LoginRequired from "@/components/LoginRequired";
-import { StarRating, getRoomOccupancyType } from "@/components/housing/Rooms";
-import { ReviewForm, PictureModal } from "@/components/housing/Reviews";
+import { StarRating } from "@/components/housing/Rooms";
 
 const CoursePage = () => {
     const params = useParams();
@@ -18,10 +16,75 @@ const CoursePage = () => {
     const [courseReviews, setCourseReviews] =
         useState<CourseWithReviews | null>(null);
     const { user, loading: authLoading } = useAuth();
+    const [averageRatings, setAverageRatings] = useState({
+        overallAverage: 0,
+        inclusivityAverage: 0,
+        challengeAverage: 0,
+        workPerWeekAverage: 0,
+        reviewCount: 0,
+    });
 
     useEffect(() => {
         const fetchReviews = async () => {
             try {
+                const calculateAverage = (reviews: CourseReview[]) => {
+                    if (!reviews || reviews.length === 0) {
+                        return {
+                            overallAverage: 0,
+                            inclusivityAverage: 0,
+                            challengeAverage: 0,
+                            workPerWeekAverage: 0,
+                            reviewCount: 0,
+                        };
+                    }
+
+                    let overallSum = 0;
+                    let overallCount = 0;
+                    let inclusivitySum = 0;
+                    let inclusivityCount = 0;
+                    let challengeSum = 0;
+                    let challengeCount = 0;
+                    let workPerWeekSum = 0;
+                    let workPerWeekCount = 0;
+
+                    reviews.forEach((review) => {
+                        if (review.overall_rating) {
+                            overallSum += review.overall_rating;
+                            overallCount++;
+                        }
+                        if (review.inclusivity_rating) {
+                            inclusivitySum += review.inclusivity_rating;
+                            inclusivityCount++;
+                        }
+                        if (review.challenge_rating) {
+                            challengeSum += review.challenge_rating;
+                            challengeCount++;
+                        }
+                        if (review.work_per_week) {
+                            workPerWeekSum += review.work_per_week;
+                            workPerWeekCount++;
+                        }
+                    });
+
+                    return {
+                        overallAverage:
+                            overallCount > 0 ? overallSum / overallCount : 0,
+                        inclusivityAverage:
+                            inclusivityCount > 0
+                                ? inclusivitySum / inclusivityCount
+                                : 0,
+                        challengeAverage:
+                            challengeCount > 0
+                                ? challengeSum / challengeCount
+                                : 0,
+                        workPerWeekAverage:
+                            workPerWeekCount > 0
+                                ? workPerWeekSum / workPerWeekCount
+                                : 0,
+                        reviewCount: reviews.length,
+                    };
+                };
+
                 setLoading(true);
 
                 // Fetch course data
@@ -50,6 +113,9 @@ const CoursePage = () => {
                 }
 
                 const data: CourseReview[] = await reviews.json();
+
+                setAverageRatings(calculateAverage(data));
+
                 const reviewsData: CourseWithReviews = {
                     reviews: data,
                     course: courseData,
@@ -67,19 +133,6 @@ const CoursePage = () => {
         fetchReviews();
     }, [id]);
 
-    const targetRef = useRef<HTMLButtonElement | null>(null);
-
-    // const scrollToReviewForm = () => {
-    //     setTimeout(() => {
-    //         if (targetRef.current) {
-    //             targetRef.current.scrollIntoView({
-    //                 behavior: "smooth",
-    //                 block: "start",
-    //             });
-    //         }
-    //     }, 0);
-    // };
-
     if (loading || authLoading) {
         return <Loading />;
     }
@@ -95,31 +148,14 @@ const CoursePage = () => {
         return `${month} ${year}`;
     };
 
-    // const handleDelete = async (id: number) => {
-    //     if (window.confirm("Are you sure you want to delete this review?")) {
-    //         try {
-    //             setLoading(true);
-    //             const response = await fetch(
-    //                 `${process.env.BACKEND_LINK}/api/campus/housing/reviews/${id}`,
-    //                 {
-    //                     method: "DELETE",
-    //                 }
-    //             );
+    // Calculate the average for the course
 
-    //             if (!response.ok) {
-    //                 throw new Error("Failed to delete review");
-    //             }
-
-    //             alert("Review deleted successfully!");
-    //             setTimeout(() => window.location.reload(), 1000);
-    //         } catch (error) {
-    //             console.error("Error deleting review", error);
-    //             alert("Failed to delete review");
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     }
-    // };
+    // Format average work per week to a readable string
+    const formatWorkPerWeek = (hours: number) => {
+        if (hours === 0) return "N/A";
+        if (hours < 1) return "Less than 1 hour";
+        return `${Math.round(hours)} hours`;
+    };
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -133,271 +169,331 @@ const CoursePage = () => {
 
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-800">
-                    Reviews for {courseName}
+                    {courseName}
                 </h1>
 
                 <div className="py-4 flex-grow">
-                    {/* {courseReviews &&
-                    courseReviews. &&
-                    courseReviews.averages.reviewCount > 0 ? (
+                    {courseReviews ? (
                         <>
                             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                                 <h4 className="text-lg font-medium mb-3">
-                                    Summary
+                                    Course Information
                                 </h4>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <p className="text-gray-600">
-                                        Occupancy:{" "}
-                                        {getRoomOccupancyType(
-                                            roomReviews.room.occupancy_type
-                                        )}
-                                    </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <p className="text-gray-600 font-medium">
+                                            Course Code:
+                                        </p>
+                                        <p>{courseReviews.course.code}</p>
+                                    </div>
 
-                                    {roomReviews.room.size && (
-                                        <p className="text-gray-600">
-                                            Size: {roomReviews.room.size} sq.
-                                            ft.
-                                        </p>
+                                    {courseReviews.course.department_names &&
+                                        courseReviews.course.department_names
+                                            .length > 0 && (
+                                            <div>
+                                                <p className="text-gray-600 font-medium">
+                                                    Departments:
+                                                </p>
+                                                <p>
+                                                    {courseReviews.course.department_names.join(
+                                                        ", "
+                                                    )}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                    {courseReviews.course.requirement_names &&
+                                        courseReviews.course.requirement_names
+                                            .length > 0 && (
+                                            <div className="col-span-1 md:col-span-2">
+                                                <p className="text-gray-600 font-medium">
+                                                    Requirements Fulfilled:
+                                                </p>
+                                                <p>
+                                                    {courseReviews.course.requirement_names.join(
+                                                        ", "
+                                                    )}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                    {courseReviews.course.term_keys &&
+                                    courseReviews.course.term_keys.length >
+                                        0 ? (
+                                        <div>
+                                            <p className="text-gray-600 font-medium">
+                                                Terms Offered (After 2020):
+                                            </p>
+                                            <p>
+                                                {courseReviews.course.term_keys
+                                                    .filter((term) => {
+                                                        // Extract the year from term (format: "2002;FA")
+                                                        const year = parseInt(
+                                                            term.split(";")[0],
+                                                            10
+                                                        );
+                                                        // Only include terms after 2020
+                                                        return year > 2020;
+                                                    })
+                                                    .map((term) => {
+                                                        const [year, semester] =
+                                                            term.split(";");
+
+                                                        // Convert semester code to full name
+                                                        let semesterName = "";
+                                                        switch (semester) {
+                                                            case "FA":
+                                                                semesterName =
+                                                                    "Fall";
+                                                                break;
+                                                            case "SP":
+                                                                semesterName =
+                                                                    "Spring";
+                                                                break;
+                                                            case "SU":
+                                                                semesterName =
+                                                                    "Summer";
+                                                                break;
+                                                            case "WI":
+                                                                semesterName =
+                                                                    "Winter";
+                                                                break;
+                                                            default:
+                                                                semesterName =
+                                                                    semester;
+                                                        }
+
+                                                        return `${semesterName} ${year}`;
+                                                    })
+                                                    .join(", ")}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <p className="text-gray-600 font-medium">
+                                                Terms Offered:
+                                            </p>
+                                            <p>Offered most terms</p>
+                                        </div>
                                     )}
-                                    <div>
-                                        <p className="text-gray-600">Overall</p>
-                                        <div className="flex items-center">
-                                            <StarRating
-                                                rating={
-                                                    roomReviews.averages
-                                                        .overallAverage
-                                                }
-                                            />
-                                            <span className="ml-2">
-                                                {roomReviews.averages.overallAverage.toFixed(
-                                                    1
-                                                )}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p className="text-gray-600">Quiet</p>
-                                        <div className="flex items-center">
-                                            <StarRating
-                                                rating={
-                                                    roomReviews.averages
-                                                        .quietAverage
-                                                }
-                                            />
-                                            <span className="ml-2">
-                                                {roomReviews.averages.quietAverage.toFixed(
-                                                    1
-                                                )}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p className="text-gray-600">Layout</p>
-                                        <div className="flex items-center">
-                                            <StarRating
-                                                rating={
-                                                    roomReviews.averages
-                                                        .layoutAverage
-                                                }
-                                            />
-                                            <span className="ml-2">
-                                                {roomReviews.averages.layoutAverage.toFixed(
-                                                    1
-                                                )}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p className="text-gray-600">
-                                            Temperature
-                                        </p>
-                                        <div className="flex items-center">
-                                            <StarRating
-                                                rating={
-                                                    roomReviews.averages
-                                                        .temperatureAverage
-                                                }
-                                            />
-                                            <span className="ml-2">
-                                                {roomReviews.averages.temperatureAverage.toFixed(
-                                                    1
-                                                )}
-                                            </span>
-                                        </div>
-                                    </div>
                                 </div>
-                                <p className="text-gray-500 mt-3">
-                                    Based on {roomReviews.averages.reviewCount}{" "}
-                                    review
-                                    {roomReviews.averages.reviewCount !== 1
-                                        ? "s"
-                                        : ""}
-                                </p>
+
+                                {courseReviews.course.description && (
+                                    <div className="mb-4">
+                                        <p className="text-gray-600 font-medium">
+                                            Description:
+                                        </p>
+                                        <p className="text-gray-800">
+                                            {courseReviews.course.description}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {averageRatings &&
+                                    averageRatings.reviewCount > 0 && (
+                                        <>
+                                            <h4 className="text-lg font-medium mb-3 mt-6">
+                                                Review Summary
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <p className="text-gray-600">
+                                                        Overall Rating
+                                                    </p>
+                                                    <div className="flex items-center">
+                                                        <StarRating
+                                                            rating={
+                                                                averageRatings.overallAverage
+                                                            }
+                                                        />
+                                                        <span className="ml-2">
+                                                            {averageRatings.overallAverage.toFixed(
+                                                                1
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-gray-600">
+                                                        Inclusivity
+                                                    </p>
+                                                    <div className="flex items-center">
+                                                        <StarRating
+                                                            rating={
+                                                                averageRatings.inclusivityAverage
+                                                            }
+                                                        />
+                                                        <span className="ml-2">
+                                                            {averageRatings.inclusivityAverage.toFixed(
+                                                                1
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-gray-600">
+                                                        Challenge Level
+                                                    </p>
+                                                    <div className="flex items-center">
+                                                        <StarRating
+                                                            rating={
+                                                                averageRatings.challengeAverage
+                                                            }
+                                                        />
+                                                        <span className="ml-2">
+                                                            {averageRatings.challengeAverage.toFixed(
+                                                                1
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-gray-600">
+                                                        Average Work Per Week
+                                                    </p>
+                                                    <p className="font-medium">
+                                                        {formatWorkPerWeek(
+                                                            averageRatings.workPerWeekAverage
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <p className="text-gray-500 mt-3">
+                                                Based on{" "}
+                                                {averageRatings.reviewCount}{" "}
+                                                review
+                                                {averageRatings.reviewCount !==
+                                                1
+                                                    ? "s"
+                                                    : ""}
+                                            </p>
+                                        </>
+                                    )}
                             </div>
 
                             <div className="py-4">
                                 <hr className="border-t border-gray-300" />
-                            </div> */}
+                            </div>
+                        </>
+                    ) : null}
 
                     {/* User Reviews */}
                     {courseReviews ? (
                         <div className="space-y-6">
-                            {courseReviews.reviews.map((review) => (
-                                <div key={review._id} className="border-b pb-4">
-                                    <div className="flex justify-between mb-2">
-                                        <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                            <span className="text-m text-gray-600 mr-2">
-                                                Overall Rating:
-                                            </span>
-                                            <span>
-                                                <StarRating
-                                                    rating={
-                                                        review.overall_rating ||
-                                                        0
-                                                    }
-                                                />
-                                            </span>
-                                            <span className="ml-2">
-                                                {review.overall_rating || ""}
-                                            </span>
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                                Student Reviews
+                            </h2>
+                            {courseReviews.reviews.length > 0 ? (
+                                courseReviews.reviews.map((review) => (
+                                    <div
+                                        key={review._id}
+                                        className="border-b pb-4 bg-white p-4 rounded-lg shadow-sm"
+                                    >
+                                        <div className="flex justify-between mb-2">
+                                            <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                                                <span className="text-m text-gray-600 mr-2">
+                                                    Overall Rating:
+                                                </span>
+                                                <span>
+                                                    <StarRating
+                                                        rating={
+                                                            review.overall_rating ||
+                                                            0
+                                                        }
+                                                    />
+                                                </span>
+                                                <span className="ml-2">
+                                                    {review.overall_rating ||
+                                                        ""}
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    {/* {user.email == review.user_email && (
-                                            <div className="flex p-2 gap-4">
-                                                <button
-                                                    className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
-                                                    onClick={() => {
-                                                        setSelectedReview(
-                                                            review
-                                                        );
-                                                        scrollToReviewForm();
-                                                    }}
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    className="bg-red-500 text-white text-m px-4 rounded-md hover:bg-red-600"
-                                                    onClick={() => {
-                                                        handleDelete(review.id);
-                                                    }}
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        )} */}
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
-                                        {review.challenge_rating && (
-                                            <div className="text-sm flex items-center mb-2">
-                                                <span className="text-gray-600 mr-2">
-                                                    Difficulty:
-                                                </span>
-                                                <span className="inline">
-                                                    <StarRating
-                                                        rating={
-                                                            review.challenge_rating ||
-                                                            0
-                                                        }
-                                                    />
-                                                </span>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
+                                            {review.challenge_rating !==
+                                                undefined && (
+                                                <div className="text-sm flex items-center mb-2">
+                                                    <span className="text-gray-600 mr-2">
+                                                        Difficulty:
+                                                    </span>
+                                                    <span className="inline">
+                                                        <StarRating
+                                                            rating={
+                                                                review.challenge_rating ||
+                                                                0
+                                                            }
+                                                        />
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {review.inclusivity_rating !==
+                                                undefined && (
+                                                <div className="text-sm flex items-center mb-1">
+                                                    <span className="text-gray-600 mr-2">
+                                                        Inclusivity:
+                                                    </span>
+                                                    <span className="inline">
+                                                        <StarRating
+                                                            rating={
+                                                                review.inclusivity_rating ||
+                                                                0
+                                                            }
+                                                        />
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {review.work_per_week !==
+                                                undefined && (
+                                                <div className="text-sm flex items-center mb-2">
+                                                    <span className="text-gray-600 mr-2">
+                                                        Work per week:
+                                                    </span>
+                                                    <span className="inline">
+                                                        {review.work_per_week
+                                                            ? `${review.work_per_week} hours`
+                                                            : "N/A"}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {review.comments && (
+                                            <div className="mt-2 mb-2">
+                                                <p className="text-gray-800">
+                                                    {review.comments}
+                                                </p>
                                             </div>
                                         )}
-                                        {review.inclusivity_rating && (
-                                            <div className="text-sm flex items-center mb-1">
-                                                <span className="text-gray-600 mr-2">
-                                                    Inclusivity:
-                                                </span>
-                                                <span className="inline">
-                                                    <StarRating
-                                                        rating={
-                                                            review.inclusivity_rating ||
-                                                            0
-                                                        }
-                                                    />
-                                                </span>
-                                            </div>
-                                        )}
-                                        {/* <div className="text-sm flex items-center mb-2">
-                                                <span className="text-gray-600 mr-2">
-                                                    Work per week:
-                                                </span>
-                                                <span className="inline">
-                                                    {review.work_per_week ||
-                                                        "unknown"}
-                                                </span>
-                                            </div> */}
-                                    </div>
 
-                                    {review.comments && (
-                                        <div className="mt-2 mb-2">
-                                            <p className="text-gray-800">
-                                                {review.comments}
+                                        {/* Date written, last updated */}
+                                        <div className="flex flex-wrap gap-4 mt-4">
+                                            <p className="text-gray-500">
+                                                Review written{" "}
+                                                {review.createdAt &&
+                                                    formatDate(
+                                                        review.createdAt
+                                                    )}
+                                            </p>
+                                            <p className="text-gray-500">
+                                                Last updated{" "}
+                                                {review.updatedAt &&
+                                                    formatDate(
+                                                        review.updatedAt
+                                                    )}
                                             </p>
                                         </div>
-                                    )}
-
-                                    {/* Review Pictures */}
-                                    {/* {review.pictures && (
-                                        <div className="pictures-container flex space-x-4">
-                                            {review.pictures &&
-                                                review.pictures.length > 0 &&
-                                                review.pictures.map(
-                                                    (picture, index) => (
-                                                        <div
-                                                            key={index}
-                                                            className="picture-item"
-                                                        >
-                                                            <Image
-                                                                src={`${process.env.BACKEND_LINK}/api/campus/housing/review_pictures/${picture}`}
-                                                                alt={`Review image ${
-                                                                    index + 1
-                                                                }`}
-                                                                width={200}
-                                                                height={200}
-                                                                className="object-cover"
-                                                                onClick={() =>
-                                                                    setSelectedPicture(
-                                                                        picture
-                                                                    )
-                                                                } // Open modal when image is clicked
-                                                                style={{
-                                                                    height: "200px",
-                                                                    objectFit:
-                                                                        "cover",
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    )
-                                                )}
-                                        </div>
-                                    )} */}
-
-                                    {/* If user clicks a picture, open a popup with enlarged image */}
-                                    {/* {selectedPicture && (
-                                        <PictureModal
-                                            isOpen={!!selectedPicture}
-                                            onClose={() =>
-                                                setSelectedPicture(null)
-                                            }
-                                            picture={selectedPicture}
-                                        />
-                                    )} */}
-
-                                    {/* Date written, last updated */}
-                                    <div className="flex space-x-16">
-                                        <p className="text-gray-500 mt-3">
-                                            Review written{" "}
-                                            {review.createdAt &&
-                                                formatDate(review.createdAt)}
-                                        </p>
-                                        <p className="text-gray-500 mt-3">
-                                            Last updated{" "}
-                                            {review.updatedAt &&
-                                                formatDate(review.updatedAt)}
-                                        </p>
                                     </div>
+                                ))
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-40">
+                                    <p className="text-gray-500 text-lg">
+                                        No reviews yet for this course.
+                                    </p>
+                                    <p className="text-gray-400">
+                                        Be the first to leave a review!
+                                    </p>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center h-40">
@@ -410,20 +506,6 @@ const CoursePage = () => {
                         </div>
                     )}
                 </div>
-
-                {/* <button
-                    className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
-                    onClick={handleAddNewReviewClick}
-                    ref={targetRef}
-                >
-                    {selectedReview ? "Cancel review edit" : "Add new review"}
-                </button> */}
-
-                {/* {(isCreatingNew || selectedReview) && (
-                    <div>
-                        <ReviewForm review={selectedReview} />
-                    </div>
-                )} */}
             </div>
         </div>
     );
