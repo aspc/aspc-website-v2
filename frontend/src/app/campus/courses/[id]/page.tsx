@@ -287,32 +287,36 @@ const CoursePage = () => {
                                             </div>
                                         )} */}
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
-                                        <div className="text-sm flex items-center mb-2">
-                                            <span className="text-gray-600 mr-2">
-                                                Difficulty:
-                                            </span>
-                                            <span className="inline">
-                                                <StarRating
-                                                    rating={
-                                                        review.challenge_rating ||
-                                                        0
-                                                    }
-                                                />
-                                            </span>
-                                        </div>
-                                        <div className="text-sm flex items-center mb-1">
-                                            <span className="text-gray-600 mr-2">
-                                                Inclusivity:
-                                            </span>
-                                            <span className="inline">
-                                                <StarRating
-                                                    rating={
-                                                        review.inclusivity_rating ||
-                                                        0
-                                                    }
-                                                />
-                                            </span>
-                                        </div>
+                                        {review.challenge_rating && (
+                                            <div className="text-sm flex items-center mb-2">
+                                                <span className="text-gray-600 mr-2">
+                                                    Difficulty:
+                                                </span>
+                                                <span className="inline">
+                                                    <StarRating
+                                                        rating={
+                                                            review.challenge_rating ||
+                                                            0
+                                                        }
+                                                    />
+                                                </span>
+                                            </div>
+                                        )}
+                                        {review.inclusivity_rating && (
+                                            <div className="text-sm flex items-center mb-1">
+                                                <span className="text-gray-600 mr-2">
+                                                    Inclusivity:
+                                                </span>
+                                                <span className="inline">
+                                                    <StarRating
+                                                        rating={
+                                                            review.inclusivity_rating ||
+                                                            0
+                                                        }
+                                                    />
+                                                </span>
+                                            </div>
+                                        )}
                                         {/* <div className="text-sm flex items-center mb-2">
                                                 <span className="text-gray-600 mr-2">
                                                     Work per week:
