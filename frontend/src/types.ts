@@ -38,7 +38,7 @@ export interface User {
     firstName: string;
     lastName: string;
     isAdmin: boolean;
-  }
+}
 
 export interface Building {
     id: number;
@@ -94,8 +94,45 @@ export interface RoomWithReviews {
 export interface RoomCardProps {
     buildingName: string;
     room: Room;
-  }
+}
 
 export interface ReviewFormProps {
     review: Review | null;
-  }
+}
+
+// Course and course review types
+export type Course = {
+    id: number;
+    code: string;
+    code_slug: string;
+    name: string;
+    department_names: string[];
+    requirement_codes: string[];
+    requirement_names: string[];
+    term_keys: string[]; // empty array means offered most terms
+    description: string;
+    all_instructor_ids: number[];
+    createdAt?: Date;
+    updatedAt?: Date;
+};
+
+export type CourseReview = {
+    _id: string;
+    id: number;
+    overall_rating?: number;
+    challenge_rating?: number;
+    inclusivity_rating?: number;
+    work_per_week?: number;
+    total_cost?: number;
+    comments?: string;
+    course_id: number;
+    instructor_id: number;
+    user_email?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+};
+
+export type CourseWithReviews = {
+    course: Course;
+    reviews: CourseReview[];
+};
