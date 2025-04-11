@@ -12,29 +12,31 @@ const router = express.Router();
 router.get("/", async (req: Request, res: Response) => {
     try {
         const { search, department } = req.query;
-        
+
         // Build the query object
         const query: any = {};
-        
+
         // Add search functionality
-        if (search && typeof search === 'string') {
+        if (search && typeof search === "string") {
             // Basic search with regex for case-insensitive matching
             query.$or = [
-                { code: { $regex: search, $options: 'i' } },
-                { name: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } }
+                { code: { $regex: search, $options: "i" } },
+                { name: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } },
             ];
         }
-        
+
         // Add department filter if provided
         if (department) {
-            const deptArray = Array.isArray(department) ? department : [department];
+            const deptArray = Array.isArray(department)
+                ? department
+                : [department];
             query.department_names = { $in: deptArray };
         }
-        
+
         // Execute the query
         const courses = await Courses.find(query).sort({ code: 1 });
-        
+
         res.json(courses);
     } catch (err) {
         console.error(err);
@@ -190,7 +192,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
  * @desc    Get all reviews for a specific course
  * @access  Public
  */
-router.get("/courses/:id/reviews", async (req: Request, res: Response) => {
+router.get("/:id/reviews", async (req: Request, res: Response) => {
     try {
         const courseId: number = parseInt(req.params.id);
 
@@ -204,7 +206,27 @@ router.get("/courses/:id/reviews", async (req: Request, res: Response) => {
             return;
         }
 
-        res.json(reviews);
+        // TODO: I don't like this formatting, but it works
+        const formattedReviews = reviews.map((review: any) => ({
+            ...review.toObject(),
+            overall_rating: review.overall_rating
+                ? parseFloat(review.overall_rating.toString())
+                : null,
+            challenge_rating: review.challenge_rating
+                ? parseFloat(review.challenge_rating.toString())
+                : null,
+            inclusivity_rating: review.inclusivity_rating
+                ? parseFloat(review.inclusivity_rating.toString())
+                : null,
+            work_per_week: review.work_per_week
+                ? parseFloat(review.work_per_week.toString())
+                : null,
+            total_cost: review.total_cost
+                ? parseFloat(review.total_cost.toString())
+                : null,
+        }));
+
+        res.json(formattedReviews);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Server error" });
