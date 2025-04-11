@@ -261,8 +261,9 @@ const CoursePage = () => {
                                                 {review.overall_rating || ""}
                                             </span>
                                         </div>
+                                    </div>
 
-                                        {/* {user.email == review.user_email && (
+                                    {/* {user.email == review.user_email && (
                                             <div className="flex p-2 gap-4">
                                                 <button
                                                     className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
@@ -285,6 +286,42 @@ const CoursePage = () => {
                                                 </button>
                                             </div>
                                         )} */}
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
+                                        <div className="text-sm flex items-center mb-2">
+                                            <span className="text-gray-600 mr-2">
+                                                Difficulty:
+                                            </span>
+                                            <span className="inline">
+                                                <StarRating
+                                                    rating={
+                                                        review.challenge_rating ||
+                                                        0
+                                                    }
+                                                />
+                                            </span>
+                                        </div>
+                                        <div className="text-sm flex items-center mb-1">
+                                            <span className="text-gray-600 mr-2">
+                                                Inclusivity:
+                                            </span>
+                                            <span className="inline">
+                                                <StarRating
+                                                    rating={
+                                                        review.inclusivity_rating ||
+                                                        0
+                                                    }
+                                                />
+                                            </span>
+                                        </div>
+                                        {/* <div className="text-sm flex items-center mb-2">
+                                                <span className="text-gray-600 mr-2">
+                                                    Work per week:
+                                                </span>
+                                                <span className="inline">
+                                                    {review.work_per_week ||
+                                                        "unknown"}
+                                                </span>
+                                            </div> */}
                                     </div>
 
                                     {review.comments && (
