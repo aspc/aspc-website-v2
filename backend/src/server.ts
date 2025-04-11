@@ -9,6 +9,9 @@ import pageRoutes from "./routes/admin/PagesRoutes";
 import staffRoutes from "./routes/admin/StaffRoutes";
 import eventRoutes from "./routes/EventsRoutes";
 import housingRoutes from "./routes/HousingRoutes";
+import coursesRoutes from "./routes/CoursesRoutes";
+import instructorsRoutes from "./routes/InstructorsRoutes";
+import reviewsRoutes from "./routes/ReviewsRoutes";
 import session from "express-session";
 import https from "https";
 import http from "http";
@@ -19,15 +22,21 @@ dotenv.config();
 const app: Express = express();
 
 // Middleware
-app.use(cors({
-  origin: ['http://localhost:3000', 'https://localhost:3001', 'https://aspc-website-v2.vercel.app','https://pomonastudents.org', 'https://api.pomonastudents.org'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+app.use(
+    cors({
+        origin: [
+            "http://localhost:3000",
+            "https://localhost:3001",
+            "https://aspc-website-v2.vercel.app",
+            "https://pomonastudents.org",
+            "https://api.pomonastudents.org",
+        ],
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        credentials: true,
+    })
+);
 app.use(express.json());
-
-
 
 app.set("trust proxy", 1); // Required for secure cookies
 
@@ -37,26 +46,27 @@ const MONGODB_URI =
 
 // Session
 app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'secretlongpassword',
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: MONGODB_URI,
-      ttl: 24 * 60 * 60, // = 1 day (in seconds)
-      autoRemove: 'native', // Use MongoDB's TTL index
-    }),
-    cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      sameSite:  process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      domain: process.env.NODE_ENV === 'production' ? '.pomonastudents.org' : undefined
-    },
-  })
+    session({
+        secret: process.env.SESSION_SECRET || "secretlongpassword",
+        resave: false,
+        saveUninitialized: false,
+        store: MongoStore.create({
+            mongoUrl: MONGODB_URI,
+            ttl: 24 * 60 * 60, // = 1 day (in seconds)
+            autoRemove: "native", // Use MongoDB's TTL index
+        }),
+        cookie: {
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            domain:
+                process.env.NODE_ENV === "production"
+                    ? ".pomonastudents.org"
+                    : undefined,
+        },
+    })
 );
-
-
 
 let bucket: GridFSBucket;
 let housingReviewPictures: GridFSBucket;
@@ -78,7 +88,7 @@ mongoose
         console.log("Profile picture uploads bucket created");
 
         housingReviewPictures = new GridFSBucket(db, {
-            bucketName: "housingreviewpictures"
+            bucketName: "housingreviewpictures",
         });
 
         console.log("Housing review uploads bucket created");
@@ -87,13 +97,15 @@ mongoose
 
 export { bucket, housingReviewPictures };
 
-
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin/pages", pageRoutes);
 app.use("/api/members", staffRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/campus/housing", housingRoutes);
+app.use("/api/courses", coursesRoutes);
+app.use("/api/instructors", instructorsRoutes);
+app.use("/api/reviews", reviewsRoutes);
 
 const PORT = process.env.PORT || 5000;
 
