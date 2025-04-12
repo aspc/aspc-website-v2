@@ -201,7 +201,9 @@ router.get("/:id/reviews", async (req: Request, res: Response) => {
             return;
         }
 
-        const reviews = await CourseReviews.find({ course_id: courseId });
+        const reviews = await CourseReviews.find({ course_id: courseId })
+            .sort({ updatedAt: -1 }) // -1 for descending order (newest first)
+            .exec();
 
         // TODO: I don't like this formatting, but it works
         const formattedReviews = reviews.map((review: any) => ({
