@@ -154,6 +154,7 @@ const CoursePage = () => {
     const formatWorkPerWeek = (hours: number) => {
         if (hours === 0) return "N/A";
         if (hours < 1) return "Less than 1 hour";
+        if (hours < 2) return "1 hour";
         return `${Math.round(hours)} hours`;
     };
 
@@ -195,9 +196,15 @@ const CoursePage = () => {
                                                     Departments:
                                                 </p>
                                                 <p>
-                                                    {courseReviews.course.department_names.join(
-                                                        ", "
-                                                    )}
+                                                    {courseReviews.course.department_names
+                                                        .map((dept) =>
+                                                            dept.includes(
+                                                                "Philosophy,Politics,Econ"
+                                                            )
+                                                                ? "PPE"
+                                                                : dept
+                                                        )
+                                                        .join(", ")}
                                                 </p>
                                             </div>
                                         )}
@@ -426,8 +433,7 @@ const CoursePage = () => {
                                                     </span>
                                                 </div>
                                             )}
-                                            {review.inclusivity_rating !==
-                                                undefined && (
+                                            {review.inclusivity_rating && (
                                                 <div className="text-sm flex items-center mb-1">
                                                     <span className="text-gray-600 mr-2">
                                                         Inclusivity:
@@ -442,19 +448,18 @@ const CoursePage = () => {
                                                     </span>
                                                 </div>
                                             )}
-                                            {review.work_per_week !==
-                                                undefined && (
-                                                <div className="text-sm flex items-center mb-2">
-                                                    <span className="text-gray-600 mr-2">
-                                                        Work per week:
-                                                    </span>
-                                                    <span className="inline">
-                                                        {review.work_per_week
-                                                            ? `${review.work_per_week} hours`
-                                                            : "N/A"}
-                                                    </span>
-                                                </div>
-                                            )}
+                                            <div className="text-sm flex items-center mb-2">
+                                                <span className="text-gray-600 mr-2">
+                                                    Work per week:
+                                                </span>
+                                                <span className="inline">
+                                                    {review.work_per_week
+                                                        ? `${formatWorkPerWeek(
+                                                              review.work_per_week
+                                                          )}`
+                                                        : "N/A"}
+                                                </span>
+                                            </div>
                                         </div>
 
                                         {review.comments && (
