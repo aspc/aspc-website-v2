@@ -27,7 +27,9 @@ type CampusGroup = {
 };
 
 const HousingPage = async () => {
-  const client = await MongoClient.connect(process.env.MONGODB_URI!);
+  const client = await MongoClient.connect(
+    process.env.MONGODB_URI! || "mongodb://localhost:27017/school-platform"
+  );
   const db = client.db("school-platform");
   const buildings = await db
     .collection<BuildingDoc>("housingbuildings")
@@ -38,12 +40,17 @@ const HousingPage = async () => {
   // Organize buildings by campus
   const housingData: CampusGroup[] = buildings.reduce((acc, building) => {
     const campusName =
-      building.campus.charAt(0).toUpperCase() + building.campus.slice(1) + " Campus";
+      building.campus.charAt(0).toUpperCase() +
+      building.campus.slice(1) +
+      " Campus";
 
     const buildingCard: BuildingCard = {
       id: building.id,
       name: building.name,
-      image: `/buildings/${building.name.toLowerCase().replace(/\s+/g, "-").replace(/-+/g, "-")}.jpg`,
+      image: `/buildings/${building.name
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")}.jpg`,
       description: building.description,
       floors: building.floors,
     };

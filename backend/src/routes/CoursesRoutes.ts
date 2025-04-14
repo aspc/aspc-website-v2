@@ -232,4 +232,45 @@ router.get("/:id/reviews", async (req: Request, res: Response) => {
     }
 });
 
+router.post("/:courseId/reviews", async (req: Request, res: Response) => {
+    try {
+        // need to find new max id for the new review
+        const result = await CourseReviews.aggregate([
+            {
+                $group: {
+                _id: null,            // No need to group, so _id is null
+                maxValue: { $max: "$id" }  // Find the max value of fieldName
+                }
+            }
+            ]);
+        
+        const maxId = result[0].maxValue + 1;
+        
+        const { courseId } = req.params;
+        
+        // parse review fields from request
+        const { overall, challenge, inclusivity, workPerWeek, comments, instructorId, email } = req.body;
+
+        // construct review data
+        const reviewData = {
+            id: maxId,
+            overall_rating: overall,
+            challenge_rating: challenge,
+            inclusivity_rating: inclusivity,
+            work_per_week: workPerWeek,
+            comments: comments,
+            course_id: courseId,
+            instructor_id: instructorId,
+            user_email: email, 
+        };
+        
+        const review = new CourseReviews(reviewData);
+        await review.save();
+
+        res.status(201).json({ message: "Review saved successfully" });
+    } catch (error) {
+        res.status(400).json({ message: "Error creating member" });
+    }
+});
+
 export default router;

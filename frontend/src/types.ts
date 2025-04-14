@@ -136,3 +136,7 @@ export type CourseWithReviews = {
     course: Course;
     reviews: CourseReview[];
 };
+
+export interface CourseReviewFormProps {
+    review: CourseReview | null;
+}
