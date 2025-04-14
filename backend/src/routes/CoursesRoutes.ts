@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { Courses, CourseReviews } from '../models/Courses';
 import { Instructors } from '../models/People';
+import { isAdmin } from "../middleware/authMiddleware";
 
 const router = express.Router();
 
@@ -81,7 +82,8 @@ router.get('/:id', async (req: Request, res: Response) => {
  * @desc    Create new course
  * @access  Private (Admin)
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post("/", isAdmin, async (req: Request, res: Response) => {
+    // TODO: Check if user is admin
     // ? Do we need to create slugs for all courses here ? //
     try {
         const {
