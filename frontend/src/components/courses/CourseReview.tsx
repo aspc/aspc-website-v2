@@ -2,11 +2,12 @@
 import React from "react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CourseReviewFormProps } from "@/types";
+import { Instructor, CourseReviewFormProps } from "@/types";
 // import Image from "next/image";
 
 export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
   review,
+  courseId,
 }) => {
   const params = useParams();
   const { id } = params;
@@ -19,6 +20,9 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
 
   const [workPerWeek, setWorkPerWeek] = useState<string>("");
   const [instructorId, setInstructorId] = useState<string>("");
+  const [courseInstructors, setCourseInstructors] = useState<
+    Instructor[] | null
+  >(null);
 
   const [hoveredStar, setHoveredStar] = useState<{
     overall: number;
@@ -61,11 +65,35 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
         challenge: review.challenge_rating || 0,
         inclusivity: review.inclusivity_rating || 0,
       });
-      setWorkPerWeek(review.work_per_week.toString() || "");
+
+      if (review.work_per_week) {
+        setWorkPerWeek(review.work_per_week.toString());
+      } else {
+        setWorkPerWeek("");
+      }
+
       setInstructorId(review.instructor_id.toString() || "");
       setComments(review.comments || "");
     }
-  }, [review]);
+    // Get all instructors for course
+    const fetchInstructors = async () => {
+      const response = await fetch(
+        `${process.env.BACKEND_LINK}/api/courses/${courseId}/instructors`
+      );
+
+      console.log("here");
+
+      if (!response.ok) {
+        throw new Error("Error fetching course instructors");
+      }
+
+      const instructors: Instructor[] = await response.json();
+      console.log(instructors);
+      setCourseInstructors(instructors);
+    };
+
+    fetchInstructors();
+  }, [review, courseId]);
 
   const handleCommentsChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setComments(e.target.value);
@@ -86,8 +114,9 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
     if (workPerWeek === null)
       errors.workPerWeek =
         "Please input the average number of hours of work per week for this course.";
-    if (instructorId === null)
-      errors.instructor = "Please select your instructor for this course.";
+    // TODO: handle the case the the instructor was not listed
+    // if (instructorId === null)
+    //   errors.instructor = "Please select your instructor for this course.";
     // Check if comments are provided
     if (!comments.trim()) errors.comments = "Please leave a comment.";
 
@@ -112,24 +141,28 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
       const user = await userResponse.json();
 
       // Construct review request
-      const formData = new FormData();
-      formData.append("overall", ratings.overall.toString());
-      formData.append("challenge", ratings.challenge.toString());
-      formData.append("inclusivity", ratings.inclusivity.toString());
-      formData.append("workPerWeek", workPerWeek.toString());
-      formData.append("instructorId", instructorId?.toString());
-      formData.append("comments", comments);
-      formData.append("email", user.user.email);
+      const reviewPayload = {
+        overall: ratings.overall,
+        challenge: ratings.challenge,
+        inclusivity: ratings.inclusivity,
+        workPerWeek: workPerWeek,
+        comments: comments,
+        email: user.user.email,
+        ...(instructorId && { instructorId }), // TODO: handle case that instructor is not listed
+      };
 
       const url = review
         ? `${process.env.BACKEND_LINK}/api/courses/reviews/${review.id}`
-        : `${process.env.BACKEND_LINK}/api/campus/housing/${id}/reviews`;
+        : `${process.env.BACKEND_LINK}/api/courses/${courseId}/reviews`;
 
       const method = review ? "PATCH" : "POST";
 
       const response = await fetch(url, {
         method,
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reviewPayload),
       });
 
       if (!response.ok) {
@@ -245,7 +278,27 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
         </div>
       </div>
 
-      {/* TODO: Instructor id */}
+      {/* Instructor id */}
+      <div>
+        <label>Instructor: </label>
+        <div>
+          <select
+            className="w-auto p-2 border rounded mb-4"
+            value={instructorId}
+            onChange={(e) => setInstructorId(e.target.value)}
+          >
+            <option value="">Select the instructor for this course</option>
+            {courseInstructors &&
+              courseInstructors.map((instructor, index) => {
+                return (
+                  <option key={instructor.name} value={instructor.id}>
+                    {instructor.name}
+                  </option>
+                );
+              })}
+          </select>
+        </div>
+      </div>
 
       {/* Comment Box */}
       <div>

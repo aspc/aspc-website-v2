@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import { Courses, CourseReviews } from "../models/Courses";
+import { Instructors } from "../models/People";
 
 const router = express.Router();
 
@@ -232,6 +233,10 @@ router.get("/:id/reviews", async (req: Request, res: Response) => {
     }
 });
 
+/**
+ * @route   POST /api/courses/:courseId/reviews
+ * @desc    Add a new review for a course
+ */
 router.post("/:courseId/reviews", async (req: Request, res: Response) => {
     try {
         // need to find new max id for the new review
@@ -249,7 +254,7 @@ router.post("/:courseId/reviews", async (req: Request, res: Response) => {
         const { courseId } = req.params;
         
         // parse review fields from request
-        const { overall, challenge, inclusivity, workPerWeek, comments, instructorId, email } = req.body;
+        const { overall, challenge, inclusivity, workPerWeek, instructorId, comments, email } = req.body;
 
         // construct review data
         const reviewData = {
@@ -259,7 +264,7 @@ router.post("/:courseId/reviews", async (req: Request, res: Response) => {
             inclusivity_rating: inclusivity,
             work_per_week: workPerWeek,
             comments: comments,
-            course_id: courseId,
+            course_id: Number(courseId),
             instructor_id: instructorId,
             user_email: email, 
         };
@@ -269,8 +274,98 @@ router.post("/:courseId/reviews", async (req: Request, res: Response) => {
 
         res.status(201).json({ message: "Review saved successfully" });
     } catch (error) {
-        res.status(400).json({ message: "Error creating member" });
+        res.status(400).json({ message: "Error creating review" });
     }
 });
+
+/**
+ * @route   PATCH /api/courses/reviews/:reviewId
+ * @desc    Edit a course review
+ */
+router.patch("/reviews/:reviewId", async (req: Request, res: Response) => {
+    try {
+        const reviewId = req.params.reviewId;
+        
+        // parse review fields from request
+        const { overall, challenge, inclusivity, workPerWeek, comments, instructorId, } = req.body;
+        
+        const updateData = {
+            overall_rating: overall,
+            challenge_rating: challenge,
+            inclusivity_rating: inclusivity,
+            work_per_week: workPerWeek,
+            comments: comments,
+            instructor_id: instructorId,
+        };
+
+        const updatedReview = await CourseReviews.findOneAndUpdate(
+            { id: reviewId },
+            updateData,
+            { new: true }
+        );
+
+        if (!updatedReview) {
+            res.status(404).json({ message: "Review not found" });
+        }
+        
+        res.status(200).json({
+            message: "Review updated",
+            updatedReview,
+        });
+    } catch (error) {
+        console.error("update error: ", error);
+        res.status(400).json({ message: "Error updating review" });
+    }
+});
+
+/**
+ * @route   DELETE /api/courses/reviews/:reviewId
+ * @desc    Delete a course review
+ */
+router.delete("/reviews/:reviewId", async (req: Request, res: Response) => {
+    try {
+        const review = await CourseReviews.findOneAndDelete({ id: req.params.reviewId });
+
+        if (!review) {
+            res.status(404).json({ message: "Review not found" });
+        }
+
+        res.status(200).json({ message: "Review deleted" });
+    } catch (error) {
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+/**
+ * @route   GET /api/courses/:courseId/instructors
+ * @desc    Get all previous instructors for a course
+ */
+router.get("/:courseId/instructors", async (req: Request, res: Response) => {
+    try {
+        const courseId: number = parseInt(req.params.courseId);
+
+        if (isNaN(courseId)) {
+            res.status(400).json({ message: "Invalid course ID format" });
+            return;
+        }
+
+        const course = await Courses.findOne({ id: courseId });
+
+        if (!course) {
+            res.status(400).json({ message: "No course found" });
+            return;
+        }
+
+        const instructorIds = course.all_instructor_ids;
+
+        const instructors = await Instructors.find({
+            id: { $in: instructorIds }
+        })
+
+        res.json(instructors);
+    } catch (error) {
+        res.status(400).json({ message: "Error getting course instructors" });
+    }
+})
 
 export default router;

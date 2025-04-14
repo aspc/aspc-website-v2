@@ -184,6 +184,32 @@ const CoursePage = () => {
     return `${Math.round(hours)} hours`;
   };
 
+  const handleDelete = async (id: number) => {
+    if (window.confirm("Are you sure you want to delete this review?")) {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `${process.env.BACKEND_LINK}/api/courses/reviews/${id}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to delete review");
+        }
+
+        alert("Review deleted successfully!");
+        setTimeout(() => window.location.reload(), 1000);
+      } catch (error) {
+        console.error("Error deleting review", error);
+        alert("Failed to delete review");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Back Button */}
@@ -380,6 +406,28 @@ const CoursePage = () => {
                           {review.overall_rating || ""}
                         </span>
                       </div>
+
+                      {user.email == review.user_email && (
+                        <div className="flex p-2 gap-4">
+                          <button
+                            className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
+                            onClick={() => {
+                              setSelectedReview(review);
+                              scrollToReviewForm();
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="bg-red-500 text-white text-m px-4 rounded-md hover:bg-red-600"
+                            onClick={() => {
+                              handleDelete(review.id);
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
@@ -467,7 +515,7 @@ const CoursePage = () => {
 
         {(isCreatingNew || selectedReview) && (
           <div>
-            <CourseReviewForm review={selectedReview} />
+            <CourseReviewForm review={selectedReview} courseId={Number(id)} />
           </div>
         )}
       </div>

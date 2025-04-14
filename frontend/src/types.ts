@@ -139,4 +139,13 @@ export type CourseWithReviews = {
 
 export interface CourseReviewFormProps {
     review: CourseReview | null;
-}
+    courseId: number;
+};
+
+export type Instructor = {
+    id: number;
+    name: string;
+    inclusivity_rating?: number;
+    competency_rating?: number;
+    challenge_rating?: number;
+};
