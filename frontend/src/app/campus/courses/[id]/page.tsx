@@ -114,7 +114,11 @@ const CoursePage = () => {
 
                 // Fetch course data
                 const coursesResponse = await fetch(
-                    `${process.env.BACKEND_LINK}/api/courses/${id}`
+                    `${process.env.BACKEND_LINK}/api/courses/${id}`,
+                    {
+                        method: "GET",
+                        credentials: "include",
+                    }
                 );
 
                 if (!coursesResponse.ok) {
@@ -128,7 +132,11 @@ const CoursePage = () => {
 
                 // Fetch instructors
                 const instructorResponse = await fetch(
-                    `${process.env.BACKEND_LINK}/api/courses/${courseData.id}/instructors`
+                    `${process.env.BACKEND_LINK}/api/courses/${courseData.id}/instructors`,
+                    {
+                        method: "GET",
+                        credentials: "include", // This allows sending cookies for session identification
+                    }
                 );
 
                 if (!instructorResponse.ok) {
@@ -146,7 +154,11 @@ const CoursePage = () => {
 
                 // Fetch course reviews
                 const reviews = await fetch(
-                    `${process.env.BACKEND_LINK}/api/courses/${id}/reviews`
+                    `${process.env.BACKEND_LINK}/api/courses/${id}/reviews`,
+                    {
+                        method: "GET",
+                        credentials: "include", // This allows sending cookies for session identification
+                    }
                 );
 
                 if (!reviews.ok) {
@@ -221,6 +233,7 @@ const CoursePage = () => {
                     `${process.env.BACKEND_LINK}/api/courses/reviews/${id}`,
                     {
                         method: "DELETE",
+                        credentials: "include",
                     }
                 );
 
