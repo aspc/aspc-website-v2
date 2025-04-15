@@ -130,16 +130,15 @@ const CoursePage = () => {
           );
         }
 
-                const instructorData: Instructor[] =
-                    await instructorResponse.json();
+        const instructorData: Instructor[] = await instructorResponse.json();
 
-                // Filter out any instructor named "Staff"
-                const filteredInstructors = instructorData.filter(
-                    (instructor) => instructor.name !== "Staff"
-                );
-                setInstructors(filteredInstructors);
+        // Filter out any instructor named "Staff"
+        const filteredInstructors = instructorData.filter(
+          (instructor) => instructor.name !== "Staff"
+        );
+        setInstructors(filteredInstructors);
 
-                // ??Display just a few instructors??
+        // ??Display just a few instructors??
 
         // Fetch course reviews
         const reviews = await fetch(
@@ -247,36 +246,27 @@ const CoursePage = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">{courseName}</h1>
 
-                <div className="py-4 flex-grow">
-                    {courseReviews ? (
-                        <>
-                            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                                <h4 className="text-lg font-medium mb-3">
-                                    Course Information
-                                </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                        <p className="text-gray-600 font-medium">
-                                            Course Code:
-                                        </p>
-                                        <p>{courseReviews.course.code}</p>
-                                    </div>
-                                    {/* Instructors section */}
-                                    {instructors && instructors.length > 0 && (
-                                        <div className="col-span-1 md:col-span-2">
-                                            <p className="text-gray-600 font-medium">
-                                                Instructors:
-                                            </p>
-                                            <p>
-                                                {instructors
-                                                    .map(
-                                                        (instructor) =>
-                                                            instructor.name
-                                                    )
-                                                    .join(", ")}
-                                            </p>
-                                        </div>
-                                    )}
+        <div className="py-4 flex-grow">
+          {courseReviews ? (
+            <>
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <h4 className="text-lg font-medium mb-3">Course Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-gray-600 font-medium">Course Code:</p>
+                    <p>{courseReviews.course.code}</p>
+                  </div>
+                  {/* Instructors section */}
+                  {instructors && instructors.length > 0 && (
+                    <div className="col-span-1 md:col-span-2">
+                      <p className="text-gray-600 font-medium">Instructors:</p>
+                      <p>
+                        {instructors
+                          .map((instructor) => instructor.name)
+                          .join("; ")}
+                      </p>
+                    </div>
+                  )}
 
                   {courseReviews.course.department_names &&
                     courseReviews.course.department_names.length > 0 && (
