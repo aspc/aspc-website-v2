@@ -2,10 +2,11 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Loading from "@/components/Loading";
-import { CourseWithReviews, Course, CourseReview } from "@/types";
+import { CourseWithReviews, Course, CourseReview, Instructor } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import LoginRequired from "@/components/LoginRequired";
 import { StarRating } from "@/components/housing/Rooms";
+import { CourseReviewForm } from "@/components/courses/CourseReview";
 
 const CoursePage = () => {
     const params = useParams();
@@ -15,6 +16,11 @@ const CoursePage = () => {
     const [courseName, setCourseName] = useState<string>("");
     const [courseReviews, setCourseReviews] =
         useState<CourseWithReviews | null>(null);
+    const [instructors, setInstructors] = useState<Instructor[]>([]);
+    const [isCreatingNew, setIsCreatingNew] = useState(false);
+    const [selectedReview, setSelectedReview] = useState<CourseReview | null>(
+        null
+    );
     const { user, loading: authLoading } = useAuth();
     const [averageRatings, setAverageRatings] = useState({
         overallAverage: 0,
@@ -24,9 +30,27 @@ const CoursePage = () => {
         reviewCount: 0,
     });
 
+    const handleAddNewReviewClick = () => {
+        if (isCreatingNew) {
+            setIsCreatingNew(false);
+        } else if (selectedReview) {
+            if (
+                window.confirm(
+                    "Are you sure you want to cancel editing this review? All new changes will be lost."
+                )
+            ) {
+                setSelectedReview(null);
+            }
+        } else {
+            setIsCreatingNew(true);
+        }
+    };
+
     useEffect(() => {
         const fetchReviews = async () => {
             try {
+                // Function to calculate average ratings
+                //--------------------------------------
                 const calculateAverage = (reviews: CourseReview[]) => {
                     if (!reviews || reviews.length === 0) {
                         return {
@@ -84,6 +108,7 @@ const CoursePage = () => {
                         reviewCount: reviews.length,
                     };
                 };
+                //-----------------------------------------
 
                 setLoading(true);
 
@@ -94,12 +119,30 @@ const CoursePage = () => {
 
                 if (!coursesResponse.ok) {
                     throw new Error(
-                        `Failed to fetch building name: ${coursesResponse.status}`
+                        `Failed to fetch courses: ${coursesResponse.status}`
                     );
                 }
 
-                const courseData = await coursesResponse.json();
+                const courseData: Course = await coursesResponse.json();
                 setCourseName(courseData.name);
+
+                // Fetch instructors
+                const instructorResponse = await fetch(
+                    `${process.env.BACKEND_LINK}/api/courses/${courseData.id}/instructors`
+                );
+
+                if (!instructorResponse.ok) {
+                    throw new Error(
+                        `Failed to fetch instructors: ${coursesResponse.status}`
+                    );
+                }
+
+                const instructorData: Instructor[] =
+                    await instructorResponse.json();
+                setInstructors(instructorData);
+
+                // TODO: Delete Staff from instructor list
+                // ??Display just a few instructors??
 
                 // Fetch course reviews
                 const reviews = await fetch(
@@ -108,23 +151,22 @@ const CoursePage = () => {
 
                 if (!reviews.ok) {
                     throw new Error(
-                        `Failed to fetch reviews: ${reviews.status}`
+                        `Failed to fetch course reviews: ${reviews.status}`
                     );
                 }
 
-                const data: CourseReview[] = await reviews.json();
+                const reviewsData: CourseReview[] = await reviews.json();
 
-                setAverageRatings(calculateAverage(data));
+                setAverageRatings(calculateAverage(reviewsData));
 
-                const reviewsData: CourseWithReviews = {
-                    reviews: data,
+                const coursesWithReviews: CourseWithReviews = {
+                    reviews: reviewsData,
                     course: courseData,
                 };
 
-                setCourseReviews(reviewsData);
-                console.log("Course reviews:", reviewsData);
+                setCourseReviews(coursesWithReviews);
             } catch (error) {
-                console.error("Error fetching room reviews:", error);
+                console.error("Server error", error);
             } finally {
                 setLoading(false);
             }
@@ -132,6 +174,19 @@ const CoursePage = () => {
 
         fetchReviews();
     }, [id]);
+
+    const targetRef = useRef<HTMLButtonElement | null>(null);
+
+    const scrollToReviewForm = () => {
+        setTimeout(() => {
+            if (targetRef.current) {
+                targetRef.current.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                });
+            }
+        }, 0);
+    };
 
     if (loading || authLoading) {
         return <Loading />;
@@ -156,6 +211,32 @@ const CoursePage = () => {
         if (hours < 1) return "Less than 1 hour";
         if (hours < 2) return "1 hour";
         return `${Math.round(hours)} hours`;
+    };
+
+    const handleDelete = async (id: number) => {
+        if (window.confirm("Are you sure you want to delete this review?")) {
+            try {
+                setLoading(true);
+                const response = await fetch(
+                    `${process.env.BACKEND_LINK}/api/courses/reviews/${id}`,
+                    {
+                        method: "DELETE",
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Failed to delete review");
+                }
+
+                alert("Review deleted successfully!");
+                setTimeout(() => window.location.reload(), 1000);
+            } catch (error) {
+                console.error("Error deleting review", error);
+                alert("Failed to delete review");
+            } finally {
+                setLoading(false);
+            }
+        }
     };
 
     return (
@@ -187,6 +268,22 @@ const CoursePage = () => {
                                         </p>
                                         <p>{courseReviews.course.code}</p>
                                     </div>
+                                    {/* Instructors section */}
+                                    {instructors && instructors.length > 0 && (
+                                        <div>
+                                            <p className="text-gray-600 font-medium">
+                                                Instructors:
+                                            </p>
+                                            <p>
+                                                {instructors
+                                                    .map(
+                                                        (instructor) =>
+                                                            instructor.name
+                                                    )
+                                                    .join(", ")}
+                                            </p>
+                                        </div>
+                                    )}
 
                                     {courseReviews.course.department_names &&
                                         courseReviews.course.department_names
@@ -309,9 +406,9 @@ const CoursePage = () => {
                                                     </p>
                                                     <div className="flex items-center">
                                                         <StarRating
-                                                            rating={
+                                                            rating={Math.round(
                                                                 averageRatings.overallAverage
-                                                            }
+                                                            )}
                                                         />
                                                         <span className="ml-2">
                                                             {averageRatings.overallAverage.toFixed(
@@ -326,9 +423,9 @@ const CoursePage = () => {
                                                     </p>
                                                     <div className="flex items-center">
                                                         <StarRating
-                                                            rating={
+                                                            rating={Math.round(
                                                                 averageRatings.inclusivityAverage
-                                                            }
+                                                            )}
                                                         />
                                                         <span className="ml-2">
                                                             {averageRatings.inclusivityAverage.toFixed(
@@ -343,9 +440,9 @@ const CoursePage = () => {
                                                     </p>
                                                     <div className="flex items-center">
                                                         <StarRating
-                                                            rating={
+                                                            rating={Math.round(
                                                                 averageRatings.challengeAverage
-                                                            }
+                                                            )}
                                                         />
                                                         <span className="ml-2">
                                                             {averageRatings.challengeAverage.toFixed(
@@ -403,10 +500,10 @@ const CoursePage = () => {
                                                 </span>
                                                 <span>
                                                     <StarRating
-                                                        rating={
+                                                        rating={Math.round(
                                                             review.overall_rating ||
-                                                            0
-                                                        }
+                                                                0
+                                                        )}
                                                     />
                                                 </span>
                                                 <span className="ml-2">
@@ -414,6 +511,33 @@ const CoursePage = () => {
                                                         ""}
                                                 </span>
                                             </div>
+
+                                            {user.email ==
+                                                review.user_email && (
+                                                <div className="flex p-2 gap-4">
+                                                    <button
+                                                        className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
+                                                        onClick={() => {
+                                                            setSelectedReview(
+                                                                review
+                                                            );
+                                                            scrollToReviewForm();
+                                                        }}
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        className="bg-red-500 text-white text-m px-4 rounded-md hover:bg-red-600"
+                                                        onClick={() => {
+                                                            handleDelete(
+                                                                review.id
+                                                            );
+                                                        }}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
@@ -425,10 +549,10 @@ const CoursePage = () => {
                                                     </span>
                                                     <span className="inline">
                                                         <StarRating
-                                                            rating={
+                                                            rating={Math.round(
                                                                 review.challenge_rating ||
-                                                                0
-                                                            }
+                                                                    0
+                                                            )}
                                                         />
                                                     </span>
                                                 </div>
@@ -440,10 +564,10 @@ const CoursePage = () => {
                                                     </span>
                                                     <span className="inline">
                                                         <StarRating
-                                                            rating={
+                                                            rating={Math.round(
                                                                 review.inclusivity_rating ||
-                                                                0
-                                                            }
+                                                                    0
+                                                            )}
                                                         />
                                                     </span>
                                                 </div>
@@ -511,6 +635,23 @@ const CoursePage = () => {
                         </div>
                     )}
                 </div>
+
+                <button
+                    className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
+                    onClick={handleAddNewReviewClick}
+                    ref={targetRef}
+                >
+                    {selectedReview ? "Cancel review edit" : "Add new review"}
+                </button>
+
+                {(isCreatingNew || selectedReview) && (
+                    <div>
+                        <CourseReviewForm
+                            review={selectedReview}
+                            courseId={Number(id)}
+                        />
+                    </div>
+                )}
             </div>
         </div>
     );
