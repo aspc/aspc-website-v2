@@ -253,7 +253,7 @@ router.post("/:courseId/reviews", async (req: Request, res: Response) => {
             work_per_week: workPerWeek,
             comments: comments,
             course_id: Number(courseId),
-            instructor_id: instructorId,
+            ...(instructorId && { instructor_id: instructorId }),
             user_email: email,
         };
 
@@ -290,7 +290,7 @@ router.patch("/reviews/:reviewId", async (req: Request, res: Response) => {
             inclusivity_rating: inclusivity,
             work_per_week: workPerWeek,
             comments: comments,
-            instructor_id: instructorId,
+            ...(instructorId && { instructor_id: instructorId }),
         };
 
         const updatedReview = await CourseReviews.findOneAndUpdate(
