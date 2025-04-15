@@ -49,6 +49,8 @@ const CoursePage = () => {
     useEffect(() => {
         const fetchReviews = async () => {
             try {
+                // Function to calculate average ratings
+                //--------------------------------------
                 const calculateAverage = (reviews: CourseReview[]) => {
                     if (!reviews || reviews.length === 0) {
                         return {
@@ -106,6 +108,7 @@ const CoursePage = () => {
                         reviewCount: reviews.length,
                     };
                 };
+                //-----------------------------------------
 
                 setLoading(true);
 
@@ -148,23 +151,22 @@ const CoursePage = () => {
 
                 if (!reviews.ok) {
                     throw new Error(
-                        `Failed to fetch reviews: ${reviews.status}`
+                        `Failed to fetch course reviews: ${reviews.status}`
                     );
                 }
 
-                const data: CourseReview[] = await reviews.json();
+                const reviewsData: CourseReview[] = await reviews.json();
 
-                setAverageRatings(calculateAverage(data));
+                setAverageRatings(calculateAverage(reviewsData));
 
-                const reviewsData: CourseWithReviews = {
-                    reviews: data,
+                const coursesWithReviews: CourseWithReviews = {
+                    reviews: reviewsData,
                     course: courseData,
                 };
 
-                setCourseReviews(reviewsData);
-                console.log("Course reviews:", reviewsData);
+                setCourseReviews(coursesWithReviews);
             } catch (error) {
-                console.error("Error fetching room reviews:", error);
+                console.error("Server error", error);
             } finally {
                 setLoading(false);
             }
