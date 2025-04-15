@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { SAMLUser } from "../models/People";
+import { CourseReviews } from "../models/Courses";
 
 export const isAuthenticated = async (
     req: Request,
@@ -45,4 +46,35 @@ export const isAdmin = async (
         res.status(500).json({ message: "Server error" });
         return;
     }
+};
+
+export const isCourseReviewOwner = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    // First check if user is authenticated and get the user ID from session
+    const sessionUserEmail = (req.session as any).user.email;
+    if (!sessionUserEmail) {
+        res.status(401).json({ message: "Authentication required" });
+        return;
+    }
+
+    const { reviewId } = req.params;
+
+    const review = await CourseReviews.findOne({ id: reviewId });
+
+    if (!review) {
+        res.status(404).json({ message: "Review not found" });
+        return;
+    }
+
+    if (review.user_email != sessionUserEmail) {
+        res.status(403).json({
+            message: "You are not authorized to modify this review",
+        });
+        return;
+    }
+
+    next();
 };
