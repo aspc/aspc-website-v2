@@ -10,7 +10,6 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
   courseId,
 }) => {
   const params = useParams();
-  const { id } = params;
 
   const [ratings, setRatings] = useState({
     overall: 0,

@@ -206,27 +206,7 @@ router.get("/:id/reviews", async (req: Request, res: Response) => {
             .sort({ updatedAt: -1 }) // -1 for descending order (newest first)
             .exec();
 
-        // TODO: I don't like this formatting, but it works
-        const formattedReviews = reviews.map((review: any) => ({
-            ...review.toObject(),
-            overall_rating: review.overall_rating
-                ? parseFloat(review.overall_rating.toString())
-                : null,
-            challenge_rating: review.challenge_rating
-                ? parseFloat(review.challenge_rating.toString())
-                : null,
-            inclusivity_rating: review.inclusivity_rating
-                ? parseFloat(review.inclusivity_rating.toString())
-                : null,
-            work_per_week: review.work_per_week
-                ? parseFloat(review.work_per_week.toString())
-                : null,
-            total_cost: review.total_cost
-                ? parseFloat(review.total_cost.toString())
-                : null,
-        }));
-
-        res.json(formattedReviews);
+        res.json(reviews);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Server error" });
@@ -243,18 +223,26 @@ router.post("/:courseId/reviews", async (req: Request, res: Response) => {
         const result = await CourseReviews.aggregate([
             {
                 $group: {
-                _id: null,            // No need to group, so _id is null
-                maxValue: { $max: "$id" }  // Find the max value of fieldName
-                }
-            }
-            ]);
-        
+                    _id: null, // No need to group, so _id is null
+                    maxValue: { $max: "$id" }, // Find the max value of fieldName
+                },
+            },
+        ]);
+
         const maxId = result[0].maxValue + 1;
-        
+
         const { courseId } = req.params;
-        
+
         // parse review fields from request
-        const { overall, challenge, inclusivity, workPerWeek, instructorId, comments, email } = req.body;
+        const {
+            overall,
+            challenge,
+            inclusivity,
+            workPerWeek,
+            instructorId,
+            comments,
+            email,
+        } = req.body;
 
         // construct review data
         const reviewData = {
@@ -266,9 +254,9 @@ router.post("/:courseId/reviews", async (req: Request, res: Response) => {
             comments: comments,
             course_id: Number(courseId),
             instructor_id: instructorId,
-            user_email: email, 
+            user_email: email,
         };
-        
+
         const review = new CourseReviews(reviewData);
         await review.save();
 
@@ -285,10 +273,17 @@ router.post("/:courseId/reviews", async (req: Request, res: Response) => {
 router.patch("/reviews/:reviewId", async (req: Request, res: Response) => {
     try {
         const reviewId = req.params.reviewId;
-        
+
         // parse review fields from request
-        const { overall, challenge, inclusivity, workPerWeek, comments, instructorId, } = req.body;
-        
+        const {
+            overall,
+            challenge,
+            inclusivity,
+            workPerWeek,
+            comments,
+            instructorId,
+        } = req.body;
+
         const updateData = {
             overall_rating: overall,
             challenge_rating: challenge,
@@ -307,7 +302,7 @@ router.patch("/reviews/:reviewId", async (req: Request, res: Response) => {
         if (!updatedReview) {
             res.status(404).json({ message: "Review not found" });
         }
-        
+
         res.status(200).json({
             message: "Review updated",
             updatedReview,
@@ -324,7 +319,9 @@ router.patch("/reviews/:reviewId", async (req: Request, res: Response) => {
  */
 router.delete("/reviews/:reviewId", async (req: Request, res: Response) => {
     try {
-        const review = await CourseReviews.findOneAndDelete({ id: req.params.reviewId });
+        const review = await CourseReviews.findOneAndDelete({
+            id: req.params.reviewId,
+        });
 
         if (!review) {
             res.status(404).json({ message: "Review not found" });
@@ -359,13 +356,13 @@ router.get("/:courseId/instructors", async (req: Request, res: Response) => {
         const instructorIds = course.all_instructor_ids;
 
         const instructors = await Instructors.find({
-            id: { $in: instructorIds }
-        })
+            id: { $in: instructorIds },
+        });
 
         res.json(instructors);
     } catch (error) {
         res.status(400).json({ message: "Error getting course instructors" });
     }
-})
+});
 
 export default router;
