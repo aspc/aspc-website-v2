@@ -406,9 +406,9 @@ const CoursePage = () => {
                                                     </p>
                                                     <div className="flex items-center">
                                                         <StarRating
-                                                            rating={
+                                                            rating={Math.round(
                                                                 averageRatings.overallAverage
-                                                            }
+                                                            )}
                                                         />
                                                         <span className="ml-2">
                                                             {averageRatings.overallAverage.toFixed(
@@ -423,9 +423,9 @@ const CoursePage = () => {
                                                     </p>
                                                     <div className="flex items-center">
                                                         <StarRating
-                                                            rating={
+                                                            rating={Math.round(
                                                                 averageRatings.inclusivityAverage
-                                                            }
+                                                            )}
                                                         />
                                                         <span className="ml-2">
                                                             {averageRatings.inclusivityAverage.toFixed(
@@ -440,9 +440,9 @@ const CoursePage = () => {
                                                     </p>
                                                     <div className="flex items-center">
                                                         <StarRating
-                                                            rating={
+                                                            rating={Math.round(
                                                                 averageRatings.challengeAverage
-                                                            }
+                                                            )}
                                                         />
                                                         <span className="ml-2">
                                                             {averageRatings.challengeAverage.toFixed(
@@ -500,10 +500,10 @@ const CoursePage = () => {
                                                 </span>
                                                 <span>
                                                     <StarRating
-                                                        rating={
+                                                        rating={Math.round(
                                                             review.overall_rating ||
-                                                            0
-                                                        }
+                                                                0
+                                                        )}
                                                     />
                                                 </span>
                                                 <span className="ml-2">
@@ -549,10 +549,10 @@ const CoursePage = () => {
                                                     </span>
                                                     <span className="inline">
                                                         <StarRating
-                                                            rating={
+                                                            rating={Math.round(
                                                                 review.challenge_rating ||
-                                                                0
-                                                            }
+                                                                    0
+                                                            )}
                                                         />
                                                     </span>
                                                 </div>
@@ -564,10 +564,10 @@ const CoursePage = () => {
                                                     </span>
                                                     <span className="inline">
                                                         <StarRating
-                                                            rating={
+                                                            rating={Math.round(
                                                                 review.inclusivity_rating ||
-                                                                0
-                                                            }
+                                                                    0
+                                                            )}
                                                         />
                                                     </span>
                                                 </div>
