@@ -139,9 +139,13 @@ const CoursePage = () => {
 
                 const instructorData: Instructor[] =
                     await instructorResponse.json();
-                setInstructors(instructorData);
 
-                // TODO: Delete Staff from instructor list
+                // Filter out any instructor named "Staff"
+                const filteredInstructors = instructorData.filter(
+                    (instructor) => instructor.name !== "Staff"
+                );
+                setInstructors(filteredInstructors);
+
                 // ??Display just a few instructors??
 
                 // Fetch course reviews
@@ -270,7 +274,7 @@ const CoursePage = () => {
                                     </div>
                                     {/* Instructors section */}
                                     {instructors && instructors.length > 0 && (
-                                        <div>
+                                        <div className="col-span-1 md:col-span-2">
                                             <p className="text-gray-600 font-medium">
                                                 Instructors:
                                             </p>
