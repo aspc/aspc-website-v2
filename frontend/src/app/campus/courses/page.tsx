@@ -3,29 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import axios, { CancelTokenSource } from 'axios';
 import { debounce } from 'lodash';
-
-interface Instructor {
-  id: number;
-  name: string;
-}
-
-interface Course {
-  _id: string;
-  id: number;
-  code: string;
-  code_slug: string;
-  name: string;
-  created_at: string;
-  updated_at: string;
-  department_names: string[];
-  requirement_codes: string[];
-  requirement_names: string[];
-  term_keys: string[];
-  description: string;
-  all_instructor_ids: number[];
-}
-
-type SchoolKey = 'PO' | 'CM' | 'HM' | 'SC' | 'PZ';
+import type { Course, Instructor, SchoolKey, CourseCardProps } from '@/types'; 
 
 const schoolColors = {
   'PO': 'bg-blue-100 text-blue-800 border-blue-300',
@@ -265,13 +243,6 @@ const CourseSearchComponent = () => {
     </div>
   );
 };
-
-interface CourseCardProps {
-  course: Course;
-  schoolCode: SchoolKey;
-  instructorCache: Record<number, Instructor>;
-  onInstructorLoad: (ids: number[]) => void;
-}
 
 const CourseCardComponent = ({ 
   course,

@@ -3,11 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import axios, { CancelTokenSource } from 'axios';
 import { debounce } from 'lodash';
-
-interface Instructor {
-  id: number;
-  name: string;
-}
+import type { Instructor } from '@/types'; // or wherever your types file is
 
 const InstructorSearch = () => {
   const [searchTerm, setSearchTerm] = useState('');

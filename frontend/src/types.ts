@@ -87,3 +87,33 @@ export interface RoomWithReviews {
     reviews: Review[];
     averages: ReviewAverages;
 }
+
+export interface Instructor {
+    id: number;
+    name: string;
+  }
+  
+export interface Course {
+_id: string;
+id: number;
+code: string;
+code_slug: string;
+name: string;
+created_at: string;
+updated_at: string;
+department_names: string[];
+requirement_codes: string[];
+requirement_names: string[];
+term_keys: string[];
+description: string;
+all_instructor_ids: number[];
+}
+
+export type SchoolKey = 'PO' | 'CM' | 'HM' | 'SC' | 'PZ';
+
+export interface CourseCardProps {
+course: Course;
+schoolCode: SchoolKey;
+instructorCache: Record<number, Instructor>;
+onInstructorLoad: (ids: number[]) => void;
+}
