@@ -111,6 +111,7 @@ export interface ReviewFormProps {
 
 // Course and course review types
 export type Course = {
+    _id: number;
     id: number;
     code: string;
     code_slug: string;
