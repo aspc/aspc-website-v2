@@ -5,6 +5,8 @@ import './globals.css'
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Suspense } from 'react'
 import LoginAlert from '@/components/ui/LoginAlert'
+import { Analytics } from "@vercel/analytics/react"
+
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -48,6 +50,7 @@ export default function RootLayout({
             </Suspense>
             {children}
             <SpeedInsights />
+            <Analytics />
             <Footer />
           </>
         )}

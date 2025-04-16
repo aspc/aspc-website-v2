@@ -342,6 +342,103 @@ router.post("/:buildingId/:roomNumber/reviews", upload.array("pictures"), async 
     }
 });
 
+router.patch("/reviews/:id", upload.array("pictures"), async (req: Request, res: Response) => {
+    try {
+        if (!req.files && !req.body) {
+            return;
+        }
+    
+        const id = req.params.id;
+        const oldReview = await HousingReviews.findOne({ id: id });
+        
+        if (!oldReview) {
+            console.log("cant find old review")
+            res.status(404).json({ message: "Review not found" });
+            return;
+        }
+        
+        // parse review fields from request
+        const { overall, quiet, layout, temperature, comments } = req.body;
+
+        // construct review data
+        let updateData = {
+            overall_rating: overall,
+            quiet_rating: quiet,
+            layout_rating: layout,
+            temperature_rating: temperature,
+            comments: comments,
+            pictures: oldReview.pictures,
+        };
+        
+        const pictureIds: ObjectId[] = [];
+
+        if (Array.isArray(req.files) && req.files.length > 0) {
+            // if new pictures provided, delete old pictures from database
+            if (oldReview.pictures && oldReview.pictures.length > 0) {
+                for (const pictureId of oldReview.pictures) {
+                    const oldPictureId = new ObjectId(pictureId);
+                    console.log(`Deleting image with ObjectId: ${oldPictureId}`);
+              
+                    await housingReviewPictures.delete(oldPictureId);
+                    console.log(`Image with ObjectId ${oldPictureId} deleted from GridFS`);
+                }
+            }
+
+            for (let i = 0; i < req.files.length; i++) {
+                const file = req.files[i] as Express.Multer.File;
+        
+                // Create a writable stream to upload to GridFS
+                const uploadStream = housingReviewPictures.openUploadStream(file.originalname, {
+                contentType: file.mimetype,
+                });
+        
+                // Upload the file buffer to GridFS
+                uploadStream.end(file.buffer);
+        
+                // Wait for the file upload to finish and get the file ID
+                uploadStream.on('finish', () => {
+                pictureIds.push(uploadStream.id);
+                });
+        
+                // Wait for the stream to finish before continuing
+                await new Promise((resolve) => {
+                uploadStream.on('finish', resolve);
+                });
+            }
+
+            updateData.pictures = pictureIds;
+        }
+
+        const updatedReview = await HousingReviews.findOneAndUpdate(
+            { id: id },
+            updateData,
+            { new: true }
+        );
+        res.status(200).json({
+            message: "Review updated",
+            updatedReview,
+        });
+
+    } catch (error) {
+        console.error("update error: ", error);
+        res.status(400).json({ message: "Error updating review" });
+    }
+});
+
+router.delete("/reviews/:id", async (req: Request, res: Response) => {
+    try {
+        const review = await HousingReviews.findOneAndDelete({ id: req.params.id });
+
+        if (!review) {
+            res.status(404).json({ message: "Review not found" });
+        }
+
+        res.status(200).json({ message: "Review deleted" });
+    } catch (error) {
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
 // Get profile picture by id
 router.get("/review_pictures/:id", async (req: Request, res: Response) => {
     try {

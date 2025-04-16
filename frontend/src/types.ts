@@ -38,7 +38,7 @@ export interface User {
     firstName: string;
     lastName: string;
     isAdmin: boolean;
-  }
+}
 
 export interface Building {
     id: number;
@@ -55,7 +55,6 @@ export interface Room {
     occupancy_type?: number;
     closet_type?: number; // No data
     bathroom_type?: number; // No data
-    // housing_suite_id: number; // DELETE
     housing_building_id: number;
     averageRating?: number;
     reviewCount?: number;
@@ -72,6 +71,8 @@ export interface Review {
     housing_room_id: number;
     user_email: string;
     pictures?: string[];
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface ReviewAverages {
@@ -88,27 +89,7 @@ export interface RoomWithReviews {
     averages: ReviewAverages;
 }
 
-export interface Instructor {
-    id: number;
-    name: string;
-  }
   
-export interface Course {
-_id: string;
-id: number;
-code: string;
-code_slug: string;
-name: string;
-created_at: string;
-updated_at: string;
-department_names: string[];
-requirement_codes: string[];
-requirement_names: string[];
-term_keys: string[];
-description: string;
-all_instructor_ids: number[];
-}
-
 export type SchoolKey = 'PO' | 'CM' | 'HM' | 'SC' | 'PZ';
 
 export interface CourseCardProps {
@@ -117,3 +98,63 @@ schoolCode: SchoolKey;
 instructorCache: Record<number, Instructor>;
 onInstructorLoad: (ids: number[]) => void;
 }
+
+// Room card component
+export interface RoomCardProps {
+    buildingName: string;
+    room: Room;
+}
+
+export interface ReviewFormProps {
+    review: Review | null;
+}
+
+// Course and course review types
+export type Course = {
+    id: number;
+    code: string;
+    code_slug: string;
+    name: string;
+    department_names: string[];
+    requirement_codes: string[];
+    requirement_names: string[];
+    term_keys: string[]; // empty array means offered most terms
+    description: string;
+    all_instructor_ids: number[];
+    createdAt?: Date;
+    updatedAt?: Date;
+};
+
+export type CourseReview = {
+    _id: string;
+    id: number;
+    overall_rating?: number;
+    challenge_rating?: number;
+    inclusivity_rating?: number;
+    work_per_week?: number;
+    total_cost?: number;
+    comments?: string;
+    course_id: number;
+    instructor_id: number;
+    user_email?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+};
+
+export type CourseWithReviews = {
+    course: Course;
+    reviews: CourseReview[];
+};
+
+export interface CourseReviewFormProps {
+    review: CourseReview | null;
+    courseId: number;
+};
+
+export type Instructor = {
+    id: number;
+    name: string;
+    inclusivity_rating?: number;
+    competency_rating?: number;
+    challenge_rating?: number;
+};

@@ -53,6 +53,7 @@ const CoursesSchema = new Schema<ICourses>({
     },
     all_instructor_ids: [{
         type: Number,
+        ref: 'Instructors',
     }],
 },
     {
@@ -65,15 +66,15 @@ const Courses = mongoose.model<ICourses>('Courses', CoursesSchema);
 // Course Reviews
 interface ICourseReviews extends Document {
     id: number;
-    overall_rating: mongoose.Schema.Types.Decimal128;
-    challenge_rating: mongoose.Schema.Types.Decimal128;
-    inclusivity_rating: mongoose.Schema.Types.Decimal128;
-    work_per_week: mongoose.Schema.Types.Decimal128;
-    total_cost: mongoose.Schema.Types.Decimal128;
+    overall_rating: number;
+    challenge_rating: number;
+    inclusivity_rating: number;
+    work_per_week: number;
+    total_cost: number;
     comments: string;
     course_id: number;
     instructor_id: number;
-    user_id: number;
+    user_email: string;
 }
 
 const CourseReviewsSchema = new Schema<ICourseReviews>({
@@ -83,19 +84,19 @@ const CourseReviewsSchema = new Schema<ICourseReviews>({
         unique: true,
     },
     overall_rating: {
-        type: mongoose.Schema.Types.Decimal128,
+        type: Number,
     },
     challenge_rating: {
-        type: mongoose.Schema.Types.Decimal128,
+        type: Number,
     },
     inclusivity_rating: {
-        type: mongoose.Schema.Types.Decimal128,
+        type: Number,
     },
     work_per_week: {
-        type: mongoose.Schema.Types.Decimal128,
+        type: Number,
     },
     total_cost: {
-        type: mongoose.Schema.Types.Decimal128,
+        type: Number,
     },
     comments: {
         type: String,
@@ -109,15 +110,18 @@ const CourseReviewsSchema = new Schema<ICourseReviews>({
     },
     instructor_id: {
         type: Number,
-        required: true,
+        ref: 'Instructors',
+        // required: true,
         index: true
     },
-    user_id: {
-        type: Number,
-        required: true,
+    user_email: {
+        type: String,
         ref: 'SAMLUser',
         index: true
-    }
+    },
+},
+{
+    timestamps: true,
 });
 
 const CourseReviews = mongoose.model<ICourseReviews>('CourseReviews', CourseReviewsSchema);
