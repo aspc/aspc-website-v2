@@ -433,9 +433,10 @@ const InstructorPage = (): JSX.Element => {
                                             <span className="text-gray-600 mr-2">
                                                 Course:
                                             </span>
-                                            <span className="inline">
-                                                {review.id ? review.id : "N/A"}
-                                            </span>
+                                            <a  href={`../courses/${review.course_id}`}
+                                                className="text-blue-500 hover:underline">
+                                                {review.course_id}
+                                            </a>
                                         </div>
 
                                         {review.comments && (
