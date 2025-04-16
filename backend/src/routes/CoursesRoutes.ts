@@ -12,32 +12,38 @@ const router = express.Router();
 // Courses routes
 router.get("/", async (req: Request, res: Response) => {
     try {
-        const { search, department } = req.query;
-
-        // Build the query object
+        const { search, number, schools, limit = 50 } = req.query;
+        
         const query: any = {};
-
-        // Add search functionality
-        if (search && typeof search === "string") {
-            // Basic search with regex for case-insensitive matching
+        
+        if (schools) {
+            const schoolList = (schools as string).split(',');
+            query.code = { 
+                $in: schoolList.map(school => new RegExp(`${school}$`, 'i'))
+            };
+        }
+        
+        if (search) {
+            const searchRegex = new RegExp(search as string, 'i');
             query.$or = [
-                { code: { $regex: search, $options: "i" } },
-                { name: { $regex: search, $options: "i" } },
-                { description: { $regex: search, $options: "i" } },
+                { name: searchRegex },
+                { code: searchRegex }
             ];
         }
-
-        // Add department filter if provided
-        if (department) {
-            const deptArray = Array.isArray(department)
-                ? department
-                : [department];
-            query.department_names = { $in: deptArray };
+        
+        if (number) {
+            const numberRegex = new RegExp(`^${number}`, 'i');
+            query.$or = [
+                ...(query.$or || []),
+                { code: numberRegex },
+                { id: parseInt(number as string) || 0 }
+            ];
         }
-
-        // Execute the query
-        const courses = await Courses.find(query).sort({ code: 1 });
-
+        
+        const courses = await Courses.find(query)
+            .limit(parseInt(limit as string))
+            .lean();
+            
         res.json(courses);
     } catch (err) {
         console.error(err);

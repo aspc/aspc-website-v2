@@ -55,7 +55,6 @@ export interface Room {
     occupancy_type?: number;
     closet_type?: number; // No data
     bathroom_type?: number; // No data
-    // housing_suite_id: number; // DELETE
     housing_building_id: number;
     averageRating?: number;
     reviewCount?: number;
@@ -90,6 +89,16 @@ export interface RoomWithReviews {
     averages: ReviewAverages;
 }
 
+  
+export type SchoolKey = 'PO' | 'CM' | 'HM' | 'SC' | 'PZ';
+
+export interface CourseCardProps {
+course: Course;
+schoolCode: SchoolKey;
+instructorCache: Record<number, Instructor>;
+onInstructorLoad: (ids: number[]) => void;
+}
+
 // Room card component
 export interface RoomCardProps {
     buildingName: string;
@@ -102,6 +111,7 @@ export interface ReviewFormProps {
 
 // Course and course review types
 export type Course = {
+    _id: number;
     id: number;
     code: string;
     code_slug: string;
