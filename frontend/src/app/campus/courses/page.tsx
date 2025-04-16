@@ -1,10 +1,10 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import axios, { CancelTokenSource } from 'axios';
 import { debounce } from 'lodash';
 
-interface InstructorReference {
+interface Instructor {
   id: number;
   name: string;
 }
@@ -22,17 +22,17 @@ interface Course {
   requirement_names: string[];
   term_keys: string[];
   description: string;
-  all_instructor_ids: InstructorReference[] | number[];
+  all_instructor_ids: number[];
 }
 
 type SchoolKey = 'PO' | 'CM' | 'HM' | 'SC' | 'PZ';
 
 const schoolColors = {
-  'PO': 'bg-blue-100 text-blue-800 border-blue-300', // Pomona
-  'CM': 'bg-red-100 text-red-800 border-red-300',    // Claremont McKenna
-  'HM': 'bg-yellow-100 text-yellow-800 border-yellow-300', // Harvey Mudd
-  'SC': 'bg-green-100 text-green-800 border-green-300',    // Scripps
-  'PZ': 'bg-orange-100 text-orange-800 border-orange-300'  // Pitzer
+  'PO': 'bg-blue-100 text-blue-800 border-blue-300',
+  'CM': 'bg-red-100 text-red-800 border-red-300',
+  'HM': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+  'SC': 'bg-green-100 text-green-800 border-green-300',
+  'PZ': 'bg-orange-100 text-orange-800 border-orange-300'
 };
 
 const schoolNames = {   
@@ -47,100 +47,114 @@ const CourseSearchComponent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [courseNumber, setCourseNumber] = useState('');
   const [selectedSchools, setSelectedSchools] = useState<Record<SchoolKey, boolean>>({
-    'PO': true,
-    'CM': true,
-    'HM': true,
-    'SC': true,
-    'PZ': true
+    'PO': true, 'CM': true, 'HM': true, 'SC': true, 'PZ': true
   });
   const [results, setResults] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sortField, setSortField] = useState<keyof Course>('name');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [instructorCache, setInstructorCache] = useState<Record<number, Instructor>>({});
+  const cancelTokenSourceRef = useRef<CancelTokenSource | null>(null);
 
-  // Memoized function to fetch instructors
-  const fetchInstructors = useCallback(async (instructorIds: number[]) => {
+  const createCancelTokenSource = () => {
+    if (cancelTokenSourceRef.current) {
+      cancelTokenSourceRef.current.cancel('Operation canceled due to new request');
+    }
+    cancelTokenSourceRef.current = axios.CancelToken.source();
+    return cancelTokenSourceRef.current;
+  };
+
+  // Fetch instructors and cache results
+  const fetchInstructors = useCallback(async (ids: number[]) => {
     try {
-      // Filter out invalid IDs and skip if no valid IDs
-      const validIds = instructorIds.filter(id => Number.isInteger(id) && id > 0);
-      if (validIds.length === 0) return [];
-  
+      const uncachedIds = ids.filter(id => !instructorCache[id]);
+      
+      if (uncachedIds.length === 0) return;
+      
       const responses = await Promise.all(
-        validIds.map(id => 
-          axios.get<{id: number, name: string}>(`/api/instructors/${id}`, {
-            timeout: 2000
-          }).catch(() => ({ data: { id, name: 'Unknown Instructor' } }))
-        )
-      );
-      return responses.map(res => res.data);
+        uncachedIds.map(id => 
+          axios.get<Instructor>(`${process.env.BACKEND_LINK}/api/instructors/${id}`, {
+            timeout: 3000
+          }).catch(() => ({ data: { id, name: 'Unknown Instructor' }}))
+      ));
+      
+      setInstructorCache(prev => ({
+        ...prev,
+        ...responses.reduce((acc, res) => ({ ...acc, [res.data.id]: res.data }), {})
+      }));
     } catch (err) {
-      console.error('Error fetching instructors:', err);
-      return instructorIds.map(id => ({ id, name: 'Unknown Instructor' }));
+      if (!axios.isCancel(err)) {
+        console.error('Error fetching instructors:', err);
+      }
     }
-  }, []);
+  }, [instructorCache]);
 
-  // Debounced search function with optimizations
   const performSearch = useCallback(async (term: string, number: string, schools: Record<SchoolKey, boolean>) => {
-    try {
-        setLoading(true);
-        setError(null);
-        
-        const activeSchools = Object.entries(schools)
-            .filter(([_, isSelected]) => isSelected)
-            .map(([school]) => school);
-        
-        const response = await axios.get<Course[]>(`${process.env.BACKEND_LINK}/api/courses`, {
-            params: {
-                search: term,
-                number: number,
-                schools: activeSchools.join(',')
-            },
-            timeout: 5000
-        });
-        
-        // Only fetch instructors if we have results
-        if (response.data.length > 0) {
-            const coursesWithInstructors = await Promise.all(
-                response.data.map(async (course) => {
-                    if (course.all_instructor_ids?.length > 0) {
-                        const instructorIds = course.all_instructor_ids.map(instructor => 
-                            typeof instructor === 'number' ? instructor : instructor.id
-                        );
-                        const instructors = await fetchInstructors(instructorIds);
-                        return { ...course, all_instructor_ids: instructors };
-                    }
-                    return course;
-                })
-            );
-            setResults(coursesWithInstructors);
-        } else {
-            setResults([]);
-        }
-    } catch (err) {
-        console.error('Search error:', err);
-        setError('Failed to fetch results. Please try again.');
-        setResults([]);
-    } finally {
-        setLoading(false);
+    if ((!term || term.length < 2) && !number) {
+      setResults([]);
+      setLoading(false);
+      return;
     }
-}, [fetchInstructors]);
 
-  // Debounce the search function (300ms delay)
-  const debouncedSearch = useCallback(
-    debounce(performSearch, 300),
+    const source = createCancelTokenSource();
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const activeSchools = Object.entries(schools)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([school]) => school);
+      
+      const response = await axios.get<Course[]>(`${process.env.BACKEND_LINK}/api/courses`, {
+        params: {
+          search: term,
+          number: number,
+          schools: activeSchools.join(','),
+          limit: 100
+        },
+        timeout: 5000,
+        cancelToken: source.token
+      });
+      
+      setResults(response.data);
+      
+      const instructorIds = response.data.slice(0, 20)
+        .flatMap(course => course.all_instructor_ids || []);
+      
+      if (instructorIds.length > 0) {
+        fetchInstructors(instructorIds);
+      }
+    } catch (err) {
+      if (axios.isCancel(err)) {
+        console.log('Request canceled:', err.message);
+        return;
+      }
+      console.error('Search error:', err);
+      setError('Failed to fetch results. Please try again.');
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchInstructors]);
+
+  const debouncedSearch = useMemo(
+    () => debounce(performSearch, 300, { leading: false, trailing: true }),
     [performSearch]
   );
 
-  // Trigger search when inputs change
   useEffect(() => {
-    if (searchTerm || courseNumber) {
+    if (searchTerm.trim() || courseNumber.trim()) {
       debouncedSearch(searchTerm, courseNumber, selectedSchools);
     } else {
       setResults([]);
     }
-
-    return () => debouncedSearch.cancel();
+    
+    return () => {
+      debouncedSearch.cancel();
+      if (cancelTokenSourceRef.current) {
+        cancelTokenSourceRef.current.cancel('Component unmounted');
+      }
+    };
   }, [searchTerm, courseNumber, selectedSchools, debouncedSearch]);
 
   const handleSchoolToggle = (school: SchoolKey) => {
@@ -150,44 +164,17 @@ const CourseSearchComponent = () => {
     }));
   };
 
-  const handleSort = (field: keyof Course) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
+  const sortedResults = useMemo(() => {
+    return [...results].sort((a, b) => {
+      const aValue = a.code;
+      const bValue = b.code;            
+      return aValue.localeCompare(bValue);;
+    });
+  }, [results]);
 
-  const sortedResults = [...results].sort((a, b) => {
-    const aValue = a[sortField];
-    const bValue = b[sortField];
-    
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      return sortDirection === 'asc' 
-        ? aValue.localeCompare(bValue) 
-        : bValue.localeCompare(aValue);
-    }
-    
-    if (typeof aValue === 'number' && typeof bValue === 'number') {
-      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-    }
-    
-    if (Array.isArray(aValue)) {
-      const aString = aValue.join(', ');
-      const bString = Array.isArray(bValue) ? bValue.join(', ') : '';
-      return sortDirection === 'asc' 
-        ? aString.localeCompare(bString) 
-        : bString.localeCompare(aString);
-    }
-    
-    return 0;
-  });
-
-  const extractSchoolCode = (code: string) => {
-    // Extract last 2 characters of the code (e.g., "HM" from "POST188HM")
-    const matches = code.match(/([A-Z]{2})$/);
-    return matches ? matches[1] as SchoolKey : 'PO';
+  const extractSchoolCode = (code: string): SchoolKey => {
+    const schoolCode = code.slice(-2);
+    return schoolNames[schoolCode as SchoolKey] ? schoolCode as SchoolKey : 'PO';
   };
 
   return (
@@ -200,29 +187,16 @@ const CourseSearchComponent = () => {
         <div className="flex flex-col md:flex-row gap-4 mb-4">
           <div className="flex-1">
             <label htmlFor="search-term" className="block text-sm font-medium text-gray-700 mb-1">
-              Course Name
+              Course Name or Code
             </label>
             <input
               id="search-term"
               type="text"
-              placeholder="Search courses..."
+              placeholder="Search by name or code (min 2 chars)"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          <div className="flex-1">
-            <label htmlFor="course-number" className="block text-sm font-medium text-gray-700 mb-1">
-              Course Number (without school suffix)
-            </label>
-            <input
-              id="course-number"
-              type="text"
-              placeholder="e.g., POST188"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={courseNumber}
-              onChange={(e) => setCourseNumber(e.target.value)}
+              autoComplete="off"
             />
           </div>
         </div>
@@ -248,12 +222,6 @@ const CourseSearchComponent = () => {
         </div>
       </div>
 
-      {loading && (
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-        </div>
-      )}
-
       {error && (
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
           <p>{error}</p>
@@ -267,33 +235,15 @@ const CourseSearchComponent = () => {
               <p className="text-gray-600 text-sm">
                 Showing {sortedResults.length} {sortedResults.length === 1 ? 'result' : 'results'}
               </p>
-              
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Sort by:</span>
-                <select 
-                  className="border rounded px-2 py-1 text-sm"
-                  value={sortField}
-                  onChange={(e) => handleSort(e.target.value as keyof Course)}
-                >
-                  <option value="name">Name</option>
-                  <option value="code">Code</option>
-                  <option value="id">ID</option>
-                  <option value="created_at">Created Date</option>
-                </select>
-                <button 
-                  className="px-2 py-1 bg-gray-200 rounded text-sm"
-                  onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
-                >
-                  {sortDirection === 'asc' ? '↑' : '↓'}
-                </button>
-              </div>
             </div>
             
             {sortedResults.map(course => (
               <CourseCard 
-                key={course._id} 
-                course={course} 
+                key={course._id}
+                course={course}
                 schoolCode={extractSchoolCode(course.code)}
+                instructorCache={instructorCache}
+                onInstructorLoad={fetchInstructors}
               />
             ))}
           </>
@@ -309,20 +259,33 @@ const CourseSearchComponent = () => {
   );
 };
 
+interface CourseCardProps {
+  course: Course;
+  schoolCode: SchoolKey;
+  instructorCache: Record<number, Instructor>;
+  onInstructorLoad: (ids: number[]) => void;
+}
+
 const CourseCard = React.memo(({ 
   course,
-  schoolCode
-}: {
-  course: Course,
-  schoolCode: SchoolKey
-}) => {
+  schoolCode,
+  instructorCache,
+  onInstructorLoad
+}: CourseCardProps) => {
+  // Load instructors when component mounts
+  useEffect(() => {
+    if (course.all_instructor_ids?.length) {
+      onInstructorLoad(course.all_instructor_ids);
+    }
+  }, [course.all_instructor_ids, onInstructorLoad]);
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       <div className="p-6">
         <div className="flex justify-between items-start">
           <div>
             <h3 className="text-xl font-bold text-gray-800 mb-1">
-              {course.code}: {course.name.trim()}
+              {course.code}: {course.name}
             </h3>
           </div>
           <span className={`${schoolColors[schoolCode]} text-xs px-2 py-1 rounded-full border`}>
@@ -364,27 +327,19 @@ const CourseCard = React.memo(({
         
         {course.all_instructor_ids?.length > 0 && (
           <div className="mb-4">
-            <p className="text-sm font-medium text-gray-600">Previous instructors:</p>
+            <p className="text-sm font-medium text-gray-600">Instructors:</p>
             <div className="flex flex-wrap gap-2 mt-1">
-              {course.all_instructor_ids.map((instructor, index) => {
-                const name = typeof instructor === 'number' 
-                  ? 'Unknown Instructor' 
-                  : instructor.name;
+              {course.all_instructor_ids.map(id => {
+                const instructor = instructorCache[id] || { id, name: 'Loading...' };
                 return (
-                  <span key={index} className="text-blue-600 hover:text-blue-800 text-sm">
-                    {name}
+                  <span key={id} className="text-blue-600 hover:text-blue-800 text-sm">
+                    {instructor.name}
                   </span>
                 );
               })}
             </div>
           </div>
         )}
-        
-        <div className="flex flex-col sm:flex-row gap-3 mt-4">
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-            View Details
-          </button>
-        </div>
       </div>
     </div>
   );

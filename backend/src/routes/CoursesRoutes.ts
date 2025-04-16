@@ -10,8 +10,38 @@ const router = express.Router();
  */
 router.get("/", async (req: Request, res: Response) => {
     try {
-        // TODO: Implement filtering logic based on query parameters
-        const courses = await Courses.find({});
+        const { search, number, schools, limit = 50 } = req.query;
+        
+        const query: any = {};
+        
+        if (schools) {
+            const schoolList = (schools as string).split(',');
+            query.code = { 
+                $in: schoolList.map(school => new RegExp(`${school}$`, 'i'))
+            };
+        }
+        
+        if (search) {
+            const searchRegex = new RegExp(search as string, 'i');
+            query.$or = [
+                { name: searchRegex },
+                { code: searchRegex }
+            ];
+        }
+        
+        if (number) {
+            const numberRegex = new RegExp(`^${number}`, 'i');
+            query.$or = [
+                ...(query.$or || []),
+                { code: numberRegex },
+                { id: parseInt(number as string) || 0 }
+            ];
+        }
+        
+        const courses = await Courses.find(query)
+            .limit(parseInt(limit as string))
+            .lean();
+            
         res.json(courses);
     } catch (err) {
         console.error(err);
