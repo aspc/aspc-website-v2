@@ -5,20 +5,37 @@ import axios, { CancelTokenSource } from 'axios';
 import { debounce } from 'lodash';
 import type { Course, Instructor, SchoolKey, CourseCardProps } from '@/types'; 
 
-const schoolColors = {
-  'PO': 'bg-blue-100 text-blue-800 border-blue-300',
-  'CM': 'bg-red-100 text-red-800 border-red-300',
-  'HM': 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  'SC': 'bg-green-100 text-green-800 border-green-300',
-  'PZ': 'bg-orange-100 text-orange-800 border-orange-300'
-};
-
-const schoolNames = {   
-  'PO': 'Pomona',
-  'CM': 'Claremont McKenna',
-  'HM': 'Harvey Mudd',
-  'SC': 'Scripps',
-  'PZ': 'Pitzer'
+const schoolData = {
+  'PO': {
+    name: 'Pomona',
+    bgColor: 'bg-blue-400',
+    buttonColor: 'bg-blue-100 text-blue-800 border-blue-300',
+    textColor: 'text-blue-800'
+  },
+  'CM': {
+    name: 'Claremont McKenna',
+    bgColor: 'bg-red-400',
+    buttonColor: 'bg-red-100 text-red-800 border-red-300',
+    textColor: 'text-red-800'
+  },
+  'HM': {
+    name: 'Harvey Mudd',
+    bgColor: 'bg-yellow-300',
+    buttonColor: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    textColor: 'text-yellow-800'
+  },
+  'SC': {
+    name: 'Scripps',
+    bgColor: 'bg-green-200',
+    buttonColor: 'bg-green-100 text-green-800 border-green-300',
+    textColor: 'text-green-800'
+  },
+  'PZ': {
+    name: 'Pitzer',
+    bgColor: 'bg-orange-300',
+    buttonColor: 'bg-orange-100 text-orange-800 border-orange-300',
+    textColor: 'text-orange-800'
+  }
 };
 
 const CourseSearchComponent = () => {
@@ -41,7 +58,6 @@ const CourseSearchComponent = () => {
     return cancelTokenSourceRef.current;
   };
 
-  // Fetch instructors and cache results
   const fetchInstructors = useCallback(async (ids: number[]): Promise<void> => {
     try {
       const uncachedIds = ids.filter(id => !instructorCache[id]);
@@ -150,16 +166,12 @@ const CourseSearchComponent = () => {
   };
 
   const sortedResults = useMemo(() => {
-    return [...results].sort((a, b) => {
-      const aValue = a.code;
-      const bValue = b.code;            
-      return aValue.localeCompare(bValue);;
-    });
+    return [...results].sort((a, b) => a.code.localeCompare(b.code));
   }, [results]);
 
   const extractSchoolCode = (code: string): SchoolKey => {
     const schoolCode = code.slice(-2);
-    return schoolNames[schoolCode as SchoolKey] ? schoolCode as SchoolKey : 'PO';
+    return schoolData[schoolCode as SchoolKey] ? schoolCode as SchoolKey : 'PO';
   };
 
   return (
@@ -196,11 +208,11 @@ const CourseSearchComponent = () => {
                 onClick={() => handleSchoolToggle(school)}
                 className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                   selectedSchools[school]
-                    ? `${schoolColors[school].split(' ')[0]} text-white`
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? `${schoolData[school].buttonColor} border-2 border-white shadow-md`
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300 border-2 border-transparent'
                 }`}
               >
-                {schoolNames[school]}
+                {schoolData[school].name}
               </button>
             ))}
           </div>
@@ -252,21 +264,22 @@ const CourseCardComponent = ({
 }: CourseCardProps) => {
 
   useEffect(() => {
-  const loadInstructors = async () => {
-    if (course.all_instructor_ids?.length) {
-      const hasUncached = course.all_instructor_ids.some(id => !instructorCache[id]);
-      if (hasUncached) {
-        await onInstructorLoad(course.all_instructor_ids);
+    const loadInstructors = async () => {
+      if (course.all_instructor_ids?.length) {
+        const hasUncached = course.all_instructor_ids.some(id => !instructorCache[id]);
+        if (hasUncached) {
+          await onInstructorLoad(course.all_instructor_ids);
+        }
       }
-    }
-  };
+    };
 
-  loadInstructors();
-}, [course.all_instructor_ids, instructorCache, onInstructorLoad]);
-
+    loadInstructors();
+  }, [course.all_instructor_ids, instructorCache, onInstructorLoad]);
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow relative">
+      <div className={`${schoolData[schoolCode].bgColor} h-2 w-full`}></div>
+      
       <div className="p-6">
         <div className="flex justify-between items-start">
           <div>
@@ -274,8 +287,8 @@ const CourseCardComponent = ({
               {course.code}: {course.name}
             </h3>
           </div>
-          <span className={`${schoolColors[schoolCode]} text-xs px-2 py-1 rounded-full border`}>
-            {schoolNames[schoolCode]}
+          <span className={`${schoolData[schoolCode].buttonColor} text-xs px-2 py-1 rounded-full border`}>
+            {schoolData[schoolCode].name}
           </span>
         </div>
         
@@ -312,21 +325,26 @@ const CourseCardComponent = ({
         </div>
         
         {course.all_instructor_ids?.length > 0 && (
-        <div className="mb-4">
-          <p className="text-sm font-medium text-gray-600">Instructors:</p>
-          <div className="flex flex-wrap gap-2 mt-1">
-            {course.all_instructor_ids
-              .map(id => instructorCache[id])
-              .filter(instructor => instructor?.name) 
-              .map(instructor => (
-                <span key={instructor.id} className="text-blue-600 hover:text-blue-800 text-sm">
-                  {instructor.name}
-                </span>
-              ))
-            }
+          <div className="mb-4">
+            <p className="text-sm font-medium text-gray-600">Instructors:</p>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {course.all_instructor_ids
+                .map(id => instructorCache[id])
+                .filter(instructor => instructor?.name) 
+                .map(instructor => (
+                  <div 
+                    key={instructor.id}
+                    className={`${schoolData[schoolCode].bgColor} bg-opacity-20 px-2 py-1 rounded-md border ${schoolData[schoolCode].bgColor} border-opacity-30`}
+                  >
+                    <span className={`${schoolData[schoolCode].textColor} text-sm font-medium`}>
+                      {instructor.name}
+                    </span>
+                  </div>
+                ))
+              }
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </div>
   );
