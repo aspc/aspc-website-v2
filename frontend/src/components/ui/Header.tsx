@@ -274,6 +274,7 @@ const Header = () => {
                                         >
                                             Course Reviews
                                         </Link>
+                                        
 
                                         <Link
                                             href="/campus/housing"
@@ -284,7 +285,7 @@ const Header = () => {
                                         </Link>
 
                                         <Link
-                                            href="/campus/instructor-reviews"
+                                            href="/campus/instructors"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
                                             onClick={() => setOpenDropdown(null)}
                                         >

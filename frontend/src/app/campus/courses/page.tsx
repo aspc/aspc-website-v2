@@ -64,7 +64,7 @@ const CourseSearchComponent = () => {
   };
 
   // Fetch instructors and cache results
-  const fetchInstructors = useCallback(async (ids: number[]) => {
+  const fetchInstructors = useCallback(async (ids: number[]): Promise<void> => {
     try {
       const uncachedIds = ids.filter(id => !instructorCache[id]);
       
@@ -74,17 +74,24 @@ const CourseSearchComponent = () => {
         uncachedIds.map(id => 
           axios.get<Instructor>(`${process.env.BACKEND_LINK}/api/instructors/${id}`, {
             timeout: 3000
-          }).catch(() => ({ data: { id, name: 'Unknown Instructor' }}))
-      ));
+          }).catch(() => null)
+        )
+      );
       
       setInstructorCache(prev => ({
         ...prev,
-        ...responses.reduce((acc, res) => ({ ...acc, [res.data.id]: res.data }), {})
+        ...responses.reduce((acc, res) => {
+          if (res && res.data) {
+            acc[res.data.id] = res.data;
+          }
+          return acc;
+        }, {} as Record<number, Instructor>)
       }));
     } catch (err) {
       if (!axios.isCancel(err)) {
         console.error('Error fetching instructors:', err);
       }
+      throw err; 
     }
   }, [instructorCache]);
 
@@ -266,18 +273,26 @@ interface CourseCardProps {
   onInstructorLoad: (ids: number[]) => void;
 }
 
-const CourseCard = React.memo(({ 
+const CourseCardComponent = ({ 
   course,
   schoolCode,
   instructorCache,
   onInstructorLoad
 }: CourseCardProps) => {
-  // Load instructors when component mounts
+
   useEffect(() => {
+  const loadInstructors = async () => {
     if (course.all_instructor_ids?.length) {
-      onInstructorLoad(course.all_instructor_ids);
+      const hasUncached = course.all_instructor_ids.some(id => !instructorCache[id]);
+      if (hasUncached) {
+        await onInstructorLoad(course.all_instructor_ids);
+      }
     }
-  }, [course.all_instructor_ids, onInstructorLoad]);
+  };
+
+  loadInstructors();
+}, [course.all_instructor_ids, instructorCache, onInstructorLoad]);
+
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
@@ -326,23 +341,27 @@ const CourseCard = React.memo(({
         </div>
         
         {course.all_instructor_ids?.length > 0 && (
-          <div className="mb-4">
-            <p className="text-sm font-medium text-gray-600">Instructors:</p>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {course.all_instructor_ids.map(id => {
-                const instructor = instructorCache[id] || { id, name: 'Loading...' };
-                return (
-                  <span key={id} className="text-blue-600 hover:text-blue-800 text-sm">
-                    {instructor.name}
-                  </span>
-                );
-              })}
-            </div>
+        <div className="mb-4">
+          <p className="text-sm font-medium text-gray-600">Instructors:</p>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {course.all_instructor_ids
+              .map(id => instructorCache[id])
+              .filter(instructor => instructor?.name) 
+              .map(instructor => (
+                <span key={instructor.id} className="text-blue-600 hover:text-blue-800 text-sm">
+                  {instructor.name}
+                </span>
+              ))
+            }
           </div>
-        )}
+        </div>
+      )}
       </div>
     </div>
   );
-});
+};
+
+const CourseCard = React.memo(CourseCardComponent);
+CourseCard.displayName = "CourseCard";
 
 export default CourseSearchComponent;

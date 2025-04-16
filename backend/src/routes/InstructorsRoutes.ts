@@ -149,4 +149,24 @@ router.get("/:id/reviews", async (req: Request, res: Response) => {
     }
 });
 
+router.get("/", async (req: Request, res: Response) => {
+    try {
+        const { q: searchTerm, limit } = req.query;
+        
+        let query: any = {};
+        
+        if (searchTerm) {
+            query.name = { $regex: searchTerm as string, $options: 'i' };
+        }
+        
+        const instructors = await Instructors.find(query)
+            .limit(parseInt(limit as string) || 100);
+            
+        res.json(instructors);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
 export default router;
