@@ -27,7 +27,10 @@ export default function DynamicRooms() {
       roomsList.map(async (room) => {
         try {
           const response = await fetch(
-            `${process.env.BACKEND_LINK}/api/campus/housing/${room.id}/reviews`
+            `${process.env.BACKEND_LINK}/api/campus/housing/${room.id}/reviews`,
+            {
+              credentials: "include",
+            }
           );
 
           if (response.ok) {
@@ -58,7 +61,6 @@ export default function DynamicRooms() {
 
         // Validate building parameter is a number
         const buildingId = Number(id);
-        console.log(buildingId);
 
         if (isNaN(buildingId)) {
           setBuildingNotFound(true);
@@ -68,9 +70,11 @@ export default function DynamicRooms() {
 
         // First fetch building info to check if it exists
         const buildingResponse = await fetch(
-          `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}`
+          `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}`,
+          {
+            credentials: "include",
+          }
         );
-        console.log(buildingResponse);
 
         if (!buildingResponse.ok) {
           if (buildingResponse.status === 404) {
@@ -95,7 +99,10 @@ export default function DynamicRooms() {
 
         // Now fetch rooms for this building
         const response = await fetch(
-          `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}/rooms`
+          `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}/rooms`,
+          {
+            credentials: "include",
+          }
         );
 
         if (!response.ok) {
@@ -155,12 +162,12 @@ export default function DynamicRooms() {
     <div className="container mx-auto px-4 py-8">
       {/* Back Button */}
       <button
-        onClick={() => router.back()} 
+        onClick={() => router.back()}
         className="mb-6 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
       >
         Back
       </button>
-      
+
       <h1 className="text-4xl font-bold mb-4">{building.name}</h1>
       <Image
         src={`/buildings/${safeName}.jpg`}
@@ -186,22 +193,31 @@ export default function DynamicRooms() {
             Floor Plans
           </h2>
           <div className="grid gap-6 pb-6 grid-cols-1 sm:grid-cols-2">
-              {Array.from({ length: building.floors }).map((_, i) => {
-              const isLastInOddSet = building.floors % 2 !== 0 && i === building.floors - 1;
+            {Array.from({ length: building.floors }).map((_, i) => {
+              const isLastInOddSet =
+                building.floors % 2 !== 0 && i === building.floors - 1;
               const isOnlyOne = building.floors === 1;
               const shouldSpanAndCenter = isLastInOddSet || isOnlyOne;
               return (
                 <div
                   key={i}
-                  className={`${shouldSpanAndCenter ? 'sm:col-span-2 flex justify-center' : ''}`}
+                  className={`${
+                    shouldSpanAndCenter
+                      ? "sm:col-span-2 flex justify-center"
+                      : ""
+                  }`}
                 >
                   <Image
                     src={`/floorplans/${safeName}-floor${i + 1}.jpg`}
                     width={800}
                     height={400}
                     alt={`Floor plan ${i + 1}`}
-                    className={`w-full h-auto rounded-lg border border-gray-200 shadow ${shouldSpanAndCenter ? 'sm:max-w-2xl' : ''}`}
-                    onError={(e) => { e.currentTarget.src = '/placeholder-floorplan.jpg'; }}
+                    className={`w-full h-auto rounded-lg border border-gray-200 shadow ${
+                      shouldSpanAndCenter ? "sm:max-w-2xl" : ""
+                    }`}
+                    onError={(e) => {
+                      e.currentTarget.src = "/placeholder-floorplan.jpg";
+                    }}
                   />
                 </div>
               );
