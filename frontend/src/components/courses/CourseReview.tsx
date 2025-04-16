@@ -315,7 +315,7 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
                             })}
                     </select>
                 </div>
-                <p className="pb-2">If you don't see a professor, email product@aspc.pomona.edu so we can add them!</p>
+                <p className="pb-2">If you don&apos;t see a professor that should be here, email product@aspc.pomona.edu so we can add them!</p>
                             
             </div>
 
