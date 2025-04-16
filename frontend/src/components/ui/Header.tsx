@@ -268,12 +268,13 @@ const Header = () => {
                                         {renderSectionLinks("resources")}
 
                                         <Link
-                                            href="/campus/course-reviews"
+                                            href="/campus/courses"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
                                             onClick={() => setOpenDropdown(null)}
                                         >
                                             Course Reviews
                                         </Link>
+                                        
 
                                         <Link
                                             href="/campus/housing"
@@ -284,7 +285,7 @@ const Header = () => {
                                         </Link>
 
                                         <Link
-                                            href="/campus/instructor-reviews"
+                                            href="/campus/instructors"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
                                             onClick={() => setOpenDropdown(null)}
                                         >
@@ -502,7 +503,7 @@ const Header = () => {
                                         {renderSectionLinks("resources", true)}
 
                                         <Link
-                                            href="/campus/course-reviews"
+                                            href="/campus/courses"
                                             className="block px-4 py-2 hover:text-yellow-400"
                                             onClick={() =>
                                                 setIsMobileMenuOpen(false)
@@ -520,7 +521,7 @@ const Header = () => {
                                             Housing Reviews
                                         </Link>
                                         <Link
-                                            href="/campus/instructor-reviews"
+                                            href="/campus/instructors"
                                             className="block px-4 py-2 hover:text-yellow-400"
                                             onClick={() =>
                                                 setIsMobileMenuOpen(false)

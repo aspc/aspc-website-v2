@@ -43,16 +43,16 @@ export default function RootLayout({
         {isMaintenanceMode ? (
           <MaintenancePage />
         ) : (
-          <>
+            <div className="flex flex-col min-h-screen">
             <Header />
             <Suspense fallback={null}>
               <LoginAlert />
             </Suspense>
-            {children}
+            <main className="flex-grow">{children}</main>
             <SpeedInsights />
             <Analytics />
             <Footer />
-          </>
+            </div>
         )}
       </body>
     </html>
