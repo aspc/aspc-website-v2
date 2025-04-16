@@ -521,7 +521,7 @@ const Header = () => {
                                             Housing Reviews
                                         </Link>
                                         <Link
-                                            href="/campus/instructor-reviews"
+                                            href="/campus/instructors"
                                             className="block px-4 py-2 hover:text-yellow-400"
                                             onClick={() =>
                                                 setIsMobileMenuOpen(false)
