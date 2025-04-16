@@ -44,7 +44,10 @@ const RoomPage = () => {
 
         // Fetch building data
         const buildingResponse = await fetch(
-          `${process.env.BACKEND_LINK}/api/campus/housing/${id}`
+          `${process.env.BACKEND_LINK}/api/campus/housing/${id}`,
+          {
+            credentials: "include",
+          }
         );
 
         if (!buildingResponse.ok) {
@@ -58,7 +61,10 @@ const RoomPage = () => {
 
         // Fetch reviews
         const reviews = await fetch(
-          `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`
+          `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`,
+          {
+            credentials: "include",
+          }
         );
 
         if (!reviews.ok) {
@@ -85,10 +91,10 @@ const RoomPage = () => {
       if (targetRef.current) {
         targetRef.current.scrollIntoView({
           behavior: "smooth",
-          block: "start", 
+          block: "start",
         });
       }
-    }, 0); 
+    }, 0);
   };
 
   if (loading || authLoading) {
@@ -114,6 +120,7 @@ const RoomPage = () => {
           `${process.env.BACKEND_LINK}/api/campus/housing/reviews/${id}`,
           {
             method: "DELETE",
+            credentials: "include",
           }
         );
 
@@ -136,7 +143,7 @@ const RoomPage = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Back Button */}
       <button
-        onClick={() => router.back()} 
+        onClick={() => router.back()}
         className="mb-6 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
       >
         Back
@@ -256,7 +263,7 @@ const RoomPage = () => {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2"> 
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
                       <div className="text-sm flex items-center mb-2">
                         <span className="text-gray-600 mr-2">Quiet:</span>
                         <span className="inline">

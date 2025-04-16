@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { SAMLUser } from "../models/People";
 import { CourseReviews } from "../models/Courses";
+import { HousingReviews } from "../models/Housing";
 
 export const isAuthenticated = async (
     req: Request,
@@ -63,6 +64,34 @@ export const isCourseReviewOwner = async (
     const { reviewId } = req.params;
 
     const review = await CourseReviews.findOne({ id: reviewId });
+
+    if (!review) {
+        res.status(404).json({ message: "Review not found" });
+        return;
+    }
+
+    if (review.user_email != sessionUserEmail) {
+        res.status(403).json({
+            message: "You are not authorized to modify this review",
+        });
+        return;
+    }
+
+    next();
+};
+
+export const isHousingReviewOwner = async (req: Request, res: Response, next: NextFunction) => {
+
+    // First check if user is authenticated and get the user ID from session
+    const sessionUserEmail = (req.session as any).user.email;
+    if (!sessionUserEmail) {
+        res.status(401).json({ message: "Authentication required" });
+        return;
+    }
+
+    const { reviewId } = req.params;
+
+    const review = await HousingReviews.findOne({ id: reviewId });
 
     if (!review) {
         res.status(404).json({ message: "Review not found" });

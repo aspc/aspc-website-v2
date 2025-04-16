@@ -3,13 +3,13 @@ import React from "react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Instructor, CourseReviewFormProps } from "@/types";
-// import Image from "next/image";
+import { useAuth } from "@/hooks/useAuth";
 
 export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
   review,
   courseId,
 }) => {
-  const params = useParams();
+  const { user } = useAuth();
 
   const [ratings, setRatings] = useState({
     overall: 0,
@@ -74,20 +74,21 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
       setInstructorId(review.instructor_id.toString() || "");
       setComments(review.comments || "");
     }
+
     // Get all instructors for course
     const fetchInstructors = async () => {
       const response = await fetch(
-        `${process.env.BACKEND_LINK}/api/courses/${courseId}/instructors`
+        `${process.env.BACKEND_LINK}/api/courses/${courseId}/instructors`,
+        {
+          credentials: "include",
+        }
       );
-
-      console.log("here");
 
       if (!response.ok) {
         throw new Error("Error fetching course instructors");
       }
 
       const instructors: Instructor[] = await response.json();
-      console.log(instructors);
       setCourseInstructors(instructors);
     };
 
@@ -125,19 +126,9 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
     }
 
     try {
-      // Get current user's email
-      const userResponse = await fetch(
-        `${process.env.BACKEND_LINK}/api/auth/current_user`,
-        {
-          credentials: "include",
-        }
-      );
-
-      if (!userResponse.ok) {
+      if (!user) {
         throw new Error("Error getting current user");
       }
-
-      const user = await userResponse.json();
 
       // Construct review request
       const reviewPayload = {
@@ -146,7 +137,7 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
         inclusivity: ratings.inclusivity,
         workPerWeek: workPerWeek,
         comments: comments,
-        email: user.user.email,
+        email: user.email,
         ...(instructorId && { instructorId }), // TODO: handle case that instructor is not listed
       };
 
@@ -162,6 +153,7 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
           "Content-Type": "application/json",
         },
         body: JSON.stringify(reviewPayload),
+        credentials: "include",
       });
 
       if (!response.ok) {
