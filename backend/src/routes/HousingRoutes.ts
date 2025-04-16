@@ -7,14 +7,24 @@ import {
 } from '../models/Housing';
 import { housingReviewPictures } from '../server';
 import { ObjectId } from 'mongodb';
+import {
+    isAdmin,
+    isAuthenticated,
+    isCourseReviewOwner,
+    isHousingReviewOwner
+} from "../middleware/authMiddleware";
 
 const router = express.Router();
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// Get all buildings
-router.get('/', async (req: Request, res: Response) => {
+/**
+ * @route   GET /api/campus/housing
+ * @desc    Get all housing buildings
+ * @access  Public
+ */
+router.get("/", isAuthenticated, async (req: Request, res: Response) => {
     try {
         const buildings = await HousingBuildings.find({});
         res.json(buildings);
@@ -23,8 +33,12 @@ router.get('/', async (req: Request, res: Response) => {
     }
 });
 
-// Get a building by id
-router.get('/:building', async (req: Request, res: Response) => {
+/**
+ * @route   GET /api/campus/housing/:building
+ * @desc    Get housing building by id
+ * @access  Public
+ */
+router.get("/:building", isAuthenticated, async (req: Request, res: Response) => {
     try {
         // Get building id
         const buildingId = parseInt(req.params.building, 10);
@@ -49,33 +63,12 @@ router.get('/:building', async (req: Request, res: Response) => {
     }
 });
 
-// Get suites in a building
-// TODO: This route is not used since we don't have data for suites, consider removing
-// router.get("/:building/suites", async (req: Request, res: Response) => {
-//     try {
-//         // Get building id
-//         const { building } = req.params;
-//         if (!building) {
-//             res.status(404).json({ message: "No building id provided" });
-//             return;
-//         }
-
-//         // Get suites
-//         const suites = await HousingSuites.find({
-//             housing_building_id: building,
-//         });
-//         if (!suites || suites.length === 0) {
-//             res.status(404).json({ message: "Suites not found" });
-//             return;
-//         }
-//         res.json(suites);
-//     } catch (error) {
-//         res.status(500).json({ message: "Server error" });
-//     }
-// });
-
-// Get all rooms in a building (by building id)
-router.get('/:building/rooms', async (req: Request, res: Response) => {
+/**
+ * @route   GET /campus/housing/:building/rooms
+ * @desc    Get all roms in a building (by building id)
+ * @access  Public
+ */
+router.get("/:building/rooms", isAuthenticated, async (req: Request, res: Response) => {
     try {
         // Get building id
         const buildingId = parseInt(req.params.building, 10);
@@ -102,8 +95,12 @@ router.get('/:building/rooms', async (req: Request, res: Response) => {
     }
 });
 
-// Get housing reviews for a room
-router.get('/:room/reviews', async (req: Request, res: Response) => {
+/**
+ * @route   GET /api/campus/:room/reviews
+ * @desc    Get housing reviews for a room
+ * @access  Public
+ */
+router.get("/:room/reviews", isAuthenticated, async (req: Request, res: Response) => {
     try {
         // Get room id and convert it to a number
         const roomId = parseInt(req.params.room, 10);
@@ -181,19 +178,22 @@ router.get('/:room/reviews', async (req: Request, res: Response) => {
     }
 });
 
-router.get(
-    '/:buildingId/:roomNumber/reviews',
-    async (req: Request, res: Response) => {
-        try {
-            // Get room id and convert it to a number
-            const { buildingId, roomNumber } = req.params;
-            const buildingIdNumber = parseInt(buildingId, 10);
-
-            // Find the room by building and room number
-            if (isNaN(buildingIdNumber)) {
-                res.status(400).json({ message: 'Invalid building ID format' });
-                return;
-            }
+/**
+ * @route   GET /api/campus/housing/:buildingId/:roomNumber/reviews
+ * @desc    Get reviews for a room by building id and room number
+ * @access  Public
+ */
+router.get("/:buildingId/:roomNumber/reviews", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+        // Get room id and convert it to a number
+        const { buildingId, roomNumber} = req.params;
+        const buildingIdNumber = parseInt(buildingId, 10); 
+  
+        // Find the room by building and room number
+        if (isNaN(buildingIdNumber)) {
+            res.status(400).json({ message: "Invalid building ID format" });
+            return;
+        }
 
             const roomData = await HousingRooms.findOne({
                 housing_building_id: buildingIdNumber,
@@ -265,12 +265,15 @@ router.get(
     }
 );
 
-router.post(
-    '/:buildingId/:roomNumber/reviews',
-    upload.array('pictures'),
-    async (req: Request, res: Response) => {
-        try {
-            const pictureIds: ObjectId[] = [];
+
+/**
+ * @route   POST /api/campus/housing/:buildingId/:roomNumber/reviews
+ * @desc    Add new housing room review
+ * @access  Public
+ */
+router.post("/:buildingId/:roomNumber/reviews", isAuthenticated, upload.array("pictures"), async (req: Request, res: Response) => {
+    try {
+        const pictureIds: ObjectId[] = [];
 
             // Upload each file to GridFS
             if (Array.isArray(req.files)) {
@@ -359,26 +362,28 @@ router.post(
     }
 );
 
-router.patch(
-    '/reviews/:id',
-    upload.array('pictures'),
-    async (req: Request, res: Response) => {
-        try {
-            if (!req.files && !req.body) {
-                return;
-            }
-
-            const id = req.params.id;
-            const oldReview = await HousingReviews.findOne({ id: id });
-
-            if (!oldReview) {
-                console.log('cant find old review');
-                res.status(404).json({ message: 'Review not found' });
-                return;
-            }
-
-            // parse review fields from request
-            const { overall, quiet, layout, temperature, comments } = req.body;
+/**
+ * @route   PATCH /api/campus/housing/reviews/:id
+ * @desc    Update housing review by review id
+ * @access  isHousingReviewOwner
+ */
+router.patch("/reviews/:reviewId", isHousingReviewOwner, upload.array("pictures"), async (req: Request, res: Response) => {
+    try {
+        if (!req.files && !req.body) {
+            return;
+        }
+    
+        const reviewId = req.params.reviewId;
+        const oldReview = await HousingReviews.findOne({ id: reviewId });
+        
+        if (!oldReview) {
+            console.log("cant find old review")
+            res.status(404).json({ message: "Review not found" });
+            return;
+        }
+        
+        // parse review fields from request
+        const { overall, quiet, layout, temperature, comments } = req.body;
 
             // construct review data
             let updateData = {
@@ -436,27 +441,31 @@ router.patch(
                 updateData.pictures = pictureIds;
             }
 
-            const updatedReview = await HousingReviews.findOneAndUpdate(
-                { id: id },
-                updateData,
-                { new: true }
-            );
-            res.status(200).json({
-                message: 'Review updated',
-                updatedReview,
-            });
-        } catch (error) {
-            console.error('update error: ', error);
-            res.status(400).json({ message: 'Error updating review' });
-        }
+        const updatedReview = await HousingReviews.findOneAndUpdate(
+            { id: reviewId },
+            updateData,
+            { new: true }
+        );
+        res.status(200).json({
+            message: "Review updated",
+            updatedReview,
+        });
+
+    } catch (error) {
+        console.error("update error: ", error);
+        res.status(400).json({ message: "Error updating review" });
+    }
     }
 );
 
-router.delete('/reviews/:id', async (req: Request, res: Response) => {
+/**
+ * @route   DELETE /api/campus/housing/reviews/:id
+ * @desc    Delete housing room review
+ * @access  isHousingReviewOwner
+ */
+router.delete("/reviews/:reviewId", isHousingReviewOwner, async (req: Request, res: Response) => {
     try {
-        const review = await HousingReviews.findOneAndDelete({
-            id: req.params.id,
-        });
+        const review = await HousingReviews.findOneAndDelete({ id: req.params.reviewId });
 
         if (!review) {
             res.status(404).json({ message: 'Review not found' });
@@ -468,8 +477,12 @@ router.delete('/reviews/:id', async (req: Request, res: Response) => {
     }
 });
 
-// Get profile picture by id
-router.get('/review_pictures/:id', async (req: Request, res: Response) => {
+/**
+ * @route   GET /api/campus/housing/review_pictures/:id
+ * @desc    Get review picture by id
+ * @access  Public
+ */
+router.get("/review_pictures/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
         const fileId = new ObjectId(req.params.id);
 

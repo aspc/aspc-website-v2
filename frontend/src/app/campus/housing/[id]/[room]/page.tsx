@@ -44,10 +44,13 @@ const RoomPage = () => {
             try {
                 setLoading(true);
 
-                // Fetch building data
-                const buildingResponse = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/${id}`
-                );
+        // Fetch building data
+        const buildingResponse = await fetch(
+          `${process.env.BACKEND_LINK}/api/campus/housing/${id}`,
+          {
+            credentials: "include",
+          }
+        );
 
                 if (!buildingResponse.ok) {
                     throw new Error(
@@ -58,10 +61,13 @@ const RoomPage = () => {
                 const buildingData = await buildingResponse.json();
                 setBuildingName(buildingData.name);
 
-                // Fetch reviews
-                const reviews = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`
-                );
+        // Fetch reviews
+        const reviews = await fetch(
+          `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`,
+          {
+            credentials: "include",
+          }
+        );
 
                 if (!reviews.ok) {
                     throw new Error(
@@ -84,16 +90,16 @@ const RoomPage = () => {
 
     const targetRef = useRef<HTMLButtonElement | null>(null);
 
-    const scrollToReviewForm = () => {
-        setTimeout(() => {
-            if (targetRef.current) {
-                targetRef.current.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start',
-                });
-            }
-        }, 0);
-    };
+  const scrollToReviewForm = () => {
+    setTimeout(() => {
+      if (targetRef.current) {
+        targetRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }, 0);
+  };
 
     if (loading || authLoading) {
         return <Loading />;
@@ -110,16 +116,17 @@ const RoomPage = () => {
         return `${month} ${year}`;
     };
 
-    const handleDelete = async (id: number) => {
-        if (window.confirm('Are you sure you want to delete this review?')) {
-            try {
-                setLoading(true);
-                const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/reviews/${id}`,
-                    {
-                        method: 'DELETE',
-                    }
-                );
+  const handleDelete = async (id: number) => {
+    if (window.confirm("Are you sure you want to delete this review?")) {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `${process.env.BACKEND_LINK}/api/campus/housing/reviews/${id}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+          }
+        );
 
                 if (!response.ok) {
                     throw new Error('Failed to delete review');
@@ -136,15 +143,15 @@ const RoomPage = () => {
         }
     };
 
-    return (
-        <div className="container mx-auto px-4 py-8">
-            {/* Back Button */}
-            <button
-                onClick={() => router.back()}
-                className="mb-6 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-                Back
-            </button>
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Back Button */}
+      <button
+        onClick={() => router.back()}
+        className="mb-6 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+      >
+        Back
+      </button>
 
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-800">
@@ -308,47 +315,26 @@ const RoomPage = () => {
                                             )}
                                         </div>
 
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
-                                            <div className="text-sm flex items-center mb-2">
-                                                <span className="text-gray-600 mr-2">
-                                                    Quiet:
-                                                </span>
-                                                <span className="inline">
-                                                    <StarRating
-                                                        rating={
-                                                            review.quiet_rating ||
-                                                            0
-                                                        }
-                                                    />
-                                                </span>
-                                            </div>
-                                            <div className="text-sm flex items-center mb-1">
-                                                <span className="text-gray-600 mr-2">
-                                                    Layout:
-                                                </span>
-                                                <span className="inline">
-                                                    <StarRating
-                                                        rating={
-                                                            review.layout_rating ||
-                                                            0
-                                                        }
-                                                    />
-                                                </span>
-                                            </div>
-                                            <div className="text-sm flex items-center mb-2">
-                                                <span className="text-gray-600 mr-2">
-                                                    Temperature:
-                                                </span>
-                                                <span className="inline">
-                                                    <StarRating
-                                                        rating={
-                                                            review.temperature_rating ||
-                                                            0
-                                                        }
-                                                    />
-                                                </span>
-                                            </div>
-                                        </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
+                      <div className="text-sm flex items-center mb-2">
+                        <span className="text-gray-600 mr-2">Quiet:</span>
+                        <span className="inline">
+                          <StarRating rating={review.quiet_rating || 0} />
+                        </span>
+                      </div>
+                      <div className="text-sm flex items-center mb-1">
+                        <span className="text-gray-600 mr-2">Layout:</span>
+                        <span className="inline">
+                          <StarRating rating={review.layout_rating || 0} />
+                        </span>
+                      </div>
+                      <div className="text-sm flex items-center mb-2">
+                        <span className="text-gray-600 mr-2">Temperature:</span>
+                        <span className="inline">
+                          <StarRating rating={review.temperature_rating || 0} />
+                        </span>
+                      </div>
+                    </div>
 
                                         {review.comments && (
                                             <div className="mt-2 mb-2">
