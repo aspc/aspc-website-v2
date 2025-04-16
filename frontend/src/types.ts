@@ -159,3 +159,8 @@ export type Instructor = {
     competency_rating?: number;
     challenge_rating?: number;
 };
+
+export interface InstructorWithReviews {
+    instructor: Instructor;
+    reviews: CourseReview[];
+}

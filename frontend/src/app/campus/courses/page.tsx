@@ -324,9 +324,10 @@ const CourseCardComponent = ({
           )}
         </div>
         
-        {course.all_instructor_ids?.length > 0 && (
+        <div className='flex justify-between'>
           <div className="mb-4">
             <p className="text-sm font-medium text-gray-600">Instructors:</p>
+        {course.all_instructor_ids?.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-1">
               {course.all_instructor_ids
                 .map(id => instructorCache[id])
@@ -336,15 +337,30 @@ const CourseCardComponent = ({
                     key={instructor.id}
                     className={`${schoolData[schoolCode].bgColor} bg-opacity-20 px-2 py-1 rounded-md border ${schoolData[schoolCode].bgColor} border-opacity-30`}
                   >
-                    <span className={`${schoolData[schoolCode].textColor} text-sm font-medium`}>
+                    <a
+                     href={`/campus/instructors/${instructor.id}`}
+                     className={`${schoolData[schoolCode].textColor} text-sm font-medium`}>
                       {instructor.name}
-                    </span>
+                    </a>
                   </div>
                 ))
-              }
-            </div>
+                }
+              </div>
+              )}
+
           </div>
-        )}
+
+
+      <div className="mt-4">
+        <a 
+          href={`/campus/courses/${course.id}`}
+          className={`inline-block ${schoolData[schoolCode].buttonColor} px-4 py-2 rounded-md font-medium hover:opacity-90 transition-opacity text-center`}
+        >
+          View Course Reviews
+        </a>
+      </div>
+
+      </div>
       </div>
     </div>
   );

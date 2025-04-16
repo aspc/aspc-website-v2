@@ -35,7 +35,7 @@ const InstructorSearch = () => {
       
       const response = await axios.get<Instructor[]>(`${process.env.BACKEND_LINK}/api/instructors`, {
         params: {
-          q: term,
+          search: term,
           limit: 50
         },
         timeout: 5000,
@@ -78,10 +78,6 @@ const InstructorSearch = () => {
     return [...results].sort((a, b) => a.name.localeCompare(b.name));
   }, [results]);
 
-  const handleViewReviews = (instructorId: number) => {
-    // Implement view reviews functionality here
-    console.log(`View reviews for instructor ${instructorId}`);
-  };
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6">
@@ -136,7 +132,7 @@ const InstructorSearch = () => {
                     {instructor.name}
                   </h3>
                   <button 
-                    onClick={() => handleViewReviews(instructor.id)}
+                    onClick={() => window.location.href = `/campus/instructors/${instructor.id}`}
                     className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
                   >
                     View Reviews
