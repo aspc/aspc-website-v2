@@ -17,6 +17,9 @@ const CoursePage = () => {
     const [courseReviews, setCourseReviews] =
         useState<CourseWithReviews | null>(null);
     const [instructors, setInstructors] = useState<Instructor[]>([]);
+    const [instructorMap, setInstructorMap] = useState<{
+        [key: number]: string;
+    }>({});
     const [isCreatingNew, setIsCreatingNew] = useState(false);
     const [selectedReview, setSelectedReview] = useState<CourseReview | null>(
         null
@@ -147,8 +150,6 @@ const CoursePage = () => {
                 );
                 setInstructors(filteredInstructors);
 
-                // ??Display just a few instructors??
-
                 // Fetch course reviews
                 const reviews = await fetch(
                     `${process.env.BACKEND_LINK}/api/courses/${id}/reviews`
@@ -161,6 +162,47 @@ const CoursePage = () => {
                 }
 
                 const reviewsData: CourseReview[] = await reviews.json();
+
+                // Create a Set of unique instructor IDs from the reviews
+                const instructorIds = new Set<number>();
+                reviewsData.forEach((review) => {
+                    if (review.instructor_id) {
+                        instructorIds.add(review.instructor_id);
+                    }
+                });
+
+                // Fetch instructor data for each unique instructor ID
+                const instructorMapping: { [key: number]: string } = {};
+
+                // Fetch all instructors in parallel
+                await Promise.all(
+                    Array.from(instructorIds).map(async (instructorId) => {
+                        try {
+                            const instructorResponse = await fetch(
+                                `${process.env.BACKEND_LINK}/api/instructors/${instructorId}`
+                            );
+
+                            if (instructorResponse.ok) {
+                                const instructorData: Instructor =
+                                    await instructorResponse.json();
+                                instructorMapping[instructorId] =
+                                    instructorData.name;
+                            } else {
+                                instructorMapping[instructorId] =
+                                    "Unknown Instructor";
+                            }
+                        } catch (error) {
+                            console.error(
+                                `Error fetching instructor ${instructorId}:`,
+                                error
+                            );
+                            instructorMapping[instructorId] =
+                                "Unknown Instructor";
+                        }
+                    })
+                );
+
+                setInstructorMap(instructorMapping);
 
                 setAverageRatings(calculateAverage(reviewsData));
 
@@ -207,8 +249,6 @@ const CoursePage = () => {
         const year = d.getFullYear();
         return `${month} ${year}`;
     };
-
-    // Calculate the average for the course
 
     // Format average work per week to a readable string
     const formatWorkPerWeek = (hours: number) => {
@@ -552,6 +592,23 @@ const CoursePage = () => {
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Display instructor name */}
+                                        {review.instructor_id &&
+                                            instructorMap[
+                                                review.instructor_id
+                                            ] && (
+                                                <div className="text-sm text-gray-600 mb-3">
+                                                    <span className="font-medium">
+                                                        Instructor:{" "}
+                                                    </span>
+                                                    {
+                                                        instructorMap[
+                                                            review.instructor_id
+                                                        ]
+                                                    }
+                                                </div>
+                                            )}
 
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
                                             {review.challenge_rating !==
