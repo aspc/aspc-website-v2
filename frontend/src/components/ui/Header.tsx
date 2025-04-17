@@ -15,7 +15,7 @@ const Header = () => {
         about: [],
         members: [],
         resources: [],
-        pressroom: [],
+        agenda: [],
         elections: [], // DELETE AFTER ELECTIONS
     });
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -39,7 +39,7 @@ const Header = () => {
                     about: [],
                     members: [],
                     resources: [],
-                    pressroom: [],
+                    agenda: [],
                     elections: [], // DELETE AFTER ELECTIONS
                 };
 
@@ -295,21 +295,21 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/* Press Room Section */}
+                            {/* Agenda Section */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
                                     onClick={() =>
-                                        handleDropdownClick("PressRoom")
+                                        handleDropdownClick("Agenda")
                                     }
                                 >
-                                    <span>Press Room</span>
+                                    <span>Agenda</span>
                                 </button>
 
-                                {/* Press Room Pages Dropdown */}
-                                {openDropdown === "PressRoom" && (
+                                {/* Agenda Pages Dropdown */}
+                                {openDropdown === "Agenda" && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        {renderSectionLinks("pressroom")}
+                                        {renderSectionLinks("agenda")}
                                     </div>
                                 )}
                             </div>
@@ -533,20 +533,20 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/* Press Room dropdown */}
+                            {/* Agenda dropdown */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="text-lg flex items-center space-x-1"
                                     onClick={() =>
-                                        handleDropdownClick("PressRoomMobile")
+                                        handleDropdownClick("AgendaMobile")
                                     }
                                 >
-                                    <span>Press Room</span>
+                                    <span>Agenda</span>
                                 </button>
 
-                                {openDropdown === "PressRoomMobile" && (
+                                {openDropdown === "AgendaMobile" && (
                                     <div className="ml-2 mt-2">
-                                        {renderSectionLinks("pressroom", true)}
+                                        {renderSectionLinks("agenda", true)}
                                     </div>
                                 )}
                             </div>

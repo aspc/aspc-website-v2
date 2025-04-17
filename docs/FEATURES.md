@@ -4,7 +4,7 @@
 
 ### Static Page Management
 - **Rich Text Editing**: Integrated TinyMCE editor for creating and updating content
-- **Content Organization**: Pages organized by sections (about, members, resources, pressroom, elections)
+- **Content Organization**: Pages organized by sections (about, members, resources, agenda, elections)
 - **Content Versioning**: Update and track changes to existing pages
 - **Page Routing**: Dynamic routes based on page section and ID (`/pages/[section]/[id]`)
 

@@ -49,20 +49,12 @@ project/
 ```
 
 
-
-
-
-## Getting Started
-
-See [Getting Started](./docs/GETTING_STARTED.md) for instructions on setting up the application locally or with Docker.
-
 ## Contributing
 
 When contributing to this project, please follow the existing code structure and naming conventions. Make sure to test your changes thoroughly before submitting a pull request.
 
 ---
 
-# GETTING_STARTED.md
 
 # Getting Started with ASPC Student Platform
 
