@@ -1,6 +1,6 @@
 import express, { Request, Response, Router } from "express";
 import { Instructors } from "../models/People";
-import { CourseReviews } from "../models/Courses";
+import { CourseReviews, Courses } from "../models/Courses";
 
 const router: Router = express.Router();
 
@@ -170,17 +170,17 @@ router.get("/:id/reviews", async (req: Request, res: Response) => {
             res.status(404).json({ message: "Instructor not found" });
             return;
         }
-
-        // Get all reviews for this instructor
-        const reviews = await CourseReviews.find({
+       // Get all reviews for this instructor
+       const reviews = await CourseReviews.find({
             instructor_id: instructorId,
-        });
+        }).sort({ updatedAt: -1 });
 
-        res.json(reviews);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server error" });
-    }
+    res.json(reviews);
+} catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+}
 });
+
 
 export default router;
