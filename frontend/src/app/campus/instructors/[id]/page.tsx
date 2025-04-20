@@ -8,10 +8,11 @@ import { StarRating } from "@/components/housing/Rooms";
 import { CourseReviewForm } from "@/components/courses/CourseReview";
 import {
     CourseReview,
-    Course,
+    //Course,
     Instructor,
     InstructorWithReviews,
 } from "@/types";
+import Link from "next/link";
 
 interface AverageRatings {
     overallAverage: number;
@@ -26,6 +27,10 @@ const InstructorPage = (): JSX.Element => {
     const router = useRouter();
     const [loading, setLoading] = useState<boolean>(true);
     const [instructorName, setInstructorName] = useState<string>("");
+    const [instructorSchool, setInstructorSchool] = useState<string>("");
+    const [instructorCourses, setInstructorCourses] = useState<
+        Array<{ courseId: number; courseCode: string; courseName: string }>
+    >([]);
     const [instructorReviews, setInstructorReviews] =
         useState<InstructorWithReviews | null>(null);
     const [isCreatingNew, setIsCreatingNew] = useState<boolean>(false);
@@ -54,6 +59,25 @@ const InstructorPage = (): JSX.Element => {
         } else {
             setIsCreatingNew(true);
             scrollToReviewForm();
+        }
+    };
+
+    // Function to convert school code to full name
+    const getSchoolFullName = (code: string): string => {
+        switch (code) {
+            case "PO":
+                return "Pomona College";
+            case "CM":
+                return "Claremont Mckenna College";
+            case "SC":
+                return "Scripps College";
+            case "HM":
+                return "Harvey Mudd College";
+            case "PZ":
+                return "Pitzer College";
+            case "N/A":
+            default:
+                return code;
         }
     };
 
@@ -128,6 +152,8 @@ const InstructorPage = (): JSX.Element => {
                 const instructorData: Instructor =
                     await instructorResponse.json();
                 setInstructorName(instructorData.name);
+                setInstructorSchool(instructorData.school || "N/A");
+                setInstructorCourses(instructorData.courses || []);
 
                 // Fetch instructor reviews
                 const reviews = await fetch(
@@ -224,6 +250,34 @@ const InstructorPage = (): JSX.Element => {
         }
     };
 
+    // Format the courses list with each course on its own line and with styled links
+    const formatCoursesList = (): JSX.Element => {
+        if (!instructorCourses || instructorCourses.length === 0)
+            return <span>No courses listed</span>;
+
+        // Sort courses if needed
+        const sortedCourses = [...instructorCourses].sort((a, b) =>
+            a.courseCode.localeCompare(b.courseCode)
+        );
+
+        // Return a JSX fragment with each course as a link on its own line
+        return (
+            <div className="mt-2 flex flex-col space-y-2">
+                {sortedCourses.map((course) => (
+                    <div key={course.courseId} className="flex items-start">
+                        <span className="mr-2 text-gray-400">•</span>
+                        <Link
+                            href={`/campus/courses/${course.courseId}`}
+                            className="text-gray-700 hover:text-indigo-600 transition-colors duration-200 font-medium"
+                        >
+                            {course.courseCode}: {course.courseName}
+                        </Link>
+                    </div>
+                ))}
+            </div>
+        );
+    };
+
     return (
         <div className="container mx-auto px-4 py-8">
             {/* Back Button */}
@@ -246,6 +300,22 @@ const InstructorPage = (): JSX.Element => {
                                 <h4 className="text-lg font-medium mb-3">
                                     Instructor Information
                                 </h4>
+
+                                {/* School and courses info about the prof */}
+                                <div className="mb-4">
+                                    <p className="text-gray-700 mb-2">
+                                        <span className="font-medium">
+                                            School:
+                                        </span>{" "}
+                                        {getSchoolFullName(instructorSchool)}
+                                    </p>
+                                    <div className="text-gray-700">
+                                        <span className="font-medium">
+                                            Courses:
+                                        </span>
+                                        {formatCoursesList()}
+                                    </div>
+                                </div>
 
                                 {averageRatings &&
                                     averageRatings.reviewCount > 0 && (
@@ -512,7 +582,7 @@ const InstructorPage = (): JSX.Element => {
                     <div>
                         <CourseReviewForm
                             review={selectedReview}
-                            courseId={1}
+                            courseId={selectedReview?.course_id || undefined}
                             instructorId={Number(instructorId)}
                         />
                     </div>

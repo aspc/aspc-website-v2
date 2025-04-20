@@ -163,6 +163,12 @@ export type Instructor = {
     inclusivity_rating?: number;
     competency_rating?: number;
     challenge_rating?: number;
+    school?: string;
+    courses?: Array<{
+        courseId: number;
+        courseCode: string;
+        courseName: string;
+    }>;
 };
 
 export interface InstructorWithReviews {
