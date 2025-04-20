@@ -6,9 +6,12 @@ import { useAuth } from "@/hooks/useAuth";
 import LoginRequired from "@/components/LoginRequired";
 import { StarRating } from "@/components/housing/Rooms";
 import { CourseReviewForm } from "@/components/courses/CourseReview";
-import { CourseReview, Course, Instructor, InstructorWithReviews } from "@/types";
-
-
+import {
+    CourseReview,
+    Course,
+    Instructor,
+    InstructorWithReviews,
+} from "@/types";
 
 interface AverageRatings {
     overallAverage: number;
@@ -19,11 +22,11 @@ interface AverageRatings {
 
 const InstructorPage = (): JSX.Element => {
     const params = useParams();
-    const instructorId = typeof params.id === 'string' ? params.id : '';
+    const instructorId = typeof params.id === "string" ? params.id : "";
     const router = useRouter();
     const [loading, setLoading] = useState<boolean>(true);
     const [instructorName, setInstructorName] = useState<string>("");
-    const [instructorReviews, setInstructorReviews] = 
+    const [instructorReviews, setInstructorReviews] =
         useState<InstructorWithReviews | null>(null);
     const [isCreatingNew, setIsCreatingNew] = useState<boolean>(false);
     const [selectedReview, setSelectedReview] = useState<CourseReview | null>(
@@ -59,7 +62,9 @@ const InstructorPage = (): JSX.Element => {
             try {
                 // Function to calculate average ratings
                 //--------------------------------------
-                const calculateAverage = (reviews: CourseReview[]): AverageRatings => {
+                const calculateAverage = (
+                    reviews: CourseReview[]
+                ): AverageRatings => {
                     if (!reviews || reviews.length === 0) {
                         return {
                             overallAverage: 0,
@@ -95,9 +100,13 @@ const InstructorPage = (): JSX.Element => {
                         overallAverage:
                             overallCount > 0 ? overallSum / overallCount : 0,
                         inclusivityAverage:
-                            inclusivityCount > 0 ? inclusivitySum / inclusivityCount : 0,
+                            inclusivityCount > 0
+                                ? inclusivitySum / inclusivityCount
+                                : 0,
                         challengeAverage:
-                            challengeCount > 0 ? challengeSum / challengeCount : 0,
+                            challengeCount > 0
+                                ? challengeSum / challengeCount
+                                : 0,
                         reviewCount: reviews.length,
                     };
                 };
@@ -116,9 +125,9 @@ const InstructorPage = (): JSX.Element => {
                     );
                 }
 
-                const instructorData: Instructor = await instructorResponse.json();
+                const instructorData: Instructor =
+                    await instructorResponse.json();
                 setInstructorName(instructorData.name);
-
 
                 // Fetch instructor reviews
                 const reviews = await fetch(
@@ -433,8 +442,10 @@ const InstructorPage = (): JSX.Element => {
                                             <span className="text-gray-600 mr-2">
                                                 Course:
                                             </span>
-                                            <a  href={`../courses/${review.course_id}`}
-                                                className="text-blue-500 hover:underline">
+                                            <a
+                                                href={`../courses/${review.course_id}`}
+                                                className="text-blue-500 hover:underline"
+                                            >
                                                 {review.course_id}
                                             </a>
                                         </div>
@@ -499,12 +510,11 @@ const InstructorPage = (): JSX.Element => {
 
                 {(isCreatingNew || selectedReview) && (
                     <div>
-                        {/* <CourseReviewForm
+                        <CourseReviewForm
                             review={selectedReview}
                             courseId={1}
                             instructorId={Number(instructorId)}
-                        /> */}
-                        <p>Sorry, unavailble for the time being.</p>
+                        />
                     </div>
                 )}
             </div>

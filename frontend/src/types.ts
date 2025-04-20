@@ -89,14 +89,13 @@ export interface RoomWithReviews {
     averages: ReviewAverages;
 }
 
-  
-export type SchoolKey = 'PO' | 'CM' | 'HM' | 'SC' | 'PZ';
+export type SchoolKey = "PO" | "CM" | "HM" | "SC" | "PZ";
 
 export interface CourseCardProps {
-course: Course;
-schoolCode: SchoolKey;
-instructorCache: Record<number, Instructor>;
-onInstructorLoad: (ids: number[]) => void;
+    course: Course;
+    schoolCode: SchoolKey;
+    instructorCache: Record<number, Instructor>;
+    onInstructorLoad: (ids: number[]) => void;
 }
 
 // Room card component
@@ -149,8 +148,14 @@ export type CourseWithReviews = {
 
 export interface CourseReviewFormProps {
     review: CourseReview | null;
-    courseId: number;
-};
+    instructorId?: number;
+    courseId?: number;
+}
+// export interface CourseReviewFormProps {
+//     review?: any;
+//     courseId?: string;
+//     instructorId?: string;
+// }
 
 export type Instructor = {
     id: number;
