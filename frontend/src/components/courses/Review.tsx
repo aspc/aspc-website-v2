@@ -1,15 +1,15 @@
 "use client";
 import React from "react";
-import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Instructor, CourseReviewFormProps } from "@/types";
-// import Image from "next/image";
 
-export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
+export const ReviewForm: React.FC<CourseReviewFormProps> = ({
     review,
     courseId,
+    instructorId,
 }) => {
-    const params = useParams();
+    // Determine if we're coming from an instructor page
+    const isFromInstructor = instructorId !== undefined;
 
     const [ratings, setRatings] = useState({
         overall: 0,
@@ -18,10 +18,20 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
     });
 
     const [workPerWeek, setWorkPerWeek] = useState<string>("");
-    const [instructorId, setInstructorId] = useState<string>("");
+    const [selectedInstructorId, setSelectedInstructorId] = useState<
+        number | undefined
+    >(undefined);
     const [courseInstructors, setCourseInstructors] = useState<
         Instructor[] | null
     >(null);
+    const [courses, setCourses] = useState<Array<{
+        courseId: number;
+        courseCode: string;
+        courseName: string;
+    }> | null>(null);
+    const [selectedCourseId, setSelectedCourseId] = useState<
+        number | undefined
+    >(undefined);
 
     const [hoveredStar, setHoveredStar] = useState<{
         overall: number;
@@ -54,7 +64,6 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
         "text-xl text-gray-300 cursor-pointer transition-colors duration-300";
 
     const [comments, setComments] = useState<string>("");
-
     const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
     useEffect(() => {
@@ -71,26 +80,59 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
                 setWorkPerWeek("");
             }
 
-            setInstructorId(review.instructor_id.toString() || "");
-            setComments(review.comments || "");
-        }
-        // Get all instructors for course
-        const fetchInstructors = async () => {
-            const response = await fetch(
-                `${process.env.BACKEND_LINK}/api/courses/${courseId}/instructors`
-            );
-
-            if (!response.ok) {
-                throw new Error("Error fetching course instructors");
+            if (isFromInstructor) {
+                setSelectedCourseId(review.course_id);
+                setSelectedInstructorId(instructorId);
+            } else {
+                setSelectedCourseId(courseId);
+                setSelectedInstructorId(review.instructor_id);
             }
 
-            const instructors: Instructor[] = await response.json();
-            console.log(instructors);
-            setCourseInstructors(instructors);
+            setComments(review.comments || "");
+        } else {
+            // For new reviews, set default selections based on the entry point
+            if (isFromInstructor) {
+                setSelectedInstructorId(instructorId);
+            } else if (courseId !== undefined) {
+                setSelectedCourseId(courseId);
+            }
+        }
+
+        // Get data based on whether we're coming from an instructor page or course page
+        const fetchData = async () => {
+            try {
+                if (isFromInstructor && instructorId !== undefined) {
+                    // Fetch instructor's courses
+                    const response = await fetch(
+                        `${process.env.BACKEND_LINK}/api/instructors/${instructorId}/courses`
+                    );
+
+                    if (!response.ok) {
+                        throw new Error("Error fetching instructor courses");
+                    }
+
+                    const coursesData = await response.json();
+                    setCourses(coursesData);
+                } else if (courseId !== undefined) {
+                    // Fetch course instructors
+                    const response = await fetch(
+                        `${process.env.BACKEND_LINK}/api/courses/${courseId}/instructors`
+                    );
+
+                    if (!response.ok) {
+                        throw new Error("Error fetching course instructors");
+                    }
+
+                    const instructors: Instructor[] = await response.json();
+                    setCourseInstructors(instructors);
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
         };
 
-        fetchInstructors();
-    }, [review, courseId]);
+        fetchData();
+    }, [review, courseId, instructorId, isFromInstructor]);
 
     const handleCommentsChange = (
         e: React.ChangeEvent<HTMLTextAreaElement>
@@ -110,12 +152,17 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
             errors.challenge = "Please select a challenge rating.";
         if (ratings.inclusivity === 0)
             errors.inclusivity = "Please select an inclusivity rating.";
-        if (workPerWeek === null)
+
+        if (!workPerWeek)
             errors.workPerWeek =
-                "Please input the average number of hours of work per week for this course.";
-        // TODO: handle the case the the instructor was not listed
-        // if (instructorId === null)
-        //   errors.instructor = "Please select your instructor for this course.";
+                "Please input the average number of hours of work per week.";
+
+        // Check relationship selection
+        if (isFromInstructor && selectedCourseId === undefined)
+            errors.course = "Please select a course for this instructor.";
+        else if (!isFromInstructor && selectedInstructorId === undefined)
+            errors.instructor = "Please select an instructor for this course.";
+
         // Check if comments are provided
         if (!comments.trim()) errors.comments = "Please leave a comment.";
 
@@ -139,20 +186,31 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
 
             const user = await userResponse.json();
 
-            // Construct review request
+            // Construct review payload
             const reviewPayload = {
                 overall: ratings.overall,
                 challenge: ratings.challenge,
                 inclusivity: ratings.inclusivity,
-                workPerWeek: workPerWeek,
+                workPerWeek: parseInt(workPerWeek, 10),
                 comments: comments,
                 email: user.user.email,
-                ...(instructorId && { instructorId }), // TODO: handle case that instructor is not listed
+                courseId: isFromInstructor ? selectedCourseId : courseId,
+                instructorId: isFromInstructor
+                    ? instructorId
+                    : selectedInstructorId,
             };
 
-            const url = review
-                ? `${process.env.BACKEND_LINK}/api/courses/reviews/${review.id}`
-                : `${process.env.BACKEND_LINK}/api/courses/${courseId}/reviews`;
+            // Determine correct endpoint
+            let url;
+            if (review) {
+                url = `${process.env.BACKEND_LINK}/api/courses/reviews/${review.id}`;
+            } else {
+                // Always use the course review endpoint
+                const reviewCourseId = isFromInstructor
+                    ? selectedCourseId
+                    : courseId;
+                url = `${process.env.BACKEND_LINK}/api/courses/${reviewCourseId}/reviews`;
+            }
 
             const method = review ? "PATCH" : "POST";
 
@@ -177,7 +235,11 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
     };
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <h2 className="text-xl font-bold mb-4">
+                {review ? "Edit Review" : "Course Review"}
+            </h2>
+
             {/* Overall Rating */}
             <div className="rating">
                 <label>Overall: </label>
@@ -202,7 +264,7 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
                     ))}
                 </div>
                 {formErrors.overall && (
-                    <p style={{ color: "red" }}>{formErrors.overall}</p>
+                    <p className="text-red-500">{formErrors.overall}</p>
                 )}
             </div>
 
@@ -230,7 +292,7 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
                     ))}
                 </div>
                 {formErrors.challenge && (
-                    <p style={{ color: "red" }}>{formErrors.challenge}</p>
+                    <p className="text-red-500">{formErrors.challenge}</p>
                 )}
             </div>
 
@@ -262,7 +324,7 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
                     ))}
                 </div>
                 {formErrors.inclusivity && (
-                    <p style={{ color: "red" }}>{formErrors.inclusivity}</p>
+                    <p className="text-red-500">{formErrors.inclusivity}</p>
                 )}
             </div>
 
@@ -276,7 +338,7 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
                         onChange={(e) => setWorkPerWeek(e.target.value)}
                     >
                         <option value="">
-                            Select the average hours per week for this course
+                            Select the average hours per week
                         </option>
                         {[...Array(20)].map((_, index) => {
                             const value = index + 1;
@@ -288,36 +350,86 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
                         })}
                     </select>
                 </div>
+                {formErrors.workPerWeek && (
+                    <p className="text-red-500">{formErrors.workPerWeek}</p>
+                )}
             </div>
 
-            {/* Instructor id */}
-            <div>
-                <label>Instructor: </label>
+            {/* Course selection - when coming from instructor page */}
+            {isFromInstructor && (
                 <div>
-                    <select
-                        className="w-auto p-2 border rounded mb-4"
-                        value={instructorId}
-                        onChange={(e) => setInstructorId(e.target.value)}
-                    >
-                        <option value="">
-                            Select the instructor for this course
-                        </option>
-                        {courseInstructors &&
-                            courseInstructors.map((instructor, index) => {
-                                return (
+                    <label>Course: </label>
+                    <div>
+                        <select
+                            className="w-auto p-2 border rounded mb-4"
+                            value={selectedCourseId}
+                            onChange={(e) =>
+                                setSelectedCourseId(
+                                    parseInt(e.target.value, 10)
+                                )
+                            }
+                        >
+                            <option value="">
+                                Select the course you took with this instructor
+                            </option>
+                            {courses &&
+                                courses.map((course) => (
                                     <option
-                                        key={instructor.name}
+                                        key={course.courseId}
+                                        value={course.courseId}
+                                    >
+                                        {course.courseCode}: {course.courseName}
+                                    </option>
+                                ))}
+                        </select>
+                    </div>
+                    {formErrors.course && (
+                        <p className="text-red-500">{formErrors.course}</p>
+                    )}
+                    <p className="pb-2">
+                        If you don&apos;t see a course that should be here,
+                        email product@aspc.pomona.edu so we can add it!
+                    </p>
+                </div>
+            )}
+
+            {/* Instructor selection - when coming from course page */}
+            {!isFromInstructor && (
+                <div>
+                    <label>Instructor: </label>
+                    <div>
+                        <select
+                            className="w-auto p-2 border rounded mb-4"
+                            value={selectedInstructorId}
+                            onChange={(e) =>
+                                setSelectedInstructorId(
+                                    parseInt(e.target.value, 10)
+                                )
+                            }
+                        >
+                            <option value="">
+                                Select the instructor for this course
+                            </option>
+                            {courseInstructors &&
+                                courseInstructors.map((instructor) => (
+                                    <option
+                                        key={instructor.id}
                                         value={instructor.id}
                                     >
                                         {instructor.name}
                                     </option>
-                                );
-                            })}
-                    </select>
+                                ))}
+                        </select>
+                    </div>
+                    {formErrors.instructor && (
+                        <p className="text-red-500">{formErrors.instructor}</p>
+                    )}
+                    <p className="pb-2">
+                        If you don&apos;t see a professor that should be here,
+                        email product@aspc.pomona.edu so we can add them!
+                    </p>
                 </div>
-                <p className="pb-2">If you don&apos;t see a professor that should be here, email product@aspc.pomona.edu so we can add them!</p>
-                            
-            </div>
+            )}
 
             {/* Comment Box */}
             <div>
@@ -331,7 +443,7 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
                     className="border rounded p-2 w-full"
                 />
                 {formErrors.comments && (
-                    <p style={{ color: "red" }}>{formErrors.comments}</p>
+                    <p className="text-red-500">{formErrors.comments}</p>
                 )}
             </div>
 
