@@ -6,7 +6,7 @@ import { CourseWithReviews, Course, CourseReview, Instructor } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import LoginRequired from "@/components/LoginRequired";
 import { StarRating } from "@/components/housing/Rooms";
-import { CourseReviewForm } from "@/components/courses/CourseReview";
+import { ReviewForm } from "@/components/courses/Review";
 
 const CoursePage = () => {
     const params = useParams();
@@ -716,9 +716,10 @@ const CoursePage = () => {
 
                 {(isCreatingNew || selectedReview) && (
                     <div>
-                        <CourseReviewForm
+                        <ReviewForm
                             review={selectedReview}
                             courseId={Number(id)}
+                            instructorId={undefined}
                         />
                     </div>
                 )}

@@ -3,7 +3,7 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { Instructor, CourseReviewFormProps } from "@/types";
 
-export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({
+export const ReviewForm: React.FC<CourseReviewFormProps> = ({
     review,
     courseId,
     instructorId,

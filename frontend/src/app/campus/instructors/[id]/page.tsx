@@ -5,7 +5,7 @@ import Loading from "@/components/Loading";
 import { useAuth } from "@/hooks/useAuth";
 import LoginRequired from "@/components/LoginRequired";
 import { StarRating } from "@/components/housing/Rooms";
-import { CourseReviewForm } from "@/components/courses/CourseReview";
+import { ReviewForm } from "@/components/courses/Review";
 import {
     CourseReview,
     //Course,
@@ -268,7 +268,7 @@ const InstructorPage = (): JSX.Element => {
                         <span className="mr-2 text-gray-400">•</span>
                         <Link
                             href={`/campus/courses/${course.courseId}`}
-                            className="text-gray-700 hover:text-indigo-600 transition-colors duration-200 font-medium"
+                            className="text-gray-700 hover:text-indigo-600 hover:underline transition-colors duration-200 font-medium"
                         >
                             {course.courseCode}: {course.courseName}
                         </Link>
@@ -310,10 +310,14 @@ const InstructorPage = (): JSX.Element => {
                                         {getSchoolFullName(instructorSchool)}
                                     </p>
                                     <div className="text-gray-700">
-                                        <span className="font-medium">
-                                            Courses:
-                                        </span>
-                                        {formatCoursesList()}
+                                        <details className="mt-2">
+                                            <summary className="cursor-pointer text-indigo-600 hover:underline">
+                                                View Courses
+                                            </summary>
+                                            <div className="mt-2">
+                                                {formatCoursesList()}
+                                            </div>
+                                        </details>
                                     </div>
                                 </div>
 
@@ -580,7 +584,7 @@ const InstructorPage = (): JSX.Element => {
 
                 {(isCreatingNew || selectedReview) && (
                     <div>
-                        <CourseReviewForm
+                        <ReviewForm
                             review={selectedReview}
                             courseId={selectedReview?.course_id || undefined}
                             instructorId={Number(instructorId)}
