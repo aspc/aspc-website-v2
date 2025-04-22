@@ -1,5 +1,12 @@
 {
   "dependencies": {
     "@vercel/speed-insights": "^1.2.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3"
+  },
+  "scripts": {
+    "format": "prettier --check .",
+    "format:write": "prettier --write ."
   }
 }
