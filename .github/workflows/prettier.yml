@@ -1,4 +1,4 @@
-name: Prettier Formatting Check
+name: Prettier
 
 on:
     pull_request:
