@@ -89,7 +89,7 @@ export interface RoomWithReviews {
     averages: ReviewAverages;
 }
 
-export type SchoolKey = "PO" | "CM" | "HM" | "SC" | "PZ";
+export type SchoolKey = 'PO' | 'CM' | 'HM' | 'SC' | 'PZ';
 
 export interface CourseCardProps {
     course: Course;

@@ -1,7 +1,7 @@
-"use client";
-import React from "react";
-import { useEffect, useState } from "react";
-import { Instructor, CourseReviewFormProps } from "@/types";
+'use client';
+import React from 'react';
+import { useEffect, useState } from 'react';
+import { Instructor, CourseReviewFormProps } from '@/types';
 
 export const ReviewForm: React.FC<CourseReviewFormProps> = ({
     review,
@@ -17,7 +17,7 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
         inclusivity: 0,
     });
 
-    const [workPerWeek, setWorkPerWeek] = useState<string>("");
+    const [workPerWeek, setWorkPerWeek] = useState<string>('');
     const [selectedInstructorId, setSelectedInstructorId] = useState<
         number | undefined
     >(undefined);
@@ -61,9 +61,9 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
     };
 
     const baseStarClass =
-        "text-xl text-gray-300 cursor-pointer transition-colors duration-300";
+        'text-xl text-gray-300 cursor-pointer transition-colors duration-300';
 
-    const [comments, setComments] = useState<string>("");
+    const [comments, setComments] = useState<string>('');
     const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
     useEffect(() => {
@@ -77,7 +77,7 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
             if (review.work_per_week) {
                 setWorkPerWeek(review.work_per_week.toString());
             } else {
-                setWorkPerWeek("");
+                setWorkPerWeek('');
             }
 
             if (isFromInstructor) {
@@ -88,7 +88,7 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                 setSelectedInstructorId(review.instructor_id);
             }
 
-            setComments(review.comments || "");
+            setComments(review.comments || '');
         } else {
             // For new reviews, set default selections based on the entry point
             if (isFromInstructor) {
@@ -108,7 +108,7 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                     );
 
                     if (!response.ok) {
-                        throw new Error("Error fetching instructor courses");
+                        throw new Error('Error fetching instructor courses');
                     }
 
                     const coursesData = await response.json();
@@ -120,14 +120,14 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                     );
 
                     if (!response.ok) {
-                        throw new Error("Error fetching course instructors");
+                        throw new Error('Error fetching course instructors');
                     }
 
                     const instructors: Instructor[] = await response.json();
                     setCourseInstructors(instructors);
                 }
             } catch (error) {
-                console.error("Error fetching data:", error);
+                console.error('Error fetching data:', error);
             }
         };
 
@@ -147,24 +147,24 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
 
         // Check if all ratings are selected
         if (ratings.overall === 0)
-            errors.overall = "Please select an overall rating.";
+            errors.overall = 'Please select an overall rating.';
         if (ratings.challenge === 0)
-            errors.challenge = "Please select a challenge rating.";
+            errors.challenge = 'Please select a challenge rating.';
         if (ratings.inclusivity === 0)
-            errors.inclusivity = "Please select an inclusivity rating.";
+            errors.inclusivity = 'Please select an inclusivity rating.';
 
         if (!workPerWeek)
             errors.workPerWeek =
-                "Please input the average number of hours of work per week.";
+                'Please input the average number of hours of work per week.';
 
         // Check relationship selection
         if (isFromInstructor && selectedCourseId === undefined)
-            errors.course = "Please select a course for this instructor.";
+            errors.course = 'Please select a course for this instructor.';
         else if (!isFromInstructor && selectedInstructorId === undefined)
-            errors.instructor = "Please select an instructor for this course.";
+            errors.instructor = 'Please select an instructor for this course.';
 
         // Check if comments are provided
-        if (!comments.trim()) errors.comments = "Please leave a comment.";
+        if (!comments.trim()) errors.comments = 'Please leave a comment.';
 
         if (Object.keys(errors).length > 0) {
             setFormErrors(errors);
@@ -176,12 +176,12 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
             const userResponse = await fetch(
                 `${process.env.BACKEND_LINK}/api/auth/current_user`,
                 {
-                    credentials: "include",
+                    credentials: 'include',
                 }
             );
 
             if (!userResponse.ok) {
-                throw new Error("Error getting current user");
+                throw new Error('Error getting current user');
             }
 
             const user = await userResponse.json();
@@ -212,24 +212,24 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                 url = `${process.env.BACKEND_LINK}/api/courses/${reviewCourseId}/reviews`;
             }
 
-            const method = review ? "PATCH" : "POST";
+            const method = review ? 'PATCH' : 'POST';
 
             const response = await fetch(url, {
                 method,
                 headers: {
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(reviewPayload),
             });
 
             if (!response.ok) {
-                throw new Error("Error submitting review");
+                throw new Error('Error submitting review');
             }
 
-            alert("Review submitted successfully!");
+            alert('Review submitted successfully!');
             window.location.reload();
         } catch (error) {
-            alert("Error submitting review");
+            alert('Error submitting review');
             console.error(error);
         }
     };
@@ -237,7 +237,7 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <h2 className="text-xl font-bold mb-4">
-                {review ? "Edit Review" : "Course Review"}
+                {review ? 'Edit Review' : 'Course Review'}
             </h2>
 
             {/* Overall Rating */}
@@ -247,16 +247,16 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                     {[1, 2, 3, 4, 5].map((value) => (
                         <span
                             key={value}
-                            onClick={() => handleStarClick("overall", value)}
+                            onClick={() => handleStarClick('overall', value)}
                             onMouseEnter={() =>
-                                handleStarHover("overall", value)
+                                handleStarHover('overall', value)
                             }
-                            onMouseLeave={() => handleStarHoverOut("overall")}
+                            onMouseLeave={() => handleStarHoverOut('overall')}
                             className={`${baseStarClass} ${
                                 ratings.overall >= value ||
                                 hoveredStar.overall >= value
-                                    ? "text-yellow-500"
-                                    : ""
+                                    ? 'text-yellow-500'
+                                    : ''
                             }`}
                         >
                             &#9733;
@@ -275,16 +275,16 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                     {[1, 2, 3, 4, 5].map((value) => (
                         <span
                             key={value}
-                            onClick={() => handleStarClick("challenge", value)}
+                            onClick={() => handleStarClick('challenge', value)}
                             onMouseEnter={() =>
-                                handleStarHover("challenge", value)
+                                handleStarHover('challenge', value)
                             }
-                            onMouseLeave={() => handleStarHoverOut("challenge")}
+                            onMouseLeave={() => handleStarHoverOut('challenge')}
                             className={`${baseStarClass} ${
                                 ratings.challenge >= value ||
                                 hoveredStar.challenge >= value
-                                    ? "text-yellow-500"
-                                    : ""
+                                    ? 'text-yellow-500'
+                                    : ''
                             }`}
                         >
                             &#9733;
@@ -304,19 +304,19 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                         <span
                             key={value}
                             onClick={() =>
-                                handleStarClick("inclusivity", value)
+                                handleStarClick('inclusivity', value)
                             }
                             onMouseEnter={() =>
-                                handleStarHover("inclusivity", value)
+                                handleStarHover('inclusivity', value)
                             }
                             onMouseLeave={() =>
-                                handleStarHoverOut("inclusivity")
+                                handleStarHoverOut('inclusivity')
                             }
                             className={`${baseStarClass} ${
                                 ratings.inclusivity >= value ||
                                 hoveredStar.inclusivity >= value
-                                    ? "text-yellow-500"
-                                    : ""
+                                    ? 'text-yellow-500'
+                                    : ''
                             }`}
                         >
                             &#9733;

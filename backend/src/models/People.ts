@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema } from 'mongoose';
 
 // Schema for SAML Authenticated Users
 interface ISAMLUser extends Document {
@@ -42,7 +42,7 @@ const SAMLUserSchema = new Schema<ISAMLUser>(
     }
 );
 
-const SAMLUser = mongoose.model<ISAMLUser>("SAMLUser", SAMLUserSchema);
+const SAMLUser = mongoose.model<ISAMLUser>('SAMLUser', SAMLUserSchema);
 
 // ASPC Staff Schema
 interface IStaff extends Document {
@@ -71,7 +71,7 @@ const StaffSchema = new Schema<IStaff>(
         },
         bio: {
             type: String,
-            default: "",
+            default: '',
         },
         group: {
             type: String,
@@ -87,7 +87,7 @@ const StaffSchema = new Schema<IStaff>(
     }
 );
 
-const Staff = mongoose.model<IStaff>("Staff", StaffSchema);
+const Staff = mongoose.model<IStaff>('Staff', StaffSchema);
 
 // Instructors Schema
 interface IInstructors extends Document {
@@ -136,7 +136,7 @@ const InstructorsSchema = new Schema<IInstructors>({
 });
 
 const Instructors = mongoose.model<IInstructors>(
-    "Instructors",
+    'Instructors',
     InstructorsSchema
 );
 

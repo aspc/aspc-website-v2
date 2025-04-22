@@ -1,31 +1,31 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Editor } from "@tinymce/tinymce-react";
-import { PageContent } from "@/types";
-import Loading from "@/components/Loading";
+import { useState, useEffect } from 'react';
+import { Editor } from '@tinymce/tinymce-react';
+import { PageContent } from '@/types';
+import Loading from '@/components/Loading';
 
 const PageDashboard = () => {
     const [linkPages, setLinkPages] = useState<PageContent[]>([]);
     const [staticPages, setStaticPages] = useState<PageContent[]>([]);
-    const [selectedStaticPage, setSelectedStaticPage] = useState<string>("");
-    const [selectedLinkPage, setSelectedLinkPage] = useState<string>("");
+    const [selectedStaticPage, setSelectedStaticPage] = useState<string>('');
+    const [selectedLinkPage, setSelectedLinkPage] = useState<string>('');
     const [isCreatingNew, setIsCreatingNew] = useState(false);
-    const [pageId, setPageId] = useState("");
-    const [pageName, setPageName] = useState("");
-    const [pageLink, setPageLink] = useState("");
-    const [content, setContent] = useState<string>("");
-    const [pageType, setPageType] = useState<"content" | "link">("content");
-    const [pageSection, setPageSection] = useState<string>("about");
+    const [pageId, setPageId] = useState('');
+    const [pageName, setPageName] = useState('');
+    const [pageLink, setPageLink] = useState('');
+    const [content, setContent] = useState<string>('');
+    const [pageType, setPageType] = useState<'content' | 'link'>('content');
+    const [pageSection, setPageSection] = useState<string>('about');
     const [loading, setLoading] = useState(false);
 
     // Available page sections
     const pageSections = [
-        "about",
-        "members",
-        "resources",
-        "agenda",
-        "elections", // DELETE AFTER ELECTIONS
+        'about',
+        'members',
+        'resources',
+        'agenda',
+        'elections', // DELETE AFTER ELECTIONS
     ];
 
     const fetchPages = async () => {
@@ -44,8 +44,8 @@ const PageDashboard = () => {
                 );
             }
         } catch (error) {
-            console.error("Error fetching pages:", error);
-            alert("Error fetching pages");
+            console.error('Error fetching pages:', error);
+            alert('Error fetching pages');
         } finally {
             setLoading(false);
         }
@@ -56,37 +56,37 @@ const PageDashboard = () => {
     }, []);
 
     const resetForm = () => {
-        setPageId("");
-        setPageName("");
-        setPageLink("");
-        setContent("<p>Add your content here...</p>");
-        setPageType("content");
-        setPageSection("about");
+        setPageId('');
+        setPageName('');
+        setPageLink('');
+        setContent('<p>Add your content here...</p>');
+        setPageType('content');
+        setPageSection('about');
     };
 
     const handleNewPage = () => {
         setIsCreatingNew(true);
-        setSelectedStaticPage("");
-        setSelectedLinkPage("");
+        setSelectedStaticPage('');
+        setSelectedLinkPage('');
         resetForm();
     };
 
     const handleEditPage = () => {
         setIsCreatingNew(false);
-        setSelectedStaticPage("");
-        setSelectedLinkPage("");
+        setSelectedStaticPage('');
+        setSelectedLinkPage('');
         resetForm();
     };
 
     // Update page ID when link changes for link-type pages
     useEffect(() => {
-        if (pageType === "link" && pageLink) {
+        if (pageType === 'link' && pageLink) {
             // Create a sanitized version of the link for use as ID
             // Remove http/https, special chars, and use dashes instead of spaces
             const sanitizedLink = pageLink
-                .replace(/^https?:\/\//, "")
-                .replace(/[^a-zA-Z0-9\s-]/g, "")
-                .replace(/\s+/g, "-")
+                .replace(/^https?:\/\//, '')
+                .replace(/[^a-zA-Z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
                 .toLowerCase();
 
             setPageId(sanitizedLink);
@@ -95,12 +95,12 @@ const PageDashboard = () => {
 
     const handleStaticPageSelect = async (pageId: string) => {
         if (!pageId) {
-            setSelectedStaticPage("");
+            setSelectedStaticPage('');
             return;
         }
 
         setSelectedStaticPage(pageId);
-        setSelectedLinkPage("");
+        setSelectedLinkPage('');
         setIsCreatingNew(false);
 
         try {
@@ -113,15 +113,15 @@ const PageDashboard = () => {
                 const pageData: PageContent = await response.json();
                 setPageId(pageData.id);
                 setPageName(pageData.name);
-                setContent(pageData.content || "");
-                setPageType("content");
+                setContent(pageData.content || '');
+                setPageType('content');
                 setPageSection(pageData.header);
             } else {
-                throw new Error("Failed to fetch page content");
+                throw new Error('Failed to fetch page content');
             }
         } catch (error) {
-            console.error("Error fetching page content:", error);
-            alert("Error loading page content");
+            console.error('Error fetching page content:', error);
+            alert('Error loading page content');
         } finally {
             setLoading(false);
         }
@@ -129,12 +129,12 @@ const PageDashboard = () => {
 
     const handleLinkPageSelect = async (pageId: string) => {
         if (!pageId) {
-            setSelectedLinkPage("");
+            setSelectedLinkPage('');
             return;
         }
 
         setSelectedLinkPage(pageId);
-        setSelectedStaticPage("");
+        setSelectedStaticPage('');
         setIsCreatingNew(false);
 
         try {
@@ -147,15 +147,15 @@ const PageDashboard = () => {
                 const pageData: PageContent = await response.json();
                 setPageId(pageData.id);
                 setPageName(pageData.name);
-                setPageLink(pageData.link || "");
-                setPageType("link");
+                setPageLink(pageData.link || '');
+                setPageType('link');
                 setPageSection(pageData.header);
             } else {
-                throw new Error("Failed to fetch page content");
+                throw new Error('Failed to fetch page content');
             }
         } catch (error) {
-            console.error("Error fetching page content:", error);
-            alert("Error loading page content");
+            console.error('Error fetching page content:', error);
+            alert('Error loading page content');
         } finally {
             setLoading(false);
         }
@@ -164,12 +164,12 @@ const PageDashboard = () => {
     const handleSave = async () => {
         // Validate form
         if (
-            (pageType === "content" && !pageId) ||
+            (pageType === 'content' && !pageId) ||
             !pageName ||
-            (pageType === "link" && !pageLink) ||
-            (pageType === "content" && !content)
+            (pageType === 'link' && !pageLink) ||
+            (pageType === 'content' && !content)
         ) {
-            alert("Please fill in all required fields");
+            alert('Please fill in all required fields');
             return;
         }
 
@@ -181,16 +181,16 @@ const PageDashboard = () => {
                 const createResponse = await fetch(
                     `${process.env.BACKEND_LINK}/api/admin/pages`,
                     {
-                        method: "POST",
+                        method: 'POST',
                         headers: {
-                            "Content-Type": "application/json",
+                            'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
                             id: pageId,
                             name: pageName,
                             header: pageSection,
-                            content: pageType === "content" ? content : null,
-                            link: pageType === "link" ? pageLink : null,
+                            content: pageType === 'content' ? content : null,
+                            link: pageType === 'link' ? pageLink : null,
                             section: pageSection,
                         }),
                     }
@@ -199,8 +199,8 @@ const PageDashboard = () => {
                 if (!createResponse.ok) {
                     if (
                         createResponse.headers
-                            .get("content-type")
-                            ?.includes("application/json")
+                            .get('content-type')
+                            ?.includes('application/json')
                     ) {
                         const errorData = await createResponse.json();
                         throw new Error(errorData.message);
@@ -208,7 +208,7 @@ const PageDashboard = () => {
                     throw new Error(`Server error: ${createResponse.status}`);
                 }
 
-                alert("Page created successfully!");
+                alert('Page created successfully!');
             } else {
                 // Update existing page
                 const pageIdToUpdate = selectedStaticPage || selectedLinkPage;
@@ -216,16 +216,16 @@ const PageDashboard = () => {
                 const updateResponse = await fetch(
                     `${process.env.BACKEND_LINK}/api/admin/pages/${pageIdToUpdate}`,
                     {
-                        method: "PUT",
+                        method: 'PUT',
                         headers: {
-                            "Content-Type": "application/json",
+                            'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
                             newId: pageId,
                             name: pageName,
                             header: pageSection,
-                            content: pageType === "content" ? content : null,
-                            link: pageType === "link" ? pageLink : null,
+                            content: pageType === 'content' ? content : null,
+                            link: pageType === 'link' ? pageLink : null,
                             section: pageSection,
                         }),
                     }
@@ -234,8 +234,8 @@ const PageDashboard = () => {
                 if (!updateResponse.ok) {
                     if (
                         updateResponse.headers
-                            .get("content-type")
-                            ?.includes("application/json")
+                            .get('content-type')
+                            ?.includes('application/json')
                     ) {
                         const errorData = await updateResponse.json();
                         throw new Error(errorData.message);
@@ -243,18 +243,18 @@ const PageDashboard = () => {
                     throw new Error(`Server error: ${updateResponse.status}`);
                 }
 
-                alert("Page updated successfully!");
+                alert('Page updated successfully!');
             }
 
             // RESET STATE AFTER SUCCESSFUL EDIT/CREATION
             setIsCreatingNew(false);
-            setSelectedStaticPage("");
-            setSelectedLinkPage("");
+            setSelectedStaticPage('');
+            setSelectedLinkPage('');
             resetForm();
             fetchPages(); // Re-fetch the data after a successful save (to update the list)
         } catch (error) {
-            console.error("Error saving page:", error);
-            alert(error instanceof Error ? error.message : "Error saving page");
+            console.error('Error saving page:', error);
+            alert(error instanceof Error ? error.message : 'Error saving page');
         } finally {
             setLoading(false);
         }
@@ -265,7 +265,7 @@ const PageDashboard = () => {
         if (!pageIdToDelete) return;
 
         const confirmDelete = window.confirm(
-            "Are you sure you want to delete this page?"
+            'Are you sure you want to delete this page?'
         );
         if (!confirmDelete) return;
 
@@ -275,25 +275,25 @@ const PageDashboard = () => {
             const response = await fetch(
                 `${process.env.BACKEND_LINK}/api/admin/pages/${pageIdToDelete}`,
                 {
-                    method: "DELETE",
+                    method: 'DELETE',
                 }
             );
 
             if (!response.ok) {
-                throw new Error("Failed to delete the page");
+                throw new Error('Failed to delete the page');
             }
 
-            alert("Page deleted successfully!");
+            alert('Page deleted successfully!');
 
             // RESET STATE AFTER SUCCESSFUL DELETION
             setIsCreatingNew(false);
-            setSelectedStaticPage("");
-            setSelectedLinkPage("");
+            setSelectedStaticPage('');
+            setSelectedLinkPage('');
             resetForm();
             fetchPages();
         } catch (error) {
-            console.error("Error deleting page:", error);
-            alert("Error deleting page");
+            console.error('Error deleting page:', error);
+            alert('Error deleting page');
         } finally {
             setLoading(false);
         }
@@ -375,7 +375,7 @@ const PageDashboard = () => {
             {(isCreatingNew || selectedStaticPage || selectedLinkPage) && (
                 <div className="bg-white p-6 rounded-lg shadow-md">
                     <h2 className="text-xl font-semibold mb-4">
-                        {isCreatingNew ? "Create New Page" : "Edit Page"}
+                        {isCreatingNew ? 'Create New Page' : 'Edit Page'}
                     </h2>
 
                     <div className="space-y-4">
@@ -397,9 +397,9 @@ const PageDashboard = () => {
                                 ))}
                             </select>
                             <p className="mt-1 text-sm text-gray-500">
-                                This page will be displayed under the{" "}
+                                This page will be displayed under the{' '}
                                 {pageSection.charAt(0).toUpperCase() +
-                                    pageSection.slice(1)}{" "}
+                                    pageSection.slice(1)}{' '}
                                 section
                             </p>
                         </div>
@@ -427,28 +427,28 @@ const PageDashboard = () => {
                             <div className="flex space-x-4">
                                 <button
                                     type="button"
-                                    onClick={() => setPageType("content")}
+                                    onClick={() => setPageType('content')}
                                     className={`px-4 py-2 rounded-md ${
-                                        pageType === "content"
-                                            ? "bg-blue-500 text-white"
-                                            : "bg-gray-200 text-gray-700"
+                                        pageType === 'content'
+                                            ? 'bg-blue-500 text-white'
+                                            : 'bg-gray-200 text-gray-700'
                                     }`}
                                     disabled={
-                                        pageType === "link" && !isCreatingNew
+                                        pageType === 'link' && !isCreatingNew
                                     }
                                 >
                                     Content Page
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setPageType("link")}
+                                    onClick={() => setPageType('link')}
                                     className={`px-4 py-2 rounded-md ${
-                                        pageType === "link"
-                                            ? "bg-blue-500 text-white"
-                                            : "bg-gray-200 text-gray-700"
+                                        pageType === 'link'
+                                            ? 'bg-blue-500 text-white'
+                                            : 'bg-gray-200 text-gray-700'
                                     }`}
                                     disabled={
-                                        pageType === "content" && !isCreatingNew
+                                        pageType === 'content' && !isCreatingNew
                                     }
                                 >
                                     Link Page
@@ -457,7 +457,7 @@ const PageDashboard = () => {
                         </div>
 
                         {/* Page ID - only visible for content pages */}
-                        {pageType === "content" && (
+                        {pageType === 'content' && (
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Page ID
@@ -478,7 +478,7 @@ const PageDashboard = () => {
                         )}
 
                         {/* Page Content or Link based on type */}
-                        {pageType === "link" ? (
+                        {pageType === 'link' ? (
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     External/Internal Link URL
@@ -511,32 +511,32 @@ const PageDashboard = () => {
                                         height: 500,
                                         menubar: false,
                                         plugins: [
-                                            "advlist",
-                                            "autolink",
-                                            "lists",
-                                            "link",
-                                            "image",
-                                            "charmap",
-                                            "preview",
-                                            "anchor",
-                                            "searchreplace",
-                                            "visualblocks",
-                                            "code",
-                                            "fullscreen",
-                                            "insertdatetime",
-                                            "media",
-                                            "table",
-                                            "code",
-                                            "help",
-                                            "wordcount",
+                                            'advlist',
+                                            'autolink',
+                                            'lists',
+                                            'link',
+                                            'image',
+                                            'charmap',
+                                            'preview',
+                                            'anchor',
+                                            'searchreplace',
+                                            'visualblocks',
+                                            'code',
+                                            'fullscreen',
+                                            'insertdatetime',
+                                            'media',
+                                            'table',
+                                            'code',
+                                            'help',
+                                            'wordcount',
                                         ],
                                         toolbar:
-                                            "undo redo | blocks | " +
-                                            "bold italic forecolor | alignleft aligncenter " +
-                                            "alignright alignjustify | bullist numlist outdent indent | " +
-                                            "removeformat | image media table | help",
+                                            'undo redo | blocks | ' +
+                                            'bold italic forecolor | alignleft aligncenter ' +
+                                            'alignright alignjustify | bullist numlist outdent indent | ' +
+                                            'removeformat | image media table | help',
                                         content_style:
-                                            "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
+                                            'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
                                     }}
                                 />
                             </div>
@@ -549,7 +549,7 @@ const PageDashboard = () => {
                                 disabled={loading}
                                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md disabled:bg-blue-300 disabled:cursor-not-allowed"
                             >
-                                {isCreatingNew ? "Create Page" : "Save Changes"}
+                                {isCreatingNew ? 'Create Page' : 'Save Changes'}
                             </button>
 
                             {!isCreatingNew && (
@@ -565,8 +565,8 @@ const PageDashboard = () => {
                             <button
                                 onClick={() => {
                                     setIsCreatingNew(false);
-                                    setSelectedStaticPage("");
-                                    setSelectedLinkPage("");
+                                    setSelectedStaticPage('');
+                                    setSelectedLinkPage('');
                                     resetForm();
                                 }}
                                 className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md"

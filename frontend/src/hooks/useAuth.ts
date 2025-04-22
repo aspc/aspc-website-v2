@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { User } from '@/types'; 
-
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { User } from '@/types';
 
 export function useAuth(requireAdmin: boolean = false) {
     const [user, setUser] = useState<User | null>(null);
@@ -12,22 +11,22 @@ export function useAuth(requireAdmin: boolean = false) {
         const checkAuth = async () => {
             try {
                 const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/auth/current_user`, // Local API route 
+                    `${process.env.BACKEND_LINK}/api/auth/current_user`, // Local API route
                     {
-                        credentials: "include",
+                        credentials: 'include',
                     }
                 );
 
                 if (response.ok) {
                     const data = await response.json();
                     if (requireAdmin && !data.user.isAdmin) {
-                        router.push("/");
+                        router.push('/');
                         return;
                     }
                     setUser(data.user);
                 }
             } catch (error) {
-                console.error("Auth check error:", error);
+                console.error('Auth check error:', error);
             } finally {
                 setLoading(false);
             }
@@ -36,6 +35,5 @@ export function useAuth(requireAdmin: boolean = false) {
         checkAuth();
     }, [router, requireAdmin]);
 
-
-    return { user, loading};
+    return { user, loading };
 }

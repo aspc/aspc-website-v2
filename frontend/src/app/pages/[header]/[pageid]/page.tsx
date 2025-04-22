@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import Loading from "@/components/Loading";
-import { PageContent } from "@/types";
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import Loading from '@/components/Loading';
+import { PageContent } from '@/types';
 
 export default function DynamicPage() {
     const params = useParams();
@@ -29,9 +29,9 @@ export default function DynamicPage() {
                 const data = await response.json();
                 setPageData(data);
             } catch (error) {
-                console.error("Error fetching page data:", error);
+                console.error('Error fetching page data:', error);
                 setError(
-                    "Failed to load page content. Please try again later."
+                    'Failed to load page content. Please try again later.'
                 );
             } finally {
                 setLoading(false);

@@ -1,55 +1,55 @@
-import express, { Request, Response } from "express";
-import PageContent from "../../models/PageContent";
+import express, { Request, Response } from 'express';
+import PageContent from '../../models/PageContent';
 
 const router = express.Router();
 
 // Get all pages
-router.get("/", async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
     try {
         const pages = await PageContent.find({});
         res.json(pages);
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
 // Get the page by id
-router.get("/:id", async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const page = await PageContent.findOne({ id });
 
         if (!page) {
-            res.status(404).json({ message: "Page not found" });
+            res.status(404).json({ message: 'Page not found' });
             return;
         }
 
         res.json(page);
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
 // Get all pages by header
-router.get("/header/:header", async (req: Request, res: Response) => {
+router.get('/header/:header', async (req: Request, res: Response) => {
     try {
         const { header } = req.params;
         const pages = await PageContent.find({ header });
         res.json(pages);
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
 // Create a new page
-router.post("/", async (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
     try {
         const { id, name, content, header, link } = req.body;
 
         if (!id || !name || !header || (!link && !content)) {
             res.status(400).json({
                 message:
-                    "id, name, and header are required, and either link or content must be provided",
+                    'id, name, and header are required, and either link or content must be provided',
             });
             return;
         }
@@ -72,14 +72,14 @@ router.post("/", async (req: Request, res: Response) => {
         });
         await newPage.save();
 
-        res.status(201).json({ message: "Page successfully created" });
+        res.status(201).json({ message: 'Page successfully created' });
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
 // Update an existing page
-router.put("/:id", async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { newId, name, content, header, link } = req.body;
@@ -87,7 +87,7 @@ router.put("/:id", async (req: Request, res: Response) => {
         if (!name && !content && !header && !link) {
             res.status(400).json({
                 message:
-                    "At least one field is required (name, content, header or link)",
+                    'At least one field is required (name, content, header or link)',
             });
             return;
         }
@@ -105,30 +105,30 @@ router.put("/:id", async (req: Request, res: Response) => {
         });
 
         if (!page) {
-            res.status(404).json("Page not found");
+            res.status(404).json('Page not found');
             return;
         }
 
-        res.json({ message: "Page successfully updated", page });
+        res.json({ message: 'Page successfully updated', page });
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
 // Delete a page by id
-router.delete("/:id", async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const page = await PageContent.findOneAndDelete({ id });
 
         if (!page) {
-            res.status(404).json({ message: "Page not found" });
+            res.status(404).json({ message: 'Page not found' });
             return;
         }
 
-        res.status(200).json({ message: "Page deleted", page });
+        res.status(200).json({ message: 'Page deleted', page });
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 

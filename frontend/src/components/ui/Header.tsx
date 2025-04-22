@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import Loading from "@/components/Loading";
-import { useAuth } from "@/hooks/useAuth";
-import { PageContent } from "@/types";
-import Image from "next/image";
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Loading from '@/components/Loading';
+import { useAuth } from '@/hooks/useAuth';
+import { PageContent } from '@/types';
+import Image from 'next/image';
 
-const groups: string[] = ["Senate", "Staff", "CollegeStaff", "Software"];
+const groups: string[] = ['Senate', 'Staff', 'CollegeStaff', 'Software'];
 
 const Header = () => {
     const { user, loading } = useAuth();
@@ -30,8 +30,8 @@ const Header = () => {
                     `${process.env.BACKEND_LINK}/api/admin/pages`
                 );
                 let data: PageContent[] = await response.json();
-                if(!user){
-                    data = data.filter(page => page.content !== null);
+                if (!user) {
+                    data = data.filter((page) => page.content !== null);
                 }
 
                 // Organize pages by header/section
@@ -56,7 +56,7 @@ const Header = () => {
 
                 setPagesMap(pagesByHeader);
             } catch (error) {
-                console.error("Error fetching pages:", error);
+                console.error('Error fetching pages:', error);
             } finally {
                 setLoadingPages(false);
             }
@@ -74,25 +74,25 @@ const Header = () => {
         const handleClickOutside = (event: MouseEvent) => {
             if (
                 openDropdown &&
-                !(event.target as Element).closest(".dropdown-container")
+                !(event.target as Element).closest('.dropdown-container')
             ) {
                 setOpenDropdown(null);
             }
         };
 
-        document.addEventListener("click", handleClickOutside);
-        return () => document.removeEventListener("click", handleClickOutside);
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
     }, [openDropdown]);
 
     // Prevent body scroll when mobile menu is open
     useEffect(() => {
         if (isMobileMenuOpen) {
-            document.body.style.overflow = "hidden";
+            document.body.style.overflow = 'hidden';
         } else {
-            document.body.style.overflow = "unset";
+            document.body.style.overflow = 'unset';
         }
         return () => {
-            document.body.style.overflow = "unset";
+            document.body.style.overflow = 'unset';
         };
     }, [isMobileMenuOpen]);
 
@@ -119,14 +119,14 @@ const Header = () => {
                                       }`
                             }
                             target={
-                                page.link && page.link.startsWith("http")
-                                    ? "_blank"
-                                    : "_self"
+                                page.link && page.link.startsWith('http')
+                                    ? '_blank'
+                                    : '_self'
                             }
                             className={`block px-4 py-2 ${
                                 closeMenuOnClick
-                                    ? "hover:text-yellow-400"
-                                    : "text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                    ? 'hover:text-yellow-400'
+                                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0'
                             }`}
                             onClick={() => {
                                 // Close dropdown menu when link is clicked
@@ -183,15 +183,15 @@ const Header = () => {
                             <div className="relative dropdown-container">
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
-                                    onClick={() => handleDropdownClick("About")}
+                                    onClick={() => handleDropdownClick('About')}
                                 >
                                     <span>About</span>
                                 </button>
 
                                 {/* About Pages Dropdown */}
-                                {openDropdown === "About" && (
+                                {openDropdown === 'About' && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        {renderSectionLinks("about")}
+                                        {renderSectionLinks('about')}
                                     </div>
                                 )}
                             </div>
@@ -201,14 +201,14 @@ const Header = () => {
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
                                     onClick={() =>
-                                        handleDropdownClick("Members")
+                                        handleDropdownClick('Members')
                                     }
                                 >
                                     <span>Officers</span>
                                 </button>
 
                                 {/* Members Dropdown with ASPC Groups and Pages */}
-                                {openDropdown === "Members" && (
+                                {openDropdown === 'Members' && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         {/* Senate Groups */}
                                         {groups.map((group, index) => (
@@ -216,17 +216,19 @@ const Header = () => {
                                                 key={`group-${index}`}
                                                 href={`/staff/${group}`}
                                                 className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                                onClick={() => setOpenDropdown(null)}
+                                                onClick={() =>
+                                                    setOpenDropdown(null)
+                                                }
                                             >
                                                 {group.replace(
                                                     /([a-z])([A-Z])/g,
-                                                    "$1 $2"
+                                                    '$1 $2'
                                                 )}
                                             </Link>
                                         ))}
 
                                         {/* Member Pages */}
-                                        {renderSectionLinks("members")}
+                                        {renderSectionLinks('members')}
                                     </div>
                                 )}
                             </div>
@@ -236,17 +238,17 @@ const Header = () => {
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
                                     onClick={() =>
-                                        handleDropdownClick("Elections")
+                                        handleDropdownClick('Elections')
                                     }
                                 >
                                     <span>Elections</span>
                                 </button>
 
                                 {/* Elections Pages Dropdown DELETE AFTER ELECTIONS */}
-                                {openDropdown === "Elections" && (
+                                {openDropdown === 'Elections' && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         {/* Dynamic Election Pages */}
-                                        {renderSectionLinks("elections")}
+                                        {renderSectionLinks('elections')}
                                     </div>
                                 )}
                             </div>
@@ -256,30 +258,33 @@ const Header = () => {
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
                                     onClick={() =>
-                                        handleDropdownClick("Resources")
+                                        handleDropdownClick('Resources')
                                     }
                                 >
                                     <span>Resources</span>
                                 </button>
 
                                 {/* Resources Pages Dropdown */}
-                                {openDropdown === "Resources" && (
+                                {openDropdown === 'Resources' && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        {renderSectionLinks("resources")}
+                                        {renderSectionLinks('resources')}
 
                                         <Link
                                             href="/campus/courses"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                            onClick={() => setOpenDropdown(null)}
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
                                         >
                                             Course Reviews
                                         </Link>
-                                        
 
                                         <Link
                                             href="/campus/housing"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                            onClick={() => setOpenDropdown(null)}
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
                                         >
                                             Housing Reviews
                                         </Link>
@@ -287,7 +292,9 @@ const Header = () => {
                                         <Link
                                             href="/campus/instructors"
                                             className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                            onClick={() => setOpenDropdown(null)}
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
                                         >
                                             Instructor Reviews
                                         </Link>
@@ -300,16 +307,16 @@ const Header = () => {
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
                                     onClick={() =>
-                                        handleDropdownClick("Agenda")
+                                        handleDropdownClick('Agenda')
                                     }
                                 >
                                     <span>Agenda</span>
                                 </button>
 
                                 {/* Agenda Pages Dropdown */}
-                                {openDropdown === "Agenda" && (
+                                {openDropdown === 'Agenda' && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        {renderSectionLinks("agenda")}
+                                        {renderSectionLinks('agenda')}
                                     </div>
                                 )}
                             </div>
@@ -332,22 +339,28 @@ const Header = () => {
                                             Dashboard
                                         </Link>
                                     )}
-                                   <button
-                                    onClick={() => {
-                                        // Clear the cookie in a simpler way
-                                        document.cookie = "connect.sid=; max-age=0; path=/;";
-                                        
-                                        // For production with domain
-                                        if (window.location.hostname.includes('pomonastudents.org')) {
-                                        document.cookie = "connect.sid=; max-age=0; path=/; domain=.pomonastudents.org;";
-                                        }
-                                        
-                                        // Then redirect to backend logout
-                                        window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`;
-                                    }}
-                                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                                    <button
+                                        onClick={() => {
+                                            // Clear the cookie in a simpler way
+                                            document.cookie =
+                                                'connect.sid=; max-age=0; path=/;';
+
+                                            // For production with domain
+                                            if (
+                                                window.location.hostname.includes(
+                                                    'pomonastudents.org'
+                                                )
+                                            ) {
+                                                document.cookie =
+                                                    'connect.sid=; max-age=0; path=/; domain=.pomonastudents.org;';
+                                            }
+
+                                            // Then redirect to backend logout
+                                            window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`;
+                                        }}
+                                        className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
                                     >
-                                    Logout
+                                        Logout
                                     </button>
                                 </>
                             ) : (
@@ -415,15 +428,15 @@ const Header = () => {
                                 <button
                                     className="text-lg flex items-center space-x-1"
                                     onClick={() =>
-                                        handleDropdownClick("AboutMobile")
+                                        handleDropdownClick('AboutMobile')
                                     }
                                 >
                                     <span>About</span>
                                 </button>
 
-                                {openDropdown === "AboutMobile" && (
+                                {openDropdown === 'AboutMobile' && (
                                     <div className="ml-2 mt-2">
-                                        {renderSectionLinks("about", true)}
+                                        {renderSectionLinks('about', true)}
                                     </div>
                                 )}
                             </div>
@@ -433,13 +446,13 @@ const Header = () => {
                                 <button
                                     className="text-lg flex items-center space-x-1"
                                     onClick={() =>
-                                        handleDropdownClick("MembersMobile")
+                                        handleDropdownClick('MembersMobile')
                                     }
                                 >
                                     <span>Officers</span>
                                 </button>
 
-                                {openDropdown === "MembersMobile" && (
+                                {openDropdown === 'MembersMobile' && (
                                     <div className="ml-2 mt-2">
                                         {/* Senate Groups */}
                                         {groups.map(
@@ -456,14 +469,14 @@ const Header = () => {
                                                 >
                                                     {group.replace(
                                                         /([a-z])([A-Z])/g,
-                                                        "$1 $2"
+                                                        '$1 $2'
                                                     )}
                                                 </Link>
                                             )
                                         )}
 
                                         {/* Member Pages */}
-                                        {renderSectionLinks("members", true)}
+                                        {renderSectionLinks('members', true)}
                                     </div>
                                 )}
                             </div>
@@ -473,16 +486,16 @@ const Header = () => {
                                 <button
                                     className="text-lg flex items-center space-x-1"
                                     onClick={() =>
-                                        handleDropdownClick("ElectionsMobile")
+                                        handleDropdownClick('ElectionsMobile')
                                     }
                                 >
                                     <span>Elections</span>
                                 </button>
 
-                                {openDropdown === "ElectionsMobile" && (
+                                {openDropdown === 'ElectionsMobile' && (
                                     <div className="ml-2 mt-2">
                                         {/* Elections links DELETE AFTER ELECTIONS */}
-                                        {renderSectionLinks("elections", true)}
+                                        {renderSectionLinks('elections', true)}
                                     </div>
                                 )}
                             </div>
@@ -492,15 +505,15 @@ const Header = () => {
                                 <button
                                     className="text-lg flex items-center space-x-1"
                                     onClick={() =>
-                                        handleDropdownClick("ResourcesMobile")
+                                        handleDropdownClick('ResourcesMobile')
                                     }
                                 >
                                     <span>Resources</span>
                                 </button>
 
-                                {openDropdown === "ResourcesMobile" && (
+                                {openDropdown === 'ResourcesMobile' && (
                                     <div className="ml-2 mt-2">
-                                        {renderSectionLinks("resources", true)}
+                                        {renderSectionLinks('resources', true)}
 
                                         <Link
                                             href="/campus/courses"
@@ -538,15 +551,15 @@ const Header = () => {
                                 <button
                                     className="text-lg flex items-center space-x-1"
                                     onClick={() =>
-                                        handleDropdownClick("AgendaMobile")
+                                        handleDropdownClick('AgendaMobile')
                                     }
                                 >
                                     <span>Agenda</span>
                                 </button>
 
-                                {openDropdown === "AgendaMobile" && (
+                                {openDropdown === 'AgendaMobile' && (
                                     <div className="ml-2 mt-2">
-                                        {renderSectionLinks("agenda", true)}
+                                        {renderSectionLinks('agenda', true)}
                                     </div>
                                 )}
                             </div>
@@ -570,23 +583,29 @@ const Header = () => {
                             )}
 
                             {user ? (
-                               <button
-                               onClick={() => {
-                                 // Clear the cookie in a simpler way
-                                 document.cookie = "connect.sid=; max-age=0; path=/;";
-                                 
-                                 // For production with domain
-                                 if (window.location.hostname.includes('pomonastudents.org')) {
-                                   document.cookie = "connect.sid=; max-age=0; path=/; domain=.pomonastudents.org;";
-                                 }
-                                 
-                                 // Then redirect to backend logout
-                                 window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`;
-                               }}
-                               className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-                             >
-                               Logout
-                             </button>
+                                <button
+                                    onClick={() => {
+                                        // Clear the cookie in a simpler way
+                                        document.cookie =
+                                            'connect.sid=; max-age=0; path=/;';
+
+                                        // For production with domain
+                                        if (
+                                            window.location.hostname.includes(
+                                                'pomonastudents.org'
+                                            )
+                                        ) {
+                                            document.cookie =
+                                                'connect.sid=; max-age=0; path=/; domain=.pomonastudents.org;';
+                                        }
+
+                                        // Then redirect to backend logout
+                                        window.location.href = `${process.env.BACKEND_LINK}/api/auth/logout/saml`;
+                                    }}
+                                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                                >
+                                    Logout
+                                </button>
                             ) : (
                                 <button
                                     onClick={() => {

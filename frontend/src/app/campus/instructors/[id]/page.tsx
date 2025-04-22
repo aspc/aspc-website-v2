@@ -1,18 +1,18 @@
-"use client";
-import { useEffect, useState, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Loading from "@/components/Loading";
-import { useAuth } from "@/hooks/useAuth";
-import LoginRequired from "@/components/LoginRequired";
-import { StarRating } from "@/components/housing/Rooms";
-import { ReviewForm } from "@/components/courses/Review";
+'use client';
+import { useEffect, useState, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Loading from '@/components/Loading';
+import { useAuth } from '@/hooks/useAuth';
+import LoginRequired from '@/components/LoginRequired';
+import { StarRating } from '@/components/housing/Rooms';
+import { ReviewForm } from '@/components/courses/Review';
 import {
     CourseReview,
     //Course,
     Instructor,
     InstructorWithReviews,
-} from "@/types";
-import Link from "next/link";
+} from '@/types';
+import Link from 'next/link';
 
 interface AverageRatings {
     overallAverage: number;
@@ -23,11 +23,11 @@ interface AverageRatings {
 
 const InstructorPage = (): JSX.Element => {
     const params = useParams();
-    const instructorId = typeof params.id === "string" ? params.id : "";
+    const instructorId = typeof params.id === 'string' ? params.id : '';
     const router = useRouter();
     const [loading, setLoading] = useState<boolean>(true);
-    const [instructorName, setInstructorName] = useState<string>("");
-    const [instructorSchool, setInstructorSchool] = useState<string>("");
+    const [instructorName, setInstructorName] = useState<string>('');
+    const [instructorSchool, setInstructorSchool] = useState<string>('');
     const [instructorCourses, setInstructorCourses] = useState<
         Array<{ courseId: number; courseCode: string; courseName: string }>
     >([]);
@@ -51,7 +51,7 @@ const InstructorPage = (): JSX.Element => {
         } else if (selectedReview) {
             if (
                 window.confirm(
-                    "Are you sure you want to cancel editing this review? All new changes will be lost."
+                    'Are you sure you want to cancel editing this review? All new changes will be lost.'
                 )
             ) {
                 setSelectedReview(null);
@@ -65,17 +65,17 @@ const InstructorPage = (): JSX.Element => {
     // Function to convert school code to full name
     const getSchoolFullName = (code: string): string => {
         switch (code) {
-            case "PO":
-                return "Pomona College";
-            case "CM":
-                return "Claremont Mckenna College";
-            case "SC":
-                return "Scripps College";
-            case "HM":
-                return "Harvey Mudd College";
-            case "PZ":
-                return "Pitzer College";
-            case "N/A":
+            case 'PO':
+                return 'Pomona College';
+            case 'CM':
+                return 'Claremont Mckenna College';
+            case 'SC':
+                return 'Scripps College';
+            case 'HM':
+                return 'Harvey Mudd College';
+            case 'PZ':
+                return 'Pitzer College';
+            case 'N/A':
             default:
                 return code;
         }
@@ -152,7 +152,7 @@ const InstructorPage = (): JSX.Element => {
                 const instructorData: Instructor =
                     await instructorResponse.json();
                 setInstructorName(instructorData.name);
-                setInstructorSchool(instructorData.school || "N/A");
+                setInstructorSchool(instructorData.school || 'N/A');
                 setInstructorCourses(instructorData.courses || []);
 
                 // Fetch instructor reviews
@@ -177,7 +177,7 @@ const InstructorPage = (): JSX.Element => {
 
                 setInstructorReviews(instructorWithReviews);
             } catch (error) {
-                console.error("Server error", error);
+                console.error('Server error', error);
             } finally {
                 setLoading(false);
             }
@@ -194,8 +194,8 @@ const InstructorPage = (): JSX.Element => {
         setTimeout(() => {
             if (targetRef.current) {
                 targetRef.current.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
+                    behavior: 'smooth',
+                    block: 'start',
                 });
             }
         }, 0);
@@ -211,39 +211,39 @@ const InstructorPage = (): JSX.Element => {
 
     const formatDate = (date: Date): string => {
         const d = new Date(date);
-        const month = d.toLocaleString("default", { month: "long" });
+        const month = d.toLocaleString('default', { month: 'long' });
         const year = d.getFullYear();
         return `${month} ${year}`;
     };
 
     // Format average work per week to a readable string
     const formatWorkPerWeek = (hours: number): string => {
-        if (hours === 0) return "N/A";
-        if (hours < 1) return "Less than 1 hour";
-        if (hours < 2) return "1 hour";
+        if (hours === 0) return 'N/A';
+        if (hours < 1) return 'Less than 1 hour';
+        if (hours < 2) return '1 hour';
         return `${Math.round(hours)} hours`;
     };
 
     const handleDelete = async (id: number): Promise<void> => {
-        if (window.confirm("Are you sure you want to delete this review?")) {
+        if (window.confirm('Are you sure you want to delete this review?')) {
             try {
                 setLoading(true);
                 const response = await fetch(
                     `${process.env.BACKEND_LINK}/api/courses/reviews/${id}`, // Reusing the course review endpoint
                     {
-                        method: "DELETE",
+                        method: 'DELETE',
                     }
                 );
 
                 if (!response.ok) {
-                    throw new Error("Failed to delete review");
+                    throw new Error('Failed to delete review');
                 }
 
-                alert("Review deleted successfully!");
+                alert('Review deleted successfully!');
                 setTimeout(() => window.location.reload(), 1000);
             } catch (error) {
-                console.error("Error deleting review", error);
-                alert("Failed to delete review");
+                console.error('Error deleting review', error);
+                alert('Failed to delete review');
             } finally {
                 setLoading(false);
             }
@@ -306,7 +306,7 @@ const InstructorPage = (): JSX.Element => {
                                     <p className="text-gray-700 mb-2">
                                         <span className="font-medium">
                                             School:
-                                        </span>{" "}
+                                        </span>{' '}
                                         {getSchoolFullName(instructorSchool)}
                                     </p>
                                     <div className="text-gray-700">
@@ -381,13 +381,13 @@ const InstructorPage = (): JSX.Element => {
                                                 </div>
                                             </div>
                                             <p className="text-gray-500 mt-3">
-                                                Based on{" "}
-                                                {averageRatings.reviewCount}{" "}
+                                                Based on{' '}
+                                                {averageRatings.reviewCount}{' '}
                                                 review
                                                 {averageRatings.reviewCount !==
                                                 1
-                                                    ? "s"
-                                                    : ""}
+                                                    ? 's'
+                                                    : ''}
                                             </p>
                                         </>
                                     )}
@@ -434,7 +434,7 @@ const InstructorPage = (): JSX.Element => {
                                                 </span>
                                                 <span className="ml-2">
                                                     {review.overall_rating ||
-                                                        ""}
+                                                        ''}
                                                 </span>
                                             </div>
 
@@ -507,7 +507,7 @@ const InstructorPage = (): JSX.Element => {
                                                         ? `${formatWorkPerWeek(
                                                               review.work_per_week
                                                           )}`
-                                                        : "N/A"}
+                                                        : 'N/A'}
                                                 </span>
                                             </div>
                                         </div>
@@ -535,14 +535,14 @@ const InstructorPage = (): JSX.Element => {
                                         {/* Date written, last updated */}
                                         <div className="flex flex-wrap gap-4 mt-4">
                                             <p className="text-gray-500">
-                                                Review written{" "}
+                                                Review written{' '}
                                                 {review.createdAt &&
                                                     formatDate(
                                                         review.createdAt
                                                     )}
                                             </p>
                                             <p className="text-gray-500">
-                                                Last updated{" "}
+                                                Last updated{' '}
                                                 {review.updatedAt &&
                                                     formatDate(
                                                         review.updatedAt
@@ -579,7 +579,7 @@ const InstructorPage = (): JSX.Element => {
                     onClick={handleAddNewReviewClick}
                     ref={targetRef}
                 >
-                    {selectedReview ? "Cancel review edit" : "Add new review"}
+                    {selectedReview ? 'Cancel review edit' : 'Add new review'}
                 </button>
 
                 {(isCreatingNew || selectedReview) && (

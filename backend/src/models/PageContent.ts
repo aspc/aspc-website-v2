@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema } from 'mongoose';
 
 interface IPageContent extends Document {
     id: string;
@@ -24,7 +24,7 @@ const PageContentSchema = new Schema<IPageContent>({
         type: String,
         required: true,
         trim: true,
-        default: "about",
+        default: 'about',
     },
     content: {
         type: String,
@@ -37,4 +37,4 @@ const PageContentSchema = new Schema<IPageContent>({
     },
 });
 
-export default mongoose.model<IPageContent>("PageContent", PageContentSchema);
+export default mongoose.model<IPageContent>('PageContent', PageContentSchema);

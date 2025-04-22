@@ -1,8 +1,8 @@
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { MongoClient } from "mongodb";
-import Link from "next/link";
-import Image from "next/image";
+import { MongoClient } from 'mongodb';
+import Link from 'next/link';
+import Image from 'next/image';
 
 // Define types for MongoDB docs and UI data structure
 type BuildingDoc = {
@@ -28,11 +28,11 @@ type CampusGroup = {
 
 const HousingPage = async () => {
     const client = await MongoClient.connect(
-        process.env.MONGODB_URI! || "mongodb://localhost:27017/school-platform"
+        process.env.MONGODB_URI! || 'mongodb://localhost:27017/school-platform'
     );
-    const db = client.db("school-platform");
+    const db = client.db('school-platform');
     const buildings = await db
-        .collection<BuildingDoc>("housingbuildings")
+        .collection<BuildingDoc>('housingbuildings')
         .find()
         .toArray();
     client.close();
@@ -42,15 +42,15 @@ const HousingPage = async () => {
         const campusName =
             building.campus.charAt(0).toUpperCase() +
             building.campus.slice(1) +
-            " Campus";
+            ' Campus';
 
         const buildingCard: BuildingCard = {
             id: building.id,
             name: building.name,
             image: `/buildings/${building.name
                 .toLowerCase()
-                .replace(/\s+/g, "-")
-                .replace(/-+/g, "-")}.jpg`,
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')}.jpg`,
             description: building.description,
             floors: building.floors,
         };
