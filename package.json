@@ -6,7 +6,7 @@
         "prettier": "^3.5.3"
     },
     "scripts": {
-        "format": "prettier --check \"**/*.{ts,tsx}\"",
-        "format:write": "prettier --write \"**/*.{ts,tsx}\""
+        "format": "prettier --check \"frontend/**/*.{ts,tsx}\" \"backend/**/*.ts\"",
+        "format:write": "prettier --write \"frontend/**/*.{ts,tsx}\" \"backend/**/*.ts\""
     }
 }
