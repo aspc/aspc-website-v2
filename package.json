@@ -1,12 +1,12 @@
 {
-  "dependencies": {
-    "@vercel/speed-insights": "^1.2.0"
-  },
-  "devDependencies": {
-    "prettier": "^3.5.3"
-  },
-  "scripts": {
-    "format": "prettier --check .",
-    "format:write": "prettier --write ."
-  }
+    "dependencies": {
+        "@vercel/speed-insights": "^1.2.0"
+    },
+    "devDependencies": {
+        "prettier": "^3.5.3"
+    },
+    "scripts": {
+        "format": "prettier --check \"**/*.{ts,tsx}\"",
+        "format:write": "prettier --write \"**/*.{ts,tsx}\""
+    }
 }
