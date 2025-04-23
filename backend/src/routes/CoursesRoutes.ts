@@ -90,8 +90,6 @@ router.get("/:id", isAuthenticated, async (req: Request, res: Response) => {
  * @access  Private (Admin)
  */
 router.post("/", isAdmin, async (req: Request, res: Response) => {
-    // TODO: Check if user is admin
-    // ? Do we need to create slugs for all courses here ? //
     try {
         const {
             id,

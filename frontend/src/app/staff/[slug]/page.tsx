@@ -28,7 +28,10 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
         const res = await fetch(
           `${process.env.BACKEND_LINK}/api/members/group/${
             groupSlugMap[resolvedParams.slug]
-          }`
+          }`,
+          {
+            credentials: "include",
+          }
         );
 
         if (!res.ok) {

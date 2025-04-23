@@ -54,6 +54,11 @@ export const isCourseReviewOwner = async (
     res: Response,
     next: NextFunction
 ) => {
+    // First check if user is authenticated
+    if (!(req.session as any).user) {
+        res.status(401).json({ message: "Authentication required" });
+        return;
+    }
     // First check if user is authenticated and get the user ID from session
     const sessionUserEmail = (req.session as any).user.email;
     if (!sessionUserEmail) {
@@ -81,6 +86,11 @@ export const isCourseReviewOwner = async (
 };
 
 export const isHousingReviewOwner = async (req: Request, res: Response, next: NextFunction) => {
+    // First check if user is authenticated
+    if (!(req.session as any).user) {
+        res.status(401).json({ message: "Authentication required" });
+        return;
+    }
 
     // First check if user is authenticated and get the user ID from session
     const sessionUserEmail = (req.session as any).user.email;
