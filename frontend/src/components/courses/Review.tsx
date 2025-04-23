@@ -104,7 +104,10 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                 if (isFromInstructor && instructorId !== undefined) {
                     // Fetch instructor's courses
                     const response = await fetch(
-                        `${process.env.BACKEND_LINK}/api/instructors/${instructorId}/courses`
+                        `${process.env.BACKEND_LINK}/api/instructors/${instructorId}/courses`,
+                        {
+                            credentials: "include", 
+                          }
                     );
 
                     if (!response.ok) {
@@ -116,7 +119,10 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                 } else if (courseId !== undefined) {
                     // Fetch course instructors
                     const response = await fetch(
-                        `${process.env.BACKEND_LINK}/api/courses/${courseId}/instructors`
+                        `${process.env.BACKEND_LINK}/api/courses/${courseId}/instructors`,
+                        {
+                            credentials: "include", 
+                          }
                     );
 
                     if (!response.ok) {
@@ -220,6 +226,7 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(reviewPayload),
+                credentials: "include",
             });
 
             if (!response.ok) {
