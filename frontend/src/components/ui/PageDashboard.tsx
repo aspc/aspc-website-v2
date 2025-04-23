@@ -24,7 +24,7 @@ const PageDashboard = () => {
         "about",
         "members",
         "resources",
-        "pressroom",
+        "agenda",
         "elections", // DELETE AFTER ELECTIONS
     ];
 

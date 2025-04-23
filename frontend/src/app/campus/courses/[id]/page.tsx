@@ -6,46 +6,49 @@ import { CourseWithReviews, Course, CourseReview, Instructor } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 import LoginRequired from "@/components/LoginRequired";
 import { StarRating } from "@/components/housing/Rooms";
-import { CourseReviewForm } from "@/components/courses/CourseReview";
+import { ReviewForm } from "@/components/courses/Review";
 
 const CoursePage = () => {
-  const params = useParams();
-  const { id } = params;
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [courseName, setCourseName] = useState<string>("");
-  const [courseReviews, setCourseReviews] = useState<CourseWithReviews | null>(
-    null
-  );
-  const [instructors, setInstructors] = useState<Instructor[]>([]);
-  const [isCreatingNew, setIsCreatingNew] = useState(false);
-  const [selectedReview, setSelectedReview] = useState<CourseReview | null>(
-    null
-  );
-  const { user, loading: authLoading } = useAuth();
-  const [averageRatings, setAverageRatings] = useState({
-    overallAverage: 0,
-    inclusivityAverage: 0,
-    challengeAverage: 0,
-    workPerWeekAverage: 0,
-    reviewCount: 0,
-  });
+    const params = useParams();
+    const { id } = params;
+    const router = useRouter();
+    const [loading, setLoading] = useState(true);
+    const [courseName, setCourseName] = useState<string>("");
+    const [courseReviews, setCourseReviews] =
+        useState<CourseWithReviews | null>(null);
+    const [instructors, setInstructors] = useState<Instructor[]>([]);
+    const [instructorMap, setInstructorMap] = useState<{
+        [key: number]: string;
+    }>({});
+    const [isCreatingNew, setIsCreatingNew] = useState(false);
+    const [selectedReview, setSelectedReview] = useState<CourseReview | null>(
+        null
+    );
+    const { user, loading: authLoading } = useAuth();
+    const [averageRatings, setAverageRatings] = useState({
+        overallAverage: 0,
+        inclusivityAverage: 0,
+        challengeAverage: 0,
+        workPerWeekAverage: 0,
+        reviewCount: 0,
+    });
 
-  const handleAddNewReviewClick = () => {
-    if (isCreatingNew) {
-      setIsCreatingNew(false);
-    } else if (selectedReview) {
-      if (
-        window.confirm(
-          "Are you sure you want to cancel editing this review? All new changes will be lost."
-        )
-      ) {
-        setSelectedReview(null);
-      }
-    } else {
-      setIsCreatingNew(true);
-    }
-  };
+    const handleAddNewReviewClick = () => {
+        if (isCreatingNew) {
+            setIsCreatingNew(false);
+        } else if (selectedReview) {
+            if (
+                window.confirm(
+                    "Are you sure you want to cancel editing this review? All new changes will be lost."
+                )
+            ) {
+                setSelectedReview(null);
+            }
+        } else {
+            setIsCreatingNew(true);
+            scrollToReviewForm();
+        }
+    };
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -137,11 +140,14 @@ const CoursePage = () => {
           );
         }
 
-        const instructorData: Instructor[] = await instructorResponse.json();
-        setInstructors(instructorData);
+                const instructorData: Instructor[] =
+                    await instructorResponse.json();
 
-        // TODO: Delete Staff from instructor list
-        // ??Display just a few instructors??
+                // Filter out any instructor named "Staff"
+                const filteredInstructors = instructorData.filter(
+                    (instructor) => instructor.name !== "Staff"
+                );
+                setInstructors(filteredInstructors);
 
         // Fetch course reviews
         const reviews = await fetch(
@@ -156,7 +162,48 @@ const CoursePage = () => {
           throw new Error(`Failed to fetch course reviews: ${reviews.status}`);
         }
 
-        const reviewsData: CourseReview[] = await reviews.json();
+                const reviewsData: CourseReview[] = await reviews.json();
+
+                // Create a Set of unique instructor IDs from the reviews
+                const instructorIds = new Set<number>();
+                reviewsData.forEach((review) => {
+                    if (review.instructor_id) {
+                        instructorIds.add(review.instructor_id);
+                    }
+                });
+
+                // Fetch instructor data for each unique instructor ID
+                const instructorMapping: { [key: number]: string } = {};
+
+                // Fetch all instructors in parallel
+                await Promise.all(
+                    Array.from(instructorIds).map(async (instructorId) => {
+                        try {
+                            const instructorResponse = await fetch(
+                                `${process.env.BACKEND_LINK}/api/instructors/${instructorId}`
+                            );
+
+                            if (instructorResponse.ok) {
+                                const instructorData: Instructor =
+                                    await instructorResponse.json();
+                                instructorMapping[instructorId] =
+                                    instructorData.name;
+                            } else {
+                                instructorMapping[instructorId] =
+                                    "Unknown Instructor";
+                            }
+                        } catch (error) {
+                            console.error(
+                                `Error fetching instructor ${instructorId}:`,
+                                error
+                            );
+                            instructorMapping[instructorId] =
+                                "Unknown Instructor";
+                        }
+                    })
+                );
+
+                setInstructorMap(instructorMapping);
 
         setAverageRatings(calculateAverage(reviewsData));
 
@@ -197,14 +244,12 @@ const CoursePage = () => {
     return <LoginRequired />;
   }
 
-  const formatDate = (date: Date) => {
-    const d = new Date(date);
-    const month = d.toLocaleString("default", { month: "long" });
-    const year = d.getFullYear();
-    return `${month} ${year}`;
-  };
-
-  // Calculate the average for the course
+    const formatDate = (date: Date) => {
+        const d = new Date(date);
+        const month = d.toLocaleString("default", { month: "long" });
+        const year = d.getFullYear();
+        return `${month} ${year}`;
+    };
 
   // Format average work per week to a readable string
   const formatWorkPerWeek = (hours: number) => {
@@ -254,27 +299,36 @@ const CoursePage = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">{courseName}</h1>
 
-        <div className="py-4 flex-grow">
-          {courseReviews ? (
-            <>
-              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <h4 className="text-lg font-medium mb-3">Course Information</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p className="text-gray-600 font-medium">Course Code:</p>
-                    <p>{courseReviews.course.code}</p>
-                  </div>
-                  {/* Instructors section */}
-                  {instructors && instructors.length > 0 && (
-                    <div>
-                      <p className="text-gray-600 font-medium">Instructors:</p>
-                      <p>
-                        {instructors
-                          .map((instructor) => instructor.name)
-                          .join(", ")}
-                      </p>
-                    </div>
-                  )}
+                <div className="py-4 flex-grow">
+                    {courseReviews ? (
+                        <>
+                            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                                <h4 className="text-lg font-medium mb-3">
+                                    Course Information
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <p className="text-gray-600 font-medium">
+                                            Course Code:
+                                        </p>
+                                        <p>{courseReviews.course.code}</p>
+                                    </div>
+                                    {/* Instructors section */}
+                                    {instructors && instructors.length > 0 && (
+                                        <div className="col-span-1 md:col-span-2">
+                                            <p className="text-gray-600 font-medium">
+                                                Instructors:
+                                            </p>
+                                            <p>
+                                                {instructors
+                                                    .map(
+                                                        (instructor) =>
+                                                            instructor.name
+                                                    )
+                                                    .join("; ")}
+                                            </p>
+                                        </div>
+                                    )}
 
                   {courseReviews.course.department_names &&
                     courseReviews.course.department_names.length > 0 && (
@@ -366,61 +420,95 @@ const CoursePage = () => {
                   </div>
                 )}
 
-                {averageRatings && averageRatings.reviewCount > 0 && (
-                  <>
-                    <h4 className="text-lg font-medium mb-3 mt-6">
-                      Review Summary
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-gray-600">Overall Rating</p>
-                        <div className="flex items-center">
-                          <StarRating
-                            rating={Math.round(averageRatings.overallAverage)}
-                          />
-                          <span className="ml-2">
-                            {averageRatings.overallAverage.toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">Inclusivity</p>
-                        <div className="flex items-center">
-                          <StarRating
-                            rating={Math.round(
-                              averageRatings.inclusivityAverage
-                            )}
-                          />
-                          <span className="ml-2">
-                            {averageRatings.inclusivityAverage.toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">Challenge Level</p>
-                        <div className="flex items-center">
-                          <StarRating
-                            rating={Math.round(averageRatings.challengeAverage)}
-                          />
-                          <span className="ml-2">
-                            {averageRatings.challengeAverage.toFixed(1)}
-                          </span>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">Average Work Per Week</p>
-                        <p className="font-medium">
-                          {formatWorkPerWeek(averageRatings.workPerWeekAverage)}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-gray-500 mt-3">
-                      Based on {averageRatings.reviewCount} review
-                      {averageRatings.reviewCount !== 1 ? "s" : ""}
-                    </p>
-                  </>
-                )}
-              </div>
+                                {averageRatings &&
+                                    averageRatings.reviewCount > 0 && (
+                                        <>
+                                            <h4 className="text-lg font-medium mb-3 mt-6">
+                                                Review Summary
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <p className="text-gray-600">
+                                                        Overall Rating
+                                                    </p>
+                                                    <div className="flex items-center">
+                                                        <StarRating
+                                                            rating={Math.round(
+                                                                averageRatings.overallAverage
+                                                            )}
+                                                        />
+                                                        <span className="ml-2">
+                                                            {averageRatings.overallAverage.toFixed(
+                                                                1
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-gray-600">
+                                                        Inclusivity
+                                                    </p>
+                                                    <div className="flex items-center">
+                                                        <StarRating
+                                                            rating={Math.round(
+                                                                averageRatings.inclusivityAverage
+                                                            )}
+                                                        />
+                                                        <span className="ml-2">
+                                                            {averageRatings.inclusivityAverage.toFixed(
+                                                                1
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-gray-600">
+                                                        Challenge Level
+                                                    </p>
+                                                    <div className="flex items-center">
+                                                        <StarRating
+                                                            rating={Math.round(
+                                                                averageRatings.challengeAverage
+                                                            )}
+                                                        />
+                                                        <span className="ml-2">
+                                                            {averageRatings.challengeAverage.toFixed(
+                                                                1
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-gray-600">
+                                                        Average Work Per Week
+                                                    </p>
+                                                    <p className="font-medium">
+                                                        {formatWorkPerWeek(
+                                                            averageRatings.workPerWeekAverage
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <p className="text-gray-500 mt-3">
+                                                Based on{" "}
+                                                {averageRatings.reviewCount}{" "}
+                                                review
+                                                {averageRatings.reviewCount !==
+                                                1
+                                                    ? "s"
+                                                    : ""}
+                                            </p>
+                                        </>
+                                    )}
+                            </div>
+
+                            <button
+                                className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
+                                onClick={handleAddNewReviewClick}
+                                ref={targetRef}
+                            >
+                                Add New Review
+                            </button>
 
               <div className="py-4">
                 <hr className="border-t border-gray-300" />
@@ -478,44 +566,68 @@ const CoursePage = () => {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
-                      {review.challenge_rating !== undefined && (
-                        <div className="text-sm flex items-center mb-2">
-                          <span className="text-gray-600 mr-2">
-                            Difficulty:
-                          </span>
-                          <span className="inline">
-                            <StarRating
-                              rating={Math.round(review.challenge_rating || 0)}
-                            />
-                          </span>
-                        </div>
-                      )}
-                      {review.inclusivity_rating && (
-                        <div className="text-sm flex items-center mb-1">
-                          <span className="text-gray-600 mr-2">
-                            Inclusivity:
-                          </span>
-                          <span className="inline">
-                            <StarRating
-                              rating={Math.round(
-                                review.inclusivity_rating || 0
-                              )}
-                            />
-                          </span>
-                        </div>
-                      )}
-                      <div className="text-sm flex items-center mb-2">
-                        <span className="text-gray-600 mr-2">
-                          Work per week:
-                        </span>
-                        <span className="inline">
-                          {review.work_per_week
-                            ? `${formatWorkPerWeek(review.work_per_week)}`
-                            : "N/A"}
-                        </span>
-                      </div>
-                    </div>
+                                        {/* Display instructor name */}
+                                        {review.instructor_id &&
+                                            instructorMap[
+                                                review.instructor_id
+                                            ] && (
+                                                <div className="text-sm text-gray-600 mb-3">
+                                                    <span className="font-medium">
+                                                        Instructor:{" "}
+                                                    </span>
+                                                    {
+                                                        instructorMap[
+                                                            review.instructor_id
+                                                        ]
+                                                    }
+                                                </div>
+                                            )}
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
+                                            {review.challenge_rating !==
+                                                undefined && (
+                                                <div className="text-sm flex items-center mb-2">
+                                                    <span className="text-gray-600 mr-2">
+                                                        Difficulty:
+                                                    </span>
+                                                    <span className="inline">
+                                                        <StarRating
+                                                            rating={Math.round(
+                                                                review.challenge_rating ||
+                                                                    0
+                                                            )}
+                                                        />
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {review.inclusivity_rating && (
+                                                <div className="text-sm flex items-center mb-1">
+                                                    <span className="text-gray-600 mr-2">
+                                                        Inclusivity:
+                                                    </span>
+                                                    <span className="inline">
+                                                        <StarRating
+                                                            rating={Math.round(
+                                                                review.inclusivity_rating ||
+                                                                    0
+                                                            )}
+                                                        />
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <div className="text-sm flex items-center mb-2">
+                                                <span className="text-gray-600 mr-2">
+                                                    Work per week:
+                                                </span>
+                                                <span className="inline">
+                                                    {review.work_per_week
+                                                        ? `${formatWorkPerWeek(
+                                                              review.work_per_week
+                                                          )}`
+                                                        : "N/A"}
+                                                </span>
+                                            </div>
+                                        </div>
 
                     {review.comments && (
                       <div className="mt-2 mb-2">
@@ -565,14 +677,18 @@ const CoursePage = () => {
           {selectedReview ? "Cancel review edit" : "Add new review"}
         </button>
 
-        {(isCreatingNew || selectedReview) && (
-          <div>
-            <CourseReviewForm review={selectedReview} courseId={Number(id)} />
-          </div>
-        )}
-      </div>
-    </div>
-  );
+                {(isCreatingNew || selectedReview) && (
+                    <div>
+                        <ReviewForm
+                            review={selectedReview}
+                            courseId={Number(id)}
+                            instructorId={undefined}
+                        />
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 };
 
 export default CoursePage;
