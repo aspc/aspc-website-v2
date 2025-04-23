@@ -1,19 +1,19 @@
-"use client";
-import { useEffect, useState, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Loading from "@/components/Loading";
-import { CourseWithReviews, Course, CourseReview, Instructor } from "@/types";
-import { useAuth } from "@/hooks/useAuth";
-import LoginRequired from "@/components/LoginRequired";
-import { StarRating } from "@/components/housing/Rooms";
-import { ReviewForm } from "@/components/courses/Review";
+'use client';
+import { useEffect, useState, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Loading from '@/components/Loading';
+import { CourseWithReviews, Course, CourseReview, Instructor } from '@/types';
+import { useAuth } from '@/hooks/useAuth';
+import LoginRequired from '@/components/LoginRequired';
+import { StarRating } from '@/components/housing/Rooms';
+import { ReviewForm } from '@/components/courses/Review';
 
 const CoursePage = () => {
     const params = useParams();
     const { id } = params;
     const router = useRouter();
     const [loading, setLoading] = useState(true);
-    const [courseName, setCourseName] = useState<string>("");
+    const [courseName, setCourseName] = useState<string>('');
     const [courseReviews, setCourseReviews] =
         useState<CourseWithReviews | null>(null);
     const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -39,7 +39,7 @@ const CoursePage = () => {
         } else if (selectedReview) {
             if (
                 window.confirm(
-                    "Are you sure you want to cancel editing this review? All new changes will be lost."
+                    'Are you sure you want to cancel editing this review? All new changes will be lost.'
                 )
             ) {
                 setSelectedReview(null);
@@ -146,7 +146,7 @@ const CoursePage = () => {
 
                 // Filter out any instructor named "Staff"
                 const filteredInstructors = instructorData.filter(
-                    (instructor) => instructor.name !== "Staff"
+                    (instructor) => instructor.name !== 'Staff'
                 );
                 setInstructors(filteredInstructors);
 
@@ -189,7 +189,7 @@ const CoursePage = () => {
                                     instructorData.name;
                             } else {
                                 instructorMapping[instructorId] =
-                                    "Unknown Instructor";
+                                    'Unknown Instructor';
                             }
                         } catch (error) {
                             console.error(
@@ -197,7 +197,7 @@ const CoursePage = () => {
                                 error
                             );
                             instructorMapping[instructorId] =
-                                "Unknown Instructor";
+                                'Unknown Instructor';
                         }
                     })
                 );
@@ -213,7 +213,7 @@ const CoursePage = () => {
 
                 setCourseReviews(coursesWithReviews);
             } catch (error) {
-                console.error("Server error", error);
+                console.error('Server error', error);
             } finally {
                 setLoading(false);
             }
@@ -228,8 +228,8 @@ const CoursePage = () => {
         setTimeout(() => {
             if (targetRef.current) {
                 targetRef.current.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
+                    behavior: 'smooth',
+                    block: 'start',
                 });
             }
         }, 0);
@@ -245,39 +245,39 @@ const CoursePage = () => {
 
     const formatDate = (date: Date) => {
         const d = new Date(date);
-        const month = d.toLocaleString("default", { month: "long" });
+        const month = d.toLocaleString('default', { month: 'long' });
         const year = d.getFullYear();
         return `${month} ${year}`;
     };
 
     // Format average work per week to a readable string
     const formatWorkPerWeek = (hours: number) => {
-        if (hours === 0) return "N/A";
-        if (hours < 1) return "Less than 1 hour";
-        if (hours < 2) return "1 hour";
+        if (hours === 0) return 'N/A';
+        if (hours < 1) return 'Less than 1 hour';
+        if (hours < 2) return '1 hour';
         return `${Math.round(hours)} hours`;
     };
 
     const handleDelete = async (id: number) => {
-        if (window.confirm("Are you sure you want to delete this review?")) {
+        if (window.confirm('Are you sure you want to delete this review?')) {
             try {
                 setLoading(true);
                 const response = await fetch(
                     `${process.env.BACKEND_LINK}/api/courses/reviews/${id}`,
                     {
-                        method: "DELETE",
+                        method: 'DELETE',
                     }
                 );
 
                 if (!response.ok) {
-                    throw new Error("Failed to delete review");
+                    throw new Error('Failed to delete review');
                 }
 
-                alert("Review deleted successfully!");
+                alert('Review deleted successfully!');
                 setTimeout(() => window.location.reload(), 1000);
             } catch (error) {
-                console.error("Error deleting review", error);
-                alert("Failed to delete review");
+                console.error('Error deleting review', error);
+                alert('Failed to delete review');
             } finally {
                 setLoading(false);
             }
@@ -325,7 +325,7 @@ const CoursePage = () => {
                                                         (instructor) =>
                                                             instructor.name
                                                     )
-                                                    .join("; ")}
+                                                    .join('; ')}
                                             </p>
                                         </div>
                                     )}
@@ -341,12 +341,12 @@ const CoursePage = () => {
                                                     {courseReviews.course.department_names
                                                         .map((dept) =>
                                                             dept.includes(
-                                                                "Philosophy,Politics,Econ"
+                                                                'Philosophy,Politics,Econ'
                                                             )
-                                                                ? "PPE"
+                                                                ? 'PPE'
                                                                 : dept
                                                         )
-                                                        .join(", ")}
+                                                        .join(', ')}
                                                 </p>
                                             </div>
                                         )}
@@ -360,7 +360,7 @@ const CoursePage = () => {
                                                 </p>
                                                 <p>
                                                     {courseReviews.course.requirement_names.join(
-                                                        ", "
+                                                        ', '
                                                     )}
                                                 </p>
                                             </div>
@@ -378,7 +378,7 @@ const CoursePage = () => {
                                                     .filter((term) => {
                                                         // Extract the year from term (format: "2002;FA")
                                                         const year = parseInt(
-                                                            term.split(";")[0],
+                                                            term.split(';')[0],
                                                             10
                                                         );
                                                         // Only include terms after 2020
@@ -386,26 +386,26 @@ const CoursePage = () => {
                                                     })
                                                     .map((term) => {
                                                         const [year, semester] =
-                                                            term.split(";");
+                                                            term.split(';');
 
                                                         // Convert semester code to full name
-                                                        let semesterName = "";
+                                                        let semesterName = '';
                                                         switch (semester) {
-                                                            case "FA":
+                                                            case 'FA':
                                                                 semesterName =
-                                                                    "Fall";
+                                                                    'Fall';
                                                                 break;
-                                                            case "SP":
+                                                            case 'SP':
                                                                 semesterName =
-                                                                    "Spring";
+                                                                    'Spring';
                                                                 break;
-                                                            case "SU":
+                                                            case 'SU':
                                                                 semesterName =
-                                                                    "Summer";
+                                                                    'Summer';
                                                                 break;
-                                                            case "WI":
+                                                            case 'WI':
                                                                 semesterName =
-                                                                    "Winter";
+                                                                    'Winter';
                                                                 break;
                                                             default:
                                                                 semesterName =
@@ -414,7 +414,7 @@ const CoursePage = () => {
 
                                                         return `${semesterName} ${year}`;
                                                     })
-                                                    .join(", ")}
+                                                    .join(', ')}
                                             </p>
                                         </div>
                                     ) : (
@@ -508,13 +508,13 @@ const CoursePage = () => {
                                                 </div>
                                             </div>
                                             <p className="text-gray-500 mt-3">
-                                                Based on{" "}
-                                                {averageRatings.reviewCount}{" "}
+                                                Based on{' '}
+                                                {averageRatings.reviewCount}{' '}
                                                 review
                                                 {averageRatings.reviewCount !==
                                                 1
-                                                    ? "s"
-                                                    : ""}
+                                                    ? 's'
+                                                    : ''}
                                             </p>
                                         </>
                                     )}
@@ -561,7 +561,7 @@ const CoursePage = () => {
                                                 </span>
                                                 <span className="ml-2">
                                                     {review.overall_rating ||
-                                                        ""}
+                                                        ''}
                                                 </span>
                                             </div>
 
@@ -600,7 +600,7 @@ const CoursePage = () => {
                                             ] && (
                                                 <div className="text-sm text-gray-600 mb-3">
                                                     <span className="font-medium">
-                                                        Instructor:{" "}
+                                                        Instructor:{' '}
                                                     </span>
                                                     {
                                                         instructorMap[
@@ -651,7 +651,7 @@ const CoursePage = () => {
                                                         ? `${formatWorkPerWeek(
                                                               review.work_per_week
                                                           )}`
-                                                        : "N/A"}
+                                                        : 'N/A'}
                                                 </span>
                                             </div>
                                         </div>
@@ -667,14 +667,14 @@ const CoursePage = () => {
                                         {/* Date written, last updated */}
                                         <div className="flex flex-wrap gap-4 mt-4">
                                             <p className="text-gray-500">
-                                                Review written{" "}
+                                                Review written{' '}
                                                 {review.createdAt &&
                                                     formatDate(
                                                         review.createdAt
                                                     )}
                                             </p>
                                             <p className="text-gray-500">
-                                                Last updated{" "}
+                                                Last updated{' '}
                                                 {review.updatedAt &&
                                                     formatDate(
                                                         review.updatedAt
@@ -711,7 +711,7 @@ const CoursePage = () => {
                     onClick={handleAddNewReviewClick}
                     ref={targetRef}
                 >
-                    {selectedReview ? "Cancel review edit" : "Add new review"}
+                    {selectedReview ? 'Cancel review edit' : 'Add new review'}
                 </button>
 
                 {(isCreatingNew || selectedReview) && (

@@ -1,5 +1,5 @@
-import express, { Request, Response, Router } from "express";
-import { CourseReviews } from "../models/Courses";
+import express, { Request, Response, Router } from 'express';
+import { CourseReviews } from '../models/Courses';
 
 const router: Router = express.Router();
 
@@ -8,13 +8,13 @@ const router: Router = express.Router();
  * @desc    Get review by ID
  * @access  Public
  */
-router.get("/reviews/:id", async (req: Request, res: Response) => {
+router.get('/reviews/:id', async (req: Request, res: Response) => {
     try {
         const reviewId = parseInt(req.params.id);
 
         // Check if conversion is valid
         if (isNaN(reviewId)) {
-            res.status(400).json({ message: "Invalid review ID format" });
+            res.status(400).json({ message: 'Invalid review ID format' });
             return;
         }
 
@@ -23,14 +23,14 @@ router.get("/reviews/:id", async (req: Request, res: Response) => {
         });
 
         if (!review) {
-            res.status(404).json({ message: "Review not found" });
+            res.status(404).json({ message: 'Review not found' });
             return;
         }
 
         res.json(review);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -39,7 +39,7 @@ router.get("/reviews/:id", async (req: Request, res: Response) => {
  * @desc    Create new review
  * @access  Private
  */
-router.post("/reviews", async (req: Request, res: Response) => {
+router.post('/reviews', async (req: Request, res: Response) => {
     try {
         const {
             id,
@@ -59,7 +59,7 @@ router.post("/reviews", async (req: Request, res: Response) => {
             id,
         });
         if (reviewExists) {
-            res.status(400).json({ message: "Review already exists" });
+            res.status(400).json({ message: 'Review already exists' });
             return;
         }
 
@@ -81,7 +81,7 @@ router.post("/reviews", async (req: Request, res: Response) => {
         res.status(201).json(savedReview);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -90,13 +90,13 @@ router.post("/reviews", async (req: Request, res: Response) => {
  * @desc    Update review
  * @access  Private
  */
-router.put("/reviews/:id", async (req: Request, res: Response) => {
+router.put('/reviews/:id', async (req: Request, res: Response) => {
     try {
         const reviewId = parseInt(req.params.id);
 
         // Check if conversion is valid
         if (isNaN(reviewId)) {
-            res.status(400).json({ message: "Invalid review ID format" });
+            res.status(400).json({ message: 'Invalid review ID format' });
             return;
         }
 
@@ -106,7 +106,7 @@ router.put("/reviews/:id", async (req: Request, res: Response) => {
         });
 
         if (!review) {
-            res.status(404).json({ message: "Review not found" });
+            res.status(404).json({ message: 'Review not found' });
             return;
         }
 
@@ -123,7 +123,7 @@ router.put("/reviews/:id", async (req: Request, res: Response) => {
         res.json(updatedReview);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -132,13 +132,13 @@ router.put("/reviews/:id", async (req: Request, res: Response) => {
  * @desc    Delete review
  * @access  Private
  */
-router.delete("/reviews/:id", async (req: Request, res: Response) => {
+router.delete('/reviews/:id', async (req: Request, res: Response) => {
     try {
         const reviewId: number = parseInt(req.params.id);
 
         // Check if conversion is valid
         if (isNaN(reviewId)) {
-            res.status(400).json({ message: "Invalid review ID format" });
+            res.status(400).json({ message: 'Invalid review ID format' });
             return;
         }
 
@@ -148,7 +148,7 @@ router.delete("/reviews/:id", async (req: Request, res: Response) => {
         });
 
         if (!review) {
-            res.status(404).json({ message: "Review not found" });
+            res.status(404).json({ message: 'Review not found' });
             return;
         }
 
@@ -157,10 +157,10 @@ router.delete("/reviews/:id", async (req: Request, res: Response) => {
         // This can also be done somewhere else
 
         await CourseReviews.findOneAndDelete({ id: reviewId });
-        res.json({ message: "Review removed" });
+        res.json({ message: 'Review removed' });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 

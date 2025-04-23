@@ -15,53 +15,64 @@ interface ICourses extends Document {
     all_instructor_ids: number[];
 }
 
-const CoursesSchema = new Schema<ICourses>({
-    id: {
-        type: Number,
-        required: true,
-        unique: true,
+const CoursesSchema = new Schema<ICourses>(
+    {
+        id: {
+            type: Number,
+            required: true,
+            unique: true,
+        },
+        code: {
+            type: String,
+            required: true,
+            unique: true,
+            trim: true,
+        },
+        code_slug: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+        name: {
+            type: String,
+            required: true,
+        },
+        department_names: [
+            {
+                type: String,
+            },
+        ],
+        requirement_codes: [
+            {
+                type: String,
+            },
+        ],
+        requirement_names: [
+            {
+                type: String,
+            },
+        ],
+        term_keys: [
+            {
+                type: String,
+            },
+        ],
+        description: {
+            type: String,
+        },
+        all_instructor_ids: [
+            {
+                type: Number,
+                ref: 'Instructors',
+            },
+        ],
     },
-    code: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true,
-    },
-    code_slug: {
-        type: String,
-        required: true,
-        unique: true,
-    },
-    name: {
-        type: String,
-        required: true,
-    },
-    department_names: [{
-        type: String,
-    }],
-    requirement_codes: [{
-        type: String,
-    }],
-    requirement_names: [{
-        type: String,
-    }],
-    term_keys: [{
-        type: String,
-    }],
-    description: {
-        type: String,
-    },
-    all_instructor_ids: [{
-        type: Number,
-        ref: 'Instructors',
-    }],
-},
     {
         timestamps: true,
-});
+    }
+);
 
 const Courses = mongoose.model<ICourses>('Courses', CoursesSchema);
-
 
 // Course Reviews
 interface ICourseReviews extends Document {
@@ -77,54 +88,58 @@ interface ICourseReviews extends Document {
     user_email: string;
 }
 
-const CourseReviewsSchema = new Schema<ICourseReviews>({
-    id: {
-        type: Number,
-        required: true,
-        unique: true,
+const CourseReviewsSchema = new Schema<ICourseReviews>(
+    {
+        id: {
+            type: Number,
+            required: true,
+            unique: true,
+        },
+        overall_rating: {
+            type: Number,
+        },
+        challenge_rating: {
+            type: Number,
+        },
+        inclusivity_rating: {
+            type: Number,
+        },
+        work_per_week: {
+            type: Number,
+        },
+        total_cost: {
+            type: Number,
+        },
+        comments: {
+            type: String,
+            trim: true,
+        },
+        course_id: {
+            type: Number,
+            required: true,
+            ref: 'Courses',
+            index: true,
+        },
+        instructor_id: {
+            type: Number,
+            ref: 'Instructors',
+            // required: true,
+            index: true,
+        },
+        user_email: {
+            type: String,
+            ref: 'SAMLUser',
+            index: true,
+        },
     },
-    overall_rating: {
-        type: Number,
-    },
-    challenge_rating: {
-        type: Number,
-    },
-    inclusivity_rating: {
-        type: Number,
-    },
-    work_per_week: {
-        type: Number,
-    },
-    total_cost: {
-        type: Number,
-    },
-    comments: {
-        type: String,
-        trim: true,
-    },
-    course_id: {
-        type: Number,
-        required: true,
-        ref: 'Courses',
-        index: true
-    },
-    instructor_id: {
-        type: Number,
-        ref: 'Instructors',
-        // required: true,
-        index: true
-    },
-    user_email: {
-        type: String,
-        ref: 'SAMLUser',
-        index: true
-    },
-},
-{
-    timestamps: true,
-});
+    {
+        timestamps: true,
+    }
+);
 
-const CourseReviews = mongoose.model<ICourseReviews>('CourseReviews', CourseReviewsSchema);
-
+const CourseReviews = mongoose.model<ICourseReviews>(
+    'CourseReviews',
+    CourseReviewsSchema
+);
 
 export { Courses, CourseReviews };

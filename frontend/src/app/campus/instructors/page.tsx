@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, {
     useState,
@@ -6,46 +6,46 @@ import React, {
     useCallback,
     useMemo,
     useRef,
-} from "react";
-import axios, { CancelTokenSource } from "axios";
-import { debounce } from "lodash";
-import type { Instructor, SchoolKey } from "@/types";
+} from 'react';
+import axios, { CancelTokenSource } from 'axios';
+import { debounce } from 'lodash';
+import type { Instructor, SchoolKey } from '@/types';
 
 const schoolData = {
     PO: {
-        name: "Pomona",
-        bgColor: "bg-blue-400",
-        buttonColor: "bg-blue-100 text-blue-800 border-blue-300",
-        textColor: "text-blue-800",
+        name: 'Pomona',
+        bgColor: 'bg-blue-400',
+        buttonColor: 'bg-blue-100 text-blue-800 border-blue-300',
+        textColor: 'text-blue-800',
     },
     CM: {
-        name: "Claremont McKenna",
-        bgColor: "bg-red-400",
-        buttonColor: "bg-red-100 text-red-800 border-red-300",
-        textColor: "text-red-800",
+        name: 'Claremont McKenna',
+        bgColor: 'bg-red-400',
+        buttonColor: 'bg-red-100 text-red-800 border-red-300',
+        textColor: 'text-red-800',
     },
     HM: {
-        name: "Harvey Mudd",
-        bgColor: "bg-yellow-300",
-        buttonColor: "bg-yellow-100 text-yellow-800 border-yellow-300",
-        textColor: "text-yellow-800",
+        name: 'Harvey Mudd',
+        bgColor: 'bg-yellow-300',
+        buttonColor: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+        textColor: 'text-yellow-800',
     },
     SC: {
-        name: "Scripps",
-        bgColor: "bg-green-200",
-        buttonColor: "bg-green-100 text-green-800 border-green-300",
-        textColor: "text-green-800",
+        name: 'Scripps',
+        bgColor: 'bg-green-200',
+        buttonColor: 'bg-green-100 text-green-800 border-green-300',
+        textColor: 'text-green-800',
     },
     PZ: {
-        name: "Pitzer",
-        bgColor: "bg-orange-300",
-        buttonColor: "bg-orange-100 text-orange-800 border-orange-300",
-        textColor: "text-orange-800",
+        name: 'Pitzer',
+        bgColor: 'bg-orange-300',
+        buttonColor: 'bg-orange-100 text-orange-800 border-orange-300',
+        textColor: 'text-orange-800',
     },
 };
 
 const InstructorSearch = () => {
-    const [searchTerm, setSearchTerm] = useState("");
+    const [searchTerm, setSearchTerm] = useState('');
     const [results, setResults] = useState<Instructor[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -54,7 +54,7 @@ const InstructorSearch = () => {
     const createCancelTokenSource = () => {
         if (cancelTokenSourceRef.current) {
             cancelTokenSourceRef.current.cancel(
-                "Operation canceled due to new request"
+                'Operation canceled due to new request'
             );
         }
         cancelTokenSourceRef.current = axios.CancelToken.source();
@@ -89,11 +89,11 @@ const InstructorSearch = () => {
             setResults(response.data);
         } catch (err) {
             if (axios.isCancel(err)) {
-                console.log("Request canceled:", err.message);
+                console.log('Request canceled:', err.message);
                 return;
             }
-            console.error("Search error:", err);
-            setError("Failed to fetch results. Please try again.");
+            console.error('Search error:', err);
+            setError('Failed to fetch results. Please try again.');
             setResults([]);
         } finally {
             setLoading(false);
@@ -114,7 +114,7 @@ const InstructorSearch = () => {
 
         return () => {
             debouncedSearch.cancel();
-            cancelTokenSourceRef.current?.cancel("Component unmounted");
+            cancelTokenSourceRef.current?.cancel('Component unmounted');
         };
     }, [searchTerm, debouncedSearch]);
 
@@ -125,7 +125,7 @@ const InstructorSearch = () => {
     // Helper function to get school styling or default to Pomona if school is missing
     const getSchoolStyling = (school?: string) => {
         if (!school || !schoolData[school as SchoolKey]) {
-            return schoolData["PO"]; // Default to Pomona styling if school is missing or invalid
+            return schoolData['PO']; // Default to Pomona styling if school is missing or invalid
         }
         return schoolData[school as SchoolKey];
     };
@@ -175,10 +175,10 @@ const InstructorSearch = () => {
                     <>
                         <div className="flex justify-between items-center">
                             <p className="text-gray-600 text-sm">
-                                Showing {filteredResults.length}{" "}
+                                Showing {filteredResults.length}{' '}
                                 {filteredResults.length === 1
-                                    ? "instructor"
-                                    : "instructors"}
+                                    ? 'instructor'
+                                    : 'instructors'}
                             </p>
                         </div>
 

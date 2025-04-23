@@ -1,6 +1,6 @@
-import express, { Request, Response, Router } from "express";
-import { Instructors } from "../models/People";
-import { CourseReviews } from "../models/Courses";
+import express, { Request, Response, Router } from 'express';
+import { Instructors } from '../models/People';
+import { CourseReviews } from '../models/Courses';
 
 const router: Router = express.Router();
 
@@ -9,7 +9,7 @@ const router: Router = express.Router();
  * @desc    Get all instructors with optional filters (search )
  * @access  Public
  */
-router.get("/", async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
     try {
         const { search } = req.query;
 
@@ -17,9 +17,9 @@ router.get("/", async (req: Request, res: Response) => {
         const query: any = {};
 
         // Add search functionality
-        if (search && typeof search === "string") {
+        if (search && typeof search === 'string') {
             // Basic search with regex for case-insensitive matching
-            query.$or = [{ name: { $regex: search, $options: "i" } }];
+            query.$or = [{ name: { $regex: search, $options: 'i' } }];
         }
 
         // Execute the query
@@ -28,7 +28,7 @@ router.get("/", async (req: Request, res: Response) => {
         res.json(instructors);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -37,13 +37,13 @@ router.get("/", async (req: Request, res: Response) => {
  * @desc    Get instructor information by ID
  * @access  Public
  */
-router.get("/:id", async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
     try {
         const instructorId = parseInt(req.params.id);
 
         // Check if conversion is valid
         if (isNaN(instructorId)) {
-            res.status(400).json({ message: "Invalid instructor ID format" });
+            res.status(400).json({ message: 'Invalid instructor ID format' });
             return;
         }
 
@@ -52,14 +52,14 @@ router.get("/:id", async (req: Request, res: Response) => {
         });
 
         if (!instructor) {
-            res.status(404).json({ message: "Instructor not found" });
+            res.status(404).json({ message: 'Instructor not found' });
             return;
         }
 
         res.json(instructor);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -68,7 +68,7 @@ router.get("/:id", async (req: Request, res: Response) => {
  * @desc    Create new instructor
  * @access  Private (Admin)
  */
-router.post("/", async (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
     try {
         const {
             id,
@@ -83,7 +83,7 @@ router.post("/", async (req: Request, res: Response) => {
             id,
         });
         if (instructorExists) {
-            res.status(400).json({ message: "Instructor already exists" });
+            res.status(400).json({ message: 'Instructor already exists' });
             return;
         }
 
@@ -99,7 +99,7 @@ router.post("/", async (req: Request, res: Response) => {
         res.status(201).json(savedInstructor);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -108,13 +108,13 @@ router.post("/", async (req: Request, res: Response) => {
  * @desc    Update instructor
  * @access  Private (Admin)
  */
-router.put("/:id", async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request, res: Response) => {
     try {
         const instructorId = parseInt(req.params.id);
 
         // Check if conversion is valid
         if (isNaN(instructorId)) {
-            res.status(400).json({ message: "Invalid instructor ID format" });
+            res.status(400).json({ message: 'Invalid instructor ID format' });
             return;
         }
 
@@ -123,7 +123,7 @@ router.put("/:id", async (req: Request, res: Response) => {
         });
 
         if (!instructor) {
-            res.status(404).json({ message: "Instructor not found" });
+            res.status(404).json({ message: 'Instructor not found' });
             return;
         }
 
@@ -136,7 +136,7 @@ router.put("/:id", async (req: Request, res: Response) => {
         res.json(updatedInstructor);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -145,13 +145,13 @@ router.put("/:id", async (req: Request, res: Response) => {
  * @desc    Get all reviews for a specific instructor
  * @access  Public
  */
-router.get("/:id/reviews", async (req: Request, res: Response) => {
+router.get('/:id/reviews', async (req: Request, res: Response) => {
     try {
         const instructorId = parseInt(req.params.id);
 
         // Check if conversion is valid
         if (isNaN(instructorId)) {
-            res.status(400).json({ message: "Invalid instructor ID format" });
+            res.status(400).json({ message: 'Invalid instructor ID format' });
             return;
         }
 
@@ -161,7 +161,7 @@ router.get("/:id/reviews", async (req: Request, res: Response) => {
         });
 
         if (!instructor) {
-            res.status(404).json({ message: "Instructor not found" });
+            res.status(404).json({ message: 'Instructor not found' });
             return;
         }
         // Get all reviews for this instructor
@@ -172,7 +172,7 @@ router.get("/:id/reviews", async (req: Request, res: Response) => {
         res.json(reviews);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -181,13 +181,13 @@ router.get("/:id/reviews", async (req: Request, res: Response) => {
  * @desc    Get all courses for a specific instructor
  * @access  Public
  */
-router.get("/:id/courses", async (req: Request, res: Response) => {
+router.get('/:id/courses', async (req: Request, res: Response) => {
     try {
         const instructorId = parseInt(req.params.id);
 
         // Check if conversion is valid
         if (isNaN(instructorId)) {
-            res.status(400).json({ message: "Invalid instructor ID format" });
+            res.status(400).json({ message: 'Invalid instructor ID format' });
             return;
         }
 
@@ -197,7 +197,7 @@ router.get("/:id/courses", async (req: Request, res: Response) => {
         });
 
         if (!instructor) {
-            res.status(404).json({ message: "Instructor not found" });
+            res.status(404).json({ message: 'Instructor not found' });
             return;
         }
 
@@ -207,7 +207,7 @@ router.get("/:id/courses", async (req: Request, res: Response) => {
         // Check if courses exist
         if (!courses || courses.length === 0) {
             res.status(404).json({
-                message: "No courses found for this instructor",
+                message: 'No courses found for this instructor',
             });
             return;
         }
@@ -215,7 +215,7 @@ router.get("/:id/courses", async (req: Request, res: Response) => {
         res.json(courses);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 

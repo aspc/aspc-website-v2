@@ -1,22 +1,22 @@
-import express, { Express, Request, Response } from "express";
-import mongoose from "mongoose";
-import MongoStore from "connect-mongo";
-import cors from "cors";
-import dotenv from "dotenv";
-import { GridFSBucket } from "mongodb";
-import authRoutes from "./routes/AuthRoutes";
-import pageRoutes from "./routes/admin/PagesRoutes";
-import staffRoutes from "./routes/admin/StaffRoutes";
-import eventRoutes from "./routes/EventsRoutes";
-import housingRoutes from "./routes/HousingRoutes";
-import coursesRoutes from "./routes/CoursesRoutes";
-import instructorsRoutes from "./routes/InstructorsRoutes";
-import reviewsRoutes from "./routes/ReviewsRoutes";
-import session from "express-session";
-import https from "https";
-import http from "http";
-import fs from "fs";
-import path from "path";
+import express, { Express, Request, Response } from 'express';
+import mongoose from 'mongoose';
+import MongoStore from 'connect-mongo';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { GridFSBucket } from 'mongodb';
+import authRoutes from './routes/AuthRoutes';
+import pageRoutes from './routes/admin/PagesRoutes';
+import staffRoutes from './routes/admin/StaffRoutes';
+import eventRoutes from './routes/EventsRoutes';
+import housingRoutes from './routes/HousingRoutes';
+import coursesRoutes from './routes/CoursesRoutes';
+import instructorsRoutes from './routes/InstructorsRoutes';
+import reviewsRoutes from './routes/ReviewsRoutes';
+import session from 'express-session';
+import https from 'https';
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
 dotenv.config();
 
 const app: Express = express();
@@ -25,44 +25,44 @@ const app: Express = express();
 app.use(
     cors({
         origin: [
-            "http://localhost:3000",
-            "https://localhost:3001",
-            "https://aspc-website-v2.vercel.app",
-            "https://pomonastudents.org",
-            "https://api.pomonastudents.org",
+            'http://localhost:3000',
+            'https://localhost:3001',
+            'https://aspc-website-v2.vercel.app',
+            'https://pomonastudents.org',
+            'https://api.pomonastudents.org',
         ],
-        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-        allowedHeaders: ["Content-Type", "Authorization"],
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
     })
 );
 app.use(express.json());
 
-app.set("trust proxy", 1); // Required for secure cookies
+app.set('trust proxy', 1); // Required for secure cookies
 
 // Connect to MongoDB
 const MONGODB_URI =
-    process.env.MONGODB_URI || "mongodb://localhost:27017/school-platform";
+    process.env.MONGODB_URI || 'mongodb://localhost:27017/school-platform';
 
 // Session
 app.use(
     session({
-        secret: process.env.SESSION_SECRET || "secretlongpassword",
+        secret: process.env.SESSION_SECRET || 'secretlongpassword',
         resave: false,
         saveUninitialized: false,
         store: MongoStore.create({
             mongoUrl: MONGODB_URI,
             ttl: 24 * 60 * 60, // = 1 day (in seconds)
-            autoRemove: "native", // Use MongoDB's TTL index
+            autoRemove: 'native', // Use MongoDB's TTL index
         }),
         cookie: {
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000, // 24 hours
             domain:
-                process.env.NODE_ENV === "production"
-                    ? ".pomonastudents.org"
+                process.env.NODE_ENV === 'production'
+                    ? '.pomonastudents.org'
                     : undefined,
         },
     })
@@ -74,46 +74,46 @@ let housingReviewPictures: GridFSBucket;
 mongoose
     .connect(MONGODB_URI)
     .then(() => {
-        console.log("Connected to MongoDB");
+        console.log('Connected to MongoDB');
         const db = mongoose.connection.db;
 
         if (!db) {
-            throw new Error("Database connection is not ready");
+            throw new Error('Database connection is not ready');
         }
 
         // Create GridFS bucket for profile picture uploads
         bucket = new GridFSBucket(db, {
-            bucketName: "uploads",
+            bucketName: 'uploads',
         });
-        console.log("Profile picture uploads bucket created");
+        console.log('Profile picture uploads bucket created');
 
         housingReviewPictures = new GridFSBucket(db, {
-            bucketName: "housingreviewpictures",
+            bucketName: 'housingreviewpictures',
         });
 
-        console.log("Housing review uploads bucket created");
+        console.log('Housing review uploads bucket created');
     })
-    .catch((err) => console.error("MongoDB connection error:", err));
+    .catch((err) => console.error('MongoDB connection error:', err));
 
 export { bucket, housingReviewPictures };
 
 // Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/admin/pages", pageRoutes);
-app.use("/api/members", staffRoutes);
-app.use("/api/events", eventRoutes);
-app.use("/api/campus/housing", housingRoutes);
-app.use("/api/courses", coursesRoutes);
-app.use("/api/instructors", instructorsRoutes);
-app.use("/api/reviews", reviewsRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/admin/pages', pageRoutes);
+app.use('/api/members', staffRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/campus/housing', housingRoutes);
+app.use('/api/courses', coursesRoutes);
+app.use('/api/instructors', instructorsRoutes);
+app.use('/api/reviews', reviewsRoutes);
 
 const PORT = process.env.PORT || 5000;
 
 // Check environment to determine server type
-if (process.env.NODE_ENV === "development") {
+if (process.env.NODE_ENV === 'development') {
     const httpsOptions = {
-        key: fs.readFileSync(path.join(__dirname, "../certs/localhost.key")),
-        cert: fs.readFileSync(path.join(__dirname, "../certs/localhost.crt")),
+        key: fs.readFileSync(path.join(__dirname, '../certs/localhost.key')),
+        cert: fs.readFileSync(path.join(__dirname, '../certs/localhost.crt')),
     };
 
     // Development: HTTPS server with local certificates

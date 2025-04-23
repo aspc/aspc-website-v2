@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema } from 'mongoose';
 
 // Housing Buildings Schema
 interface IHousingBuildings extends Document {
@@ -35,7 +35,7 @@ const HousingBuildingsSchema = new Schema<IHousingBuildings>({
 });
 
 const HousingBuildings = mongoose.model<IHousingBuildings>(
-    "HousingBuildings",
+    'HousingBuildings',
     HousingBuildingsSchema
 );
 
@@ -77,7 +77,7 @@ const HousingRoomsSchema = new Schema<IHousingRooms>({
     housing_building_id: {
         type: Number,
         required: true,
-        ref: "HousingBuildings",
+        ref: 'HousingBuildings',
         index: true,
     },
     room_number: {
@@ -87,7 +87,7 @@ const HousingRoomsSchema = new Schema<IHousingRooms>({
 });
 
 const HousingRooms = mongoose.model<IHousingRooms>(
-    "HousingRooms",
+    'HousingRooms',
     HousingRoomsSchema
 );
 
@@ -128,13 +128,13 @@ const HousingReviewsSchema = new Schema<IHousingReviews>(
         },
         housing_room_id: {
             type: Number,
-            ref: "HousingRooms",
+            ref: 'HousingRooms',
             required: true,
             index: true,
         },
         user_email: {
             type: String,
-            ref: "SAMLUser",
+            ref: 'SAMLUser',
         },
         pictures: [
             {
@@ -148,7 +148,7 @@ const HousingReviewsSchema = new Schema<IHousingReviews>(
 );
 
 const HousingReviews = mongoose.model<IHousingReviews>(
-    "HousingReviews",
+    'HousingReviews',
     HousingReviewsSchema
 );
 

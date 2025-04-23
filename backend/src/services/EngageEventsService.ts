@@ -1,5 +1,5 @@
-import axios from "axios";
-import dotenv from "dotenv";
+import axios from 'axios';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -20,7 +20,7 @@ class EngageEventsService {
 
     constructor() {
         if (!process.env.ENGAGE_API_URL || !process.env.ENGAGE_API_KEY) {
-            throw new Error("ENGAGE_API_URL and ENGAGE_API_KEY must be set");
+            throw new Error('ENGAGE_API_URL and ENGAGE_API_KEY must be set');
         }
         this.apiUrl = process.env.ENGAGE_API_URL;
         this.apiKey = process.env.ENGAGE_API_KEY;
@@ -30,8 +30,8 @@ class EngageEventsService {
         try {
             const response = await axios.get(this.apiUrl, {
                 headers: {
-                    Accept: "application/json",
-                    "X-Engage-Api-Key": this.apiKey,
+                    Accept: 'application/json',
+                    'X-Engage-Api-Key': this.apiKey,
                 },
                 params: {
                     startDate: startTime,
@@ -44,22 +44,22 @@ class EngageEventsService {
                 .filter((event: any) => !this.shouldSkipEvent(event))
                 .map((event: any) => this.formatEvent(event));
         } catch (error) {
-            console.error("Error fetching Engage events:", error);
+            console.error('Error fetching Engage events:', error);
             throw error;
         }
     }
 
     private shouldSkipEvent(event: any): boolean {
-        const filter = ["Sunday Practice", "General Meetings"];
+        const filter = ['Sunday Practice', 'General Meetings'];
         return (
             filter.includes(event.eventName.trim()) ||
-            event.typeName === "Organization Only"
+            event.typeName === 'Organization Only'
         );
     }
 
     private formatEvent(event: any): Event {
         // TODO: TEMPORARY SOLUTION Production environment: subtract 8 hours from start and end times
-        if (process.env.NODE_ENV === "production") {
+        if (process.env.NODE_ENV === 'production') {
             // Subtract 8 hours for production environment
             const startDateTime = new Date(parseInt(event.startDateTime));
             const endDateTime = new Date(parseInt(event.endDateTime));
@@ -69,45 +69,45 @@ class EngageEventsService {
 
             return {
                 name: event.eventName,
-                location: event.otherLocation || "N/A",
+                location: event.otherLocation || 'N/A',
                 description: this.sanitizeHtml(event.description),
                 host: event.organizationName,
                 details_url: event.eventUrl,
                 start: startDateTime.toLocaleString(),
                 end: endDateTime.toLocaleString(),
-                status: "approved",
+                status: 'approved',
             };
         }
 
         // Non-production environment
         return {
             name: event.eventName,
-            location: event.otherLocation || "N/A",
+            location: event.otherLocation || 'N/A',
             description: this.sanitizeHtml(event.description),
             host: event.organizationName,
             details_url: event.eventUrl,
             start: new Date(parseInt(event.startDateTime)).toLocaleString(),
             end: new Date(parseInt(event.endDateTime)).toLocaleString(),
-            status: "approved",
+            status: 'approved',
         };
     }
 
     private sanitizeHtml(html: string): string {
-        if (!html) return "";
+        if (!html) return '';
 
         return (
             html
                 // First replace common HTML entities
-                .replace(/&nbsp;/g, " ")
-                .replace(/&amp;/g, "&")
-                .replace(/&lt;/g, "<")
-                .replace(/&gt;/g, ">")
+                .replace(/&nbsp;/g, ' ')
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
                 .replace(/&quot;/g, '"')
                 .replace(/&#39;/g, "'")
                 // Remove HTML tags
-                .replace(/<[^>]*>/g, "")
+                .replace(/<[^>]*>/g, '')
                 // Normalize whitespace
-                .replace(/\s+/g, " ")
+                .replace(/\s+/g, ' ')
                 .trim()
         );
     }

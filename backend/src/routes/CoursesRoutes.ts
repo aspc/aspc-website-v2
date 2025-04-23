@@ -1,6 +1,6 @@
-import express, { Request, Response } from "express";
-import { Courses, CourseReviews } from "../models/Courses";
-import { Instructors } from "../models/People";
+import express, { Request, Response } from 'express';
+import { Courses, CourseReviews } from '../models/Courses';
+import { Instructors } from '../models/People';
 
 const router = express.Router();
 
@@ -10,44 +10,41 @@ const router = express.Router();
  * @access  Public
  */
 // Courses routes
-router.get("/", async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
     try {
         const { search, number, schools, limit = 50 } = req.query;
-        
+
         const query: any = {};
-        
+
         if (schools) {
             const schoolList = (schools as string).split(',');
-            query.code = { 
-                $in: schoolList.map(school => new RegExp(`${school}$`, 'i'))
+            query.code = {
+                $in: schoolList.map((school) => new RegExp(`${school}$`, 'i')),
             };
         }
-        
+
         if (search) {
             const searchRegex = new RegExp(search as string, 'i');
-            query.$or = [
-                { name: searchRegex },
-                { code: searchRegex }
-            ];
+            query.$or = [{ name: searchRegex }, { code: searchRegex }];
         }
-        
+
         if (number) {
             const numberRegex = new RegExp(`^${number}`, 'i');
             query.$or = [
                 ...(query.$or || []),
                 { code: numberRegex },
-                { id: parseInt(number as string) || 0 }
+                { id: parseInt(number as string) || 0 },
             ];
         }
-        
+
         const courses = await Courses.find(query)
             .limit(parseInt(limit as string))
             .lean();
-            
+
         res.json(courses);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -56,26 +53,26 @@ router.get("/", async (req: Request, res: Response) => {
  * @desc    Get course by ID
  * @access  Public
  */
-router.get("/:id", async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
     try {
         const courseId = parseInt(req.params.id, 10);
 
         // Check if conversion is valid
         if (isNaN(courseId)) {
-            res.status(400).json({ message: "Invalid course ID format" });
+            res.status(400).json({ message: 'Invalid course ID format' });
             return;
         }
 
         // Find course by ID
         const course = await Courses.findOne({ id: courseId });
         if (!course) {
-            res.status(404).json({ message: "Course not found" });
+            res.status(404).json({ message: 'Course not found' });
             return;
         }
         res.json(course);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -84,7 +81,7 @@ router.get("/:id", async (req: Request, res: Response) => {
  * @desc    Create new course
  * @access  Private (Admin)
  */
-router.post("/", async (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
     // ? Do we need to create slugs for all courses here ? //
     try {
         const {
@@ -103,7 +100,7 @@ router.post("/", async (req: Request, res: Response) => {
         // Check if course already exists
         const courseExists = await Courses.findOne({ id });
         if (courseExists) {
-            res.status(400).json({ message: "Course already exists" });
+            res.status(400).json({ message: 'Course already exists' });
             return;
         }
 
@@ -124,7 +121,7 @@ router.post("/", async (req: Request, res: Response) => {
         res.status(201).json(savedCourse);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -133,20 +130,20 @@ router.post("/", async (req: Request, res: Response) => {
  * @desc    Update course
  * @access  Private (Admin)
  */
-router.put("/:id", async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request, res: Response) => {
     try {
         const courseId = parseInt(req.params.id, 10);
 
         // Check if conversion is valid
         if (isNaN(courseId)) {
-            res.status(400).json({ message: "Invalid course ID format" });
+            res.status(400).json({ message: 'Invalid course ID format' });
             return;
         }
 
         // Find course by ID
         const course = await Courses.findOne({ id: courseId });
         if (!course) {
-            res.status(404).json({ message: "Course not found" });
+            res.status(404).json({ message: 'Course not found' });
             return;
         }
 
@@ -159,7 +156,7 @@ router.put("/:id", async (req: Request, res: Response) => {
         res.json(updatedCourse);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -168,29 +165,29 @@ router.put("/:id", async (req: Request, res: Response) => {
  * @desc    Delete course
  * @access  Private (Admin)
  */
-router.delete("/:id", async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response) => {
     try {
         const courseId = parseInt(req.params.id, 10);
 
         // Check if conversion is valid
         if (isNaN(courseId)) {
-            res.status(400).json({ message: "Invalid course ID format" });
+            res.status(400).json({ message: 'Invalid course ID format' });
             return;
         }
 
         // Find course by ID
         const course = await Courses.findOne({ id: courseId });
         if (!course) {
-            res.status(404).json({ message: "Course not found" });
+            res.status(404).json({ message: 'Course not found' });
             return;
         }
 
         // Delete course
         await Courses.findOneAndDelete({ id: courseId });
-        res.json({ message: "Course removed" });
+        res.json({ message: 'Course removed' });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -199,12 +196,12 @@ router.delete("/:id", async (req: Request, res: Response) => {
  * @desc    Get all reviews for a specific course
  * @access  Public
  */
-router.get("/:id/reviews", async (req: Request, res: Response) => {
+router.get('/:id/reviews', async (req: Request, res: Response) => {
     try {
         const courseId: number = parseInt(req.params.id);
 
         if (isNaN(courseId)) {
-            res.status(400).json({ message: "Invalid course ID format" });
+            res.status(400).json({ message: 'Invalid course ID format' });
             return;
         }
 
@@ -215,7 +212,7 @@ router.get("/:id/reviews", async (req: Request, res: Response) => {
         res.json(reviews);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -223,14 +220,14 @@ router.get("/:id/reviews", async (req: Request, res: Response) => {
  * @route   POST /api/courses/:courseId/reviews
  * @desc    Add a new review for a course
  */
-router.post("/:courseId/reviews", async (req: Request, res: Response) => {
+router.post('/:courseId/reviews', async (req: Request, res: Response) => {
     try {
         // need to find new max id for the new review
         const result = await CourseReviews.aggregate([
             {
                 $group: {
                     _id: null, // No need to group, so _id is null
-                    maxValue: { $max: "$id" }, // Find the max value of fieldName
+                    maxValue: { $max: '$id' }, // Find the max value of fieldName
                 },
             },
         ]);
@@ -266,9 +263,9 @@ router.post("/:courseId/reviews", async (req: Request, res: Response) => {
         const review = new CourseReviews(reviewData);
         await review.save();
 
-        res.status(201).json({ message: "Review saved successfully" });
+        res.status(201).json({ message: 'Review saved successfully' });
     } catch (error) {
-        res.status(400).json({ message: "Error creating review" });
+        res.status(400).json({ message: 'Error creating review' });
     }
 });
 
@@ -276,7 +273,7 @@ router.post("/:courseId/reviews", async (req: Request, res: Response) => {
  * @route   PATCH /api/courses/reviews/:reviewId
  * @desc    Edit a course review
  */
-router.patch("/reviews/:reviewId", async (req: Request, res: Response) => {
+router.patch('/reviews/:reviewId', async (req: Request, res: Response) => {
     try {
         const reviewId = req.params.reviewId;
 
@@ -306,16 +303,16 @@ router.patch("/reviews/:reviewId", async (req: Request, res: Response) => {
         );
 
         if (!updatedReview) {
-            res.status(404).json({ message: "Review not found" });
+            res.status(404).json({ message: 'Review not found' });
         }
 
         res.status(200).json({
-            message: "Review updated",
+            message: 'Review updated',
             updatedReview,
         });
     } catch (error) {
-        console.error("update error: ", error);
-        res.status(400).json({ message: "Error updating review" });
+        console.error('update error: ', error);
+        res.status(400).json({ message: 'Error updating review' });
     }
 });
 
@@ -323,19 +320,19 @@ router.patch("/reviews/:reviewId", async (req: Request, res: Response) => {
  * @route   DELETE /api/courses/reviews/:reviewId
  * @desc    Delete a course review
  */
-router.delete("/reviews/:reviewId", async (req: Request, res: Response) => {
+router.delete('/reviews/:reviewId', async (req: Request, res: Response) => {
     try {
         const review = await CourseReviews.findOneAndDelete({
             id: req.params.reviewId,
         });
 
         if (!review) {
-            res.status(404).json({ message: "Review not found" });
+            res.status(404).json({ message: 'Review not found' });
         }
 
-        res.status(200).json({ message: "Review deleted" });
+        res.status(200).json({ message: 'Review deleted' });
     } catch (error) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -343,19 +340,19 @@ router.delete("/reviews/:reviewId", async (req: Request, res: Response) => {
  * @route   GET /api/courses/:courseId/instructors
  * @desc    Get all previous instructors for a course
  */
-router.get("/:courseId/instructors", async (req: Request, res: Response) => {
+router.get('/:courseId/instructors', async (req: Request, res: Response) => {
     try {
         const courseId: number = parseInt(req.params.courseId);
 
         if (isNaN(courseId)) {
-            res.status(400).json({ message: "Invalid course ID format" });
+            res.status(400).json({ message: 'Invalid course ID format' });
             return;
         }
 
         const course = await Courses.findOne({ id: courseId });
 
         if (!course) {
-            res.status(400).json({ message: "No course found" });
+            res.status(400).json({ message: 'No course found' });
             return;
         }
 
@@ -367,7 +364,7 @@ router.get("/:courseId/instructors", async (req: Request, res: Response) => {
 
         res.json(instructors);
     } catch (error) {
-        res.status(400).json({ message: "Error getting course instructors" });
+        res.status(400).json({ message: 'Error getting course instructors' });
     }
 });
 
