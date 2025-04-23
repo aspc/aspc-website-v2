@@ -74,47 +74,37 @@ const CourseSearchComponent = () => {
         return cancelTokenSourceRef.current;
     };
 
-    const fetchInstructors = useCallback(
-        async (ids: number[]): Promise<void> => {
-            try {
-                const uncachedIds = ids.filter((id) => !instructorCache[id]);
-
-                if (uncachedIds.length === 0) return;
-
-                const responses = await Promise.all(
-                    uncachedIds.map((id) =>
-                        axios
-                            .get<Instructor>(
-                                `${process.env.BACKEND_LINK}/api/instructors/${id}`,
-                                {
-                                    timeout: 3000,
-                                }
-                            )
-                            .catch(() => null)
-                    )
-                );
-
-                setInstructorCache((prev) => ({
-                    ...prev,
-                    ...responses.reduce(
-                        (acc, res) => {
-                            if (res && res.data) {
-                                acc[res.data.id] = res.data;
-                            }
-                            return acc;
-                        },
-                        {} as Record<number, Instructor>
-                    ),
-                }));
-            } catch (err) {
-                if (!axios.isCancel(err)) {
-                    console.error('Error fetching instructors:', err);
-                }
-                throw err;
-            }
-        },
-        [instructorCache]
-    );
+  const fetchInstructors = useCallback(async (ids: number[]): Promise<void> => {
+    try {
+      const uncachedIds = ids.filter(id => !instructorCache[id]);
+      
+      if (uncachedIds.length === 0) return;
+      
+      const responses = await Promise.all(
+        uncachedIds.map(id => 
+          axios.get<Instructor>(`${process.env.BACKEND_LINK}/api/instructors/${id}`, {
+            timeout: 3000,
+            withCredentials: true
+          }).catch(() => null)
+        )
+      );
+      
+      setInstructorCache(prev => ({
+        ...prev,
+        ...responses.reduce((acc, res) => {
+          if (res && res.data) {
+            acc[res.data.id] = res.data;
+          }
+          return acc;
+        }, {} as Record<number, Instructor>)
+      }));
+    } catch (err) {
+      if (!axios.isCancel(err)) {
+        console.error('Error fetching instructors:', err);
+      }
+      throw err; 
+    }
+  }, [instructorCache]);
 
     const performSearch = useCallback(
         async (
@@ -128,53 +118,48 @@ const CourseSearchComponent = () => {
                 return;
             }
 
-            const source = createCancelTokenSource();
-
-            try {
-                setLoading(true);
-                setError(null);
-
-                const activeSchools = Object.entries(schools)
-                    .filter(([_, isSelected]) => isSelected)
-                    .map(([school]) => school);
-
-                const response = await axios.get<Course[]>(
-                    `${process.env.BACKEND_LINK}/api/courses`,
-                    {
-                        params: {
-                            search: term,
-                            number: number,
-                            schools: activeSchools.join(','),
-                            limit: 100,
-                        },
-                        timeout: 5000,
-                        cancelToken: source.token,
-                    }
-                );
-
-                setResults(response.data);
-
-                const instructorIds = response.data
-                    .slice(0, 20)
-                    .flatMap((course) => course.all_instructor_ids || []);
-
-                if (instructorIds.length > 0) {
-                    fetchInstructors(instructorIds);
-                }
-            } catch (err) {
-                if (axios.isCancel(err)) {
-                    console.log('Request canceled:', err.message);
-                    return;
-                }
-                console.error('Search error:', err);
-                setError('Failed to fetch results. Please try again.');
-                setResults([]);
-            } finally {
-                setLoading(false);
-            }
+    const source = createCancelTokenSource();
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const activeSchools = Object.entries(schools)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([school]) => school);
+      
+      const response = await axios.get<Course[]>(`${process.env.BACKEND_LINK}/api/courses`, {
+        params: {
+          search: term,
+          number: number,
+          schools: activeSchools.join(','),
+          limit: 100
         },
-        [fetchInstructors]
-    );
+        timeout: 5000,
+        cancelToken: source.token,
+        withCredentials: true
+      });
+      
+      setResults(response.data);
+      
+      const instructorIds = response.data.slice(0, 20)
+        .flatMap(course => course.all_instructor_ids || []);
+      
+      if (instructorIds.length > 0) {
+        fetchInstructors(instructorIds);
+      }
+    } catch (err) {
+      if (axios.isCancel(err)) {
+        console.log('Request canceled:', err.message);
+        return;
+      }
+      console.error('Search error:', err);
+      setError('Failed to fetch results. Please try again.');
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchInstructors]);
 
     const debouncedSearch = useMemo(
         () => debounce(performSearch, 300, { leading: false, trailing: true }),
