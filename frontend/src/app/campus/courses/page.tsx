@@ -67,7 +67,8 @@ const CourseSearchComponent = () => {
       const responses = await Promise.all(
         uncachedIds.map(id => 
           axios.get<Instructor>(`${process.env.BACKEND_LINK}/api/instructors/${id}`, {
-            timeout: 3000
+            timeout: 3000,
+            withCredentials: true
           }).catch(() => null)
         )
       );
@@ -114,7 +115,8 @@ const CourseSearchComponent = () => {
           limit: 100
         },
         timeout: 5000,
-        cancelToken: source.token
+        cancelToken: source.token,
+        withCredentials: true
       });
       
       setResults(response.data);
