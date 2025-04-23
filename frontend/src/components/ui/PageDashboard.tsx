@@ -100,7 +100,11 @@ const PageDashboard = () => {
         try {
             setLoading(true);
             const response = await fetch(
-                `${process.env.BACKEND_LINK}/api/admin/pages/${pageId}`
+                `${process.env.BACKEND_LINK}/api/admin/pages/${pageId}`,
+                {
+                    method: "GET",
+                    credentials: "include",
+                }
             );
 
             if (response.ok) {
@@ -134,7 +138,11 @@ const PageDashboard = () => {
         try {
             setLoading(true);
             const response = await fetch(
-                `${process.env.BACKEND_LINK}/api/admin/pages/${pageId}`
+                `${process.env.BACKEND_LINK}/api/admin/pages/${pageId}`,
+                {
+                    method: "GET",
+                    credentials: "include",
+                }
             );
 
             if (response.ok) {
@@ -175,7 +183,8 @@ const PageDashboard = () => {
                 const createResponse = await fetch(
                     `${process.env.BACKEND_LINK}/api/admin/pages`,
                     {
-                        method: 'POST',
+                        method: "POST",
+                        credentials: "include",
                         headers: {
                             'Content-Type': 'application/json',
                         },
@@ -210,7 +219,8 @@ const PageDashboard = () => {
                 const updateResponse = await fetch(
                     `${process.env.BACKEND_LINK}/api/admin/pages/${pageIdToUpdate}`,
                     {
-                        method: 'PUT',
+                        method: "PUT",
+                        credentials: "include",
                         headers: {
                             'Content-Type': 'application/json',
                         },
@@ -269,7 +279,8 @@ const PageDashboard = () => {
             const response = await fetch(
                 `${process.env.BACKEND_LINK}/api/admin/pages/${pageIdToDelete}`,
                 {
-                    method: 'DELETE',
+                    method: "DELETE",
+                    credentials: "include",
                 }
             );
 

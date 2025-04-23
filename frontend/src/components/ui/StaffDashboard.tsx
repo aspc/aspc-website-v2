@@ -25,7 +25,10 @@ const StaffDashboard = () => {
     const fetchMembers = async () => {
         try {
             const response = await fetch(
-                `${process.env.BACKEND_LINK}/api/members`
+                `${process.env.BACKEND_LINK}/api/members`,
+                {
+                    credentials: "include",
+                }
             );
             if (response.ok) {
                 const data = await response.json();
@@ -49,7 +52,10 @@ const StaffDashboard = () => {
             try {
                 setIsLoading(true);
                 const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/members/${selectedMemberId}`
+                    `${process.env.BACKEND_LINK}/api/members/${selectedMemberId}`,
+                    {
+                        credentials: "include",
+                    }
                 );
 
                 if (response.ok) {
@@ -102,13 +108,11 @@ const StaffDashboard = () => {
         if (window.confirm('Are you sure you want to delete this member?')) {
             try {
                 setIsLoading(true);
-                const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/members/${selectedMemberId}`,
-                    {
-                        method: 'DELETE',
-                    }
-                );
-
+                const response = await fetch(`${process.env.BACKEND_LINK}/api/members/${selectedMemberId}`, {
+                    method: "DELETE",
+                    credentials: "include",
+                });    
+                
                 if (!response.ok) {
                     throw new Error('Failed to delete member');
                 }
@@ -149,6 +153,7 @@ const StaffDashboard = () => {
 
             const response = await fetch(url, {
                 method,
+                credentials: "include",
                 body: formData,
             });
 

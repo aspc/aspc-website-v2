@@ -1,8 +1,13 @@
-import express, { Request, Response } from 'express';
-import multer from 'multer';
-import { ObjectId } from 'mongodb';
-import { Staff } from '../../models/People';
-import { bucket } from '../../server';
+import express, { Request, Response } from "express";
+import multer from "multer";
+import { ObjectId } from "mongodb";
+import { Staff } from "../../models/People";
+import { bucket } from "../../server";
+import {
+    isAdmin,
+    isAuthenticated,
+} from "../../middleware/authMiddleware";
+
 
 const router = express.Router();
 
@@ -20,7 +25,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // Get staff info by id
-router.get('/:id', async (req: Request, res: Response) => {
+router.get("/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const staff = await Staff.findOne({ id: id });
@@ -36,7 +41,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // Get staff info by group
-router.get('/group/:group', async (req: Request, res: Response) => {
+router.get("/group/:group", isAuthenticated, async (req: Request, res: Response) => {
     try {
         const { group } = req.params;
         const staff = await Staff.find({ group: group });
@@ -53,7 +58,7 @@ router.get('/group/:group', async (req: Request, res: Response) => {
 });
 
 // Create staff member
-router.post('/', upload.single('file'), async (req: Request, res: Response) => {
+router.post("/", isAdmin, upload.single("file"), async (req: Request, res: Response) => {
     if (!req.file) {
         res.status(400).send('No file uploaded');
         return;
@@ -91,8 +96,9 @@ router.post('/', upload.single('file'), async (req: Request, res: Response) => {
 
 // Update staff info
 router.patch(
-    '/:id',
-    upload.single('file'),
+    "/:id",
+    isAdmin,
+    upload.single("file"),
     async (req: Request, res: Response) => {
         try {
             if (!req.file && !req.body) {
@@ -191,7 +197,7 @@ router.get('/profile-pic/:id', async (req: Request, res: Response) => {
     }
 });
 
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete("/:id", isAdmin, async (req: Request, res: Response) => {
     try {
         const staff = await Staff.findOneAndDelete({ id: req.params.id });
 
