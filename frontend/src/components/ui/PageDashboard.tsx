@@ -24,8 +24,8 @@ const PageDashboard = () => {
         'about',
         'members',
         'resources',
-        'agenda',
-        'elections', // DELETE AFTER ELECTIONS
+        'press',
+        'scs'
     ];
 
     const fetchPages = async () => {

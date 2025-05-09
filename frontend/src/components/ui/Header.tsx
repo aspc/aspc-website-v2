@@ -15,9 +15,10 @@ const Header = () => {
         about: [],
         members: [],
         resources: [],
-        agenda: [],
-        elections: [], // DELETE AFTER ELECTIONS
+        press: [],
+        scs: []
     });
+
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
     const [loadingPages, setLoadingPages] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -39,8 +40,8 @@ const Header = () => {
                     about: [],
                     members: [],
                     resources: [],
-                    agenda: [],
-                    elections: [], // DELETE AFTER ELECTIONS
+                    press: [],
+                    scs: []
                 };
 
                 data.forEach((page) => {
@@ -233,25 +234,7 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/* Elections Section DELETE AFTER ELECTIONS*/}
-                            <div className="relative dropdown-container">
-                                <button
-                                    className="flex items-center space-x-1 hover:text-blue-500"
-                                    onClick={() =>
-                                        handleDropdownClick('Elections')
-                                    }
-                                >
-                                    <span>Elections</span>
-                                </button>
 
-                                {/* Elections Pages Dropdown DELETE AFTER ELECTIONS */}
-                                {openDropdown === 'Elections' && (
-                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        {/* Dynamic Election Pages */}
-                                        {renderSectionLinks('elections')}
-                                    </div>
-                                )}
-                            </div>
 
                             {/* Resources Section */}
                             <div className="relative dropdown-container">
@@ -302,21 +285,38 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/* Agenda Section */}
+                            {/* Press Room Section */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
                                     onClick={() =>
-                                        handleDropdownClick('Agenda')
+                                        handleDropdownClick('Press')
                                     }
                                 >
-                                    <span>Agenda</span>
+                                    <span>Press Room</span>
                                 </button>
 
-                                {/* Agenda Pages Dropdown */}
-                                {openDropdown === 'Agenda' && (
+                                {/* Press Pages Dropdown */}
+                                {openDropdown === 'Press' && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        {renderSectionLinks('agenda')}
+                                        {renderSectionLinks('press')}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/*SCS Internship Program Section */}
+                            <div className="relative dropdown-container">
+                                <button
+                                    className="flex items-center space-x-1 hover:text-blue-500"
+                                    onClick={() => handleDropdownClick('SCS')}
+                                >
+                                    <span>SCS Internship</span>
+                                </button>
+
+                                {/* SCS Pages Dropdown */}
+                                {openDropdown === 'SCS' && (
+                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
+                                        {renderSectionLinks('scs')}
                                     </div>
                                 )}
                             </div>
@@ -481,24 +481,6 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/* Elections - Dynamic in Mobile View */}
-                            <div className="relative dropdown-container">
-                                <button
-                                    className="text-lg flex items-center space-x-1"
-                                    onClick={() =>
-                                        handleDropdownClick('ElectionsMobile')
-                                    }
-                                >
-                                    <span>Elections</span>
-                                </button>
-
-                                {openDropdown === 'ElectionsMobile' && (
-                                    <div className="ml-2 mt-2">
-                                        {/* Elections links DELETE AFTER ELECTIONS */}
-                                        {renderSectionLinks('elections', true)}
-                                    </div>
-                                )}
-                            </div>
 
                             {/* Resources dropdown */}
                             <div className="relative dropdown-container">
@@ -546,20 +528,38 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/* Agenda dropdown */}
+                            {/* Press dropdown */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="text-lg flex items-center space-x-1"
                                     onClick={() =>
-                                        handleDropdownClick('AgendaMobile')
+                                        handleDropdownClick('PressMobile')
                                     }
                                 >
-                                    <span>Agenda</span>
+                                    <span>Press Room</span>
                                 </button>
 
-                                {openDropdown === 'AgendaMobile' && (
+                                {openDropdown === 'PressMobile' && (
                                     <div className="ml-2 mt-2">
-                                        {renderSectionLinks('agenda', true)}
+                                        {renderSectionLinks('press', true)}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* SCS dropdown */}
+                            <div className="relative dropdown-container">
+                                <button
+                                    className="text-lg flex items-center space-x-1"
+                                    onClick={() =>
+                                        handleDropdownClick('SCSMobile')
+                                    }
+                                >
+                                    <span>SCS Internship</span>
+                                </button>
+
+                                {openDropdown === 'SCSMobile' && (
+                                    <div className="ml-2 mt-2">
+                                        {renderSectionLinks('scs', true)}
                                     </div>
                                 )}
                             </div>

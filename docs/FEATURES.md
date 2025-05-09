@@ -4,7 +4,7 @@
 
 ### Static Page Management
 - **Rich Text Editing**: Integrated TinyMCE editor for creating and updating content
-- **Content Organization**: Pages organized by sections (about, members, resources, agenda, elections)
+- **Content Organization**: Pages organized by sections (about, members, resources, press room, scs internship)
 - **Content Versioning**: Update and track changes to existing pages
 - **Page Routing**: Dynamic routes based on page section and ID (`/pages/[section]/[id]`)
 
@@ -64,53 +64,96 @@
 - **Form Validation**: Ensure all required fields are completed
 
 ## Academic Resources
-(Based on database models, specific frontend implementation may be in progress)
 
 ### Course Information
-- **Course Database**: Store and retrieve course information
-- **Department Organization**: Courses organized by academic departments
-- **Course Details**: Course codes, names, and additional information
+- **Course Database**: Comprehensive database storing course codes, names, descriptions and metadata
+- **Department Organization**: Courses organized by academic departments with filtering capabilities
+- **Course Details**: Detailed course information including:
+  - Course code and name
+  - Department affiliations
+  - Graduation requirement fulfillment
+  - Terms offered (historical data)
+  - Course descriptions
+  - Associated instructors
+
+### Course Search System
+- **Text-Based Search**: Search by course name or course code
+- **School Filtering**: Filter courses by the 5C college (Pomona, CMC, Scripps, Harvey Mudd, Pitzer)
+- **Visual School Indicators**: Color-coded course cards based on the offering institution
+- **Results Management**: Pagination and sorting of search results
 
 ### Course Reviews
-- **Rating System**: Multiple rating dimensions including:
-  - Overall rating
-  - Challenge rating
-  - Inclusivity rating
-  - Work per week
-  - Total cost
-- **User Comments**: Textual feedback on courses
-- **Instructor Association**: Reviews linked to specific instructors
+- **Multi-dimensional Rating System**:
+  - Overall rating (5-star scale)
+  - Challenge rating (5-star scale)
+  - Inclusivity rating (5-star scale)
+  - Work per week (hours estimation)
+- **Review Management**: Users can create, edit, and delete their own reviews
+- **Instructor Association**: Reviews linked to specific instructors who taught the course
+- **Statistical Summaries**: Aggregated rating averages displayed with review counts
+- **Comment System**: Detailed text feedback on course experiences
+- **Timestamp Tracking**: Record of when reviews were created and last updated
 
 ## Housing Resources
-(Based on database models, specific frontend implementation may be in progress)
 
-### Housing Information
-- **Building Database**: Campus housing building information
-- **Room Details**: Information about specific rooms including:
-  - Size
-  - Occupancy type
-  - Closet type
-  - Bathroom type
+### Building Information
+- **Campus Organization**: Buildings organized by campus location
+- **Building Database**: Comprehensive information including:
+  - Building name and location
+  - Number of floors
+  - Building descriptions
+  - Campus affiliation
+- **Building Gallery**: Images of each residence hall
+- **Floor Plans**: Viewable floor plans for each building level
+
+### Room Browsing System
+- **Building-based Navigation**: Browse rooms organized by building
+- **Room Type Filtering**: View rooms based on occupancy type (single, double, triple)
+- **Room Size Information**: Square footage details where available
+
+### Room Details
+- **Room Specifications**:
   - Room number
+  - Occupancy type (single, double, triple)
+  - Room size in square feet
+  - Closet type information
+  - Bathroom type information
+- **Room Location**: Building and floor information
 
 ### Housing Reviews
-- **Rating System**: Multiple rating dimensions including:
-  - Overall rating
-  - Quiet rating
-  - Layout rating
-  - Temperature rating
-- **User Comments**: Textual feedback on housing
-- **Photo Upload**: Ability to add room pictures
+- **Multi-dimensional Rating System**:
+  - Overall rating (5-star scale)
+  - Quiet rating (5-star scale)
+  - Layout rating (5-star scale)
+  - Temperature rating (5-star scale)
+- **Photo Documentation**: Upload and view photos of rooms
+  - Photo gallery for each review
+  - Enlarged view modal for detailed inspection
+- **Review Management**: Create, edit, and delete your own reviews
+- **Statistical Summaries**: Aggregated rating averages for each dimension
+- **Comment System**: Detailed text feedback on housing experiences
+- **Timestamp Tracking**: Record of when reviews were created and last updated
 
 ## Instructor Information
-(Based on database models, specific frontend implementation may be in progress)
 
 ### Instructor Profiles
-- **Instructor Database**: Store instructor information
+- **Instructor Database**: Comprehensive storage of faculty information
+- **School Affiliation**: Association with specific colleges
+- **Course History**: Record of courses taught by each instructor
+
+### Instructor Search
+- **Name-based Search**: Find instructors by name
+- **School Filtering**: Visual indication of instructor's home institution
+- **Color-coded Interface**: School-specific styling for instructor cards
+
+### Instructor Reviews
 - **Rating Aggregation**: Average ratings across multiple dimensions:
+  - Overall rating
   - Inclusivity rating
-  - Competency rating
   - Challenge rating
+- **Course-Specific Feedback**: Reviews linked to specific courses taught
+- **Review Management**: Users can create, edit, and delete their own reviews
+- **Review Statistics**: Summary of instructor performance across all courses
 
 ## Responsive Design
 
