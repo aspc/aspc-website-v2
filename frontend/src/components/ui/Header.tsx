@@ -16,7 +16,7 @@ const Header = () => {
         members: [],
         resources: [],
         press: [],
-        scs: []
+        scs: [],
     });
 
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -41,7 +41,7 @@ const Header = () => {
                     members: [],
                     resources: [],
                     press: [],
-                    scs: []
+                    scs: [],
                 };
 
                 data.forEach((page) => {
@@ -234,8 +234,6 @@ const Header = () => {
                                 )}
                             </div>
 
-
-
                             {/* Resources Section */}
                             <div className="relative dropdown-container">
                                 <button
@@ -289,9 +287,7 @@ const Header = () => {
                             <div className="relative dropdown-container">
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
-                                    onClick={() =>
-                                        handleDropdownClick('Press')
-                                    }
+                                    onClick={() => handleDropdownClick('Press')}
                                 >
                                     <span>Press Room</span>
                                 </button>
@@ -480,7 +476,6 @@ const Header = () => {
                                     </div>
                                 )}
                             </div>
-
 
                             {/* Resources dropdown */}
                             <div className="relative dropdown-container">
