@@ -20,13 +20,7 @@ const PageDashboard = () => {
     const [loading, setLoading] = useState(false);
 
     // Available page sections
-    const pageSections = [
-        'about',
-        'members',
-        'resources',
-        'agenda',
-        'elections', // DELETE AFTER ELECTIONS
-    ];
+    const pageSections = ['about', 'members', 'resources', 'press', 'scs'];
 
     const fetchPages = async () => {
         try {
