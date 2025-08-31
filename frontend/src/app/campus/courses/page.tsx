@@ -10,6 +10,7 @@ import React, {
 import axios, { CancelTokenSource } from 'axios';
 import { debounce } from 'lodash';
 import type { Course, Instructor, SchoolKey, CourseCardProps } from '@/types';
+import Loading from '@/components/Loading';
 
 const schoolData = {
     PO: {
@@ -273,8 +274,10 @@ const CourseSearchComponent = () => {
             )}
 
             <div className="space-y-4">
-                {sortedResults.length > 0 ? (
-                    <>
+                {loading ? (
+                    <Loading />
+                ) : sortedResults.length > 0 ? (
+                        <>
                         <div className="flex justify-between items-center">
                             <p className="text-gray-600 text-sm">
                                 Showing {sortedResults.length}{' '}
