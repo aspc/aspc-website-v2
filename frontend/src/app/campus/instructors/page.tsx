@@ -61,6 +61,11 @@ const InstructorSearch = () => {
         return cancelTokenSourceRef.current;
     };
 
+    const formatFullName = (s: string) => {
+        const parts = s.trim().split(/\s+/);
+        return s.includes(',') || parts.length !== 2 ? s : `${parts[1]}, ${parts[0]}`;
+    };
+
     const performSearch = useCallback(async (term: string) => {
         if (!term || term.length < 2) {
             setResults([]);
@@ -78,7 +83,7 @@ const InstructorSearch = () => {
                 `${process.env.BACKEND_LINK}/api/instructors`,
                 {
                     params: {
-                        search: term,
+                        search: formatFullName(term),
                         limit: 50,
                     },
                     timeout: 5000,
