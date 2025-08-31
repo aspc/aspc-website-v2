@@ -277,7 +277,7 @@ const CourseSearchComponent = () => {
                 {loading ? (
                     <Loading />
                 ) : sortedResults.length > 0 ? (
-                        <>
+                    <>
                         <div className="flex justify-between items-center">
                             <p className="text-gray-600 text-sm">
                                 Showing {sortedResults.length}{' '}
