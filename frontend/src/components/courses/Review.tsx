@@ -106,8 +106,8 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                     const response = await fetch(
                         `${process.env.BACKEND_LINK}/api/instructors/${instructorId}/courses`,
                         {
-                            credentials: "include", 
-                          }
+                            credentials: 'include',
+                        }
                     );
 
                     if (!response.ok) {
@@ -121,8 +121,8 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                     const response = await fetch(
                         `${process.env.BACKEND_LINK}/api/courses/${courseId}/instructors`,
                         {
-                            credentials: "include", 
-                          }
+                            credentials: 'include',
+                        }
                     );
 
                     if (!response.ok) {
@@ -226,7 +226,7 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(reviewPayload),
-                credentials: "include",
+                credentials: 'include',
             });
 
             if (!response.ok) {

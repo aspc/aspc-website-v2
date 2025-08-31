@@ -27,7 +27,7 @@ const StaffDashboard = () => {
             const response = await fetch(
                 `${process.env.BACKEND_LINK}/api/members`,
                 {
-                    credentials: "include",
+                    credentials: 'include',
                 }
             );
             if (response.ok) {
@@ -54,7 +54,7 @@ const StaffDashboard = () => {
                 const response = await fetch(
                     `${process.env.BACKEND_LINK}/api/members/${selectedMemberId}`,
                     {
-                        credentials: "include",
+                        credentials: 'include',
                     }
                 );
 
@@ -108,11 +108,14 @@ const StaffDashboard = () => {
         if (window.confirm('Are you sure you want to delete this member?')) {
             try {
                 setIsLoading(true);
-                const response = await fetch(`${process.env.BACKEND_LINK}/api/members/${selectedMemberId}`, {
-                    method: "DELETE",
-                    credentials: "include",
-                });    
-                
+                const response = await fetch(
+                    `${process.env.BACKEND_LINK}/api/members/${selectedMemberId}`,
+                    {
+                        method: 'DELETE',
+                        credentials: 'include',
+                    }
+                );
+
                 if (!response.ok) {
                     throw new Error('Failed to delete member');
                 }
@@ -153,7 +156,7 @@ const StaffDashboard = () => {
 
             const response = await fetch(url, {
                 method,
-                credentials: "include",
+                credentials: 'include',
                 body: formData,
             });
 

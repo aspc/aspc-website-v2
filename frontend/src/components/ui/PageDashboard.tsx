@@ -102,8 +102,8 @@ const PageDashboard = () => {
             const response = await fetch(
                 `${process.env.BACKEND_LINK}/api/admin/pages/${pageId}`,
                 {
-                    method: "GET",
-                    credentials: "include",
+                    method: 'GET',
+                    credentials: 'include',
                 }
             );
 
@@ -140,8 +140,8 @@ const PageDashboard = () => {
             const response = await fetch(
                 `${process.env.BACKEND_LINK}/api/admin/pages/${pageId}`,
                 {
-                    method: "GET",
-                    credentials: "include",
+                    method: 'GET',
+                    credentials: 'include',
                 }
             );
 
@@ -183,8 +183,8 @@ const PageDashboard = () => {
                 const createResponse = await fetch(
                     `${process.env.BACKEND_LINK}/api/admin/pages`,
                     {
-                        method: "POST",
-                        credentials: "include",
+                        method: 'POST',
+                        credentials: 'include',
                         headers: {
                             'Content-Type': 'application/json',
                         },
@@ -219,8 +219,8 @@ const PageDashboard = () => {
                 const updateResponse = await fetch(
                     `${process.env.BACKEND_LINK}/api/admin/pages/${pageIdToUpdate}`,
                     {
-                        method: "PUT",
-                        credentials: "include",
+                        method: 'PUT',
+                        credentials: 'include',
                         headers: {
                             'Content-Type': 'application/json',
                         },
@@ -279,8 +279,8 @@ const PageDashboard = () => {
             const response = await fetch(
                 `${process.env.BACKEND_LINK}/api/admin/pages/${pageIdToDelete}`,
                 {
-                    method: "DELETE",
-                    credentials: "include",
+                    method: 'DELETE',
+                    credentials: 'include',
                 }
             );
 

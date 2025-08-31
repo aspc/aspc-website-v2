@@ -5,7 +5,7 @@ import {
     isAdmin,
     isAuthenticated,
     isCourseReviewOwner,
-} from "../middleware/authMiddleware";
+} from '../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -15,7 +15,7 @@ const router = express.Router();
  * @access  Public
  */
 // Courses routes
-router.get("/", isAuthenticated, async (req: Request, res: Response) => {
+router.get('/', isAuthenticated, async (req: Request, res: Response) => {
     try {
         const { search, number, schools, limit = 50 } = req.query;
 
@@ -58,7 +58,7 @@ router.get("/", isAuthenticated, async (req: Request, res: Response) => {
  * @desc    Get course by ID
  * @access  Public
  */
-router.get("/:id", isAuthenticated, async (req: Request, res: Response) => {
+router.get('/:id', isAuthenticated, async (req: Request, res: Response) => {
     try {
         const courseId = parseInt(req.params.id, 10);
 
@@ -86,7 +86,7 @@ router.get("/:id", isAuthenticated, async (req: Request, res: Response) => {
  * @desc    Create new course
  * @access  Private (Admin)
  */
-router.post("/", isAdmin, async (req: Request, res: Response) => {
+router.post('/', isAdmin, async (req: Request, res: Response) => {
     try {
         const {
             id,
@@ -134,7 +134,7 @@ router.post("/", isAdmin, async (req: Request, res: Response) => {
  * @desc    Update course
  * @access  Private (Admin)
  */
-router.put("/:id", isAdmin, async (req: Request, res: Response) => {
+router.put('/:id', isAdmin, async (req: Request, res: Response) => {
     try {
         const courseId = parseInt(req.params.id, 10);
 
@@ -169,7 +169,7 @@ router.put("/:id", isAdmin, async (req: Request, res: Response) => {
  * @desc    Delete course
  * @access  Private (Admin)
  */
-router.delete("/:id", isAdmin, async (req: Request, res: Response) => {
+router.delete('/:id', isAdmin, async (req: Request, res: Response) => {
     try {
         const courseId = parseInt(req.params.id, 10);
 
@@ -201,14 +201,14 @@ router.delete("/:id", isAdmin, async (req: Request, res: Response) => {
  * @access  Public
  */
 router.get(
-    "/:id/reviews",
+    '/:id/reviews',
     isAuthenticated,
     async (req: Request, res: Response) => {
         try {
             const courseId: number = parseInt(req.params.id);
 
             if (isNaN(courseId)) {
-                res.status(400).json({ message: "Invalid course ID format" });
+                res.status(400).json({ message: 'Invalid course ID format' });
                 return;
             }
 
@@ -219,7 +219,7 @@ router.get(
             res.json(reviews);
         } catch (err) {
             console.error(err);
-            res.status(500).json({ message: "Server error" });
+            res.status(500).json({ message: 'Server error' });
         }
     }
 );
@@ -230,7 +230,7 @@ router.get(
  * @access  Public
  */
 router.post(
-    "/:courseId/reviews",
+    '/:courseId/reviews',
     isAuthenticated,
     async (req: Request, res: Response) => {
         try {
@@ -239,7 +239,7 @@ router.post(
                 {
                     $group: {
                         _id: null, // No need to group, so _id is null
-                        maxValue: { $max: "$id" }, // Find the max value of fieldName
+                        maxValue: { $max: '$id' }, // Find the max value of fieldName
                     },
                 },
             ]);
@@ -275,9 +275,9 @@ router.post(
             const review = new CourseReviews(reviewData);
             await review.save();
 
-            res.status(201).json({ message: "Review saved successfully" });
+            res.status(201).json({ message: 'Review saved successfully' });
         } catch (error) {
-            res.status(400).json({ message: "Error creating review" });
+            res.status(400).json({ message: 'Error creating review' });
         }
     }
 );
@@ -288,7 +288,7 @@ router.post(
  * @access  Owner
  */
 router.patch(
-    "/reviews/:reviewId",
+    '/reviews/:reviewId',
     isCourseReviewOwner,
     async (req: Request, res: Response) => {
         try {
@@ -320,16 +320,16 @@ router.patch(
             );
 
             if (!updatedReview) {
-                res.status(404).json({ message: "Review not found" });
+                res.status(404).json({ message: 'Review not found' });
             }
 
             res.status(200).json({
-                message: "Review updated",
+                message: 'Review updated',
                 updatedReview,
             });
         } catch (error) {
-            console.error("update error: ", error);
-            res.status(400).json({ message: "Error updating review" });
+            console.error('update error: ', error);
+            res.status(400).json({ message: 'Error updating review' });
         }
     }
 );
@@ -340,7 +340,7 @@ router.patch(
  * @access  Owner
  */
 router.delete(
-    "/reviews/:reviewId",
+    '/reviews/:reviewId',
     isCourseReviewOwner,
     async (req: Request, res: Response) => {
         try {
@@ -349,12 +349,12 @@ router.delete(
             });
 
             if (!review) {
-                res.status(404).json({ message: "Review not found" });
+                res.status(404).json({ message: 'Review not found' });
             }
 
-            res.status(200).json({ message: "Review deleted" });
+            res.status(200).json({ message: 'Review deleted' });
         } catch (error) {
-            res.status(500).json({ message: "Server error" });
+            res.status(500).json({ message: 'Server error' });
         }
     }
 );
@@ -365,21 +365,21 @@ router.delete(
  * @access  Public
  */
 router.get(
-    "/:courseId/instructors",
+    '/:courseId/instructors',
     isAuthenticated,
     async (req: Request, res: Response) => {
         try {
             const courseId: number = parseInt(req.params.courseId);
 
             if (isNaN(courseId)) {
-                res.status(400).json({ message: "Invalid course ID format" });
+                res.status(400).json({ message: 'Invalid course ID format' });
                 return;
             }
 
             const course = await Courses.findOne({ id: courseId });
 
             if (!course) {
-                res.status(400).json({ message: "No course found" });
+                res.status(400).json({ message: 'No course found' });
                 return;
             }
 
@@ -392,7 +392,7 @@ router.get(
             res.json(instructors);
         } catch (error) {
             res.status(400).json({
-                message: "Error getting course instructors",
+                message: 'Error getting course instructors',
             });
         }
     }

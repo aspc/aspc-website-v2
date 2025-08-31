@@ -1,15 +1,15 @@
-"use client";
-import React from "react";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { ReviewFormProps } from "@/types";
-import { useAuth } from "@/hooks/useAuth";
-import Image from "next/image";
+'use client';
+import React from 'react';
+import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { ReviewFormProps } from '@/types';
+import { useAuth } from '@/hooks/useAuth';
+import Image from 'next/image';
 
 export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
-  const { user } = useAuth();
-  const params = useParams();
-  const { id, room } = params;
+    const { user } = useAuth();
+    const params = useParams();
+    const { id, room } = params;
 
     const [ratings, setRatings] = useState({
         overall: 0,
@@ -117,19 +117,19 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
             return;
         }
 
-    try {
-      if (!user) {
-        throw new Error("Error getting current user");
-      }
+        try {
+            if (!user) {
+                throw new Error('Error getting current user');
+            }
 
-      // Construct review request
-      const formData = new FormData();
-      formData.append("overall", ratings.overall.toString());
-      formData.append("quiet", ratings.quiet.toString());
-      formData.append("layout", ratings.layout.toString());
-      formData.append("temperature", ratings.temperature.toString());
-      formData.append("comments", comments);
-      formData.append("email", user.email);
+            // Construct review request
+            const formData = new FormData();
+            formData.append('overall', ratings.overall.toString());
+            formData.append('quiet', ratings.quiet.toString());
+            formData.append('layout', ratings.layout.toString());
+            formData.append('temperature', ratings.temperature.toString());
+            formData.append('comments', comments);
+            formData.append('email', user.email);
 
             if (pictures) {
                 Array.from(pictures).forEach((file) => {
@@ -143,11 +143,11 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
 
             const method = review ? 'PATCH' : 'POST';
 
-      const response = await fetch(url, {
-        method,
-        body: formData,
-        credentials: "include",
-      });
+            const response = await fetch(url, {
+                method,
+                body: formData,
+                credentials: 'include',
+            });
 
             if (!response.ok) {
                 throw new Error('Error submitting review');

@@ -142,7 +142,7 @@ const InstructorPage = (): JSX.Element => {
                 const instructorResponse = await fetch(
                     `${process.env.BACKEND_LINK}/api/instructors/${instructorId}`,
                     {
-                        credentials: "include",
+                        credentials: 'include',
                     }
                 );
 
@@ -162,7 +162,7 @@ const InstructorPage = (): JSX.Element => {
                 const reviews = await fetch(
                     `${process.env.BACKEND_LINK}/api/instructors/${instructorId}/reviews`,
                     {
-                        credentials: "include",
+                        credentials: 'include',
                     }
                 );
 
@@ -237,8 +237,8 @@ const InstructorPage = (): JSX.Element => {
                 const response = await fetch(
                     `${process.env.BACKEND_LINK}/api/courses/reviews/${id}`, // Reusing the course review endpoint
                     {
-                        method: "DELETE",
-                        credentials:"include",
+                        method: 'DELETE',
+                        credentials: 'include',
                     }
                 );
 
