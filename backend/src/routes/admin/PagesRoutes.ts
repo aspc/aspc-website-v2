@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import PageContent from '../../models/PageContent';
+import { isAdmin, isAuthenticated } from '../../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // Get the page by id
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', isAuthenticated, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const page = await PageContent.findOne({ id });
@@ -42,7 +43,7 @@ router.get('/header/:header', async (req: Request, res: Response) => {
 });
 
 // Create a new page
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', isAdmin, async (req: Request, res: Response) => {
     try {
         const { id, name, content, header, link } = req.body;
 
@@ -79,7 +80,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // Update an existing page
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', isAdmin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { newId, name, content, header, link } = req.body;
@@ -116,7 +117,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // Delete a page by id
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', isAdmin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const page = await PageContent.findOneAndDelete({ id });

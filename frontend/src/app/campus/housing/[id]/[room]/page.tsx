@@ -46,7 +46,10 @@ const RoomPage = () => {
 
                 // Fetch building data
                 const buildingResponse = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/${id}`
+                    `${process.env.BACKEND_LINK}/api/campus/housing/${id}`,
+                    {
+                        credentials: 'include',
+                    }
                 );
 
                 if (!buildingResponse.ok) {
@@ -60,7 +63,10 @@ const RoomPage = () => {
 
                 // Fetch reviews
                 const reviews = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`
+                    `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`,
+                    {
+                        credentials: 'include',
+                    }
                 );
 
                 if (!reviews.ok) {
@@ -118,6 +124,7 @@ const RoomPage = () => {
                     `${process.env.BACKEND_LINK}/api/campus/housing/reviews/${id}`,
                     {
                         method: 'DELETE',
+                        credentials: 'include',
                     }
                 );
 

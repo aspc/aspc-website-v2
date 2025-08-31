@@ -25,7 +25,10 @@ const StaffDashboard = () => {
     const fetchMembers = async () => {
         try {
             const response = await fetch(
-                `${process.env.BACKEND_LINK}/api/members`
+                `${process.env.BACKEND_LINK}/api/members`,
+                {
+                    credentials: 'include',
+                }
             );
             if (response.ok) {
                 const data = await response.json();
@@ -49,7 +52,10 @@ const StaffDashboard = () => {
             try {
                 setIsLoading(true);
                 const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/members/${selectedMemberId}`
+                    `${process.env.BACKEND_LINK}/api/members/${selectedMemberId}`,
+                    {
+                        credentials: 'include',
+                    }
                 );
 
                 if (response.ok) {
@@ -106,6 +112,7 @@ const StaffDashboard = () => {
                     `${process.env.BACKEND_LINK}/api/members/${selectedMemberId}`,
                     {
                         method: 'DELETE',
+                        credentials: 'include',
                     }
                 );
 
@@ -149,6 +156,7 @@ const StaffDashboard = () => {
 
             const response = await fetch(url, {
                 method,
+                credentials: 'include',
                 body: formData,
             });
 

@@ -18,11 +18,13 @@ export default function DynamicPage() {
             try {
                 setLoading(true);
                 const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/admin/pages/${pageid}`
+                    `${process.env.BACKEND_LINK}/api/admin/pages/${pageid}`,
+                    {
+                        credentials: 'include',
+                    }
                 );
 
                 if (!response.ok) {
-                    console.log(pageid);
                     throw new Error(`Failed to fetch page: ${response.status}`);
                 }
 

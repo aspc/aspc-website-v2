@@ -140,7 +140,10 @@ const InstructorPage = (): JSX.Element => {
 
                 // Fetch instructor data
                 const instructorResponse = await fetch(
-                    `${process.env.BACKEND_LINK}/api/instructors/${instructorId}`
+                    `${process.env.BACKEND_LINK}/api/instructors/${instructorId}`,
+                    {
+                        credentials: 'include',
+                    }
                 );
 
                 if (!instructorResponse.ok) {
@@ -157,7 +160,10 @@ const InstructorPage = (): JSX.Element => {
 
                 // Fetch instructor reviews
                 const reviews = await fetch(
-                    `${process.env.BACKEND_LINK}/api/instructors/${instructorId}/reviews`
+                    `${process.env.BACKEND_LINK}/api/instructors/${instructorId}/reviews`,
+                    {
+                        credentials: 'include',
+                    }
                 );
 
                 if (!reviews.ok) {
@@ -232,6 +238,7 @@ const InstructorPage = (): JSX.Element => {
                     `${process.env.BACKEND_LINK}/api/courses/reviews/${id}`, // Reusing the course review endpoint
                     {
                         method: 'DELETE',
+                        credentials: 'include',
                     }
                 );
 

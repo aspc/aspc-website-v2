@@ -17,9 +17,6 @@ const CoursePage = () => {
     const [courseReviews, setCourseReviews] =
         useState<CourseWithReviews | null>(null);
     const [instructors, setInstructors] = useState<Instructor[]>([]);
-    const [instructorMap, setInstructorMap] = useState<{
-        [key: number]: string;
-    }>({});
     const [isCreatingNew, setIsCreatingNew] = useState(false);
     const [selectedReview, setSelectedReview] = useState<CourseReview | null>(
         null
@@ -46,7 +43,6 @@ const CoursePage = () => {
             }
         } else {
             setIsCreatingNew(true);
-            scrollToReviewForm();
         }
     };
 
@@ -118,7 +114,11 @@ const CoursePage = () => {
 
                 // Fetch course data
                 const coursesResponse = await fetch(
-                    `${process.env.BACKEND_LINK}/api/courses/${id}`
+                    `${process.env.BACKEND_LINK}/api/courses/${id}`,
+                    {
+                        method: 'GET',
+                        credentials: 'include',
+                    }
                 );
 
                 if (!coursesResponse.ok) {
@@ -132,7 +132,11 @@ const CoursePage = () => {
 
                 // Fetch instructors
                 const instructorResponse = await fetch(
-                    `${process.env.BACKEND_LINK}/api/courses/${courseData.id}/instructors`
+                    `${process.env.BACKEND_LINK}/api/courses/${courseData.id}/instructors`,
+                    {
+                        method: 'GET',
+                        credentials: 'include', // This allows sending cookies for session identification
+                    }
                 );
 
                 if (!instructorResponse.ok) {
@@ -143,16 +147,18 @@ const CoursePage = () => {
 
                 const instructorData: Instructor[] =
                     await instructorResponse.json();
+                setInstructors(instructorData);
 
-                // Filter out any instructor named "Staff"
-                const filteredInstructors = instructorData.filter(
-                    (instructor) => instructor.name !== 'Staff'
-                );
-                setInstructors(filteredInstructors);
+                // TODO: Delete Staff from instructor list
+                // ??Display just a few instructors??
 
                 // Fetch course reviews
                 const reviews = await fetch(
-                    `${process.env.BACKEND_LINK}/api/courses/${id}/reviews`
+                    `${process.env.BACKEND_LINK}/api/courses/${id}/reviews`,
+                    {
+                        method: 'GET',
+                        credentials: 'include', // This allows sending cookies for session identification
+                    }
                 );
 
                 if (!reviews.ok) {
@@ -162,47 +168,6 @@ const CoursePage = () => {
                 }
 
                 const reviewsData: CourseReview[] = await reviews.json();
-
-                // Create a Set of unique instructor IDs from the reviews
-                const instructorIds = new Set<number>();
-                reviewsData.forEach((review) => {
-                    if (review.instructor_id) {
-                        instructorIds.add(review.instructor_id);
-                    }
-                });
-
-                // Fetch instructor data for each unique instructor ID
-                const instructorMapping: { [key: number]: string } = {};
-
-                // Fetch all instructors in parallel
-                await Promise.all(
-                    Array.from(instructorIds).map(async (instructorId) => {
-                        try {
-                            const instructorResponse = await fetch(
-                                `${process.env.BACKEND_LINK}/api/instructors/${instructorId}`
-                            );
-
-                            if (instructorResponse.ok) {
-                                const instructorData: Instructor =
-                                    await instructorResponse.json();
-                                instructorMapping[instructorId] =
-                                    instructorData.name;
-                            } else {
-                                instructorMapping[instructorId] =
-                                    'Unknown Instructor';
-                            }
-                        } catch (error) {
-                            console.error(
-                                `Error fetching instructor ${instructorId}:`,
-                                error
-                            );
-                            instructorMapping[instructorId] =
-                                'Unknown Instructor';
-                        }
-                    })
-                );
-
-                setInstructorMap(instructorMapping);
 
                 setAverageRatings(calculateAverage(reviewsData));
 
@@ -250,6 +215,8 @@ const CoursePage = () => {
         return `${month} ${year}`;
     };
 
+    // Calculate the average for the course
+
     // Format average work per week to a readable string
     const formatWorkPerWeek = (hours: number) => {
         if (hours === 0) return 'N/A';
@@ -266,6 +233,7 @@ const CoursePage = () => {
                     `${process.env.BACKEND_LINK}/api/courses/reviews/${id}`,
                     {
                         method: 'DELETE',
+                        credentials: 'include',
                     }
                 );
 
@@ -315,7 +283,7 @@ const CoursePage = () => {
                                     </div>
                                     {/* Instructors section */}
                                     {instructors && instructors.length > 0 && (
-                                        <div className="col-span-1 md:col-span-2">
+                                        <div>
                                             <p className="text-gray-600 font-medium">
                                                 Instructors:
                                             </p>
@@ -325,7 +293,7 @@ const CoursePage = () => {
                                                         (instructor) =>
                                                             instructor.name
                                                     )
-                                                    .join('; ')}
+                                                    .join(', ')}
                                             </p>
                                         </div>
                                     )}
@@ -520,14 +488,6 @@ const CoursePage = () => {
                                     )}
                             </div>
 
-                            <button
-                                className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
-                                onClick={handleAddNewReviewClick}
-                                ref={targetRef}
-                            >
-                                Add New Review
-                            </button>
-
                             <div className="py-4">
                                 <hr className="border-t border-gray-300" />
                             </div>
@@ -593,23 +553,6 @@ const CoursePage = () => {
                                             )}
                                         </div>
 
-                                        {/* Display instructor name */}
-                                        {review.instructor_id &&
-                                            instructorMap[
-                                                review.instructor_id
-                                            ] && (
-                                                <div className="text-sm text-gray-600 mb-3">
-                                                    <span className="font-medium">
-                                                        Instructor:{' '}
-                                                    </span>
-                                                    {
-                                                        instructorMap[
-                                                            review.instructor_id
-                                                        ]
-                                                    }
-                                                </div>
-                                            )}
-
                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
                                             {review.challenge_rating !==
                                                 undefined && (
@@ -648,9 +591,7 @@ const CoursePage = () => {
                                                 </span>
                                                 <span className="inline">
                                                     {review.work_per_week
-                                                        ? `${formatWorkPerWeek(
-                                                              review.work_per_week
-                                                          )}`
+                                                        ? `${formatWorkPerWeek(review.work_per_week)}`
                                                         : 'N/A'}
                                                 </span>
                                             </div>
@@ -719,7 +660,6 @@ const CoursePage = () => {
                         <ReviewForm
                             review={selectedReview}
                             courseId={Number(id)}
-                            instructorId={undefined}
                         />
                     </div>
                 )}

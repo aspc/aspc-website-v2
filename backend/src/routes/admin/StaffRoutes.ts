@@ -3,6 +3,7 @@ import multer from 'multer';
 import { ObjectId } from 'mongodb';
 import { Staff } from '../../models/People';
 import { bucket } from '../../server';
+import { isAdmin, isAuthenticated } from '../../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // Get staff info by id
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', isAuthenticated, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const staff = await Staff.findOne({ id: id });
@@ -36,62 +37,77 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // Get staff info by group
-router.get('/group/:group', async (req: Request, res: Response) => {
-    try {
-        const { group } = req.params;
-        const staff = await Staff.find({ group: group });
-        staff.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+router.get(
+    '/group/:group',
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+        try {
+            const { group } = req.params;
+            const staff = await Staff.find({ group: group });
+            staff.sort((a, b) => parseInt(a.id) - parseInt(b.id));
 
-        if (!staff) {
-            res.status(404).json({ message: 'Members not found' });
-            return;
+            if (!staff) {
+                res.status(404).json({ message: 'Members not found' });
+                return;
+            }
+            res.json(staff);
+        } catch (error) {
+            res.status(500).json({ message: 'Server error' });
         }
-        res.json(staff);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
     }
-});
+);
 
 // Create staff member
-router.post('/', upload.single('file'), async (req: Request, res: Response) => {
-    if (!req.file) {
-        res.status(400).send('No file uploaded');
-        return;
+router.post(
+    '/',
+    isAdmin,
+    upload.single('file'),
+    async (req: Request, res: Response) => {
+        if (!req.file) {
+            res.status(400).send('No file uploaded');
+            return;
+        }
+
+        try {
+            // Upload profile picture to GridFS
+            const uploadStream = bucket.openUploadStream(
+                req.file.originalname,
+                {
+                    contentType: req.file.mimetype,
+                }
+            );
+
+            uploadStream.end(req.file.buffer);
+
+            uploadStream.on('finish', async () => {
+                // After uploading the file, create a new member with the picture's file id
+                const memberData = {
+                    id: req.body.id,
+                    name: req.body.name,
+                    position: req.body.position,
+                    bio: req.body.bio,
+                    group: req.body.group,
+                    profilePic: uploadStream.id,
+                };
+
+                const member = new Staff(memberData);
+                await member.save();
+
+                req.file = undefined; // free up memory
+                res.status(201).json({
+                    message: 'Member created successfully',
+                });
+            });
+        } catch (error) {
+            res.status(400).json({ message: 'Error creating member' });
+        }
     }
-
-    try {
-        // Upload profile picture to GridFS
-        const uploadStream = bucket.openUploadStream(req.file.originalname, {
-            contentType: req.file.mimetype,
-        });
-
-        uploadStream.end(req.file.buffer);
-
-        uploadStream.on('finish', async () => {
-            // After uploading the file, create a new member with the picture's file id
-            const memberData = {
-                id: req.body.id,
-                name: req.body.name,
-                position: req.body.position,
-                bio: req.body.bio,
-                group: req.body.group,
-                profilePic: uploadStream.id,
-            };
-
-            const member = new Staff(memberData);
-            await member.save();
-
-            req.file = undefined; // free up memory
-            res.status(201).json({ message: 'Member created successfully' });
-        });
-    } catch (error) {
-        res.status(400).json({ message: 'Error creating member' });
-    }
-});
+);
 
 // Update staff info
 router.patch(
     '/:id',
+    isAdmin,
     upload.single('file'),
     async (req: Request, res: Response) => {
         try {
@@ -191,7 +207,7 @@ router.get('/profile-pic/:id', async (req: Request, res: Response) => {
     }
 });
 
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', isAdmin, async (req: Request, res: Response) => {
     try {
         const staff = await Staff.findOneAndDelete({ id: req.params.id });
 
