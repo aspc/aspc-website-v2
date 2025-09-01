@@ -600,7 +600,7 @@ const CoursePage = () => {
 
                                         {review.comments && (
                                             <div className="mt-2 mb-2">
-                                                <FormattedReviewText 
+                                                <FormattedReviewText
                                                     text={review.comments}
                                                     className="text-gray-800"
                                                 />
