@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import LoginRequired from '@/components/LoginRequired';
 import { StarRating } from '@/components/housing/Rooms';
 import { ReviewForm } from '@/components/courses/Review';
+import { FormattedReviewText } from '@/utils/textFormatting';
 
 const CoursePage = () => {
     const params = useParams();
@@ -599,9 +600,10 @@ const CoursePage = () => {
 
                                         {review.comments && (
                                             <div className="mt-2 mb-2">
-                                                <p className="text-gray-800">
-                                                    {review.comments}
-                                                </p>
+                                                <FormattedReviewText 
+                                                    text={review.comments}
+                                                    className="text-gray-800"
+                                                />
                                             </div>
                                         )}
 
