@@ -54,11 +54,10 @@ Every PR must include:
 ### 3. Testing Requirements
 
 #### Backend Testing
-- **API Routes**: Include curl statements in a bash file for all new/modified endpoints
-- **Unit Tests**: Provide unit tests for helper functions and scripts
+- **API Routes**: Include curl statements showing success for all new/modified endpoints
+- **Unit Tests**: Provide unit tests for helper functions and scripts if needed
 - **Screenshots**: Include screenshots showing successful execution of tests
 
-**Testing Script Location**: `backend/src/__tests__/api-routes.sh`
 
 **Example curl commands for HTTPS development setup:**
 ```bash
@@ -101,7 +100,7 @@ Use this checklist when creating your PR:
 - [ ] Task/issue is linked to PR
 - [ ] Context and description provided
 - [ ] Testing requirements met:
-  - [ ] Backend: Test script provided (`backend/src/__tests__/api-routes.sh`)
+  - [ ] Backend: Test Curl Statements
   - [ ] Backend: Unit tests included  
   - [ ] Frontend: Screenshots/videos included
   - [ ] Local reproduction steps documented
@@ -132,7 +131,7 @@ Use this checklist when creating your PR:
 # Test single endpoint
 curl -k https://localhost:5000/api/courses
 
-# Run full API test suite
+# Run full API test suite (not needed for now, future implementation)
 ./backend/src/__tests__/api-routes.sh
 
 # Check server connectivity
