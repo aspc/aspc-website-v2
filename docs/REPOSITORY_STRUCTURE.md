@@ -64,6 +64,8 @@ project/
 │   │   ├── hooks/                    # Custom React hooks
 │   │   │   └── useAuth.ts            # Authentication hook
 │   │   ├── middleware.ts             # Next.js middleware
+|   |   ├── utils                     # util shared functions
+|   |   |   └── textFormatting.tsx    # Review Comment Formatting function
 │   │   └── types.ts                  # TypeScript type definitions
 │   ├── certs/                        # SSL certificates
 │   │   ├── localhost.key
