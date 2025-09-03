@@ -63,7 +63,9 @@ const InstructorSearch = () => {
 
     const formatFullName = (s: string) => {
         const parts = s.trim().split(/\s+/);
-        return s.includes(',') || parts.length !== 2 ? s : `${parts[1]}, ${parts[0]}`;
+        return s.includes(',') || parts.length !== 2
+            ? s
+            : `${parts[1]}, ${parts[0]}`;
     };
 
     const performSearch = useCallback(async (term: string) => {
