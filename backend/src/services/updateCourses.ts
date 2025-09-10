@@ -54,20 +54,25 @@ let requirementMap: Map<string, string> = new Map();
 // Fetch department/course area mappings and separate into departments vs requirements
 async function fetchDepartmentMappings(apiKey: string): Promise<void> {
     try {
-        const response = await fetch('https://jicsweb.pomona.edu/api/CourseAreas', {
-            headers: {
-                'Authorization-Token': apiKey
+        const response = await fetch(
+            'https://jicsweb.pomona.edu/api/CourseAreas',
+            {
+                headers: {
+                    'Authorization-Token': apiKey,
+                },
             }
-        });
+        );
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch course areas: ${response.status} ${response.statusText}`);
+            throw new Error(
+                `Failed to fetch course areas: ${response.status} ${response.statusText}`
+            );
         }
 
         const courseAreas: APICourseArea[] = await response.json();
-        
+
         // Separate departments from requirements based on first character
-        courseAreas.forEach(area => {
+        courseAreas.forEach((area) => {
             if (area.Code && area.Code.length > 0) {
                 if (/^\d/.test(area.Code)) {
                     // Starts with number - it's a requirement
@@ -88,17 +93,23 @@ async function fetchDepartmentMappings(apiKey: string): Promise<void> {
 }
 
 // Fetch courses for a specific course area (could be department or requirement)
-async function fetchCoursesForArea(termKey: string, courseArea: string, apiKey: string): Promise<APICourse[]> {
+async function fetchCoursesForArea(
+    termKey: string,
+    courseArea: string,
+    apiKey: string
+): Promise<APICourse[]> {
     try {
         const url = `https://jicsweb.pomona.edu/api/Courses/${termKey}/${courseArea}`;
         const isRequirement = /^\d/.test(courseArea);
-        
-        console.log(`  Fetching ${isRequirement ? 'requirement' : 'department'} ${courseArea}...`);
+
+        console.log(
+            `  Fetching ${isRequirement ? 'requirement' : 'department'} ${courseArea}...`
+        );
 
         const response = await fetch(url, {
             headers: {
-                'Authorization-Token': apiKey
-            }
+                'Authorization-Token': apiKey,
+            },
         });
 
         if (!response.ok) {
@@ -110,14 +121,16 @@ async function fetchCoursesForArea(termKey: string, courseArea: string, apiKey: 
                 console.log(`    ⚠ Invalid area: ${courseArea}`);
                 return [];
             } else {
-                console.log(`    ⚠ Error ${response.status} for ${courseArea}`);
+                console.log(
+                    `    ⚠ Error ${response.status} for ${courseArea}`
+                );
                 return [];
             }
         }
 
         const courses: APICourse[] = await response.json();
         console.log(`    ✓ Found ${courses.length} courses`);
-        
+
         return courses;
     } catch (error: any) {
         console.log(`    ⚠ Error fetching ${courseArea}: ${error.message}`);
@@ -126,43 +139,55 @@ async function fetchCoursesForArea(termKey: string, courseArea: string, apiKey: 
 }
 
 // Fetch all courses from both departments and requirements
-async function fetchAllCoursesFromAPI(termKey: string, apiKey: string): Promise<{ course: APICourse, sourceArea: string }[]> {
+async function fetchAllCoursesFromAPI(
+    termKey: string,
+    apiKey: string
+): Promise<{ course: APICourse; sourceArea: string }[]> {
     try {
-        const allCoursesWithSource: { course: APICourse, sourceArea: string }[] = [];
-        
+        const allCoursesWithSource: {
+            course: APICourse;
+            sourceArea: string;
+        }[] = [];
+
         // Combine all area codes (departments + requirements)
         const allAreaCodes = [
             ...Array.from(departmentMap.keys()),
-            ...Array.from(requirementMap.keys())
+            ...Array.from(requirementMap.keys()),
         ];
-        
-        console.log(`\nFetching courses from ${departmentMap.size} departments and ${requirementMap.size} requirements...`);
-        
+
+        console.log(
+            `\nFetching courses from ${departmentMap.size} departments and ${requirementMap.size} requirements...`
+        );
+
         let successfulAreas = 0;
         let failedAreas = 0;
-        
+
         for (const areaCode of allAreaCodes) {
-            const courses = await fetchCoursesForArea(termKey, areaCode, apiKey);
-            
+            const courses = await fetchCoursesForArea(
+                termKey,
+                areaCode,
+                apiKey
+            );
+
             if (courses.length > 0) {
                 // Store each course with its source area
-                courses.forEach(course => {
+                courses.forEach((course) => {
                     allCoursesWithSource.push({ course, sourceArea: areaCode });
                 });
                 successfulAreas++;
             } else {
                 failedAreas++;
             }
-            
+
             // Small delay to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 100));
         }
-        
+
         console.log(`\n=== Fetch Summary ===`);
         console.log(`Successful areas: ${successfulAreas}`);
         console.log(`Failed/empty areas: ${failedAreas}`);
         console.log(`Total course entries: ${allCoursesWithSource.length}`);
-        
+
         return allCoursesWithSource;
     } catch (error) {
         console.error('Error fetching all courses:', error);
@@ -175,17 +200,17 @@ function stripSectionNumber(courseCode: string): string {
     // Pattern to match course code without section number
     // Examples: "CSCI005  HM-01" -> "CSCI005 HM"
     const match = courseCode.match(/^([A-Z]+\d+[A-Z]?)\s+([A-Z]+)/);
-    
+
     if (match) {
         return `${match[1]} ${match[2]}`;
     }
-    
+
     // If pattern doesn't match, try to remove anything after the last hyphen
     const lastHyphenIndex = courseCode.lastIndexOf('-');
     if (lastHyphenIndex > 0) {
         return courseCode.substring(0, lastHyphenIndex).trim();
     }
-    
+
     return courseCode;
 }
 
@@ -215,7 +240,7 @@ function getDepartmentNames(deptCode: string): string[] {
         console.warn('Department code is empty');
         return [];
     }
-    
+
     const deptName = departmentMap.get(deptCode);
     if (deptName) {
         return [deptName];
@@ -226,7 +251,9 @@ function getDepartmentNames(deptCode: string): string[] {
 }
 
 // Main function to process courses with source tracking
-async function updateCoursesFromAPI(coursesWithSource: { course: APICourse, sourceArea: string }[]) {
+async function updateCoursesFromAPI(
+    coursesWithSource: { course: APICourse; sourceArea: string }[]
+) {
     try {
         let coursesCreated = 0;
         let coursesUpdated = 0;
@@ -241,47 +268,63 @@ async function updateCoursesFromAPI(coursesWithSource: { course: APICourse, sour
                 // Strip section number from course code
                 const courseCode = stripSectionNumber(apiCourse.CourseCode);
                 const courseCodeSlug = generateCodeSlug(courseCode);
-                
+
                 // Generate term key
                 const termKey = '2025;FA';
-                
+
                 // Check if source is requirement or department
                 const isRequirement = /^\d/.test(sourceArea);
-                
-                console.log(`Processing: ${apiCourse.CourseCode} -> ${courseCode} (from ${isRequirement ? 'requirement' : 'department'} ${sourceArea})`);
+
+                console.log(
+                    `Processing: ${apiCourse.CourseCode} -> ${courseCode} (from ${isRequirement ? 'requirement' : 'department'} ${sourceArea})`
+                );
 
                 // Check if course exists
-                const existingCourse = await Courses.findOne({ code: courseCode });
+                const existingCourse = await Courses.findOne({
+                    code: courseCode,
+                });
 
                 if (existingCourse) {
                     // Course exists - update it
                     let updated = false;
-                    
+
                     // Add term key if new
                     if (!existingCourse.term_keys.includes(termKey)) {
                         existingCourse.term_keys.push(termKey);
                         updated = true;
                     }
-                    
+
                     if (isRequirement) {
                         // Add requirement if not already present
-                        if (!existingCourse.requirement_codes.includes(sourceArea)) {
+                        if (
+                            !existingCourse.requirement_codes.includes(
+                                sourceArea
+                            )
+                        ) {
                             existingCourse.requirement_codes.push(sourceArea);
-                            const requirementName = requirementMap.get(sourceArea) || sourceArea;
-                            existingCourse.requirement_names.push(requirementName);
+                            const requirementName =
+                                requirementMap.get(sourceArea) || sourceArea;
+                            existingCourse.requirement_names.push(
+                                requirementName
+                            );
                             updated = true;
-                            console.log(`  + Added requirement: ${sourceArea} - ${requirementName}`);
+                            console.log(
+                                `  + Added requirement: ${sourceArea} - ${requirementName}`
+                            );
                         }
                     } else {
                         // Add department if not already present
-                        const deptName = departmentMap.get(sourceArea) || sourceArea;
-                        if (!existingCourse.department_names.includes(deptName)) {
+                        const deptName =
+                            departmentMap.get(sourceArea) || sourceArea;
+                        if (
+                            !existingCourse.department_names.includes(deptName)
+                        ) {
                             existingCourse.department_names.push(deptName);
                             updated = true;
                             console.log(`  + Added department: ${deptName}`);
                         }
                     }
-                    
+
                     if (updated) {
                         await existingCourse.save();
                         console.log(`  ✓ Updated course ${courseCode}`);
@@ -292,49 +335,57 @@ async function updateCoursesFromAPI(coursesWithSource: { course: APICourse, sour
                 } else {
                     // Course doesn't exist - create it
                     const nextId = await getNextCourseId();
-                    
+
                     // Extract department from course code
                     const deptCode = extractDepartmentCode(courseCode);
-                    
+
                     // Initialize arrays
                     let departmentNames: string[] = [];
                     let requirementCodes: string[] = [];
                     let requirementNames: string[] = [];
-                    
+
                     if (isRequirement) {
                         // Coming from requirement area
                         requirementCodes = [sourceArea];
-                        requirementNames = [requirementMap.get(sourceArea) || sourceArea];
+                        requirementNames = [
+                            requirementMap.get(sourceArea) || sourceArea,
+                        ];
                         // Try to get department from course code
                         departmentNames = getDepartmentNames(deptCode);
                     } else {
                         // Coming from department area
-                        departmentNames = [departmentMap.get(sourceArea) || sourceArea];
+                        departmentNames = [
+                            departmentMap.get(sourceArea) || sourceArea,
+                        ];
                         // Requirements empty for now
                     }
-                    
+
                     const newCourse = new Courses({
                         id: nextId,
                         code: courseCode,
                         code_slug: courseCodeSlug,
-                        name: apiCourse.Name ? apiCourse.Name.trim() : 'Untitled Course',
+                        name: apiCourse.Name
+                            ? apiCourse.Name.trim()
+                            : 'Untitled Course',
                         department_names: departmentNames,
                         requirement_codes: requirementCodes,
                         requirement_names: requirementNames,
                         term_keys: [termKey],
                         description: apiCourse.Description || '',
-                        all_instructor_ids: []
+                        all_instructor_ids: [],
                     });
 
                     await newCourse.save();
                     console.log(`  ✓ Created course ${courseCode}`);
                     coursesCreated++;
                 }
-                
+
                 processedCourses.add(courseCode);
-                
             } catch (error) {
-                console.error(`  ✗ Error processing ${apiCourse.CourseCode}:`, error);
+                console.error(
+                    `  ✗ Error processing ${apiCourse.CourseCode}:`,
+                    error
+                );
                 errors++;
             }
         }
@@ -345,7 +396,6 @@ async function updateCoursesFromAPI(coursesWithSource: { course: APICourse, sour
         console.log(`Courses skipped: ${coursesSkipped}`);
         console.log(`Unique courses: ${processedCourses.size}`);
         console.log(`Errors: ${errors}`);
-
     } catch (error) {
         console.error('Fatal error processing courses:', error);
         throw error;
@@ -357,15 +407,19 @@ async function main() {
     const API_KEY = process.env.POMONA_API_KEY;
     if (!API_KEY) {
         console.error('Error: POMONA_API_KEY environment variable is not set');
-        console.log('Please set it in your .env file: POMONA_API_KEY=your_api_key_here');
+        console.log(
+            'Please set it in your .env file: POMONA_API_KEY=your_api_key_here'
+        );
         process.exit(1);
     }
 
     const TERM_KEY = '2025;FA';
-    
+
     try {
         // Connect to MongoDB
-        const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/school-platform';
+        const MONGODB_URI =
+            process.env.MONGODB_URI ||
+            'mongodb://localhost:27017/school-platform';
         await mongoose.connect(MONGODB_URI);
         console.log('Connected to MongoDB');
 
@@ -374,14 +428,16 @@ async function main() {
         await fetchDepartmentMappings(API_KEY);
 
         // Then, fetch courses from all areas
-        const coursesWithSource = await fetchAllCoursesFromAPI(TERM_KEY, API_KEY);
+        const coursesWithSource = await fetchAllCoursesFromAPI(
+            TERM_KEY,
+            API_KEY
+        );
 
         // Process all courses
         console.log('\nProcessing courses...');
         await updateCoursesFromAPI(coursesWithSource);
 
         console.log('\n✓ Script completed successfully');
-
     } catch (error) {
         console.error('Error in main:', error);
         process.exit(1);
@@ -402,4 +458,10 @@ if (require.main === module) {
     runWithArgs();
 }
 
-export { updateCoursesFromAPI, stripSectionNumber, generateCodeSlug, fetchAllCoursesFromAPI, fetchDepartmentMappings };
+export {
+    updateCoursesFromAPI,
+    stripSectionNumber,
+    generateCodeSlug,
+    fetchAllCoursesFromAPI,
+    fetchDepartmentMappings,
+};
