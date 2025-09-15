@@ -46,7 +46,6 @@ const schoolData = {
 
 const CourseSearchComponent = () => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [courseNumber, setCourseNumber] = useState('');
     const [selectedSchools, setSelectedSchools] = useState<
         Record<SchoolKey, boolean>
     >({
@@ -118,12 +117,8 @@ const CourseSearchComponent = () => {
     );
 
     const performSearch = useCallback(
-        async (
-            term: string,
-            number: string,
-            schools: Record<SchoolKey, boolean>
-        ) => {
-            if ((!term || term.length < 2) && !number) {
+        async (term: string, schools: Record<SchoolKey, boolean>) => {
+            if (!term || term.length < 2) {
                 setResults([]);
                 setLoading(false);
                 return;
@@ -144,7 +139,6 @@ const CourseSearchComponent = () => {
                     {
                         params: {
                             search: term,
-                            number: number,
                             schools: activeSchools.join(','),
                             limit: 100,
                         },
@@ -184,8 +178,8 @@ const CourseSearchComponent = () => {
     );
 
     useEffect(() => {
-        if (searchTerm.trim() || courseNumber.trim()) {
-            debouncedSearch(searchTerm, courseNumber, selectedSchools);
+        if (searchTerm.trim()) {
+            debouncedSearch(searchTerm, selectedSchools);
         } else {
             setResults([]);
         }
@@ -196,7 +190,7 @@ const CourseSearchComponent = () => {
                 cancelTokenSourceRef.current.cancel('Component unmounted');
             }
         };
-    }, [searchTerm, courseNumber, selectedSchools, debouncedSearch]);
+    }, [searchTerm, selectedSchools, debouncedSearch]);
 
     const handleSchoolToggle = (school: SchoolKey) => {
         setSelectedSchools((prev) => ({
@@ -298,7 +292,7 @@ const CourseSearchComponent = () => {
                     </>
                 ) : (
                     !loading &&
-                    (searchTerm || courseNumber) && (
+                    searchTerm && (
                         <div className="text-center py-8 text-gray-500">
                             No courses found matching your search criteria.
                         </div>
