@@ -129,6 +129,7 @@ const CourseSearchComponent = () => {
                 return;
             }
 
+            const term_cleaned = term.replace(/\\/g, '');
             const source = createCancelTokenSource();
 
             try {
@@ -143,7 +144,7 @@ const CourseSearchComponent = () => {
                     `${process.env.BACKEND_LINK}/api/courses`,
                     {
                         params: {
-                            search: term,
+                            search: term_cleaned,
                             number: number,
                             schools: activeSchools.join(','),
                             limit: 100,
