@@ -5,10 +5,13 @@
 This repository contains the ASPC Student Platform, a web application for Pomona College students. The platform provides authentication through Pomona's ITS system using SAML, and serves as a central hub for student resources.
 
 ### Software Developer Team:
+
 Haram Yoon,
 Cole Uyematsu,
-Vadym Musiienko,
 Kartika Santoso,
+Prince Bashangezi,
+Ella Zhu,
+Vadym Musiienko,
 Abrar Yaser
 
 # Deployment Information
@@ -27,8 +30,9 @@ This repository includes several documentation files to help you understand and 
 - [Authentication](./docs/AUTHENTICATION.md) - Details on the SAML authentication system
 - [Features](./docs/FEATURES.md) - Explanation of application features and functionalities
 
-## Basic Repository Structure 
- - Detailed can be found at [Repository Structure](./docs/REPOSITORY_STRUCTURE.md)
+## Basic Repository Structure
+
+- Detailed can be found at [Repository Structure](./docs/REPOSITORY_STRUCTURE.md)
 
 ```
 project/
@@ -48,13 +52,11 @@ project/
 └── docs/              # Documentation files
 ```
 
-
 ## Contributing
 
 When contributing to this project, please follow the existing code structure and naming conventions. Make sure to test your changes thoroughly before submitting a pull request.
 
 ---
-
 
 # Getting Started with ASPC Student Platform
 
@@ -122,6 +124,7 @@ This will make the frontend available at https://localhost:3001
 Create a `.env` file in both the frontend and backend directories with the following variables:
 
 **Backend .env**
+
 ```
 NODE_ENV=development
 SESSION_SECRET=your_secret_key_here
@@ -130,9 +133,11 @@ IDP_METADATA_URL=<url_from_ITS>
 ENGAGE_API_URL=<engage_url>
 ENGAGE_API_KEY=<engage key>
 ```
+
 Note: last four are only needed for events pulling or authentication, and application can still be run without them.
 
 **Frontend .env**
+
 ```
 BACKEND_LINK=https://localhost:5000
 ```
@@ -159,6 +164,7 @@ docker-compose up
 ```
 
 This will start the application with the following services:
+
 - MongoDB on port 27017
 - Backend on port 5000
 - Frontend on port 3001
@@ -166,6 +172,7 @@ This will start the application with the following services:
 ### Docker Configuration
 
 The Docker setup includes:
+
 - Volume for MongoDB persistence
 - Volume for certificates
 - Environment variable configuration
@@ -188,32 +195,34 @@ For production deployment:
 ### Common Issues
 
 1. **SSL Certificate Problems**
-   - Ensure certificates are properly generated
-   - Check that certificate paths are correct in config files
-   - Verify Common Name is set to 'localhost' for local development
+
+    - Ensure certificates are properly generated
+    - Check that certificate paths are correct in config files
+    - Verify Common Name is set to 'localhost' for local development
 
 2. **SAML Authentication Issues**
-   - Verify IDP metadata is correctly downloaded and saved
-   - Check entity ID and ACS URL configuration
-   - Ensure HTTPS is working correctly on both frontend and backend
+
+    - Verify IDP metadata is correctly downloaded and saved
+    - Check entity ID and ACS URL configuration
+    - Ensure HTTPS is working correctly on both frontend and backend
 
 3. **Docker Issues**
-   - Check if ports are already in use
-   - Verify environment variables in docker-compose.yml
-   - Ensure MongoDB volume has correct permissions
-
+    - Check if ports are already in use
+    - Verify environment variables in docker-compose.yml
+    - Ensure MongoDB volume has correct permissions
 
 ### How to run the docker container locally:
 
 1. Build the container:
+
     ```bash
-    cd backend  
-    docker build -t aspc-backend . 
-    ```  
+    cd backend
+    docker build -t aspc-backend .
+    ```
 
 2. Run your new container, you can change the port from 5001 to any port available. This will be the port your docker container connects to. Make sure to insert the correct environment variables.
     ```bash
-    docker run -p 5001:5000 \                                                         
+    docker run -p 5001:5000 \
       -e MONGODB_URI="mongodb+srv://{user}:{password}@aspc.qm4l8.mongodb.net/school-platform?retryWrites=true&w=majority&appName=ASPC" \
       -e NEXT_PUBLIC_TINYMCE_API_KEY="{key}" \
       aspc-backend
@@ -222,16 +231,19 @@ For production deployment:
 ### How to deploy:
 
 1. Clear all previous builders:
+
     ```bash
     docker buildx rm mybuilder || true
     ```
 
 2. Create a new builder, you can name it anything:
+
     ```bash
     docker buildx create --use --name mybuilder
     ```
 
 3. Build the container and push it to dockerhub:
+
     ```bash
     docker buildx build \
       --platform linux/amd64 \
@@ -241,6 +253,7 @@ For production deployment:
     ```
 
 4. Check architecture (has to be linux amd64 for Amazon Lightsail):
+
     ```bash
     docker manifest inspect aspcsoftware/aspc-backend:latest
     ```
@@ -249,4 +262,3 @@ For production deployment:
     ```bash
     docker.io/aspcsoftware/aspc-backend:latest
     ```
-

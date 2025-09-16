@@ -89,6 +89,7 @@ const CourseSearchComponent = () => {
                                 `${process.env.BACKEND_LINK}/api/instructors/${id}`,
                                 {
                                     timeout: 3000,
+                                    withCredentials: true,
                                 }
                             )
                             .catch(() => null)
@@ -150,6 +151,7 @@ const CourseSearchComponent = () => {
                         },
                         timeout: 5000,
                         cancelToken: source.token,
+                        withCredentials: true,
                     }
                 );
 

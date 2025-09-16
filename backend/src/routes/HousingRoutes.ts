@@ -7,14 +7,24 @@ import {
 } from '../models/Housing';
 import { housingReviewPictures } from '../server';
 import { ObjectId } from 'mongodb';
+import {
+    isAdmin,
+    isAuthenticated,
+    isCourseReviewOwner,
+    isHousingReviewOwner,
+} from '../middleware/authMiddleware';
 
 const router = express.Router();
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// Get all buildings
-router.get('/', async (req: Request, res: Response) => {
+/**
+ * @route   GET /api/campus/housing
+ * @desc    Get all housing buildings
+ * @access  Public
+ */
+router.get('/', isAuthenticated, async (req: Request, res: Response) => {
     try {
         const buildings = await HousingBuildings.find({});
         res.json(buildings);
@@ -23,166 +33,173 @@ router.get('/', async (req: Request, res: Response) => {
     }
 });
 
-// Get a building by id
-router.get('/:building', async (req: Request, res: Response) => {
-    try {
-        // Get building id
-        const buildingId = parseInt(req.params.building, 10);
+/**
+ * @route   GET /api/campus/housing/:building
+ * @desc    Get housing building by id
+ * @access  Public
+ */
+router.get(
+    '/:building',
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+        try {
+            // Get building id
+            const buildingId = parseInt(req.params.building, 10);
 
-        // Check if conversion is valid
-        if (isNaN(buildingId)) {
-            res.status(400).json({ message: 'Invalid building ID format' });
-            return;
+            // Check if conversion is valid
+            if (isNaN(buildingId)) {
+                res.status(400).json({ message: 'Invalid building ID format' });
+                return;
+            }
+
+            // Find building by id
+            const buildingData = await HousingBuildings.findOne({
+                id: buildingId,
+            });
+            if (!buildingData) {
+                res.status(404).json({ message: 'Building not found' });
+                return;
+            }
+
+            // Return building
+            res.json(buildingData);
+        } catch (error) {
+            res.status(500).json({ message: 'Server error' });
         }
-
-        // Find building by id
-        const buildingData = await HousingBuildings.findOne({ id: buildingId });
-        if (!buildingData) {
-            res.status(404).json({ message: 'Building not found' });
-            return;
-        }
-
-        // Return building
-        res.json(buildingData);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
     }
-});
+);
 
-// Get suites in a building
-// TODO: This route is not used since we don't have data for suites, consider removing
-// router.get("/:building/suites", async (req: Request, res: Response) => {
-//     try {
-//         // Get building id
-//         const { building } = req.params;
-//         if (!building) {
-//             res.status(404).json({ message: "No building id provided" });
-//             return;
-//         }
+/**
+ * @route   GET /campus/housing/:building/rooms
+ * @desc    Get all roms in a building (by building id)
+ * @access  Public
+ */
+router.get(
+    '/:building/rooms',
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+        try {
+            // Get building id
+            const buildingId = parseInt(req.params.building, 10);
 
-//         // Get suites
-//         const suites = await HousingSuites.find({
-//             housing_building_id: building,
-//         });
-//         if (!suites || suites.length === 0) {
-//             res.status(404).json({ message: "Suites not found" });
-//             return;
-//         }
-//         res.json(suites);
-//     } catch (error) {
-//         res.status(500).json({ message: "Server error" });
-//     }
-// });
+            // Check if conversion is valid
+            if (isNaN(buildingId)) {
+                res.status(400).json({ message: 'Invalid building ID format' });
+                return;
+            }
 
-// Get all rooms in a building (by building id)
-router.get('/:building/rooms', async (req: Request, res: Response) => {
-    try {
-        // Get building id
-        const buildingId = parseInt(req.params.building, 10);
+            // Get all rooms in the building
+            const rooms = await HousingRooms.find({
+                housing_building_id: buildingId,
+            }).sort({ room_number: 1 });
 
-        // Check if conversion is valid
-        if (isNaN(buildingId)) {
-            res.status(400).json({ message: 'Invalid building ID format' });
-            return;
+            if (!rooms || rooms.length === 0) {
+                res.status(404).json({ message: 'Rooms not found' });
+                return;
+            }
+
+            res.json(rooms);
+        } catch (error) {
+            res.status(500).json({ message: 'Server error' });
         }
-
-        // Get all rooms in the building
-        const rooms = await HousingRooms.find({
-            housing_building_id: buildingId,
-        }).sort({ room_number: 1 });
-
-        if (!rooms || rooms.length === 0) {
-            res.status(404).json({ message: 'Rooms not found' });
-            return;
-        }
-
-        res.json(rooms);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
     }
-});
+);
 
-// Get housing reviews for a room
-router.get('/:room/reviews', async (req: Request, res: Response) => {
-    try {
-        // Get room id and convert it to a number
-        const roomId = parseInt(req.params.room, 10);
+/**
+ * @route   GET /api/campus/:room/reviews
+ * @desc    Get housing reviews for a room
+ * @access  Public
+ */
+router.get(
+    '/:room/reviews',
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+        try {
+            // Get room id and convert it to a number
+            const roomId = parseInt(req.params.room, 10);
 
-        // Check if conversion is valid
-        if (isNaN(roomId)) {
-            res.status(400).json({ message: 'Invalid room ID format' });
-            return;
-        }
+            // Check if conversion is valid
+            if (isNaN(roomId)) {
+                res.status(400).json({ message: 'Invalid room ID format' });
+                return;
+            }
 
-        // Find the room by room id
-        const roomData = await HousingRooms.findOne({ id: roomId });
+            // Find the room by room id
+            const roomData = await HousingRooms.findOne({ id: roomId });
 
-        if (!roomData) {
-            res.status(404).json({ message: 'Room not found' });
-            return;
-        }
+            if (!roomData) {
+                res.status(404).json({ message: 'Room not found' });
+                return;
+            }
 
-        // Get all reviews for the room
-        const reviews = await HousingReviews.find({
-            housing_room_id: roomId,
-        });
+            // Get all reviews for the room
+            const reviews = await HousingReviews.find({
+                housing_room_id: roomId,
+            });
 
-        // Calculate average ratings
-        if (reviews.length > 0) {
-            const overallRatings = reviews
-                .map((r) => r.overall_rating)
-                .filter(Boolean) as number[];
-            const quietRatings = reviews
-                .map((r) => r.quiet_rating)
-                .filter(Boolean) as number[];
-            const layoutRatings = reviews
-                .map((r) => r.layout_rating)
-                .filter(Boolean) as number[];
-            const temperatureRatings = reviews
-                .map((r) => r.temperature_rating)
-                .filter(Boolean) as number[];
+            // Calculate average ratings
+            if (reviews.length > 0) {
+                const overallRatings = reviews
+                    .map((r) => r.overall_rating)
+                    .filter(Boolean) as number[];
+                const quietRatings = reviews
+                    .map((r) => r.quiet_rating)
+                    .filter(Boolean) as number[];
+                const layoutRatings = reviews
+                    .map((r) => r.layout_rating)
+                    .filter(Boolean) as number[];
+                const temperatureRatings = reviews
+                    .map((r) => r.temperature_rating)
+                    .filter(Boolean) as number[];
 
-            const calcAverage = (arr: number[]) =>
-                arr.length > 0
-                    ? arr.reduce((sum, val) => sum + val, 0) / arr.length
-                    : 0;
+                const calcAverage = (arr: number[]) =>
+                    arr.length > 0
+                        ? arr.reduce((sum, val) => sum + val, 0) / arr.length
+                        : 0;
 
-            const averages = {
-                overallAverage: calcAverage(overallRatings),
-                quietAverage: calcAverage(quietRatings),
-                layoutAverage: calcAverage(layoutRatings),
-                temperatureAverage: calcAverage(temperatureRatings),
-                reviewCount: reviews.length,
-            };
+                const averages = {
+                    overallAverage: calcAverage(overallRatings),
+                    quietAverage: calcAverage(quietRatings),
+                    layoutAverage: calcAverage(layoutRatings),
+                    temperatureAverage: calcAverage(temperatureRatings),
+                    reviewCount: reviews.length,
+                };
 
-            // Return reviews and averages as well as the room data itself
+                // Return reviews and averages as well as the room data itself
+                res.json({
+                    room: roomData,
+                    reviews: reviews,
+                    averages: averages,
+                });
+                return;
+            }
+
+            // Return reviews (even if empty)
             res.json({
                 room: roomData,
                 reviews: reviews,
-                averages: averages,
+                averages: {
+                    overallAverage: 0,
+                    quietAverage: 0,
+                    layoutAverage: 0,
+                    temperatureAverage: 0,
+                    reviewCount: 0,
+                },
             });
-            return;
+        } catch (error) {
+            res.status(500).json({ message: 'Server error' });
         }
-
-        // Return reviews (even if empty)
-        res.json({
-            room: roomData,
-            reviews: reviews,
-            averages: {
-                overallAverage: 0,
-                quietAverage: 0,
-                layoutAverage: 0,
-                temperatureAverage: 0,
-                reviewCount: 0,
-            },
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
     }
-});
+);
 
+/**
+ * @route   GET /api/campus/housing/:buildingId/:roomNumber/reviews
+ * @desc    Get reviews for a room by building id and room number
+ * @access  Public
+ */
 router.get(
     '/:buildingId/:roomNumber/reviews',
+    isAuthenticated,
     async (req: Request, res: Response) => {
         try {
             // Get room id and convert it to a number
@@ -265,8 +282,14 @@ router.get(
     }
 );
 
+/**
+ * @route   POST /api/campus/housing/:buildingId/:roomNumber/reviews
+ * @desc    Add new housing room review
+ * @access  Public
+ */
 router.post(
     '/:buildingId/:roomNumber/reviews',
+    isAuthenticated,
     upload.array('pictures'),
     async (req: Request, res: Response) => {
         try {
@@ -359,8 +382,14 @@ router.post(
     }
 );
 
+/**
+ * @route   PATCH /api/campus/housing/reviews/:id
+ * @desc    Update housing review by review id
+ * @access  isHousingReviewOwner
+ */
 router.patch(
-    '/reviews/:id',
+    '/reviews/:reviewId',
+    isHousingReviewOwner,
     upload.array('pictures'),
     async (req: Request, res: Response) => {
         try {
@@ -368,8 +397,8 @@ router.patch(
                 return;
             }
 
-            const id = req.params.id;
-            const oldReview = await HousingReviews.findOne({ id: id });
+            const reviewId = req.params.reviewId;
+            const oldReview = await HousingReviews.findOne({ id: reviewId });
 
             if (!oldReview) {
                 console.log('cant find old review');
@@ -437,7 +466,7 @@ router.patch(
             }
 
             const updatedReview = await HousingReviews.findOneAndUpdate(
-                { id: id },
+                { id: reviewId },
                 updateData,
                 { new: true }
             );
@@ -452,53 +481,71 @@ router.patch(
     }
 );
 
-router.delete('/reviews/:id', async (req: Request, res: Response) => {
-    try {
-        const review = await HousingReviews.findOneAndDelete({
-            id: req.params.id,
-        });
-
-        if (!review) {
-            res.status(404).json({ message: 'Review not found' });
-        }
-
-        res.status(200).json({ message: 'Review deleted' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
-});
-
-// Get profile picture by id
-router.get('/review_pictures/:id', async (req: Request, res: Response) => {
-    try {
-        const fileId = new ObjectId(req.params.id);
-
-        // Check if file exists
-        const files = await housingReviewPictures
-            .find({ _id: fileId })
-            .toArray();
-        if (!files.length) {
-            res.status(404).json({ message: 'Profile picture not found' });
-            return;
-        }
-
-        // Set appropriate headers
-        res.set('Content-Type', files[0].contentType);
-
-        // Create download stream
-        const downloadStream = housingReviewPictures.openDownloadStream(fileId);
-
-        // Pipe the file to the response
-        downloadStream.pipe(res);
-
-        downloadStream.on('error', () => {
-            res.status(404).json({
-                message: 'Error retrieving profile picture',
+/**
+ * @route   DELETE /api/campus/housing/reviews/:id
+ * @desc    Delete housing room review
+ * @access  isHousingReviewOwner
+ */
+router.delete(
+    '/reviews/:reviewId',
+    isHousingReviewOwner,
+    async (req: Request, res: Response) => {
+        try {
+            const review = await HousingReviews.findOneAndDelete({
+                id: req.params.reviewId,
             });
-        });
-    } catch (error) {
-        res.status(400).json({ message: 'Invalid profile picture ID' });
+
+            if (!review) {
+                res.status(404).json({ message: 'Review not found' });
+            }
+
+            res.status(200).json({ message: 'Review deleted' });
+        } catch (error) {
+            res.status(500).json({ message: 'Server error' });
+        }
     }
-});
+);
+
+/**
+ * @route   GET /api/campus/housing/review_pictures/:id
+ * @desc    Get review picture by id
+ * @access  Public
+ */
+router.get(
+    '/review_pictures/:id',
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+        try {
+            const fileId = new ObjectId(req.params.id);
+
+            // Check if file exists
+            const files = await housingReviewPictures
+                .find({ _id: fileId })
+                .toArray();
+            if (!files.length) {
+                res.status(404).json({ message: 'Profile picture not found' });
+                return;
+            }
+
+            // Set appropriate headers
+            res.set('Content-Type', files[0].contentType);
+
+            // Create download stream
+            const downloadStream =
+                housingReviewPictures.openDownloadStream(fileId);
+
+            // Pipe the file to the response
+            downloadStream.pipe(res);
+
+            downloadStream.on('error', () => {
+                res.status(404).json({
+                    message: 'Error retrieving profile picture',
+                });
+            });
+        } catch (error) {
+            res.status(400).json({ message: 'Invalid profile picture ID' });
+        }
+    }
+);
 
 export default router;

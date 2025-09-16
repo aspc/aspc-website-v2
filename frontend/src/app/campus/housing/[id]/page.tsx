@@ -27,7 +27,10 @@ export default function DynamicRooms() {
             roomsList.map(async (room) => {
                 try {
                     const response = await fetch(
-                        `${process.env.BACKEND_LINK}/api/campus/housing/${room.id}/reviews`
+                        `${process.env.BACKEND_LINK}/api/campus/housing/${room.id}/reviews`,
+                        {
+                            credentials: 'include',
+                        }
                     );
 
                     if (response.ok) {
@@ -61,7 +64,6 @@ export default function DynamicRooms() {
 
                 // Validate building parameter is a number
                 const buildingId = Number(id);
-                console.log(buildingId);
 
                 if (isNaN(buildingId)) {
                     setBuildingNotFound(true);
@@ -71,9 +73,11 @@ export default function DynamicRooms() {
 
                 // First fetch building info to check if it exists
                 const buildingResponse = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}`
+                    `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}`,
+                    {
+                        credentials: 'include',
+                    }
                 );
-                console.log(buildingResponse);
 
                 if (!buildingResponse.ok) {
                     if (buildingResponse.status === 404) {
@@ -98,7 +102,10 @@ export default function DynamicRooms() {
 
                 // Now fetch rooms for this building
                 const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}/rooms`
+                    `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}/rooms`,
+                    {
+                        credentials: 'include',
+                    }
                 );
 
                 if (!response.ok) {
@@ -201,14 +208,22 @@ export default function DynamicRooms() {
                             return (
                                 <div
                                     key={i}
-                                    className={`${shouldSpanAndCenter ? 'sm:col-span-2 flex justify-center' : ''}`}
+                                    className={`${
+                                        shouldSpanAndCenter
+                                            ? 'sm:col-span-2 flex justify-center'
+                                            : ''
+                                    }`}
                                 >
                                     <Image
                                         src={`/floorplans/${safeName}-floor${i + 1}.jpg`}
                                         width={800}
                                         height={400}
                                         alt={`Floor plan ${i + 1}`}
-                                        className={`w-full h-auto rounded-lg border border-gray-200 shadow ${shouldSpanAndCenter ? 'sm:max-w-2xl' : ''}`}
+                                        className={`w-full h-auto rounded-lg border border-gray-200 shadow ${
+                                            shouldSpanAndCenter
+                                                ? 'sm:max-w-2xl'
+                                                : ''
+                                        }`}
                                         onError={(e) => {
                                             e.currentTarget.src =
                                                 '/placeholder-floorplan.jpg';

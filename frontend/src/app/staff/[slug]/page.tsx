@@ -14,7 +14,6 @@ const groupSlugMap: { [key: string]: string } = {
 
 const SenatePage: React.FC<PageProps> = ({ params }) => {
     const resolvedParams = React.use(params);
-    console.log(resolvedParams.slug);
     const { loading } = useAuth();
     const [members, setMembers] = useState<StaffMember[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -29,7 +28,10 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
                 const res = await fetch(
                     `${process.env.BACKEND_LINK}/api/members/group/${
                         groupSlugMap[resolvedParams.slug]
-                    }`
+                    }`,
+                    {
+                        credentials: 'include',
+                    }
                 );
 
                 if (!res.ok) {
