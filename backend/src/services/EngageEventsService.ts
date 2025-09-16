@@ -70,7 +70,7 @@ class EngageEventsService {
             return {
                 name: event.eventName,
                 location: event.otherLocation || 'N/A',
-                description: this.sanitizeHtml(event.description),
+                description: event.description,
                 host: event.organizationName,
                 details_url: event.eventUrl,
                 start: startDateTime.toLocaleString(),
@@ -83,33 +83,13 @@ class EngageEventsService {
         return {
             name: event.eventName,
             location: event.otherLocation || 'N/A',
-            description: this.sanitizeHtml(event.description),
+            description: event.description,
             host: event.organizationName,
             details_url: event.eventUrl,
             start: new Date(parseInt(event.startDateTime)).toLocaleString(),
             end: new Date(parseInt(event.endDateTime)).toLocaleString(),
             status: 'approved',
         };
-    }
-
-    private sanitizeHtml(html: string): string {
-        if (!html) return '';
-
-        return (
-            html
-                // First replace common HTML entities
-                .replace(/&nbsp;/g, ' ')
-                .replace(/&amp;/g, '&')
-                .replace(/&lt;/g, '<')
-                .replace(/&gt;/g, '>')
-                .replace(/&quot;/g, '"')
-                .replace(/&#39;/g, "'")
-                // Remove HTML tags
-                .replace(/<[^>]*>/g, '')
-                // Normalize whitespace
-                .replace(/\s+/g, ' ')
-                .trim()
-        );
     }
 }
 

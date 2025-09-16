@@ -39,12 +39,15 @@ export const formatReviewText = (text: string): string => {
             .replace(/<\/p>/gi, '\n')
             .replace(/<div>/gi, '\n')
             .replace(/<\/div>/gi, '\n')
+            // Remove HTML tags (including span tags with classes)
+            .replace(/<[^>]*>/g, '')
             // Replace HTML tabs and spaces
             .replace(/&tab;/g, '\t')
             .replace(/&emsp;/g, '    ') // 4 spaces for em space
             .replace(/&ensp;/g, '  ') // 2 spaces for en space
             // Clean up multiple consecutive newlines
             .replace(/\n\s*\n\s*\n/g, '\n\n')
+            .replace(/\s+/g, ' ')
             // Trim leading and trailing whitespace
             .trim()
     );
