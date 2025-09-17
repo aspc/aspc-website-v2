@@ -199,11 +199,31 @@ const CourseSearchComponent = () => {
     }, [searchTerm, courseNumber, selectedSchools, debouncedSearch]);
 
     const handleSchoolToggle = (school: SchoolKey) => {
-        setSelectedSchools((prev) => ({
+        setSelectedSchools((prev) => {
+            const allSelected = Object.values(prev).every(Boolean); 
+
+            if (allSelected) {
+            return Object.fromEntries(
+                Object.keys(prev).map((k) => [k, k === school])
+            ) as typeof prev;
+            }
+
+            const newState = {
             ...prev,
             [school]: !prev[school],
-        }));
-    };
+            };
+
+            const anySelected = Object.values(newState).some(Boolean);
+            
+            if (!anySelected) {
+            return Object.fromEntries(
+                Object.keys(prev).map((k) => [k, true])
+            ) as typeof prev;
+            }
+
+            return newState;
+        });
+        };
 
     const sortedResults = useMemo(() => {
         return [...results].sort((a, b) => a.code.localeCompare(b.code));
