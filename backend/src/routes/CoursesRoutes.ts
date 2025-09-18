@@ -29,20 +29,22 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             // $search stage with compound must for text across name/code and optional school filter
             const searchStage: any = {
                 $search: {
-                  index: "courses",
-                  compound: {
-                    must: String(search).split(" ").map(term => ({
-                      text: {
-                        query: term,
-                        path: ['name', 'code'],
-                        fuzzy: {
-                          maxEdits: 2,
-                        },
-                      },
-                    })),
-                  },
+                    index: 'courses',
+                    compound: {
+                        must: String(search)
+                            .split(' ')
+                            .map((term) => ({
+                                text: {
+                                    query: term,
+                                    path: ['name', 'code'],
+                                    fuzzy: {
+                                        maxEdits: 2,
+                                    },
+                                },
+                            })),
+                    },
                 },
-              };
+            };
 
             if (schoolList.length > 0) {
                 searchStage.$search.compound.filter = [
@@ -64,14 +66,16 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             pipeline.push(searchStage);
 
             // If a course number is provided, filter for codes starting with it or exact id match
-            //currently no course number is passed from the frontend 
+            //currently no course number is passed from the frontend
             if (number) {
                 const parsedNumber = parseInt(number as string);
                 pipeline.push({
                     $match: {
                         $or: [
                             { code: { $regex: `^${number}`, $options: 'i' } },
-                            ...(isNaN(parsedNumber) ? [] : [{ id: parsedNumber }]),
+                            ...(isNaN(parsedNumber)
+                                ? []
+                                : [{ id: parsedNumber }]),
                         ],
                     },
                 });
