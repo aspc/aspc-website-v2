@@ -288,14 +288,28 @@ const CoursePage = () => {
                                             <p className="text-gray-600 font-medium">
                                                 Instructors:
                                             </p>
-                                            <p>
+                                            <div className="flex flex-wrap gap-1 mt-1">
                                                 {instructors
-                                                    .map(
+                                                    .filter(
                                                         (instructor) =>
-                                                            instructor.name
+                                                            instructor?.name
                                                     )
-                                                    .join(', ')}
-                                            </p>
+                                                    .map((instructor) => (
+                                                        <div
+                                                            key={instructor.id}
+                                                            className={`bg-opacity-20 px-2 py-1 rounded-md border border-opacity-30`}
+                                                        >
+                                                            <a
+                                                                href={`/campus/instructors/${instructor.id}`}
+                                                                className={`text-sm font-medium`}
+                                                            >
+                                                                {
+                                                                    instructor.name
+                                                                }
+                                                            </a>
+                                                        </div>
+                                                    ))}
+                                            </div>
                                         </div>
                                     )}
 
