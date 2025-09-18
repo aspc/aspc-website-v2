@@ -5,6 +5,7 @@ import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import Loading from '@/components/Loading';
 import { Event } from '@/types';
+import { FormattedReviewText } from '@/utils/textFormatting';
 
 const localizer = momentLocalizer(moment);
 
@@ -145,10 +146,12 @@ const EventsPage = () => {
                         <p className="text-gray-600 mb-2">
                             <strong>Host:</strong> {selectedEvent.resource.host}
                         </p>
-                        <p className="text-gray-700 mb-4">
-                            {selectedEvent.resource.description}
-                        </p>
-
+                        <div className="mb-4">
+                            <FormattedReviewText
+                                text={selectedEvent.resource.description}
+                                className="text-gray-700"
+                            />
+                        </div>
                         <div className="flex justify-between">
                             <a
                                 href={selectedEvent.resource.details_url}
