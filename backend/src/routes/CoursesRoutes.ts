@@ -29,22 +29,20 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             // $search stage with compound must for text across name/code and optional school filter
             const searchStage: any = {
                 $search: {
-                    index: "courses",
-                    compound: {
-                        must: [
-                            {
-                                text: {
-                                    query: String(search),
-                                    path: ['name', 'code'],
-                                    fuzzy: {
-                                        maxEdits: 2,
-                                    },
-                                },
-                            },
-                        ],
-                    },
+                  index: "courses",
+                  compound: {
+                    must: String(search).split(" ").map(term => ({
+                      text: {
+                        query: term,
+                        path: ['name', 'code'],
+                        fuzzy: {
+                          maxEdits: 2,
+                        },
+                      },
+                    })),
+                  },
                 },
-            };
+              };
 
             if (schoolList.length > 0) {
                 searchStage.$search.compound.filter = [
