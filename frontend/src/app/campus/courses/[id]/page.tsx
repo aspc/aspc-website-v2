@@ -290,7 +290,10 @@ const CoursePage = () => {
                                             </p>
                                             <div className="flex flex-wrap gap-1 mt-1">
                                                 {instructors
-                                                    .filter((instructor) => instructor?.name)
+                                                    .filter(
+                                                        (instructor) =>
+                                                            instructor?.name
+                                                    )
                                                     .map((instructor) => (
                                                         <div
                                                             key={instructor.id}
@@ -300,7 +303,9 @@ const CoursePage = () => {
                                                                 href={`/campus/instructors/${instructor.id}`}
                                                                 className={`text-sm font-medium`}
                                                             >
-                                                                {instructor.name}
+                                                                {
+                                                                    instructor.name
+                                                                }
                                                             </a>
                                                         </div>
                                                     ))}
