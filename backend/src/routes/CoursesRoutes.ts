@@ -19,34 +19,73 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
     try {
         const { search, number, schools, limit = 50 } = req.query;
 
-        const query: any = {};
+        const numericLimit = parseInt(limit as string);
+        const schoolList = schools ? (schools as string).split(',') : [];
 
-        if (schools) {
-            const schoolList = (schools as string).split(',');
-            query.code = {
-                $in: schoolList.map((school) => new RegExp(`${school}$`, 'i')),
-            };
-        }
-
+        // Use Atlas Search for typo-resilient fuzzy search whenever a search term is provided
         if (search) {
-            const searchRegex = new RegExp(search as string, 'i');
-            query.$or = [{ name: searchRegex }, { code: searchRegex }];
+            const pipeline: any[] = [];
+
+            // $search stage with compound must for text across name/code and optional school filter
+            const searchStage: any = {
+                $search: {
+                    index: 'courses',
+                    compound: {
+                        must: String(search)
+                            .split(' ')
+                            .map((term) => ({
+                                text: {
+                                    query: term,
+                                    path: ['name', 'code'],
+                                    fuzzy: {
+                                        maxEdits: 2,
+                                    },
+                                },
+                            })),
+                    },
+                },
+            };
+
+            if (schoolList.length > 0) {
+                searchStage.$search.compound.filter = [
+                    {
+                        compound: {
+                            should: schoolList.map((school) => ({
+                                wildcard: {
+                                    query: `*${school}`,
+                                    path: 'code',
+                                    allowAnalyzedField: true,
+                                },
+                            })),
+                            minimumShouldMatch: 1,
+                        },
+                    },
+                ];
+            }
+
+            pipeline.push(searchStage);
+
+            // If a course number is provided, filter for codes starting with it or exact id match
+            //currently no course number is passed from the frontend
+            if (number) {
+                const parsedNumber = parseInt(number as string);
+                pipeline.push({
+                    $match: {
+                        $or: [
+                            { code: { $regex: `^${number}`, $options: 'i' } },
+                            ...(isNaN(parsedNumber)
+                                ? []
+                                : [{ id: parsedNumber }]),
+                        ],
+                    },
+                });
+            }
+
+            pipeline.push({ $limit: numericLimit });
+
+            const courses = await Courses.aggregate(pipeline).exec();
+            res.json(courses);
         }
-
-        if (number) {
-            const numberRegex = new RegExp(`^${number}`, 'i');
-            query.$or = [
-                ...(query.$or || []),
-                { code: numberRegex },
-                { id: parseInt(number as string) || 0 },
-            ];
-        }
-
-        const courses = await Courses.find(query)
-            .limit(parseInt(limit as string))
-            .lean();
-
-        res.json(courses);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
