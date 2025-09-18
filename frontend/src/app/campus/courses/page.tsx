@@ -182,7 +182,7 @@ const CourseSearchComponent = () => {
 
     const debouncedSearch = useMemo(
         () => debounce(performSearch, 300, { leading: false, trailing: true }),
-        [performSearch]
+        [performSearch, selectedSchools]
     );
 
     useEffect(() => {
