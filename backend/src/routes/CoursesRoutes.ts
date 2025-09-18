@@ -83,7 +83,6 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
 
             const courses = await Courses.aggregate(pipeline).exec();
             res.json(courses);
-            return;
         }
     } catch (err) {
         console.error(err);
