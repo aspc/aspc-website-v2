@@ -10,6 +10,7 @@ import React, {
 import axios, { CancelTokenSource } from 'axios';
 import { debounce } from 'lodash';
 import type { Course, Instructor, SchoolKey, CourseCardProps } from '@/types';
+import Loading from '@/components/Loading';
 
 const schoolData = {
     PO: {
@@ -129,6 +130,7 @@ const CourseSearchComponent = () => {
                 return;
             }
 
+            const term_cleaned = term.replace(/\\/g, '');
             const source = createCancelTokenSource();
 
             try {
@@ -143,7 +145,7 @@ const CourseSearchComponent = () => {
                     `${process.env.BACKEND_LINK}/api/courses`,
                     {
                         params: {
-                            search: term,
+                            search: term_cleaned,
                             number: number,
                             schools: activeSchools.join(','),
                             limit: 100,
@@ -180,7 +182,7 @@ const CourseSearchComponent = () => {
 
     const debouncedSearch = useMemo(
         () => debounce(performSearch, 300, { leading: false, trailing: true }),
-        [performSearch]
+        [performSearch, selectedSchools]
     );
 
     useEffect(() => {
@@ -199,10 +201,30 @@ const CourseSearchComponent = () => {
     }, [searchTerm, courseNumber, selectedSchools, debouncedSearch]);
 
     const handleSchoolToggle = (school: SchoolKey) => {
-        setSelectedSchools((prev) => ({
-            ...prev,
-            [school]: !prev[school],
-        }));
+        setSelectedSchools((prev) => {
+            const allSelected = Object.values(prev).every(Boolean);
+
+            if (allSelected) {
+                return Object.fromEntries(
+                    Object.keys(prev).map((k) => [k, k === school])
+                ) as typeof prev;
+            }
+
+            const newState = {
+                ...prev,
+                [school]: !prev[school],
+            };
+
+            const anySelected = Object.values(newState).some(Boolean);
+
+            if (!anySelected) {
+                return Object.fromEntries(
+                    Object.keys(prev).map((k) => [k, true])
+                ) as typeof prev;
+            }
+
+            return newState;
+        });
     };
 
     const sortedResults = useMemo(() => {
@@ -275,7 +297,9 @@ const CourseSearchComponent = () => {
             )}
 
             <div className="space-y-4">
-                {sortedResults.length > 0 ? (
+                {loading ? (
+                    <Loading />
+                ) : sortedResults.length > 0 ? (
                     <>
                         <div className="flex justify-between items-center">
                             <p className="text-gray-600 text-sm">
