@@ -128,13 +128,13 @@ const ForumEventSchema = new Schema<IForumEvent>(
 );
 
 // Instance methods for ForumEvent
-ForumEventSchema.methods.hasUserRated = function(userId: string): boolean {
-    return this.ratings.some((rating: IRating) => 
-        rating.userId.toString() === userId.toString()
+ForumEventSchema.methods.hasUserRated = function (userId: string): boolean {
+    return this.ratings.some(
+        (rating: IRating) => rating.userId.toString() === userId.toString()
     );
 };
 
-ForumEventSchema.methods.getAverageRatings = function() {
+ForumEventSchema.methods.getAverageRatings = function () {
     if (this.ratings.length === 0) {
         return {
             overall: 0,
@@ -152,7 +152,7 @@ ForumEventSchema.methods.getAverageRatings = function() {
     this.ratings.forEach((rating: IRating) => {
         overallSum += rating.overall;
         wouldRepeatSum += rating.wouldRepeat;
-        
+
         rating.customRatings.forEach((custom: ICustomRating) => {
             if (!customSums[custom.question]) {
                 customSums[custom.question] = 0;
@@ -162,7 +162,7 @@ ForumEventSchema.methods.getAverageRatings = function() {
     });
 
     const customAverages: { [key: string]: number } = {};
-    Object.keys(customSums).forEach(question => {
+    Object.keys(customSums).forEach((question) => {
         customAverages[question] = customSums[question] / totalResponses;
     });
 
@@ -223,7 +223,17 @@ const EventCommentSchema = new Schema<IEventComment>(
 // Create compound index to ensure one comment per user per event
 EventCommentSchema.index({ eventId: 1, author: 1 }, { unique: true });
 
-const EventComment = mongoose.model<IEventComment>('EventComment', EventCommentSchema);
+const EventComment = mongoose.model<IEventComment>(
+    'EventComment',
+    EventCommentSchema
+);
 
 // Export all models and interfaces
-export { ForumEvent, EventComment, IForumEvent, IEventComment, IRating, ICustomRating };
+export {
+    ForumEvent,
+    EventComment,
+    IForumEvent,
+    IEventComment,
+    IRating,
+    ICustomRating,
+};
