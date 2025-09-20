@@ -17,7 +17,7 @@ const router = express.Router();
 // Courses routes
 router.get('/', isAuthenticated, async (req: Request, res: Response) => {
     try {
-        const { search, number, schools, limit = 50 } = req.query;
+        const { search, schools, limit = 50 } = req.query;
 
         const query: any = {};
 
@@ -31,15 +31,6 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
         if (search) {
             const searchRegex = new RegExp(search as string, 'i');
             query.$or = [{ name: searchRegex }, { code: searchRegex }];
-        }
-
-        if (number) {
-            const numberRegex = new RegExp(`^${number}`, 'i');
-            query.$or = [
-                ...(query.$or || []),
-                { code: numberRegex },
-                { id: parseInt(number as string) || 0 },
-            ];
         }
 
         const courses = await Courses.find(query)
