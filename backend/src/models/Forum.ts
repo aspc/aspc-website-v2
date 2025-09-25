@@ -31,6 +31,15 @@ interface IForumEvent extends Document {
     ratingUntil: Date;
     ratings: IRating[];
     customQuestions: string[];
+
+    // Methods
+    hasUserRated(userId: string): boolean;
+    getAverageRatings(): {
+        overall: number;
+        wouldRepeat: number;
+        customQuestions: { [key: string]: number };
+        totalResponses: number;
+    };
 }
 
 // Schema for ForumEvent
