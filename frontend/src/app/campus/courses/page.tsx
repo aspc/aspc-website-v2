@@ -178,14 +178,21 @@ const CourseSearchComponent = () => {
         [fetchInstructors]
     );
 
+    const selectedSchoolsRef = useRef(selectedSchools);
+
+    useEffect(() => {
+        selectedSchoolsRef.current = selectedSchools;
+        }, [selectedSchools]);
+
     const debouncedSearch = useMemo(
-        () => debounce(performSearch, 300, { leading: false, trailing: true }),
-        [performSearch, selectedSchools]
+        () => debounce((term: string, number: string) => {performSearch(term, number, selectedSchoolsRef.current);
+    }, 300),
+        [performSearch],
     );
 
     useEffect(() => {
         if (searchTerm.trim() || courseNumber.trim()) {
-            debouncedSearch(searchTerm, courseNumber, selectedSchools);
+            debouncedSearch(searchTerm, courseNumber);
         } else {
             setResults([]);
         }
@@ -196,7 +203,13 @@ const CourseSearchComponent = () => {
                 cancelTokenSourceRef.current.cancel('Component unmounted');
             }
         };
-    }, [searchTerm, courseNumber, selectedSchools, debouncedSearch]);
+    }, [searchTerm, courseNumber, debouncedSearch]);
+
+    useEffect(() => {
+        if (searchTerm.trim() || courseNumber.trim()) {
+            debouncedSearch(searchTerm, courseNumber);
+        }
+        }, [selectedSchools, searchTerm, courseNumber, debouncedSearch]);
 
     const handleSchoolToggle = (school: SchoolKey) => {
         setSelectedSchools((prev) => ({
