@@ -10,6 +10,7 @@ import React, {
 import axios, { CancelTokenSource } from 'axios';
 import { debounce } from 'lodash';
 import type { Course, Instructor, SchoolKey, CourseCardProps } from '@/types';
+import Loading from '@/components/Loading';
 
 const schoolData = {
     PO: {
@@ -46,7 +47,6 @@ const schoolData = {
 
 const CourseSearchComponent = () => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [courseNumber, setCourseNumber] = useState('');
     const [selectedSchools, setSelectedSchools] = useState<
         Record<SchoolKey, boolean>
     >({
@@ -118,17 +118,14 @@ const CourseSearchComponent = () => {
     );
 
     const performSearch = useCallback(
-        async (
-            term: string,
-            number: string,
-            schools: Record<SchoolKey, boolean>
-        ) => {
-            if ((!term || term.length < 2) && !number) {
+        async (term: string, schools: Record<SchoolKey, boolean>) => {
+            if (!term || term.length < 2) {
                 setResults([]);
                 setLoading(false);
                 return;
             }
 
+            const term_cleaned = term.replace(/\\/g, '');
             const source = createCancelTokenSource();
 
             try {
@@ -143,8 +140,7 @@ const CourseSearchComponent = () => {
                     `${process.env.BACKEND_LINK}/api/courses`,
                     {
                         params: {
-                            search: term,
-                            number: number,
+                            search: term_cleaned,
                             schools: activeSchools.join(','),
                             limit: 100,
                         },
@@ -212,10 +208,30 @@ const CourseSearchComponent = () => {
         }, [selectedSchools, searchTerm, courseNumber, debouncedSearch]);
 
     const handleSchoolToggle = (school: SchoolKey) => {
-        setSelectedSchools((prev) => ({
-            ...prev,
-            [school]: !prev[school],
-        }));
+        setSelectedSchools((prev) => {
+            const allSelected = Object.values(prev).every(Boolean);
+
+            if (allSelected) {
+                return Object.fromEntries(
+                    Object.keys(prev).map((k) => [k, k === school])
+                ) as typeof prev;
+            }
+
+            const newState = {
+                ...prev,
+                [school]: !prev[school],
+            };
+
+            const anySelected = Object.values(newState).some(Boolean);
+
+            if (!anySelected) {
+                return Object.fromEntries(
+                    Object.keys(prev).map((k) => [k, true])
+                ) as typeof prev;
+            }
+
+            return newState;
+        });
     };
 
     const sortedResults = useMemo(() => {
@@ -288,7 +304,9 @@ const CourseSearchComponent = () => {
             )}
 
             <div className="space-y-4">
-                {sortedResults.length > 0 ? (
+                {loading ? (
+                    <Loading />
+                ) : sortedResults.length > 0 ? (
                     <>
                         <div className="flex justify-between items-center">
                             <p className="text-gray-600 text-sm">
@@ -311,7 +329,7 @@ const CourseSearchComponent = () => {
                     </>
                 ) : (
                     !loading &&
-                    (searchTerm || courseNumber) && (
+                    searchTerm && (
                         <div className="text-center py-8 text-gray-500">
                             No courses found matching your search criteria.
                         </div>

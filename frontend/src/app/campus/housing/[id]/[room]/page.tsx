@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import LoginRequired from '@/components/LoginRequired';
 import { StarRating, getRoomOccupancyType } from '@/components/housing/Rooms';
 import { ReviewForm, PictureModal } from '@/components/housing/Reviews';
+import { FormattedReviewText } from '@/utils/textFormatting';
 
 const RoomPage = () => {
     const params = useParams();
@@ -359,9 +360,10 @@ const RoomPage = () => {
 
                                         {review.comments && (
                                             <div className="mt-2 mb-2">
-                                                <p className="text-gray-800">
-                                                    {review.comments}
-                                                </p>
+                                                <FormattedReviewText
+                                                    text={review.comments}
+                                                    className="text-gray-800"
+                                                />
                                             </div>
                                         )}
 
