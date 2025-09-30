@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { ForumEvent, EventComment } from '../models/Forum';
-import { isAuthenticated } from '../middleware/authMiddleware';
+import { isAuthenticated, isAdmin } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -140,7 +140,7 @@ router.get(
 
 /**
  * @route   POST /api/openforum/:id/comment
- * @desc    Get reviews for a room by building id and room number
+ * @desc    Add a new comment for an event by event's id
  * @access  Public
  */
 router.post(
@@ -163,6 +163,149 @@ router.post(
         } catch (err) {
             console.error(err);
             res.status(500).json({ message: 'Server error' });
+        }
+    }
+);
+
+// ADMIN ROUTES
+
+/**
+ * @route   POST /api/openforum
+ * @desc    Add new open forum event
+ * @access  Admin
+ */
+router.post('/', isAdmin, async (req: Request, res: Response) => {
+    try {
+        const {
+            title,
+            description,
+            createdBy,
+            staffHost,
+            eventDate,
+            location,
+            ratingUntil,
+            customQuestions,
+        } = req.body;
+
+        if (
+            !title ||
+            !description ||
+            !createdBy ||
+            !eventDate ||
+            !location ||
+            !ratingUntil
+        ) {
+            res.status(400).json({ message: 'Missing required fields.' });
+            return;
+        }
+
+        const event = new ForumEvent({
+            title: title,
+            description: description,
+            createdBy: createdBy,
+            staffHost: staffHost,
+            eventDate: eventDate,
+            location: location,
+            ratingUntil: ratingUntil,
+            ratings: [],
+            customQuestions: customQuestions || [],
+        });
+
+        const savedEvent = await event.save();
+
+        res.status(201).json(savedEvent);
+    } catch (error) {
+        res.status(400).json({ message: 'Error creating new custom event' });
+    }
+});
+
+/**
+ * @route   PUT /api/openforum/:id
+ * @desc    Update existing open forum event by id
+ * @access  Admin
+ */
+router.put('/:id', isAdmin, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const {
+            title,
+            description,
+            createdBy,
+            staffHost,
+            eventDate,
+            location,
+            ratingUntil,
+            customQuestions,
+        } = req.body;
+
+        if (
+            !title ||
+            !description ||
+            !createdBy ||
+            !eventDate ||
+            !location ||
+            !ratingUntil
+        ) {
+            res.status(400).json({ message: 'Missing required fields.' });
+            return;
+        }
+
+        const updatedEvent = await ForumEvent.findByIdAndUpdate(
+            id,
+            {
+                title: title,
+                description: description,
+                createdBy: createdBy,
+                staffHost: staffHost,
+                eventDate: eventDate,
+                location: location,
+                ratingUntil: ratingUntil,
+                customQuestions: customQuestions || [],
+            },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedEvent) {
+            res.status(404).json({ message: 'Forum event not found.' });
+        }
+
+        res.status(201).json(updatedEvent);
+    } catch (error) {
+        res.status(400).json({ message: 'Error updating event' });
+    }
+});
+
+/**
+ * @route   PATCH /api/openforum/comments/:id/hide
+ * @desc    Hide / unhide a comment by comment id
+ * @access  Admin
+ */
+router.patch(
+    '/comments/:id/hide',
+    isAdmin,
+    async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+
+            const comment = await EventComment.findById(id);
+
+            if (!comment) {
+                res.status(400).json({
+                    message: 'Comment does not exist',
+                });
+            } else {
+                comment.isHidden = !comment.isHidden;
+                const updatedComment = await comment.save();
+
+                res.status(201).json({
+                    message: `Comment is now ${updatedComment.isHidden ? 'hidden' : 'visible'}.`,
+                    comment: updatedComment,
+                });
+            }
+        } catch (error) {
+            res.status(400).json({
+                message: 'Error hiding comment',
+            });
         }
     }
 );
