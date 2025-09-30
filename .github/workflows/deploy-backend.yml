@@ -14,7 +14,6 @@ on:
         default: 'test'
 jobs:
   build-and-deploy:
-    # Made it so that it only runs if the PR was merged (not if it was closed without merging)
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     
