@@ -25,23 +25,34 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
         // Use Atlas Search for typo-resilient fuzzy search whenever a search term is provided
         if (search) {
             const pipeline: any[] = [];
-
-            // $search stage with compound must for text across name/code and optional school filter
+            // $search stage with compound should for text across name/code and school filter
             const searchStage: any = {
                 $search: {
                     index: 'courses',
                     compound: {
-                        must: String(search)
-                            .split(' ')
-                            .map((term) => ({
+                        should: [
+                            // Full phrase match with score boost
+                            {
                                 text: {
-                                    query: term,
+                                    query: String(search),
                                     path: ['name', 'code'],
-                                    fuzzy: {
-                                        maxEdits: 2,
+                                    score: { boost: { value: 5 } }
+                                }
+                            },
+                            // Individual term matches with fuzzy search
+                            ...String(search)
+                                .split(' ')
+                                .map((term) => ({
+                                    text: {
+                                        query: term,
+                                        path: ['name', 'code'],
+                                        fuzzy: {
+                                            maxEdits: term.length < 6 ? 1 : 2,
+                                        },
                                     },
-                                },
-                            })),
+                                }))
+                        ],
+                        minimumShouldMatch: 1,
                     },
                 },
             };
