@@ -81,27 +81,21 @@ const CourseSearchComponent = () => {
 
                 if (uncachedIds.length === 0) return;
 
-                const responses = await Promise.all(
-                    uncachedIds.map((id) =>
-                        axios
-                            .get<Instructor>(
-                                `${process.env.BACKEND_LINK}/api/instructors/${id}`,
-                                {
-                                    timeout: 3000,
-                                    withCredentials: true,
-                                }
-                            )
-                            .catch(() => null)
-                    )
+                // Single bulk request instead of multiple individual requests
+                const response = await axios.get<Instructor[]>(
+                    `${process.env.BACKEND_LINK}/api/instructors/bulk`,
+                    {
+                        params: { ids: uncachedIds.join(',') },
+                        timeout: 5000,
+                        withCredentials: true,
+                    }
                 );
 
                 setInstructorCache((prev) => ({
                     ...prev,
-                    ...responses.reduce(
-                        (acc, res) => {
-                            if (res && res.data) {
-                                acc[res.data.id] = res.data;
-                            }
+                    ...response.data.reduce(
+                        (acc, instructor) => {
+                            acc[instructor.id] = instructor;
                             return acc;
                         },
                         {} as Record<number, Instructor>
@@ -111,7 +105,6 @@ const CourseSearchComponent = () => {
                 if (!axios.isCancel(err)) {
                     console.error('Error fetching instructors:', err);
                 }
-                throw err;
             }
         },
         [instructorCache]
@@ -153,7 +146,6 @@ const CourseSearchComponent = () => {
                 setResults(response.data);
 
                 const instructorIds = response.data
-                    .slice(0, 20)
                     .flatMap((course) => course.all_instructor_ids || []);
 
                 if (instructorIds.length > 0) {
