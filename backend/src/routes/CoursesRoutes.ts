@@ -19,25 +19,67 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
     try {
         const { search, schools, limit = 50 } = req.query;
 
-        const query: any = {};
+        const numericLimit = parseInt(limit as string);
+        const schoolList = schools ? (schools as string).split(',') : [];
 
-        if (schools) {
-            const schoolList = (schools as string).split(',');
-            query.code = {
-                $in: schoolList.map((school) => new RegExp(`${school}$`, 'i')),
-            };
-        }
-
+        // Use Atlas Search for typo-resilient fuzzy search whenever a search term is provided
         if (search) {
-            const searchRegex = new RegExp(search as string, 'i');
-            query.$or = [{ name: searchRegex }, { code: searchRegex }];
+            const pipeline: any[] = [];
+            // $search stage with compound should for text across name/code and school filter
+            const searchStage: any = {
+                $search: {
+                    index: 'courses',
+                    compound: {
+                        should: [
+                            // Full phrase match with score boost
+                            {
+                                text: {
+                                    query: String(search),
+                                    path: ['name', 'code'],
+                                    score: { boost: { value: 5 } },
+                                },
+                            },
+                            // Individual term matches with fuzzy search
+                            ...String(search)
+                                .split(' ')
+                                .map((term) => ({
+                                    text: {
+                                        query: term,
+                                        path: ['name', 'code'],
+                                        fuzzy: {
+                                            maxEdits: term.length < 6 ? 1 : 2,
+                                        },
+                                    },
+                                })),
+                        ],
+                        minimumShouldMatch: 1,
+                    },
+                },
+            };
+
+            if (schoolList.length > 0) {
+                searchStage.$search.compound.filter = [
+                    {
+                        compound: {
+                            should: schoolList.map((school) => ({
+                                wildcard: {
+                                    query: `*${school}`,
+                                    path: 'code',
+                                    allowAnalyzedField: true,
+                                },
+                            })),
+                            minimumShouldMatch: 1,
+                        },
+                    },
+                ];
+            }
+
+            pipeline.push(searchStage);
+            pipeline.push({ $limit: numericLimit });
+
+            const courses = await Courses.aggregate(pipeline).exec();
+            res.json(courses);
         }
-
-        const courses = await Courses.find(query)
-            .limit(parseInt(limit as string))
-            .lean();
-
-        res.json(courses);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
