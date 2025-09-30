@@ -1,5 +1,4 @@
 name: Deploy Backend to AWS Lightsail
-
 on:
   pull_request:
     types: [closed]
@@ -7,10 +6,8 @@ on:
       - main
     paths:
       - 'backend/**'
-
 jobs:
   build-and-deploy:
-    # Made it so that it only runs if the PR was merged (not if it was closed without merging)
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     
@@ -42,12 +39,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
       
-      - name: Install AWS CLI
-        run: |
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install
-          aws --version
+      # AWS CLI is already installed on ubuntu-latest runners
+      # Removed the "Install AWS CLI" step
       
       - name: Install Lightsail Control plugin
         run: |
