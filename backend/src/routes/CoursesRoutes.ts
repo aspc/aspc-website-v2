@@ -36,8 +36,8 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                                 text: {
                                     query: String(search),
                                     path: ['name', 'code'],
-                                    score: { boost: { value: 5 } }
-                                }
+                                    score: { boost: { value: 5 } },
+                                },
                             },
                             // Individual term matches with fuzzy search
                             ...String(search)
@@ -50,7 +50,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                                             maxEdits: term.length < 6 ? 1 : 2,
                                         },
                                     },
-                                }))
+                                })),
                         ],
                         minimumShouldMatch: 1,
                     },
