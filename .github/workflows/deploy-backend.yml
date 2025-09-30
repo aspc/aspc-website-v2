@@ -6,9 +6,12 @@ on:
       - main
     paths:
       - 'backend/**'
-  push:  # temp for testing, remove later
-    branches:
-      - fix/backend-actions-fix
+  workflow_dispatch:  # Add this to allow manual runs
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: false
+        default: 'test'
 jobs:
   build-and-deploy:
     # Made it so that it only runs if the PR was merged (not if it was closed without merging)
