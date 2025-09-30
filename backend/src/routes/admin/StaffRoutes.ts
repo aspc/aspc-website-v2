@@ -10,10 +10,10 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// Get all ids and names
+// Get all ids and names and positions of staff members
 router.get('/', async (req: Request, res: Response) => {
     try {
-        const staff = await Staff.find({}, { id: 1, name: 1 });
+        const staff = await Staff.find({}, { id: 1, name: 1, position: 1 });
         res.json(staff);
     } catch (error) {
         res.status(500).json({ message: 'Server error' });

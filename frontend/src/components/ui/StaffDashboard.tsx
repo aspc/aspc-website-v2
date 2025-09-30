@@ -212,7 +212,7 @@ const StaffDashboard = () => {
                             </option>
                             {existingMembers.map((member) => (
                                 <option key={member.id} value={member.id}>
-                                    {member.name}
+                                    {member.position}
                                 </option>
                             ))}
                         </select>
