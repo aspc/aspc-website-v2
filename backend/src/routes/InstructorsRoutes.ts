@@ -33,6 +33,43 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 /**
+ * @route   GET /api/instructors/bulk
+ * @desc    Get multiple instructors by IDs
+ * @access  Public
+ */
+router.get('/bulk', async (req: Request, res: Response) => {
+    try {
+        const { ids } = req.query;
+
+        if (!ids || typeof ids !== 'string') {
+            res.status(400).json({ message: 'IDs parameter is required' });
+            return;
+        }
+
+        const instructorIds = ids
+            .split(',')
+            .map((id) => parseInt(id.trim(), 10))
+            .filter((id) => !isNaN(id));
+
+        if (instructorIds.length === 0) {
+            res.status(400).json({
+                message: 'No valid instructor IDs provided',
+            });
+            return;
+        }
+
+        const instructors = await Instructors.find({
+            id: { $in: instructorIds },
+        });
+
+        res.json(instructors);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+/**
  * @route   GET /api/instructors/:id
  * @desc    Get instructor information by ID
  * @access  Public
