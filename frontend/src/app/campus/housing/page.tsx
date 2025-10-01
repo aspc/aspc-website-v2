@@ -95,7 +95,11 @@ const HousingPage = async () => {
                                             {building.name}
                                         </h3>
                                         <p className="text-sm text-gray-600">
-                                            {building.description?.slice(0, 100)}...
+                                            {building.description?.slice(
+                                                0,
+                                                100
+                                            )}
+                                            ...
                                         </p>
                                         <span className="mt-4 inline-block text-blue-600 hover:underline">
                                             View Details →

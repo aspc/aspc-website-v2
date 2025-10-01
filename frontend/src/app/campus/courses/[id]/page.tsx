@@ -255,7 +255,6 @@ const CoursePage = () => {
 
     return (
         <div className="min-h-screen bg-gray-100 text-gray-900">
-
             <div className="container mx-auto px-4 py-8">
                 {/* Back Button */}
                 <button
@@ -285,39 +284,48 @@ const CoursePage = () => {
                                             <p>{courseReviews.course.code}</p>
                                         </div>
                                         {/* Instructors section */}
-                                        {instructors && instructors.length > 0 && (
-                                            <div>
-                                                <p className="text-gray-600 font-medium">
-                                                    Instructors:
-                                                </p>
-                                                <div className="flex flex-wrap gap-1 mt-1">
-                                                    {instructors
-                                                        .filter(
-                                                            (instructor) =>
-                                                                instructor?.name
-                                                        )
-                                                        .map((instructor) => (
-                                                            <div
-                                                                key={instructor.id}
-                                                                className={`bg-opacity-20 px-2 py-1 rounded-md border border-opacity-30`}
-                                                            >
-                                                                <a
-                                                                    href={`/campus/instructors/${instructor.id}`}
-                                                                    className={`text-sm font-medium`}
-                                                                >
-                                                                    {
-                                                                        instructor.name
-                                                                    }
-                                                                </a>
-                                                            </div>
-                                                        ))}
+                                        {instructors &&
+                                            instructors.length > 0 && (
+                                                <div>
+                                                    <p className="text-gray-600 font-medium">
+                                                        Instructors:
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                        {instructors
+                                                            .filter(
+                                                                (instructor) =>
+                                                                    instructor?.name
+                                                            )
+                                                            .map(
+                                                                (
+                                                                    instructor
+                                                                ) => (
+                                                                    <div
+                                                                        key={
+                                                                            instructor.id
+                                                                        }
+                                                                        className={`bg-opacity-20 px-2 py-1 rounded-md border border-opacity-30`}
+                                                                    >
+                                                                        <a
+                                                                            href={`/campus/instructors/${instructor.id}`}
+                                                                            className={`text-sm font-medium`}
+                                                                        >
+                                                                            {
+                                                                                instructor.name
+                                                                            }
+                                                                        </a>
+                                                                    </div>
+                                                                )
+                                                            )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
 
-                                        {courseReviews.course.department_names &&
-                                            courseReviews.course.department_names
-                                                .length > 0 && (
+                                        {courseReviews.course
+                                            .department_names &&
+                                            courseReviews.course
+                                                .department_names.length >
+                                                0 && (
                                                 <div>
                                                     <p className="text-gray-600 font-medium">
                                                         Departments:
@@ -336,9 +344,11 @@ const CoursePage = () => {
                                                 </div>
                                             )}
 
-                                        {courseReviews.course.requirement_names &&
-                                            courseReviews.course.requirement_names
-                                                .length > 0 && (
+                                        {courseReviews.course
+                                            .requirement_names &&
+                                            courseReviews.course
+                                                .requirement_names.length >
+                                                0 && (
                                                 <div className="col-span-1 md:col-span-2">
                                                     <p className="text-gray-600 font-medium">
                                                         Requirements Fulfilled:
@@ -362,19 +372,25 @@ const CoursePage = () => {
                                                     {courseReviews.course.term_keys
                                                         .filter((term) => {
                                                             // Extract the year from term (format: "2002;FA")
-                                                            const year = parseInt(
-                                                                term.split(';')[0],
-                                                                10
-                                                            );
+                                                            const year =
+                                                                parseInt(
+                                                                    term.split(
+                                                                        ';'
+                                                                    )[0],
+                                                                    10
+                                                                );
                                                             // Only include terms after 2020
                                                             return year > 2020;
                                                         })
                                                         .map((term) => {
-                                                            const [year, semester] =
-                                                                term.split(';');
+                                                            const [
+                                                                year,
+                                                                semester,
+                                                            ] = term.split(';');
 
                                                             // Convert semester code to full name
-                                                            let semesterName = '';
+                                                            let semesterName =
+                                                                '';
                                                             switch (semester) {
                                                                 case 'FA':
                                                                     semesterName =
@@ -418,7 +434,10 @@ const CoursePage = () => {
                                                 Description:
                                             </p>
                                             <p className="text-gray-800">
-                                                {courseReviews.course.description}
+                                                {
+                                                    courseReviews.course
+                                                        .description
+                                                }
                                             </p>
                                         </div>
                                     )}
@@ -483,7 +502,8 @@ const CoursePage = () => {
                                                     </div>
                                                     <div>
                                                         <p className="text-gray-600">
-                                                            Average Work Per Week
+                                                            Average Work Per
+                                                            Week
                                                         </p>
                                                         <p className="font-medium">
                                                             {formatWorkPerWeek(
@@ -670,7 +690,9 @@ const CoursePage = () => {
                         onClick={handleAddNewReviewClick}
                         ref={targetRef}
                     >
-                        {selectedReview ? 'Cancel review edit' : 'Add new review'}
+                        {selectedReview
+                            ? 'Cancel review edit'
+                            : 'Add new review'}
                     </button>
 
                     {(isCreatingNew || selectedReview) && (
