@@ -227,94 +227,96 @@ const CourseSearchComponent = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto p-4 md:p-6">
-            <div className="bg-gray-50 rounded-lg shadow-md p-6 mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
-                    5C Course Search
-                </h1>
+        <div className="min-h-screen bg-gray-100 text-gray-900">
+            <div className="max-w-6xl mx-auto p-4 md:p-6">
+                <div className="bg-gray-50 rounded-lg shadow-md p-6 mb-6">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
+                        5C Course Search
+                    </h1>
 
-                <div className="flex flex-col md:flex-row gap-4 mb-4">
-                    <div className="flex-1">
-                        <label
-                            htmlFor="search-term"
-                            className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                            Course Name or Code
-                        </label>
-                        <input
-                            id="search-term"
-                            type="text"
-                            placeholder="Search by name or code (min 2 chars)"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            autoComplete="off"
-                        />
-                    </div>
-                </div>
-
-                <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Schools:
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                        {(Object.keys(selectedSchools) as SchoolKey[]).map(
-                            (school) => (
-                                <button
-                                    key={school}
-                                    type="button"
-                                    onClick={() => handleSchoolToggle(school)}
-                                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                                        selectedSchools[school]
-                                            ? `${schoolData[school].buttonColor} border-2 border-white shadow-md`
-                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300 border-2 border-transparent'
-                                    }`}
-                                >
-                                    {schoolData[school].name}
-                                </button>
-                            )
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {error && (
-                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
-                    <p>{error}</p>
-                </div>
-            )}
-
-            <div className="space-y-4">
-                {loading ? (
-                    <Loading />
-                ) : sortedResults.length > 0 ? (
-                    <>
-                        <div className="flex justify-between items-center">
-                            <p className="text-gray-600 text-sm">
-                                Showing {sortedResults.length}{' '}
-                                {sortedResults.length === 1
-                                    ? 'result'
-                                    : 'results'}
-                            </p>
-                        </div>
-
-                        {sortedResults.map((course) => (
-                            <CourseCardComponent
-                                key={course._id}
-                                course={course}
-                                schoolCode={extractSchoolCode(course.code)}
-                                instructorCache={instructorCache}
+                    <div className="flex flex-col md:flex-row gap-4 mb-4">
+                        <div className="flex-1">
+                            <label
+                                htmlFor="search-term"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
+                                Course Name or Code
+                            </label>
+                            <input
+                                id="search-term"
+                                type="text"
+                                placeholder="Search by name or code (min 2 chars)"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                autoComplete="off"
                             />
-                        ))}
-                    </>
-                ) : (
-                    !loading &&
-                    searchTerm && (
-                        <div className="text-center py-8 text-gray-500">
-                            No courses found matching your search criteria.
                         </div>
-                    )
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Schools:
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {(Object.keys(selectedSchools) as SchoolKey[]).map(
+                                (school) => (
+                                    <button
+                                        key={school}
+                                        type="button"
+                                        onClick={() => handleSchoolToggle(school)}
+                                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                                            selectedSchools[school]
+                                                ? `${schoolData[school].buttonColor} border-2 border-white shadow-md`
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 border-2 border-transparent'
+                                        }`}
+                                    >
+                                        {schoolData[school].name}
+                                    </button>
+                                )
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {error && (
+                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
+                        <p>{error}</p>
+                    </div>
                 )}
+
+                <div className="space-y-4">
+                    {loading ? (
+                        <Loading />
+                    ) : sortedResults.length > 0 ? (
+                        <>
+                            <div className="flex justify-between items-center">
+                                <p className="text-gray-600 text-sm">
+                                    Showing {sortedResults.length}{' '}
+                                    {sortedResults.length === 1
+                                        ? 'result'
+                                        : 'results'}
+                                </p>
+                            </div>
+
+                            {sortedResults.map((course) => (
+                                <CourseCardComponent
+                                    key={course._id}
+                                    course={course}
+                                    schoolCode={extractSchoolCode(course.code)}
+                                    instructorCache={instructorCache}
+                                />
+                            ))}
+                        </>
+                    ) : (
+                        !loading &&
+                        searchTerm && (
+                            <div className="text-center py-8 text-gray-500">
+                                No courses found matching your search criteria.
+                            </div>
+                        )
+                    )}
+                </div>
             </div>
         </div>
     );
