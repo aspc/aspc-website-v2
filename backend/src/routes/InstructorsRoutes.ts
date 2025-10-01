@@ -46,10 +46,15 @@ router.get('/bulk', async (req: Request, res: Response) => {
             return;
         }
 
-        const instructorIds = ids.split(',').map((id) => parseInt(id.trim(), 10)).filter((id) => !isNaN(id));
+        const instructorIds = ids
+            .split(',')
+            .map((id) => parseInt(id.trim(), 10))
+            .filter((id) => !isNaN(id));
 
         if (instructorIds.length === 0) {
-            res.status(400).json({ message: 'No valid instructor IDs provided' });
+            res.status(400).json({
+                message: 'No valid instructor IDs provided',
+            });
             return;
         }
 

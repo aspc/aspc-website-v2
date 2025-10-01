@@ -72,7 +72,9 @@ const CourseSearchComponent = () => {
     const fetchInstructors = useCallback(
         async (ids: number[]): Promise<void> => {
             try {
-                const uncachedIds = ids.filter(id => !instructorCacheRef.current[id]);
+                const uncachedIds = ids.filter(
+                    (id) => !instructorCacheRef.current[id]
+                );
 
                 if (uncachedIds.length === 0) return;
 
@@ -113,13 +115,14 @@ const CourseSearchComponent = () => {
                 return;
             }
             if (cancelTokenSourceRef.current) {
-                cancelTokenSourceRef.current.cancel('Operation canceled due to new request');
+                cancelTokenSourceRef.current.cancel(
+                    'Operation canceled due to new request'
+                );
             }
 
             const cleanedTerm = term.replace(/\\/g, '').trim();
             const source = axios.CancelToken.source();
             cancelTokenSourceRef.current = source;
-
 
             try {
                 setLoading(true);
@@ -145,8 +148,9 @@ const CourseSearchComponent = () => {
 
                 setResults(response.data);
 
-                const instructorIds = response.data
-                    .flatMap((course) => course.all_instructor_ids || []);
+                const instructorIds = response.data.flatMap(
+                    (course) => course.all_instructor_ids || []
+                );
 
                 if (instructorIds.length > 0) {
                     fetchInstructors(instructorIds);
@@ -172,8 +176,7 @@ const CourseSearchComponent = () => {
     );
 
     useEffect(() => {
-            debouncedSearch(searchTerm, selectedSchools);
-        
+        debouncedSearch(searchTerm, selectedSchools);
 
         return () => {
             debouncedSearch.cancel();
@@ -189,10 +192,14 @@ const CourseSearchComponent = () => {
 
             if (allSelected) {
                 const newState: Record<SchoolKey, boolean> = {
-                   PO: false, CM: false, HM: false, SC: false, PZ: false,
-               };
-               newState[school] = true;
-               return newState;
+                    PO: false,
+                    CM: false,
+                    HM: false,
+                    SC: false,
+                    PZ: false,
+                };
+                newState[school] = true;
+                return newState;
             }
 
             const newState = {
@@ -216,9 +223,7 @@ const CourseSearchComponent = () => {
 
     const extractSchoolCode = (code: string): SchoolKey => {
         const schoolCode = code.slice(-2) as SchoolKey;
-        return schoolData[schoolCode]
-            ? (schoolCode)
-            : 'PO';
+        return schoolData[schoolCode] ? schoolCode : 'PO';
     };
 
     return (
@@ -318,8 +323,8 @@ const CourseSearchComponent = () => {
 const CourseCardComponent = ({
     course,
     schoolCode,
-    instructorCache }: Omit<CourseCardProps, 'onInstructorLoad'>) => {
-
+    instructorCache,
+}: Omit<CourseCardProps, 'onInstructorLoad'>) => {
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow relative">
             <div
