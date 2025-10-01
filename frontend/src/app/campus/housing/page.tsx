@@ -69,42 +69,44 @@ const HousingPage = async () => {
     }, [] as CampusGroup[]);
 
     return (
-        <div className="container mx-auto p-6">
-            {housingData.map((campus, index) => (
-                <section key={index} className="mb-12">
-                    <h2 className="text-3xl font-semibold mb-6 text-gray-700 border-b-2 border-gray-200 pb-2">
-                        {campus.campus}
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {campus.buildings.map((building) => (
-                            <Link
-                                key={building.id}
-                                href={`/campus/housing/${building.id}`}
-                                className="block bg-white shadow-lg rounded-lg overflow-hidden transform transition-transform duration-300 hover:scale-105"
-                            >
-                                <Image
-                                    src={building.image}
-                                    alt={building.name}
-                                    width={800}
-                                    height={400}
-                                    className="w-full h-48 object-cover"
-                                />
-                                <div className="p-6">
-                                    <h3 className="text-xl font-bold text-gray-800 mb-2">
-                                        {building.name}
-                                    </h3>
-                                    <p className="text-sm text-gray-600">
-                                        {building.description?.slice(0, 100)}...
-                                    </p>
-                                    <span className="mt-4 inline-block text-blue-600 hover:underline">
-                                        View Details →
-                                    </span>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                </section>
-            ))}
+        <div className="min-h-screen bg-gray-100 text-gray-900">
+            <div className="container mx-auto p-6">
+                {housingData.map((campus, index) => (
+                    <section key={index} className="mb-12">
+                        <h2 className="text-3xl font-semibold mb-6 text-gray-700 border-b-2 border-gray-200 pb-2">
+                            {campus.campus}
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {campus.buildings.map((building) => (
+                                <Link
+                                    key={building.id}
+                                    href={`/campus/housing/${building.id}`}
+                                    className="block bg-white shadow-lg rounded-lg overflow-hidden transform transition-transform duration-300 hover:scale-105"
+                                >
+                                    <Image
+                                        src={building.image}
+                                        alt={building.name}
+                                        width={800}
+                                        height={400}
+                                        className="w-full h-48 object-cover"
+                                    />
+                                    <div className="p-6">
+                                        <h3 className="text-xl font-bold text-gray-800 mb-2">
+                                            {building.name}
+                                        </h3>
+                                        <p className="text-sm text-gray-600">
+                                            {building.description?.slice(0, 100)}...
+                                        </p>
+                                        <span className="mt-4 inline-block text-blue-600 hover:underline">
+                                            View Details →
+                                        </span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </section>
+                ))}
+            </div>
         </div>
     );
 };
