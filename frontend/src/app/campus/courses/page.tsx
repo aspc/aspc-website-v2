@@ -264,7 +264,9 @@ const CourseSearchComponent = () => {
                                     <button
                                         key={school}
                                         type="button"
-                                        onClick={() => handleSchoolToggle(school)}
+                                        onClick={() =>
+                                            handleSchoolToggle(school)
+                                        }
                                         className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                                             selectedSchools[school]
                                                 ? `${schoolData[school].buttonColor} border-2 border-white shadow-md`

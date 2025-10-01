@@ -103,7 +103,6 @@ const EventsPage = () => {
 
     return (
         <div className="min-h-screen bg-gray-100 text-gray-900">
-
             <div className="p-5">
                 {selectedEvent && (
                     <div
@@ -146,7 +145,8 @@ const EventsPage = () => {
                                 {selectedEvent.resource.location}
                             </p>
                             <p className="text-gray-600 mb-2">
-                                <strong>Host:</strong> {selectedEvent.resource.host}
+                                <strong>Host:</strong>{' '}
+                                {selectedEvent.resource.host}
                             </p>
                             <div className="mb-4">
                                 <FormattedReviewText

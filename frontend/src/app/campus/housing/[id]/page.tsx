@@ -155,8 +155,8 @@ export default function DynamicRooms() {
                             Building Not Found
                         </h1>
                         <p className="text-lg text-gray-700 mt-4">
-                            The building you&apos;re looking for doesn&apos;t exist.
-                            Please check the URL and try again.
+                            The building you&apos;re looking for doesn&apos;t
+                            exist. Please check the URL and try again.
                         </p>
                         <p className="text-gray-600 mt-2">Error: {error}</p>
                     </div>
@@ -167,7 +167,6 @@ export default function DynamicRooms() {
 
     return (
         <div className="min-h-screen bg-gray-100 text-gray-900">
-
             <div className="container mx-auto px-4 py-8">
                 {/* Back Button */}
                 <button
@@ -185,7 +184,9 @@ export default function DynamicRooms() {
                     alt={building.name}
                     className="w-full max-h-[500px] object-cover mb-6 rounded-lg"
                 />
-                <p className="text-lg text-gray-700 mb-4">{building.description}</p>
+                <p className="text-lg text-gray-700 mb-4">
+                    {building.description}
+                </p>
 
                 {/* Button to toggle floor plans */}
                 <button
@@ -202,40 +203,42 @@ export default function DynamicRooms() {
                             Floor Plans
                         </h2>
                         <div className="grid gap-6 pb-6 grid-cols-1 sm:grid-cols-2">
-                            {Array.from({ length: building.floors }).map((_, i) => {
-                                const isLastInOddSet =
-                                    building.floors % 2 !== 0 &&
-                                    i === building.floors - 1;
-                                const isOnlyOne = building.floors === 1;
-                                const shouldSpanAndCenter =
-                                    isLastInOddSet || isOnlyOne;
-                                return (
-                                    <div
-                                        key={i}
-                                        className={`${
-                                            shouldSpanAndCenter
-                                                ? 'sm:col-span-2 flex justify-center'
-                                                : ''
-                                        }`}
-                                    >
-                                        <Image
-                                            src={`/floorplans/${safeName}-floor${i + 1}.jpg`}
-                                            width={800}
-                                            height={400}
-                                            alt={`Floor plan ${i + 1}`}
-                                            className={`w-full h-auto rounded-lg border border-gray-200 shadow ${
+                            {Array.from({ length: building.floors }).map(
+                                (_, i) => {
+                                    const isLastInOddSet =
+                                        building.floors % 2 !== 0 &&
+                                        i === building.floors - 1;
+                                    const isOnlyOne = building.floors === 1;
+                                    const shouldSpanAndCenter =
+                                        isLastInOddSet || isOnlyOne;
+                                    return (
+                                        <div
+                                            key={i}
+                                            className={`${
                                                 shouldSpanAndCenter
-                                                    ? 'sm:max-w-2xl'
+                                                    ? 'sm:col-span-2 flex justify-center'
                                                     : ''
                                             }`}
-                                            onError={(e) => {
-                                                e.currentTarget.src =
-                                                    '/placeholder-floorplan.jpg';
-                                            }}
-                                        />
-                                    </div>
-                                );
-                            })}
+                                        >
+                                            <Image
+                                                src={`/floorplans/${safeName}-floor${i + 1}.jpg`}
+                                                width={800}
+                                                height={400}
+                                                alt={`Floor plan ${i + 1}`}
+                                                className={`w-full h-auto rounded-lg border border-gray-200 shadow ${
+                                                    shouldSpanAndCenter
+                                                        ? 'sm:max-w-2xl'
+                                                        : ''
+                                                }`}
+                                                onError={(e) => {
+                                                    e.currentTarget.src =
+                                                        '/placeholder-floorplan.jpg';
+                                                }}
+                                            />
+                                        </div>
+                                    );
+                                }
+                            )}
                         </div>
                     </div>
                 )}
