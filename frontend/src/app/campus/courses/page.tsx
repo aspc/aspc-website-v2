@@ -62,22 +62,17 @@ const CourseSearchComponent = () => {
     const [instructorCache, setInstructorCache] = useState<
         Record<number, Instructor>
     >({});
+    const instructorCacheRef = useRef(instructorCache);
     const cancelTokenSourceRef = useRef<CancelTokenSource | null>(null);
 
-    const createCancelTokenSource = () => {
-        if (cancelTokenSourceRef.current) {
-            cancelTokenSourceRef.current.cancel(
-                'Operation canceled due to new request'
-            );
-        }
-        cancelTokenSourceRef.current = axios.CancelToken.source();
-        return cancelTokenSourceRef.current;
-    };
+    useEffect(() => {
+        instructorCacheRef.current = instructorCache;
+    }, [instructorCache]);
 
     const fetchInstructors = useCallback(
         async (ids: number[]): Promise<void> => {
             try {
-                const uncachedIds = ids.filter((id) => !instructorCache[id]);
+                const uncachedIds = ids.filter(id => !instructorCacheRef.current[id]);
 
                 if (uncachedIds.length === 0) return;
 
@@ -107,7 +102,7 @@ const CourseSearchComponent = () => {
                 }
             }
         },
-        [instructorCache]
+        []
     );
 
     const performSearch = useCallback(
@@ -117,9 +112,13 @@ const CourseSearchComponent = () => {
                 setLoading(false);
                 return;
             }
+            if (cancelTokenSourceRef.current) {
+                cancelTokenSourceRef.current.cancel('Operation canceled due to new request');
+            }
 
-            const term_cleaned = term.replace(/\\/g, '');
-            const source = createCancelTokenSource();
+            const cleanedTerm = term.replace(/\\/g, '').trim();
+            const source = axios.CancelToken.source();
+            cancelTokenSourceRef.current = source;
 
             try {
                 setLoading(true);
@@ -133,7 +132,7 @@ const CourseSearchComponent = () => {
                     `${process.env.BACKEND_LINK}/api/courses`,
                     {
                         params: {
-                            search: term_cleaned,
+                            search: cleanedTerm,
                             schools: activeSchools.join(','),
                             limit: 100,
                         },
@@ -168,15 +167,12 @@ const CourseSearchComponent = () => {
 
     const debouncedSearch = useMemo(
         () => debounce(performSearch, 300, { leading: false, trailing: true }),
-        [performSearch, selectedSchools]
+        [performSearch]
     );
 
     useEffect(() => {
-        if (searchTerm.trim()) {
             debouncedSearch(searchTerm, selectedSchools);
-        } else {
-            setResults([]);
-        }
+        
 
         return () => {
             debouncedSearch.cancel();
@@ -191,9 +187,11 @@ const CourseSearchComponent = () => {
             const allSelected = Object.values(prev).every(Boolean);
 
             if (allSelected) {
-                return Object.fromEntries(
-                    Object.keys(prev).map((k) => [k, k === school])
-                ) as typeof prev;
+                const newState: Record<SchoolKey, boolean> = {
+                   PO: false, CM: false, HM: false, SC: false, PZ: false,
+               };
+               newState[school] = true;
+               return newState;
             }
 
             const newState = {
@@ -204,9 +202,7 @@ const CourseSearchComponent = () => {
             const anySelected = Object.values(newState).some(Boolean);
 
             if (!anySelected) {
-                return Object.fromEntries(
-                    Object.keys(prev).map((k) => [k, true])
-                ) as typeof prev;
+                return { PO: true, CM: true, HM: true, SC: true, PZ: true };
             }
 
             return newState;
@@ -218,9 +214,9 @@ const CourseSearchComponent = () => {
     }, [results]);
 
     const extractSchoolCode = (code: string): SchoolKey => {
-        const schoolCode = code.slice(-2);
-        return schoolData[schoolCode as SchoolKey]
-            ? (schoolCode as SchoolKey)
+        const schoolCode = code.slice(-2) as SchoolKey;
+        return schoolData[schoolCode]
+            ? (schoolCode)
             : 'PO';
     };
 
@@ -297,12 +293,11 @@ const CourseSearchComponent = () => {
                         </div>
 
                         {sortedResults.map((course) => (
-                            <CourseCard
+                            <CourseCardComponent
                                 key={course._id}
                                 course={course}
                                 schoolCode={extractSchoolCode(course.code)}
                                 instructorCache={instructorCache}
-                                onInstructorLoad={fetchInstructors}
                             />
                         ))}
                     </>
@@ -322,23 +317,7 @@ const CourseSearchComponent = () => {
 const CourseCardComponent = ({
     course,
     schoolCode,
-    instructorCache,
-    onInstructorLoad,
-}: CourseCardProps) => {
-    useEffect(() => {
-        const loadInstructors = async () => {
-            if (course.all_instructor_ids?.length) {
-                const hasUncached = course.all_instructor_ids.some(
-                    (id) => !instructorCache[id]
-                );
-                if (hasUncached) {
-                    await onInstructorLoad(course.all_instructor_ids);
-                }
-            }
-        };
-
-        loadInstructors();
-    }, [course.all_instructor_ids, instructorCache, onInstructorLoad]);
+    instructorCache }: Omit<CourseCardProps, 'onInstructorLoad'>) => {
 
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow relative">
@@ -442,8 +421,5 @@ const CourseCardComponent = ({
         </div>
     );
 };
-
-const CourseCard = React.memo(CourseCardComponent);
-CourseCard.displayName = 'CourseCard';
 
 export default CourseSearchComponent;
