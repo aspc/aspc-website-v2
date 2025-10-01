@@ -120,6 +120,7 @@ const CourseSearchComponent = () => {
             const source = axios.CancelToken.source();
             cancelTokenSourceRef.current = source;
 
+
             try {
                 setLoading(true);
                 setError(null);
