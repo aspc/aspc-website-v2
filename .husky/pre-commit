@@ -1,0 +1,2 @@
+echo "npx lint-staged" > .husky/pre-commit
+chmod +x .husky/pre-commit
