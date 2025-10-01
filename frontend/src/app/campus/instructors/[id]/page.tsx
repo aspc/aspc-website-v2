@@ -288,7 +288,6 @@ const InstructorPage = (): JSX.Element => {
 
     return (
         <div className="min-h-screen bg-gray-100 text-gray-900">
-
             <div className="container mx-auto px-4 py-8">
                 {/* Back Button */}
                 <button
@@ -317,7 +316,9 @@ const InstructorPage = (): JSX.Element => {
                                             <span className="font-medium">
                                                 School:
                                             </span>{' '}
-                                            {getSchoolFullName(instructorSchool)}
+                                            {getSchoolFullName(
+                                                instructorSchool
+                                            )}
                                         </p>
                                         <div className="text-gray-700">
                                             <details className="mt-2">
@@ -515,8 +516,8 @@ const InstructorPage = (): JSX.Element => {
                                                     <span className="inline">
                                                         {review.work_per_week
                                                             ? `${formatWorkPerWeek(
-                                                                review.work_per_week
-                                                            )}`
+                                                                  review.work_per_week
+                                                              )}`
                                                             : 'N/A'}
                                                     </span>
                                                 </div>
@@ -590,14 +591,18 @@ const InstructorPage = (): JSX.Element => {
                         onClick={handleAddNewReviewClick}
                         ref={targetRef}
                     >
-                        {selectedReview ? 'Cancel review edit' : 'Add new review'}
+                        {selectedReview
+                            ? 'Cancel review edit'
+                            : 'Add new review'}
                     </button>
 
                     {(isCreatingNew || selectedReview) && (
                         <div>
                             <ReviewForm
                                 review={selectedReview}
-                                courseId={selectedReview?.course_id || undefined}
+                                courseId={
+                                    selectedReview?.course_id || undefined
+                                }
                                 instructorId={Number(instructorId)}
                             />
                         </div>

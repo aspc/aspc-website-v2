@@ -179,12 +179,14 @@ const RoomPage = () => {
 
                                         {roomReviews.room.size && (
                                             <p className="text-gray-600">
-                                                Size: {roomReviews.room.size} sq.
-                                                ft.
+                                                Size: {roomReviews.room.size}{' '}
+                                                sq. ft.
                                             </p>
                                         )}
                                         <div>
-                                            <p className="text-gray-600">Overall</p>
+                                            <p className="text-gray-600">
+                                                Overall
+                                            </p>
                                             <div className="flex items-center">
                                                 <StarRating
                                                     rating={
@@ -200,7 +202,9 @@ const RoomPage = () => {
                                             </div>
                                         </div>
                                         <div>
-                                            <p className="text-gray-600">Quiet</p>
+                                            <p className="text-gray-600">
+                                                Quiet
+                                            </p>
                                             <div className="flex items-center">
                                                 <StarRating
                                                     rating={
@@ -216,7 +220,9 @@ const RoomPage = () => {
                                             </div>
                                         </div>
                                         <div>
-                                            <p className="text-gray-600">Layout</p>
+                                            <p className="text-gray-600">
+                                                Layout
+                                            </p>
                                             <div className="flex items-center">
                                                 <StarRating
                                                     rating={
@@ -251,7 +257,8 @@ const RoomPage = () => {
                                         </div>
                                     </div>
                                     <p className="text-gray-500 mt-3">
-                                        Based on {roomReviews.averages.reviewCount}{' '}
+                                        Based on{' '}
+                                        {roomReviews.averages.reviewCount}{' '}
                                         review
                                         {roomReviews.averages.reviewCount !== 1
                                             ? 's'
@@ -375,7 +382,10 @@ const RoomPage = () => {
                                                         review.pictures.length >
                                                             0 &&
                                                         review.pictures.map(
-                                                            (picture, index) => (
+                                                            (
+                                                                picture,
+                                                                index
+                                                            ) => (
                                                                 <div
                                                                     key={index}
                                                                     className="picture-item"
@@ -383,8 +393,12 @@ const RoomPage = () => {
                                                                     <Image
                                                                         src={`${process.env.BACKEND_LINK}/api/campus/housing/review_pictures/${picture}`}
                                                                         alt={`Review image ${index + 1}`}
-                                                                        width={200}
-                                                                        height={200}
+                                                                        width={
+                                                                            200
+                                                                        }
+                                                                        height={
+                                                                            200
+                                                                        }
                                                                         className="object-cover"
                                                                         onClick={() =>
                                                                             setSelectedPicture(
@@ -418,11 +432,15 @@ const RoomPage = () => {
                                             <div className="flex space-x-16">
                                                 <p className="text-gray-500 mt-3">
                                                     Review written{' '}
-                                                    {formatDate(review.createdAt)}
+                                                    {formatDate(
+                                                        review.createdAt
+                                                    )}
                                                 </p>
                                                 <p className="text-gray-500 mt-3">
                                                     Last updated{' '}
-                                                    {formatDate(review.updatedAt)}
+                                                    {formatDate(
+                                                        review.updatedAt
+                                                    )}
                                                 </p>
                                             </div>
                                         </div>
@@ -446,7 +464,9 @@ const RoomPage = () => {
                         onClick={handleAddNewReviewClick}
                         ref={targetRef}
                     >
-                        {selectedReview ? 'Cancel review edit' : 'Add new review'}
+                        {selectedReview
+                            ? 'Cancel review edit'
+                            : 'Add new review'}
                     </button>
 
                     {(isCreatingNew || selectedReview) && (
