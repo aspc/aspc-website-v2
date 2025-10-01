@@ -287,319 +287,322 @@ const InstructorPage = (): JSX.Element => {
     };
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            {/* Back Button */}
-            <button
-                onClick={() => router.back()}
-                className="mb-6 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-                Back
-            </button>
+        <div className="min-h-screen bg-gray-100 text-gray-900">
 
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-800">
-                    {instructorName}
-                </h1>
+            <div className="container mx-auto px-4 py-8">
+                {/* Back Button */}
+                <button
+                    onClick={() => router.back()}
+                    className="mb-6 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                    Back
+                </button>
 
-                <div className="py-4 flex-grow">
-                    {instructorReviews ? (
-                        <>
-                            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                                <h4 className="text-lg font-medium mb-3">
-                                    Instructor Information
-                                </h4>
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-800">
+                        {instructorName}
+                    </h1>
 
-                                {/* School and courses info about the prof */}
-                                <div className="mb-4">
-                                    <p className="text-gray-700 mb-2">
-                                        <span className="font-medium">
-                                            School:
-                                        </span>{' '}
-                                        {getSchoolFullName(instructorSchool)}
-                                    </p>
-                                    <div className="text-gray-700">
-                                        <details className="mt-2">
-                                            <summary className="cursor-pointer text-indigo-600 hover:underline">
-                                                View Courses
-                                            </summary>
-                                            <div className="mt-2">
-                                                {formatCoursesList()}
-                                            </div>
-                                        </details>
+                    <div className="py-4 flex-grow">
+                        {instructorReviews ? (
+                            <>
+                                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                                    <h4 className="text-lg font-medium mb-3">
+                                        Instructor Information
+                                    </h4>
+
+                                    {/* School and courses info about the prof */}
+                                    <div className="mb-4">
+                                        <p className="text-gray-700 mb-2">
+                                            <span className="font-medium">
+                                                School:
+                                            </span>{' '}
+                                            {getSchoolFullName(instructorSchool)}
+                                        </p>
+                                        <div className="text-gray-700">
+                                            <details className="mt-2">
+                                                <summary className="cursor-pointer text-indigo-600 hover:underline">
+                                                    View Courses
+                                                </summary>
+                                                <div className="mt-2">
+                                                    {formatCoursesList()}
+                                                </div>
+                                            </details>
+                                        </div>
                                     </div>
+
+                                    {averageRatings &&
+                                        averageRatings.reviewCount > 0 && (
+                                            <>
+                                                <h4 className="text-lg font-medium mb-3 mt-6">
+                                                    Review Summary
+                                                </h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div>
+                                                        <p className="text-gray-600">
+                                                            Overall Rating
+                                                        </p>
+                                                        <div className="flex items-center">
+                                                            <StarRating
+                                                                rating={Math.round(
+                                                                    averageRatings.overallAverage
+                                                                )}
+                                                            />
+                                                            <span className="ml-2">
+                                                                {averageRatings.overallAverage.toFixed(
+                                                                    1
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-gray-600">
+                                                            Inclusivity
+                                                        </p>
+                                                        <div className="flex items-center">
+                                                            <StarRating
+                                                                rating={Math.round(
+                                                                    averageRatings.inclusivityAverage
+                                                                )}
+                                                            />
+                                                            <span className="ml-2">
+                                                                {averageRatings.inclusivityAverage.toFixed(
+                                                                    1
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-gray-600">
+                                                            Challenge Level
+                                                        </p>
+                                                        <div className="flex items-center">
+                                                            <StarRating
+                                                                rating={Math.round(
+                                                                    averageRatings.challengeAverage
+                                                                )}
+                                                            />
+                                                            <span className="ml-2">
+                                                                {averageRatings.challengeAverage.toFixed(
+                                                                    1
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <p className="text-gray-500 mt-3">
+                                                    Based on{' '}
+                                                    {averageRatings.reviewCount}{' '}
+                                                    review
+                                                    {averageRatings.reviewCount !==
+                                                    1
+                                                        ? 's'
+                                                        : ''}
+                                                </p>
+                                            </>
+                                        )}
                                 </div>
 
-                                {averageRatings &&
-                                    averageRatings.reviewCount > 0 && (
-                                        <>
-                                            <h4 className="text-lg font-medium mb-3 mt-6">
-                                                Review Summary
-                                            </h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <div>
-                                                    <p className="text-gray-600">
-                                                        Overall Rating
-                                                    </p>
-                                                    <div className="flex items-center">
+                                <button
+                                    className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
+                                    onClick={handleAddNewReviewClick}
+                                    ref={targetRef}
+                                >
+                                    Add New Review
+                                </button>
+
+                                <div className="py-4">
+                                    <hr className="border-t border-gray-300" />
+                                </div>
+                            </>
+                        ) : null}
+
+                        {/* User Reviews */}
+                        {instructorReviews ? (
+                            <div className="space-y-6">
+                                <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                                    Student Reviews
+                                </h2>
+                                {instructorReviews.reviews.length > 0 ? (
+                                    instructorReviews.reviews.map((review) => (
+                                        <div
+                                            key={review._id}
+                                            className="border-b pb-4 bg-white p-4 rounded-lg shadow-sm"
+                                        >
+                                            <div className="flex justify-between mb-2">
+                                                <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                                                    <span className="text-m text-gray-600 mr-2">
+                                                        Overall Rating:
+                                                    </span>
+                                                    <span>
                                                         <StarRating
                                                             rating={Math.round(
-                                                                averageRatings.overallAverage
+                                                                review.overall_rating ||
+                                                                    0
                                                             )}
                                                         />
-                                                        <span className="ml-2">
-                                                            {averageRatings.overallAverage.toFixed(
-                                                                1
-                                                            )}
-                                                        </span>
-                                                    </div>
+                                                    </span>
+                                                    <span className="ml-2">
+                                                        {review.overall_rating ||
+                                                            ''}
+                                                    </span>
                                                 </div>
-                                                <div>
-                                                    <p className="text-gray-600">
-                                                        Inclusivity
-                                                    </p>
-                                                    <div className="flex items-center">
-                                                        <StarRating
-                                                            rating={Math.round(
-                                                                averageRatings.inclusivityAverage
-                                                            )}
-                                                        />
-                                                        <span className="ml-2">
-                                                            {averageRatings.inclusivityAverage.toFixed(
-                                                                1
-                                                            )}
-                                                        </span>
+
+                                                {user.email ===
+                                                    review.user_email && (
+                                                    <div className="flex p-2 gap-4">
+                                                        <button
+                                                            className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
+                                                            onClick={() => {
+                                                                setSelectedReview(
+                                                                    review
+                                                                );
+                                                                scrollToReviewForm();
+                                                            }}
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            className="bg-red-500 text-white text-m px-4 rounded-md hover:bg-red-600"
+                                                            onClick={() => {
+                                                                handleDelete(
+                                                                    review.id
+                                                                );
+                                                            }}
+                                                        >
+                                                            Delete
+                                                        </button>
                                                     </div>
-                                                </div>
-                                                <div>
-                                                    <p className="text-gray-600">
-                                                        Challenge Level
-                                                    </p>
-                                                    <div className="flex items-center">
-                                                        <StarRating
-                                                            rating={Math.round(
-                                                                averageRatings.challengeAverage
-                                                            )}
-                                                        />
-                                                        <span className="ml-2">
-                                                            {averageRatings.challengeAverage.toFixed(
-                                                                1
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <p className="text-gray-500 mt-3">
-                                                Based on{' '}
-                                                {averageRatings.reviewCount}{' '}
-                                                review
-                                                {averageRatings.reviewCount !==
-                                                1
-                                                    ? 's'
-                                                    : ''}
-                                            </p>
-                                        </>
-                                    )}
-                            </div>
-
-                            <button
-                                className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
-                                onClick={handleAddNewReviewClick}
-                                ref={targetRef}
-                            >
-                                Add New Review
-                            </button>
-
-                            <div className="py-4">
-                                <hr className="border-t border-gray-300" />
-                            </div>
-                        </>
-                    ) : null}
-
-                    {/* User Reviews */}
-                    {instructorReviews ? (
-                        <div className="space-y-6">
-                            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                                Student Reviews
-                            </h2>
-                            {instructorReviews.reviews.length > 0 ? (
-                                instructorReviews.reviews.map((review) => (
-                                    <div
-                                        key={review._id}
-                                        className="border-b pb-4 bg-white p-4 rounded-lg shadow-sm"
-                                    >
-                                        <div className="flex justify-between mb-2">
-                                            <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                                <span className="text-m text-gray-600 mr-2">
-                                                    Overall Rating:
-                                                </span>
-                                                <span>
-                                                    <StarRating
-                                                        rating={Math.round(
-                                                            review.overall_rating ||
-                                                                0
-                                                        )}
-                                                    />
-                                                </span>
-                                                <span className="ml-2">
-                                                    {review.overall_rating ||
-                                                        ''}
-                                                </span>
+                                                )}
                                             </div>
 
-                                            {user.email ===
-                                                review.user_email && (
-                                                <div className="flex p-2 gap-4">
-                                                    <button
-                                                        className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
-                                                        onClick={() => {
-                                                            setSelectedReview(
-                                                                review
-                                                            );
-                                                            scrollToReviewForm();
-                                                        }}
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <button
-                                                        className="bg-red-500 text-white text-m px-4 rounded-md hover:bg-red-600"
-                                                        onClick={() => {
-                                                            handleDelete(
-                                                                review.id
-                                                            );
-                                                        }}
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
-                                            {review.challenge_rating !==
-                                                undefined && (
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
+                                                {review.challenge_rating !==
+                                                    undefined && (
+                                                    <div className="text-sm flex items-center mb-2">
+                                                        <span className="text-gray-600 mr-2">
+                                                            Difficulty:
+                                                        </span>
+                                                        <span className="inline">
+                                                            <StarRating
+                                                                rating={Math.round(
+                                                                    review.challenge_rating ||
+                                                                        0
+                                                                )}
+                                                            />
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {review.inclusivity_rating && (
+                                                    <div className="text-sm flex items-center mb-1">
+                                                        <span className="text-gray-600 mr-2">
+                                                            Inclusivity:
+                                                        </span>
+                                                        <span className="inline">
+                                                            <StarRating
+                                                                rating={Math.round(
+                                                                    review.inclusivity_rating ||
+                                                                        0
+                                                                )}
+                                                            />
+                                                        </span>
+                                                    </div>
+                                                )}
                                                 <div className="text-sm flex items-center mb-2">
                                                     <span className="text-gray-600 mr-2">
-                                                        Difficulty:
+                                                        Work per week:
                                                     </span>
                                                     <span className="inline">
-                                                        <StarRating
-                                                            rating={Math.round(
-                                                                review.challenge_rating ||
-                                                                    0
-                                                            )}
-                                                        />
+                                                        {review.work_per_week
+                                                            ? `${formatWorkPerWeek(
+                                                                review.work_per_week
+                                                            )}`
+                                                            : 'N/A'}
                                                     </span>
                                                 </div>
-                                            )}
-                                            {review.inclusivity_rating && (
-                                                <div className="text-sm flex items-center mb-1">
-                                                    <span className="text-gray-600 mr-2">
-                                                        Inclusivity:
-                                                    </span>
-                                                    <span className="inline">
-                                                        <StarRating
-                                                            rating={Math.round(
-                                                                review.inclusivity_rating ||
-                                                                    0
-                                                            )}
-                                                        />
-                                                    </span>
-                                                </div>
-                                            )}
-                                            <div className="text-sm flex items-center mb-2">
+                                            </div>
+
+                                            <div className="text-sm mb-2">
                                                 <span className="text-gray-600 mr-2">
-                                                    Work per week:
+                                                    Course:
                                                 </span>
-                                                <span className="inline">
-                                                    {review.work_per_week
-                                                        ? `${formatWorkPerWeek(
-                                                              review.work_per_week
-                                                          )}`
-                                                        : 'N/A'}
-                                                </span>
+                                                <a
+                                                    href={`../courses/${review.course_id}`}
+                                                    className="text-blue-500 hover:underline"
+                                                >
+                                                    {review.course_id}
+                                                </a>
+                                            </div>
+
+                                            {review.comments && (
+                                                <div className="mt-2 mb-2">
+                                                    <FormattedReviewText
+                                                        text={review.comments}
+                                                        className="text-gray-800"
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {/* Date written, last updated */}
+                                            <div className="flex flex-wrap gap-4 mt-4">
+                                                <p className="text-gray-500">
+                                                    Review written{' '}
+                                                    {review.createdAt &&
+                                                        formatDate(
+                                                            review.createdAt
+                                                        )}
+                                                </p>
+                                                <p className="text-gray-500">
+                                                    Last updated{' '}
+                                                    {review.updatedAt &&
+                                                        formatDate(
+                                                            review.updatedAt
+                                                        )}
+                                                </p>
                                             </div>
                                         </div>
-
-                                        <div className="text-sm mb-2">
-                                            <span className="text-gray-600 mr-2">
-                                                Course:
-                                            </span>
-                                            <a
-                                                href={`../courses/${review.course_id}`}
-                                                className="text-blue-500 hover:underline"
-                                            >
-                                                {review.course_id}
-                                            </a>
-                                        </div>
-
-                                        {review.comments && (
-                                            <div className="mt-2 mb-2">
-                                                <FormattedReviewText
-                                                    text={review.comments}
-                                                    className="text-gray-800"
-                                                />
-                                            </div>
-                                        )}
-
-                                        {/* Date written, last updated */}
-                                        <div className="flex flex-wrap gap-4 mt-4">
-                                            <p className="text-gray-500">
-                                                Review written{' '}
-                                                {review.createdAt &&
-                                                    formatDate(
-                                                        review.createdAt
-                                                    )}
-                                            </p>
-                                            <p className="text-gray-500">
-                                                Last updated{' '}
-                                                {review.updatedAt &&
-                                                    formatDate(
-                                                        review.updatedAt
-                                                    )}
-                                            </p>
-                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-40">
+                                        <p className="text-gray-500 text-lg">
+                                            No reviews yet for this instructor.
+                                        </p>
+                                        <p className="text-gray-400">
+                                            Be the first to leave a review!
+                                        </p>
                                     </div>
-                                ))
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-40">
-                                    <p className="text-gray-500 text-lg">
-                                        No reviews yet for this instructor.
-                                    </p>
-                                    <p className="text-gray-400">
-                                        Be the first to leave a review!
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center h-40">
-                            <p className="text-gray-500 text-lg">
-                                No reviews yet for this instructor.
-                            </p>
-                            <p className="text-gray-400">
-                                Be the first to leave a review!
-                            </p>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-40">
+                                <p className="text-gray-500 text-lg">
+                                    No reviews yet for this instructor.
+                                </p>
+                                <p className="text-gray-400">
+                                    Be the first to leave a review!
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    <button
+                        className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
+                        onClick={handleAddNewReviewClick}
+                        ref={targetRef}
+                    >
+                        {selectedReview ? 'Cancel review edit' : 'Add new review'}
+                    </button>
+
+                    {(isCreatingNew || selectedReview) && (
+                        <div>
+                            <ReviewForm
+                                review={selectedReview}
+                                courseId={selectedReview?.course_id || undefined}
+                                instructorId={Number(instructorId)}
+                            />
                         </div>
                     )}
                 </div>
-
-                <button
-                    className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
-                    onClick={handleAddNewReviewClick}
-                    ref={targetRef}
-                >
-                    {selectedReview ? 'Cancel review edit' : 'Add new review'}
-                </button>
-
-                {(isCreatingNew || selectedReview) && (
-                    <div>
-                        <ReviewForm
-                            review={selectedReview}
-                            courseId={selectedReview?.course_id || undefined}
-                            instructorId={Number(instructorId)}
-                        />
-                    </div>
-                )}
             </div>
         </div>
     );

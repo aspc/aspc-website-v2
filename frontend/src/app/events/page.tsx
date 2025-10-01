@@ -102,91 +102,94 @@ const EventsPage = () => {
     if (loading) return <Loading />;
 
     return (
-        <div className="p-5">
-            {selectedEvent && (
-                <div
-                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto"
-                    onClick={closeEventDetails}
-                >
+        <div className="min-h-screen bg-gray-100 text-gray-900">
+
+            <div className="p-5">
+                {selectedEvent && (
                     <div
-                        className="bg-white p-6 rounded-lg max-w-lg w-11/12 shadow-lg relative mt-10 max-h-[80vh] overflow-y-auto"
-                        onClick={(e) => e.stopPropagation()}
+                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto"
+                        onClick={closeEventDetails}
                     >
-                        <h2
-                            className={`text-2xl font-bold ${selectedEvent.resource.status === 'canceled' ? 'line-through text-red-500' : 'text-gray-800'}`}
+                        <div
+                            className="bg-white p-6 rounded-lg max-w-lg w-11/12 shadow-lg relative mt-10 max-h-[80vh] overflow-y-auto"
+                            onClick={(e) => e.stopPropagation()}
                         >
-                            {selectedEvent.title}
-                        </h2>
-                        <p
-                            className={`font-medium mb-2 ${selectedEvent.resource.status === 'canceled' ? 'text-red-500' : 'text-gray-600'}`}
-                        >
-                            Status:{' '}
-                            {selectedEvent.resource.status
-                                .charAt(0)
-                                .toUpperCase() +
-                                selectedEvent.resource.status.slice(1)}
-                        </p>
-                        <p className="text-gray-600 mb-2">
-                            <strong>Start:</strong>{' '}
-                            {moment(selectedEvent.start).format('LLLL')}
-                        </p>
-                        {!moment(selectedEvent.start).isSame(
-                            selectedEvent.end,
-                            'day'
-                        ) && (
-                            <p className="text-gray-600 mb-2">
-                                <strong>End:</strong>{' '}
-                                {moment(selectedEvent.end).format('LLLL')}
+                            <h2
+                                className={`text-2xl font-bold ${selectedEvent.resource.status === 'canceled' ? 'line-through text-red-500' : 'text-gray-800'}`}
+                            >
+                                {selectedEvent.title}
+                            </h2>
+                            <p
+                                className={`font-medium mb-2 ${selectedEvent.resource.status === 'canceled' ? 'text-red-500' : 'text-gray-600'}`}
+                            >
+                                Status:{' '}
+                                {selectedEvent.resource.status
+                                    .charAt(0)
+                                    .toUpperCase() +
+                                    selectedEvent.resource.status.slice(1)}
                             </p>
-                        )}
-                        <p className="text-gray-600 mb-2">
-                            <strong>Location:</strong>{' '}
-                            {selectedEvent.resource.location}
-                        </p>
-                        <p className="text-gray-600 mb-2">
-                            <strong>Host:</strong> {selectedEvent.resource.host}
-                        </p>
-                        <div className="mb-4">
-                            <FormattedReviewText
-                                text={selectedEvent.resource.description}
-                                className="text-gray-700"
-                            />
-                        </div>
-                        <div className="flex justify-between">
-                            <a
-                                href={selectedEvent.resource.details_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="bg-[#3174ad] text-white py-2 px-4 rounded-lg hover:bg-[#255a89] transition"
-                            >
-                                Event Details
-                            </a>
-                            <button
-                                onClick={closeEventDetails}
-                                className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600"
-                            >
-                                Close
-                            </button>
+                            <p className="text-gray-600 mb-2">
+                                <strong>Start:</strong>{' '}
+                                {moment(selectedEvent.start).format('LLLL')}
+                            </p>
+                            {!moment(selectedEvent.start).isSame(
+                                selectedEvent.end,
+                                'day'
+                            ) && (
+                                <p className="text-gray-600 mb-2">
+                                    <strong>End:</strong>{' '}
+                                    {moment(selectedEvent.end).format('LLLL')}
+                                </p>
+                            )}
+                            <p className="text-gray-600 mb-2">
+                                <strong>Location:</strong>{' '}
+                                {selectedEvent.resource.location}
+                            </p>
+                            <p className="text-gray-600 mb-2">
+                                <strong>Host:</strong> {selectedEvent.resource.host}
+                            </p>
+                            <div className="mb-4">
+                                <FormattedReviewText
+                                    text={selectedEvent.resource.description}
+                                    className="text-gray-700"
+                                />
+                            </div>
+                            <div className="flex justify-between">
+                                <a
+                                    href={selectedEvent.resource.details_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bg-[#3174ad] text-white py-2 px-4 rounded-lg hover:bg-[#255a89] transition"
+                                >
+                                    Event Details
+                                </a>
+                                <button
+                                    onClick={closeEventDetails}
+                                    className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600"
+                                >
+                                    Close
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            <div className="bg-white rounded-lg p-4 shadow-md min-h-[600px] h-[calc(100vh-180px)]">
-                <Calendar
-                    localizer={localizer}
-                    events={events}
-                    startAccessor="start"
-                    endAccessor="end"
-                    views={{ month: true, week: false, day: false }}
-                    view={currentView}
-                    onView={handleViewChange}
-                    defaultView={'month'}
-                    date={currentDate}
-                    onNavigate={(newDate: Date) => setCurrentDate(newDate)}
-                    onSelectEvent={handleSelectEvent}
-                    popup={true}
-                />
+                <div className="bg-white rounded-lg p-4 shadow-md min-h-[600px] h-[calc(100vh-180px)]">
+                    <Calendar
+                        localizer={localizer}
+                        events={events}
+                        startAccessor="start"
+                        endAccessor="end"
+                        views={{ month: true, week: false, day: false }}
+                        view={currentView}
+                        onView={handleViewChange}
+                        defaultView={'month'}
+                        date={currentDate}
+                        onNavigate={(newDate: Date) => setCurrentDate(newDate)}
+                        onSelectEvent={handleSelectEvent}
+                        popup={true}
+                    />
+                </div>
             </div>
         </div>
     );
