@@ -24,7 +24,6 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
             try {
                 setIsLoading(true);
 
-                // Fetch members by group
                 const res = await fetch(
                     `${process.env.BACKEND_LINK}/api/members/group/${
                         groupSlugMap[resolvedParams.slug]
@@ -70,8 +69,6 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
                     {resolvedParams.slug.replace(/([a-z])([A-Z])/g, '$1 $2')}
                 </h1>
 
-                {/* Senator Cards */}
-
                 {members.length === 0 ? (
                     <div className="text-center text-gray-600">
                         No members found in this group.
@@ -106,7 +103,7 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
                                                         const target =
                                                             e.target as HTMLImageElement;
                                                         target.src =
-                                                            '/cecil.jpg'; // Direct src replacement
+                                                            '/cecil.jpg';
                                                     }}
                                                     layout="fill"
                                                 />
@@ -118,6 +115,14 @@ const SenatePage: React.FC<PageProps> = ({ params }) => {
                                         <p className="text-gray-600 ml-2">
                                             {member.position}
                                         </p>
+                                        {member.email && (
+                                            <a
+                                                href={`mailto:${member.email}`}
+                                                className="text-blue-600 hover:text-blue-800 ml-2 text-sm"
+                                            >
+                                                {member.email}
+                                            </a>
+                                        )}
                                         <button
                                             type="button"
                                             onClick={() => {
