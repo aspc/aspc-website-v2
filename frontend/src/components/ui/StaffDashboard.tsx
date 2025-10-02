@@ -17,6 +17,7 @@ const StaffDashboard = () => {
     const [profilePictureURL, setProfilePictureURL] = useState<string>('');
     const [name, setName] = useState<string>('');
     const [position, setPosition] = useState<string>('');
+    const [email, setEmail] = useState<string>('');
     const [bio, setBio] = useState<string>('');
     const [group, setGroup] = useState<string>('senate');
     const [id, setId] = useState<string>('');
@@ -62,6 +63,7 @@ const StaffDashboard = () => {
                     const data = await response.json();
                     setName(data.name);
                     setPosition(data.position);
+                    setEmail(data.email || '');
                     setBio(data.bio);
                     setGroup(data.group);
                     setId(data.id);
@@ -96,6 +98,7 @@ const StaffDashboard = () => {
     const resetForm = () => {
         setName('');
         setPosition('');
+        setEmail('');
         setBio('');
         setGroup('senate');
         setId('');
@@ -145,6 +148,7 @@ const StaffDashboard = () => {
             formData.append('id', id);
             formData.append('name', name);
             formData.append('position', position);
+            formData.append('email', email);
             formData.append('bio', bio);
             formData.append('group', group);
 
@@ -284,7 +288,6 @@ const StaffDashboard = () => {
                             height={128}
                             className="w-32 h-32 rounded-full object-cover"
                             onError={() => {
-                                // If image fails to load, clear the URL
                                 setProfilePictureURL('');
                             }}
                         />
@@ -321,6 +324,20 @@ const StaffDashboard = () => {
                     type="text"
                     value={position}
                     onChange={(e) => setPosition(e.target.value)}
+                    required
+                />
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                    Email
+                </h2>
+                <input
+                    className="w-full p-4 border rounded"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="example@aspc.pomona.edu"
                     required
                 />
             </div>

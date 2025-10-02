@@ -49,9 +49,10 @@ interface IStaff extends Document {
     id: string;
     name: string;
     position: string;
+    email: string; // NEW FIELD
     bio: string;
     group: string;
-    profilePic: mongoose.Types.ObjectId; // Id of picture after uploading to GridFS
+    profilePic: mongoose.Types.ObjectId;
 }
 
 const StaffSchema = new Schema<IStaff>(
@@ -68,6 +69,12 @@ const StaffSchema = new Schema<IStaff>(
         position: {
             type: String,
             required: true,
+        },
+        email: {
+            type: String,
+            required: true,
+            trim: true,
+            lowercase: true,
         },
         bio: {
             type: String,

@@ -85,6 +85,7 @@ router.post(
                     id: req.body.id,
                     name: req.body.name,
                     position: req.body.position,
+                    email: req.body.email,
                     bio: req.body.bio,
                     group: req.body.group,
                     profilePic: uploadStream.id,
