@@ -110,7 +110,6 @@ const EventReviewSchema = new Schema<IEventReview>(
         },
         content: {
             type: String,
-            required: true,
             maxlength: 1000,
             trim: true,
         },
