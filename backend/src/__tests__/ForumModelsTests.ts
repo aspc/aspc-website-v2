@@ -7,7 +7,9 @@ dotenv.config();
 async function testRatingFunctions() {
     try {
         // Connect to your database
-        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/school-platform'
+        await mongoose.connect(
+            process.env.MONGODB_URI ||
+                'mongodb://localhost:27017/school-platform'
         );
         console.log('✅ Connected to MongoDB\n');
 
@@ -45,7 +47,10 @@ async function testRatingFunctions() {
         const stats1 = await EventReview.getAverageRatings(event._id);
         console.log('Stats:', stats1);
         console.log('Expected: all zeros');
-        console.log('Result:', stats1.totalResponses === 0 ? '✅ PASS' : '❌ FAIL');
+        console.log(
+            'Result:',
+            stats1.totalResponses === 0 ? '✅ PASS' : '❌ FAIL'
+        );
         console.log('');
 
         // ============================================
@@ -83,14 +88,21 @@ async function testRatingFunctions() {
         const stats2 = await EventReview.getAverageRatings(event._id);
         console.log('Stats:', stats2);
         console.log('Expected: overall=5, wouldRepeat=4, totalResponses=1');
-        console.log('Result:', stats2.overall === 5 && stats2.wouldRepeat === 4 && stats2.totalResponses === 1 ? '✅ PASS' : '❌ FAIL');
+        console.log(
+            'Result:',
+            stats2.overall === 5 &&
+                stats2.wouldRepeat === 4 &&
+                stats2.totalResponses === 1
+                ? '✅ PASS'
+                : '❌ FAIL'
+        );
         console.log('');
 
         // ============================================
         // TEST 6: Add more ratings
         // ============================================
         console.log('TEST 6: Adding 2 more ratings');
-        
+
         await EventReview.create({
             eventId: event._id,
             author: userId2,
@@ -114,7 +126,7 @@ async function testRatingFunctions() {
                 { question: 'How was the venue?', rating: 5 },
             ],
         });
-        
+
         console.log('✅ 2 more ratings created\n');
 
         // ============================================
@@ -129,12 +141,17 @@ async function testRatingFunctions() {
         console.log('  - totalResponses: 3');
         console.log('  - food: 4 (avg of 5,3,4)');
         console.log('  - venue: ~3.67 (avg of 4,2,5)');
-        
+
         const overallCorrect = stats3.overall === 4;
         const wouldRepeatCorrect = Math.abs(stats3.wouldRepeat - 3.67) < 0.01;
         const totalCorrect = stats3.totalResponses === 3;
-        
-        console.log('Result:', overallCorrect && wouldRepeatCorrect && totalCorrect ? '✅ PASS' : '❌ FAIL');
+
+        console.log(
+            'Result:',
+            overallCorrect && wouldRepeatCorrect && totalCorrect
+                ? '✅ PASS'
+                : '❌ FAIL'
+        );
         console.log('');
 
         // ============================================
@@ -164,7 +181,7 @@ async function testRatingFunctions() {
         // TEST 9: Test with hidden comment
         // ============================================
         console.log('TEST 9: Testing hidden comment exclusion');
-        
+
         const userId4 = new mongoose.Types.ObjectId();
         await EventReview.create({
             eventId: event._id,
@@ -179,7 +196,10 @@ async function testRatingFunctions() {
         const stats4 = await EventReview.getAverageRatings(event._id);
         console.log('Stats (should still be 3 responses, not 4):', stats4);
         console.log('Expected: totalResponses=3 (hidden rating excluded)');
-        console.log('Result:', stats4.totalResponses === 3 ? '✅ PASS' : '❌ FAIL');
+        console.log(
+            'Result:',
+            stats4.totalResponses === 3 ? '✅ PASS' : '❌ FAIL'
+        );
         console.log('');
 
         // ============================================
@@ -193,7 +213,6 @@ async function testRatingFunctions() {
         console.log('========================================');
         console.log('ALL TESTS COMPLETED!');
         console.log('========================================');
-
     } catch (error) {
         console.error('❌ Error:', error);
     } finally {
