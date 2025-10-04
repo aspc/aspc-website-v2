@@ -6,6 +6,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 // Interface for ForumEvent document
 interface IForumEvent extends Document {
+    _id: mongoose.Types.ObjectId;
     title: string;
     description: string;
     createdBy: mongoose.Types.ObjectId;
@@ -71,7 +72,7 @@ const ForumEventSchema = new Schema<IForumEvent>(
 const ForumEvent = mongoose.model<IForumEvent>('ForumEvent', ForumEventSchema);
 
 // ============================================
-// EventComment Interface and Schema
+// EventReview Interface and Schema
 // ============================================
 
 // Interface for rating subdocument
@@ -81,6 +82,7 @@ interface ICustomRating {
 }
 
 interface IEventReview extends Document {
+    _id: mongoose.Types.ObjectId;
     eventId: mongoose.Types.ObjectId;
     author: mongoose.Types.ObjectId;
     isAnonymous: boolean;
@@ -150,10 +152,10 @@ const EventReviewSchema = new Schema<IEventReview>(
     }
 );
 
-// Create compound index to ensure one comment per user per event
+// Create compound index to ensure one review per user per event
 EventReviewSchema.index({ eventId: 1, author: 1 }, { unique: true });
 
-// Add indexes for aggregation performance
+// Optional: Add indexes for aggregation performance
 EventReviewSchema.index({ eventId: 1, overall: 1 });
 EventReviewSchema.index({ eventId: 1, wouldRepeat: 1 });
 
@@ -176,7 +178,7 @@ EventReviewSchema.statics.getAverageRatings = async function (
         {
             $match: {
                 eventId: new mongoose.Types.ObjectId(eventId.toString()),
-                isHidden: false,
+                isHidden: false, // Optional: exclude hidden comments from stats
             },
         },
         {
@@ -250,8 +252,8 @@ EventReviewSchema.statics.getRatingsForEvent = async function (
         .lean();
 };
 
-const EventComment = mongoose.model<IEventReview>(
-    'EventComment',
+const EventReview = mongoose.model<IEventReview, IEventReviewModel>(
+    'EventReview',
     EventReviewSchema
 );
 
@@ -259,19 +261,21 @@ const EventComment = mongoose.model<IEventReview>(
 // TypeScript Interface Extensions for Statics
 // ============================================
 
-interface IEventCommentModel extends mongoose.Model<IEventReview> {
+interface IEventReviewModel extends mongoose.Model<IEventReview> {
     hasUserRated(
         eventId: string | mongoose.Types.ObjectId,
         userId: string | mongoose.Types.ObjectId
     ): Promise<boolean>;
-
-    getAverageRatings(eventId: string | mongoose.Types.ObjectId): Promise<{
+    
+    getAverageRatings(
+        eventId: string | mongoose.Types.ObjectId
+    ): Promise<{
         overall: number;
         wouldRepeat: number;
         customQuestions: { [key: string]: number };
         totalResponses: number;
     }>;
-
+    
     getRatingsForEvent(
         eventId: string | mongoose.Types.ObjectId,
         options?: { skip?: number; limit?: number; includeHidden?: boolean }
@@ -281,12 +285,9 @@ interface IEventCommentModel extends mongoose.Model<IEventReview> {
 // Export all models and interfaces
 export {
     ForumEvent,
-    EventComment as EventCommentModel,
+    EventReview,
     IForumEvent,
     IEventReview,
-    IEventCommentModel,
+    IEventReviewModel,
     ICustomRating,
 };
-
-// Re-export with proper typing
-export default EventComment as IEventCommentModel;
