@@ -266,16 +266,14 @@ interface IEventReviewModel extends mongoose.Model<IEventReview> {
         eventId: string | mongoose.Types.ObjectId,
         userId: string | mongoose.Types.ObjectId
     ): Promise<boolean>;
-    
-    getAverageRatings(
-        eventId: string | mongoose.Types.ObjectId
-    ): Promise<{
+
+    getAverageRatings(eventId: string | mongoose.Types.ObjectId): Promise<{
         overall: number;
         wouldRepeat: number;
         customQuestions: { [key: string]: number };
         totalResponses: number;
     }>;
-    
+
     getRatingsForEvent(
         eventId: string | mongoose.Types.ObjectId,
         options?: { skip?: number; limit?: number; includeHidden?: boolean }
