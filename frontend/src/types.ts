@@ -11,6 +11,7 @@ export interface StaffMember {
     name: string;
     position: string;
     bio: string;
+    email: string;
     profilePic: string;
     group: string;
 }
