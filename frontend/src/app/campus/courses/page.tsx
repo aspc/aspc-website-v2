@@ -163,7 +163,7 @@ const CourseSearchComponent = () => {
                     .filter(([_, isSelected]) => isSelected)
                     .map(([school]) => school);
 
-                const response = await axios.get<any>(
+                const response = await axios.get<CoursesResponse>(
                     `${process.env.BACKEND_LINK}/api/courses`,
                     {
                         params: {
