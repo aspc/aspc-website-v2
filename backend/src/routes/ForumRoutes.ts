@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { ForumEvent, EventComment } from '../models/Forum';
+import { ForumEvent, EventReview } from '../models/Forum';
 import { isAuthenticated, isAdmin } from '../middleware/authMiddleware';
 
 const router = express.Router();
@@ -42,69 +42,22 @@ router.get('/:id', isAuthenticated, async (req: Request, res: Response) => {
 });
 
 /**
- * @route   POST /api/openforum/:id/rate
- * @desc    Add new open forum event rating
+ * @route   GET /api/openforum/:id/comments
+ * @desc    Get all comments for an open forum event
  * @access  Public
  */
-router.post(
-    '/:id/rate',
+router.get(
+    '/:id/ratings',
     isAuthenticated,
     async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
 
-            const event = await ForumEvent.findById(id);
+            const stats = await EventReview.getAverageRatings(id);
 
-            if (!event) {
-                res.status(404).json({ message: 'Event not found' });
-                return;
-            }
-
-            // parse review fields from request
-            const { userId, isAnonymous, overall, wouldRepeat, customRatings } =
-                req.body;
-
-            if (
-                typeof overall !== 'number' ||
-                overall < 1 ||
-                overall > 5 ||
-                typeof wouldRepeat !== 'number' ||
-                wouldRepeat < 1 ||
-                wouldRepeat > 5 ||
-                !Array.isArray(customRatings)
-            ) {
-                res.status(400).json({ message: 'Invalid rating data.' });
-                return;
-            }
-
-            const ratingDate = new Date();
-
-            if (ratingDate > event.ratingUntil) {
-                res.status(403).json({ message: 'Rating period has ended.' });
-                return;
-            }
-
-            if (event.hasUserRated(userId)) {
-                res.status(409).json({
-                    message: 'User has already rated this event.',
-                });
-                return;
-            }
-
-            event.ratings.push({
-                userId: userId,
-                isAnonymous: isAnonymous,
-                overall: overall,
-                wouldRepeat: wouldRepeat,
-                customRatings: customRatings,
-                createdAt: ratingDate,
-            });
-
-            await event.save();
-
-            res.status(201).json({ message: 'Rating saved successfully' });
+            res.json(stats);
         } catch (error) {
-            res.status(400).json({ message: 'Error creating rating' });
+            res.status(500).json({ message: 'Server error' });
         }
     }
 );
@@ -121,7 +74,7 @@ router.get(
         try {
             const { id } = req.params;
 
-            const comments = await EventComment.find({
+            const comments = await EventReview.find({
                 eventId: id,
                 isHidden: false,
             });
@@ -139,27 +92,46 @@ router.get(
 );
 
 /**
- * @route   POST /api/openforum/:id/comment
- * @desc    Add a new comment for an event by event's id
+ * @route   POST /api/openforum/:id/review
+ * @desc    Add a new review for an event by the event's id
  * @access  Public
  */
 router.post(
-    '/:id/comment',
+    '/:id/review',
     isAuthenticated,
     async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
-            const { author, isAnonymous, content } = req.body;
+            const {
+                author,
+                isAnonymous,
+                content,
+                overall,
+                wouldRepeat,
+                customRatings,
+            } = req.body;
 
-            const newComment = new EventComment({
+            const userHasRated = await EventReview.hasUserRated(id, author);
+
+            if (userHasRated) {
+                res.status(400).json({
+                    message: 'User has already rated this event',
+                });
+                return;
+            }
+
+            const newReview = new EventReview({
                 eventId: id,
                 author: author,
                 isAnonymous: isAnonymous,
                 content: content,
+                overall: overall,
+                wouldRepeat: wouldRepeat,
+                customRatings: customRatings,
             });
 
-            const savedComment = await newComment.save();
-            res.status(201).json(savedComment);
+            const savedReview = await newReview.save();
+            res.status(201).json(savedReview);
         } catch (err) {
             console.error(err);
             res.status(500).json({ message: 'Server error' });
@@ -185,6 +157,7 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
             location,
             ratingUntil,
             customQuestions,
+            engageEventId,
         } = req.body;
 
         if (
@@ -207,8 +180,8 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
             eventDate: eventDate,
             location: location,
             ratingUntil: ratingUntil,
-            ratings: [],
             customQuestions: customQuestions || [],
+            engageEventId: engageEventId,
         });
 
         const savedEvent = await event.save();
@@ -287,7 +260,7 @@ router.patch(
         try {
             const { id } = req.params;
 
-            const comment = await EventComment.findById(id);
+            const comment = await EventReview.findById(id);
 
             if (!comment) {
                 res.status(400).json({
