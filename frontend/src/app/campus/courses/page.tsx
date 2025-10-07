@@ -1,6 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, {
+    useState,
+    useEffect,
+    useCallback,
+    useMemo,
+    useRef,
+    Suspense,
+} from 'react';
 import axios, { CancelTokenSource } from 'axios';
 import { debounce } from 'lodash';
 import type { Course, Instructor, SchoolKey, CourseCardProps } from '@/types';
@@ -443,4 +450,10 @@ const CourseCardComponent = ({ course, schoolCode, instructorCache }: Omit<Cours
     );
 };
 
-export default CourseSearchComponent;
+export default function CourseSearchPage() {
+    return (
+        <Suspense fallback={<Loading />}>
+            <CourseSearchComponent />
+        </Suspense>
+    );
+}
