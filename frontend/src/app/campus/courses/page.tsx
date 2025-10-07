@@ -6,6 +6,7 @@ import React, {
     useCallback,
     useMemo,
     useRef,
+    Suspense,
 } from 'react';
 import axios, { CancelTokenSource } from 'axios';
 import { debounce } from 'lodash';
@@ -653,4 +654,10 @@ const CourseCardComponent = ({
     );
 };
 
-export default CourseSearchComponent;
+export default function CourseSearchPage() {
+    return (
+        <Suspense fallback={<Loading />}>
+            <CourseSearchComponent />
+        </Suspense>
+    );
+}
