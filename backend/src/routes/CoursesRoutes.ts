@@ -11,20 +11,22 @@ const router = express.Router();
 
 /**
  * @route   GET /api/courses
- * @desc    Get all courses with optional filters (search and department)
+ * @desc    Get all courses with optional filters (search and department) with pagination
  * @access  Public
  */
-// Courses routes
 router.get('/', isAuthenticated, async (req: Request, res: Response) => {
     try {
-        const { search, schools, limit = 50 } = req.query;
+        const { search, schools, limit = 20, page = 1 } = req.query;
 
         const numericLimit = parseInt(limit as string);
+        const numericPage = parseInt(page as string);
+        const skip = (numericPage - 1) * numericLimit;
         const schoolList = schools ? (schools as string).split(',') : [];
 
         // Use Atlas Search for typo-resilient fuzzy search whenever a search term is provided
         if (search) {
             const pipeline: any[] = [];
+
             // $search stage with compound should for text across name/code and school filter
             const searchStage: any = {
                 $search: {
@@ -75,10 +77,47 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             }
 
             pipeline.push(searchStage);
-            pipeline.push({ $limit: numericLimit });
 
-            const courses = await Courses.aggregate(pipeline).exec();
-            res.json(courses);
+            // Add a $facet stage to get both the paginated results and total count
+            pipeline.push({
+                $facet: {
+                    metadata: [{ $count: 'totalCount' }],
+                    courses: [{ $skip: skip }, { $limit: numericLimit }],
+                },
+            });
+
+            const result = await Courses.aggregate(pipeline).exec();
+
+            const totalCount = result[0]?.metadata[0]?.totalCount || 0;
+            const courses = result[0]?.courses || [];
+            const totalPages = Math.ceil(totalCount / numericLimit);
+
+            const paginationInfo = {
+                currentPage: numericPage,
+                totalPages: totalPages,
+                totalCount: totalCount,
+                limit: numericLimit,
+                hasNextPage: numericPage < totalPages,
+                hasPrevPage: numericPage > 1,
+            };
+
+            res.json({
+                courses,
+                pagination: paginationInfo,
+            });
+        } else {
+            // If no search term, return empty results
+            res.json({
+                courses: [],
+                pagination: {
+                    currentPage: 1,
+                    totalPages: 0,
+                    totalCount: 0,
+                    limit: numericLimit,
+                    hasNextPage: false,
+                    hasPrevPage: false,
+                },
+            });
         }
     } catch (err) {
         console.error(err);
@@ -230,7 +269,7 @@ router.delete('/:id', isAdmin, async (req: Request, res: Response) => {
 
 /**
  * @route   GET /api/courses/:id/reviews
- * @desc    Get all reviews for a specific course
+ * @desc    Get all reviews for a specific course with pagination
  * @access  Public
  */
 router.get(
@@ -394,7 +433,7 @@ router.delete(
 
 /**
  * @route   GET /api/courses/:courseId/instructors
- * @desc    Get all previous instructors for a course
+ * @desc    Get all previous instructors for a course with optional pagination
  * @access  Public
  */
 router.get(
@@ -403,6 +442,10 @@ router.get(
     async (req: Request, res: Response) => {
         try {
             const courseId: number = parseInt(req.params.courseId);
+            const {
+                limit = '20', // Default to 20 items per page
+                page = '1', // Default to first page
+            } = req.query;
 
             if (isNaN(courseId)) {
                 res.status(400).json({ message: 'Invalid course ID format' });
@@ -417,12 +460,33 @@ router.get(
             }
 
             const instructorIds = course.all_instructor_ids;
+            const numericLimit = parseInt(limit as string);
+            const numericPage = parseInt(page as string);
+            const skip = (numericPage - 1) * numericLimit;
 
+            // Get total count
+            const totalCount = instructorIds.length;
+            const totalPages = Math.ceil(totalCount / numericLimit);
+
+            // Paginate the instructor IDs
+            const paginatedIds = instructorIds.slice(skip, skip + numericLimit);
+
+            // Fetch the instructors for the current page
             const instructors = await Instructors.find({
-                id: { $in: instructorIds },
+                id: { $in: paginatedIds },
             });
 
-            res.json(instructors);
+            res.json({
+                instructors,
+                pagination: {
+                    currentPage: numericPage,
+                    totalPages,
+                    totalCount,
+                    limit: numericLimit,
+                    hasNextPage: numericPage < totalPages,
+                    hasPrevPage: numericPage > 1,
+                },
+            });
         } catch (error) {
             res.status(400).json({
                 message: 'Error getting course instructors',

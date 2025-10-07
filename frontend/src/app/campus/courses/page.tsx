@@ -11,6 +11,7 @@ import axios, { CancelTokenSource } from 'axios';
 import { debounce } from 'lodash';
 import type { Course, Instructor, SchoolKey, CourseCardProps } from '@/types';
 import Loading from '@/components/Loading';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 const schoolData = {
     PO: {
@@ -45,7 +46,24 @@ const schoolData = {
     },
 };
 
+interface PaginationInfo {
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+    limit: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+}
+
+interface CoursesResponse {
+    courses: Course[];
+    pagination: PaginationInfo;
+}
+
 const CourseSearchComponent = () => {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedSchools, setSelectedSchools] = useState<
         Record<SchoolKey, boolean>
@@ -62,8 +80,14 @@ const CourseSearchComponent = () => {
     const [instructorCache, setInstructorCache] = useState<
         Record<number, Instructor>
     >({});
+    const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+
     const instructorCacheRef = useRef(instructorCache);
     const cancelTokenSourceRef = useRef<CancelTokenSource | null>(null);
+
+    // Get pagination params from URL
+    const currentPage = Number(searchParams.get('page')) || 1;
+    const limit = Number(searchParams.get('limit')) || 20;
 
     useEffect(() => {
         instructorCacheRef.current = instructorCache;
@@ -108,9 +132,16 @@ const CourseSearchComponent = () => {
     );
 
     const performSearch = useCallback(
-        async (term: string, schools: Record<SchoolKey, boolean>) => {
+        async (
+            term: string,
+            schools: Record<SchoolKey, boolean>,
+            page: number,
+            itemLimit: number
+        ) => {
+            // Don't search if term is too short
             if (!term || term.length < 2) {
                 setResults([]);
+                setPagination(null);
                 setLoading(false);
                 return;
             }
@@ -132,13 +163,14 @@ const CourseSearchComponent = () => {
                     .filter(([_, isSelected]) => isSelected)
                     .map(([school]) => school);
 
-                const response = await axios.get<Course[]>(
+                const response = await axios.get<any>(
                     `${process.env.BACKEND_LINK}/api/courses`,
                     {
                         params: {
                             search: cleanedTerm,
                             schools: activeSchools.join(','),
-                            limit: 100,
+                            page: page,
+                            limit: itemLimit,
                         },
                         timeout: 5000,
                         cancelToken: source.token,
@@ -146,14 +178,45 @@ const CourseSearchComponent = () => {
                     }
                 );
 
-                setResults(response.data);
+                console.log('API Response:', response.data); // Debug log
 
-                const instructorIds = response.data.flatMap(
-                    (course) => course.all_instructor_ids || []
-                );
+                // Handle both paginated and non-paginated responses
+                let coursesData: Course[] = [];
+                let paginationData: PaginationInfo | null = null;
 
-                if (instructorIds.length > 0) {
-                    fetchInstructors(instructorIds);
+                if (response.data) {
+                    if (response.data.courses && response.data.pagination) {
+                        // Paginated response
+                        coursesData = response.data.courses || [];
+                        paginationData = response.data.pagination;
+                    } else if (Array.isArray(response.data)) {
+                        // Non-paginated response (legacy)
+                        coursesData = response.data;
+                        paginationData = {
+                            currentPage: 1,
+                            totalPages: 1,
+                            totalCount: coursesData.length,
+                            limit: coursesData.length,
+                            hasNextPage: false,
+                            hasPrevPage: false,
+                        };
+                    } else if (response.data.courses) {
+                        coursesData = response.data.courses || [];
+                    }
+                }
+
+                setResults(coursesData);
+                setPagination(paginationData);
+
+                // Only fetch instructors if we have courses
+                if (Array.isArray(coursesData) && coursesData.length > 0) {
+                    const instructorIds = coursesData.flatMap(
+                        (course) => course.all_instructor_ids || []
+                    );
+
+                    if (instructorIds.length > 0) {
+                        fetchInstructors(instructorIds);
+                    }
                 }
             } catch (err) {
                 if (axios.isCancel(err)) {
@@ -163,6 +226,7 @@ const CourseSearchComponent = () => {
                 console.error('Search error:', err);
                 setError('Failed to fetch results. Please try again.');
                 setResults([]);
+                setPagination(null);
             } finally {
                 setLoading(false);
             }
@@ -176,7 +240,7 @@ const CourseSearchComponent = () => {
     );
 
     useEffect(() => {
-        debouncedSearch(searchTerm, selectedSchools);
+        debouncedSearch(searchTerm, selectedSchools, currentPage, limit);
 
         return () => {
             debouncedSearch.cancel();
@@ -184,7 +248,7 @@ const CourseSearchComponent = () => {
                 cancelTokenSourceRef.current.cancel('Component unmounted');
             }
         };
-    }, [searchTerm, selectedSchools, debouncedSearch]);
+    }, [searchTerm, selectedSchools, currentPage, limit, debouncedSearch]);
 
     const handleSchoolToggle = (school: SchoolKey) => {
         setSelectedSchools((prev) => {
@@ -215,6 +279,24 @@ const CourseSearchComponent = () => {
 
             return newState;
         });
+
+        // Reset to page 1 when changing filters
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', '1');
+        router.push(`/campus/courses?${params.toString()}`);
+    };
+
+    const handlePageChange = (newPage: number) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', newPage.toString());
+        router.push(`/campus/courses?${params.toString()}`);
+    };
+
+    const handleLimitChange = (newLimit: number) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', '1'); // Reset to first page when changing limit
+        params.set('limit', newLimit.toString());
+        router.push(`/campus/courses?${params.toString()}`);
     };
 
     const sortedResults = useMemo(() => {
@@ -247,7 +329,17 @@ const CourseSearchComponent = () => {
                             placeholder="Search by name or code (min 2 chars)"
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                // Reset to page 1 on new search
+                                const params = new URLSearchParams(
+                                    searchParams.toString()
+                                );
+                                params.set('page', '1');
+                                router.push(
+                                    `/campus/courses?${params.toString()}`
+                                );
+                            }}
                             autoComplete="off"
                         />
                     </div>
@@ -290,12 +382,41 @@ const CourseSearchComponent = () => {
                 ) : sortedResults.length > 0 ? (
                     <>
                         <div className="flex justify-between items-center">
-                            <p className="text-gray-600 text-sm">
-                                Showing {sortedResults.length}{' '}
-                                {sortedResults.length === 1
-                                    ? 'result'
-                                    : 'results'}
+                            <p className="text-white text-sm">
+                                {pagination ? (
+                                    <>
+                                        Showing {(currentPage - 1) * limit + 1}-
+                                        {Math.min(
+                                            currentPage * limit,
+                                            pagination.totalCount
+                                        )}{' '}
+                                        of {pagination.totalCount} results
+                                    </>
+                                ) : (
+                                    <>
+                                        Showing {sortedResults.length}{' '}
+                                        {sortedResults.length === 1
+                                            ? 'result'
+                                            : 'results'}
+                                    </>
+                                )}
                             </p>
+                            {pagination && (
+                                <select
+                                    value={limit}
+                                    onChange={(e) =>
+                                        handleLimitChange(
+                                            Number(e.target.value)
+                                        )
+                                    }
+                                    className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="10">10 per page</option>
+                                    <option value="20">20 per page</option>
+                                    <option value="50">50 per page</option>
+                                    <option value="100">100 per page</option>
+                                </select>
+                            )}
                         </div>
 
                         {sortedResults.map((course) => (
@@ -306,6 +427,110 @@ const CourseSearchComponent = () => {
                                 instructorCache={instructorCache}
                             />
                         ))}
+
+                        {/* Pagination Controls */}
+                        {pagination && (
+                            <div className="flex justify-center items-center gap-2 mt-8 pb-4">
+                                {/* Previous Button */}
+                                <button
+                                    onClick={() =>
+                                        handlePageChange(currentPage - 1)
+                                    }
+                                    disabled={!pagination.hasPrevPage}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                        pagination.hasPrevPage
+                                            ? 'bg-gray-700 text-white hover:bg-gray-800'
+                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                    }`}
+                                >
+                                    ← Previous
+                                </button>
+
+                                {/* Page Numbers */}
+                                <div className="flex gap-1">
+                                    {currentPage > 2 && (
+                                        <>
+                                            <button
+                                                onClick={() =>
+                                                    handlePageChange(1)
+                                                }
+                                                className="px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm"
+                                            >
+                                                1
+                                            </button>
+                                            {currentPage > 3 && (
+                                                <span className="px-2 py-2">
+                                                    ...
+                                                </span>
+                                            )}
+                                        </>
+                                    )}
+
+                                    {Array.from(
+                                        { length: pagination.totalPages },
+                                        (_, i) => i + 1
+                                    )
+                                        .filter((pageNum) => {
+                                            return (
+                                                pageNum >= currentPage - 1 &&
+                                                pageNum <= currentPage + 1
+                                            );
+                                        })
+                                        .map((pageNum) => (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() =>
+                                                    handlePageChange(pageNum)
+                                                }
+                                                className={`px-3 py-2 rounded-md transition-colors text-sm ${
+                                                    pageNum === currentPage
+                                                        ? 'bg-gray-700 text-white'
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                }`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        ))}
+
+                                    {currentPage <
+                                        pagination.totalPages - 1 && (
+                                        <>
+                                            {currentPage <
+                                                pagination.totalPages - 2 && (
+                                                <span className="px-2 py-2">
+                                                    ...
+                                                </span>
+                                            )}
+                                            <button
+                                                onClick={() =>
+                                                    handlePageChange(
+                                                        pagination.totalPages
+                                                    )
+                                                }
+                                                className="px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm"
+                                            >
+                                                {pagination.totalPages}
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Next Button */}
+                                <button
+                                    onClick={() =>
+                                        handlePageChange(currentPage + 1)
+                                    }
+                                    disabled={!pagination.hasNextPage}
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                        pagination.hasNextPage
+                                            ? 'bg-gray-700 text-white hover:bg-gray-800'
+                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                    }`}
+                                >
+                                    Next →
+                                </button>
+                            </div>
+                        )}
                     </>
                 ) : (
                     !loading &&
