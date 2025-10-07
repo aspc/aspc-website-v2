@@ -98,17 +98,22 @@ const CourseSearchComponent = () => {
                 .filter(([_, isSelected]) => isSelected)
                 .map(([school]) => school);
 
-            const response = await axios.get<any>(`${process.env.BACKEND_LINK}/api/courses`, {
-                params: {
-                    search: cleanedTerm,
-                    schools: activeSchools.join(','),
-                    page,
-                    limit: itemLimit,
-                },
-                timeout: 5000,
-                cancelToken: source.token,
-                withCredentials: true,
-            });
+                const response = await axios.get<CoursesResponse>(
+                    `${process.env.BACKEND_LINK}/api/courses`,
+                    {
+                        params: {
+                            search: cleanedTerm,
+                            schools: activeSchools.join(','),
+                            page: page,
+                            limit: itemLimit,
+                        },
+                        timeout: 5000,
+                        cancelToken: source.token,
+                        withCredentials: true,
+                    }
+                );
+
+                console.log('API Response:', response.data); // Debug log
 
             let coursesData: Course[] = [];
             let paginationData: PaginationInfo | null = null;
