@@ -68,23 +68,23 @@ router.get(
  * @access  Public
  */
 router.get(
-    '/:id/comments',
+    '/:id/reviews',
     isAuthenticated,
     async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
 
-            const comments = await EventReview.find({
+            const reviews = await EventReview.find({
                 eventId: id,
                 isHidden: false,
             });
 
-            if (!comments) {
+            if (!reviews) {
                 res.status(404).json({ message: 'Event not found' });
                 return;
             }
 
-            res.json(comments);
+            res.json(reviews);
         } catch (error) {
             res.status(500).json({ message: 'Server error' });
         }
