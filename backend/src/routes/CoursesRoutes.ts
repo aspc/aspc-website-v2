@@ -31,24 +31,54 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                     index: 'courses',
                     compound: {
                         should: [
-                            // Full phrase match with score boost
+                            // Exact course code match with highest priority
                             {
                                 text: {
                                     query: String(search),
-                                    path: ['name', 'code'],
-                                    score: { boost: { value: 5 } },
+                                    path: 'code',
+                                    score: { boost: { value: 10 } },
                                 },
                             },
-                            // Individual term matches with fuzzy search
+                            // Full phrase match on course code with high priority
+                            {
+                                text: {
+                                    query: String(search),
+                                    path: 'code',
+                                    score: { boost: { value: 8 } },
+                                },
+                            },
+                            // Full phrase match on course name with medium priority
+                            {
+                                text: {
+                                    query: String(search),
+                                    path: 'name',
+                                    score: { boost: { value: 6 } },
+                                },
+                            },
+                            // Individual term matches with fuzzy search on course code (higher priority)
                             ...String(search)
                                 .split(' ')
                                 .map((term) => ({
                                     text: {
                                         query: term,
-                                        path: ['name', 'code'],
+                                        path: 'code',
                                         fuzzy: {
                                             maxEdits: term.length < 6 ? 1 : 2,
                                         },
+                                        score: { boost: { value: 4 } },
+                                    },
+                                })),
+                            // Individual term matches with fuzzy search on course name (lower priority)
+                            ...String(search)
+                                .split(' ')
+                                .map((term) => ({
+                                    text: {
+                                        query: term,
+                                        path: 'name',
+                                        fuzzy: {
+                                            maxEdits: term.length < 6 ? 1 : 2,
+                                        },
+                                        score: { boost: { value: 3 } },
                                     },
                                 })),
                         ],
