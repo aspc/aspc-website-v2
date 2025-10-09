@@ -33,29 +33,23 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                         should: [
                             // Exact course code match with highest priority
                             {
-                                text: {
+                                wildcard: {
                                     query: String(search),
                                     path: 'code',
-                                    score: { boost: { value: 10 } },
+                                    allowAnalyzedField: true,
+                                    score: { boost: { value: 20 } },
                                 },
                             },
-                            // Full phrase match on course code with high priority
+                            // Exact course name match with high priority
                             {
-                                text: {
-                                    query: String(search),
-                                    path: 'code',
-                                    score: { boost: { value: 8 } },
-                                },
-                            },
-                            // Full phrase match on course name with medium priority
-                            {
-                                text: {
+                                wildcard: {
                                     query: String(search),
                                     path: 'name',
-                                    score: { boost: { value: 6 } },
+                                    allowAnalyzedField: true,
+                                    score: { boost: { value: 15 } },
                                 },
                             },
-                            // Individual term matches with fuzzy search on course code (higher priority)
+                            // Individual term matches with fuzzy search on course code (lower priority)
                             ...String(search)
                                 .split(' ')
                                 .map((term) => ({
@@ -63,12 +57,12 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                                         query: term,
                                         path: 'code',
                                         fuzzy: {
-                                            maxEdits: term.length < 6 ? 1 : 2,
+                                            maxEdits: 2,
                                         },
                                         score: { boost: { value: 4 } },
                                     },
                                 })),
-                            // Individual term matches with fuzzy search on course name (lower priority)
+                            // Individual term matches with fuzzy search on course name (lowest priority)
                             ...String(search)
                                 .split(' ')
                                 .map((term) => ({
@@ -78,7 +72,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                                         fuzzy: {
                                             maxEdits: term.length < 6 ? 1 : 2,
                                         },
-                                        score: { boost: { value: 3 } },
+                                        score: { boost: { value: 2 } },
                                     },
                                 })),
                         ],
