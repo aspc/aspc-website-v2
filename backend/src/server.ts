@@ -12,6 +12,7 @@ import housingRoutes from './routes/HousingRoutes';
 import coursesRoutes from './routes/CoursesRoutes';
 import instructorsRoutes from './routes/InstructorsRoutes';
 import reviewsRoutes from './routes/ReviewsRoutes';
+import forumRoutes from './routes/ForumRoutes';
 import session from 'express-session';
 import https from 'https';
 import http from 'http';
@@ -107,6 +108,7 @@ app.use('/api/campus/housing', housingRoutes);
 app.use('/api/courses', coursesRoutes);
 app.use('/api/instructors', instructorsRoutes);
 app.use('/api/reviews', reviewsRoutes);
+app.use('/api/openforum', forumRoutes);
 
 const PORT = process.env.PORT || 5000;
 
