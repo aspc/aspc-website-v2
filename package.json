@@ -1,12 +1,18 @@
 {
-    "dependencies": {
-        "@vercel/speed-insights": "^1.2.0"
-    },
-    "devDependencies": {
-        "prettier": "^3.5.3"
-    },
-    "scripts": {
-        "format": "prettier --check \"frontend/**/*.{ts,tsx}\" \"backend/**/*.ts\"",
-        "format:write": "prettier --write \"frontend/**/*.{ts,tsx}\" \"backend/**/*.ts\""
-    }
+  "dependencies": {
+    "@vercel/speed-insights": "^1.2.0"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.3",
+    "prettier": "^3.5.3"
+  },
+  "scripts": {
+    "format": "prettier --check \"frontend/**/*.{ts,tsx}\" \"backend/**/*.ts\"",
+    "format:write": "prettier --write \"frontend/**/*.{ts,tsx}\" \"backend/**/*.ts\"",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": "prettier --write"
+  }
 }
