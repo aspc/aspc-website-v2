@@ -103,13 +103,13 @@ router.post(
         try {
             const { id } = req.params;
             const {
-                author,
                 isAnonymous,
                 content,
                 overall,
                 wouldRepeat,
                 customRatings,
             } = req.body;
+            const author = (req.session as any).user;
 
             const userHasRated = await EventReview.hasUserRated(id, author);
 
@@ -240,6 +240,7 @@ router.put('/:id', isAdmin, async (req: Request, res: Response) => {
 
         if (!updatedEvent) {
             res.status(404).json({ message: 'Forum event not found.' });
+            return;
         }
 
         res.status(201).json(updatedEvent);
