@@ -12,6 +12,21 @@ import { debounce } from 'lodash';
 import type { Course, Instructor, SchoolKey, CourseCardProps } from '@/types';
 import Loading from '@/components/Loading';
 
+const poRequirementMapping = {
+    'Analyzing Difference': 'PO Analyzing Difference',
+    'Area 1': 'PO Area 1 Requirement',
+    'Area 2': 'PO Area 2 Requirement',
+    'Area 3': 'PO Area 3 Requirement',
+    'Area 4': 'PO Area 4 Requirement',
+    'Area 5': 'PO Area 5 Requirement',
+    'Area 6': 'PO Area 6 Requirement',
+    'Community Partnership': 'PO Community Partnership',
+    'Language': 'PO Language Requirement',
+    'Physical Education': 'PO Phys Ed Requirement',
+    'Speaking Intensive': 'PO Speaking Intensive',
+    'Writing Intensive': 'PO Writing Intensive Req',
+};
+
 const schoolData = {
     PO: {
         name: 'Pomona',
@@ -56,6 +71,9 @@ const CourseSearchComponent = () => {
         SC: true,
         PZ: true,
     });
+    const [selectedRequirements, setSelectedRequirements] = useState<Record<string, boolean>>(
+        Object.keys(poRequirementMapping).reduce((acc, key) => ({ ...acc, [key]: false }), {})
+    );
     const [results, setResults] = useState<Course[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -70,7 +88,7 @@ const CourseSearchComponent = () => {
     }, [instructorCache]);
 
     const fetchInstructors = useCallback(
-        async (ids: number[]): Promise<void> => {
+        async (ids: number[]) => {
             try {
                 const uncachedIds = ids.filter(
                     (id) => !instructorCacheRef.current[id]
@@ -206,20 +224,36 @@ const CourseSearchComponent = () => {
                 ...prev,
                 [school]: !prev[school],
             };
-
-            const anySelected = Object.values(newState).some(Boolean);
-
-            if (!anySelected) {
+            if (!Object.values(newState).some(Boolean)) {
                 return { PO: true, CM: true, HM: true, SC: true, PZ: true };
             }
-
             return newState;
         });
     };
 
+    const handleRequirementToggle = (req: string) => {
+        setSelectedRequirements(prev => {
+            const newState = { ...prev, [req]: !prev[req] };
+            return newState;
+        });
+    };
+
+    const anyRequirementSelected = Object.values(selectedRequirements).some(Boolean);
+
+    const filteredResults = useMemo(() => {
+        if (!anyRequirementSelected) return results;
+        return results.filter(course =>
+            course.requirement_names?.some(req =>
+                Object.entries(poRequirementMapping).some(
+                    ([key, mapped]) => selectedRequirements[key] && req.includes(mapped)
+                )
+            )
+        );
+    }, [results, selectedRequirements, anyRequirementSelected]);
+
     const sortedResults = useMemo(() => {
-        return [...results].sort((a, b) => a.code.localeCompare(b.code));
-    }, [results]);
+        return [...filteredResults].sort((a, b) => a.code.localeCompare(b.code));
+    }, [filteredResults]);
 
     const extractSchoolCode = (code: string): SchoolKey => {
         const schoolCode = code.slice(-2) as SchoolKey;
@@ -276,6 +310,26 @@ const CourseSearchComponent = () => {
                         )}
                     </div>
                 </div>
+
+                <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Pomona Requirements:</label>
+                    <div className="flex flex-wrap gap-2">
+                        {Object.keys(poRequirementMapping).map((req) => (
+                            <button
+                                key={req}
+                                type="button"
+                                onClick={() => handleRequirementToggle(req)}
+                                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                                    selectedRequirements[req]
+                                        ? 'bg-blue-100 text-blue-800 border border-blue-300 shadow-sm'
+                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300 border border-transparent'
+                                }`}
+                            >
+                                {req}
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </div>
 
             {error && (
@@ -291,10 +345,7 @@ const CourseSearchComponent = () => {
                     <>
                         <div className="flex justify-between items-center">
                             <p className="text-gray-600 text-sm">
-                                Showing {sortedResults.length}{' '}
-                                {sortedResults.length === 1
-                                    ? 'result'
-                                    : 'results'}
+                                Showing {sortedResults.length} result{sortedResults.length !== 1 && 's'}
                             </p>
                         </div>
 
