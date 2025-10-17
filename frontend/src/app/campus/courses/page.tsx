@@ -300,9 +300,9 @@ const CourseSearchComponent = () => {
         router.push(`/campus/courses?${params.toString()}`);
     };
 
-    const sortedResults = useMemo(() => {
-        return [...results].sort((a, b) => a.code.localeCompare(b.code));
-    }, [results]);
+//     const sortedresults = useMemo(() => {
+//     return [...results].sort((a, b) => (b.reviews_count || 0) - (a.reviews_count || 0));
+// }, [results]);
 
     const extractSchoolCode = (code: string): SchoolKey => {
         const schoolCode = code.slice(-2) as SchoolKey;
@@ -380,7 +380,7 @@ const CourseSearchComponent = () => {
             <div className="space-y-4">
                 {loading ? (
                     <Loading />
-                ) : sortedResults.length > 0 ? (
+                ) : results.length > 0 ? (
                     <>
                         <div className="flex justify-between items-center">
                             <p className="text-white text-sm">
@@ -395,8 +395,8 @@ const CourseSearchComponent = () => {
                                     </>
                                 ) : (
                                     <>
-                                        Showing {sortedResults.length}{' '}
-                                        {sortedResults.length === 1
+                                        Showing {results.length}{' '}
+                                        {results.length === 1
                                             ? 'result'
                                             : 'results'}
                                     </>
@@ -420,7 +420,7 @@ const CourseSearchComponent = () => {
                             )}
                         </div>
 
-                        {sortedResults.map((course) => (
+                        {results.map((course) => (
                             <CourseCardComponent
                                 key={course._id}
                                 course={course}
@@ -645,7 +645,8 @@ const CourseCardComponent = ({
                             href={`/campus/courses/${course.id}`}
                             className={`inline-block ${schoolData[schoolCode].buttonColor} px-4 py-2 rounded-md font-medium hover:opacity-90 transition-opacity text-center`}
                         >
-                            View Course Reviews
+                            View {course.reviews_count ?? 0}{' '}
+                            {course.reviews_count === 1 ? 'Course Review' : 'Course Reviews'}
                         </a>
                     </div>
                 </div>
