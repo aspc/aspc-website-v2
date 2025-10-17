@@ -12,7 +12,6 @@ interface ICourses extends Document {
     // empty array signifies offered most terms
     term_keys: string[];
     description: string;
-    reviews_count: number;
     all_instructor_ids: number[];
     review_count: number;
 }

@@ -79,7 +79,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             pipeline.push(searchStage);
 
             // sort courses by number of reviews (descending)
-            pipeline.push({ $sort: { reviews_count: -1 } });
+            pipeline.push({ $sort: { review_count: -1 } });
 
             // Add a $facet stage to get both the paginated results and total count
             pipeline.push({
@@ -353,7 +353,7 @@ router.post(
             // increment review count on the course
             await Courses.findOneAndUpdate(
                 { id: Number(courseId) },
-                { $inc: { reviews_count: 1 } }
+                { $inc: { review_count: 1 } }
             );
 
             res.status(201).json({ message: 'Review saved successfully' });

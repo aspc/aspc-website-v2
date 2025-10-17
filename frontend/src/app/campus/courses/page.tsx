@@ -645,8 +645,8 @@ const CourseCardComponent = ({
                             href={`/campus/courses/${course.id}`}
                             className={`inline-block ${schoolData[schoolCode].buttonColor} px-4 py-2 rounded-md font-medium hover:opacity-90 transition-opacity text-center`}
                         >
-                            View {course.reviews_count ?? 0}{' '}
-                            {course.reviews_count === 1 ? 'Course Review' : 'Course Reviews'}
+                            View {course.review_count ?? 0}{' '}
+                            {course.review_count === 1 ? 'Course Review' : 'Course Reviews'}
                         </a>
                     </div>
                 </div>
