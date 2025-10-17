@@ -352,7 +352,7 @@ router.post(
 
             await Courses.findOneAndUpdate(
                 { id: Number(courseId) },
-                { $inc: { reviews_count: 1 } }
+                { $inc: { review_count: 1 } }
             );
 
             res.status(201).json({ message: 'Review saved successfully' });
