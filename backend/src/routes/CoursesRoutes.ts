@@ -78,8 +78,8 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
 
             pipeline.push(searchStage);
 
-            // sort courses by number of reviews (descending)
-            pipeline.push({ $sort: { review_count: -1 } });
+            // IF WE WANT TO sort courses by number of reviews (descending)
+            // pipeline.push({ $sort: { review_count: -1 } });
 
             // Add a $facet stage to get both the paginated results and total count
             pipeline.push({
@@ -350,10 +350,9 @@ router.post(
             const review = new CourseReviews(reviewData);
             await review.save();
 
-            // increment review count on the course
             await Courses.findOneAndUpdate(
                 { id: Number(courseId) },
-                { $inc: { review_count: 1 } }
+                { $inc: { reviews_count: 1 } }
             );
 
             res.status(201).json({ message: 'Review saved successfully' });
@@ -431,7 +430,13 @@ router.delete(
 
             if (!review) {
                 res.status(404).json({ message: 'Review not found' });
+                return;
             }
+
+            await Courses.findOneAndUpdate(
+                { id: review.course_id },
+                { $inc: { reviews_count: -1 } }
+            );
 
             res.status(200).json({ message: 'Review deleted' });
         } catch (error) {
