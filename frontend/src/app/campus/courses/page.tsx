@@ -22,7 +22,7 @@ const poRequirementMapping = {
     'Area 5': 'PO Area 5 Requirement',
     'Area 6': 'PO Area 6 Requirement',
     'Community Partnership': 'PO Community Partnership',
-    Language: 'PO Language Requirement',
+    'Language': 'PO Language Requirement',
     'Physical Education': 'PO Phys Ed Requirement',
     'Speaking Intensive': 'PO Speaking Intensive',
     'Writing Intensive': 'PO Writing Intensive Req',
