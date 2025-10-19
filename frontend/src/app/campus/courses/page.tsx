@@ -22,7 +22,7 @@ const poRequirementMapping = {
     'Area 5': 'PO Area 5 Requirement',
     'Area 6': 'PO Area 6 Requirement',
     'Community Partnership': 'PO Community Partnership',
-    'Language': 'PO Language Requirement',
+    Language: 'PO Language Requirement',
     'Physical Education': 'PO Phys Ed Requirement',
     'Speaking Intensive': 'PO Speaking Intensive',
     'Writing Intensive': 'PO Writing Intensive Req',
@@ -72,8 +72,13 @@ const CourseSearchComponent = () => {
         SC: true,
         PZ: true,
     });
-    const [selectedRequirements, setSelectedRequirements] = useState<Record<string, boolean>>(
-        Object.keys(poRequirementMapping).reduce((acc, key) => ({ ...acc, [key]: false }), {})
+    const [selectedRequirements, setSelectedRequirements] = useState<
+        Record<string, boolean>
+    >(
+        Object.keys(poRequirementMapping).reduce(
+            (acc, key) => ({ ...acc, [key]: false }),
+            {}
+        )
     );
     const [results, setResults] = useState<Course[]>([]);
     const [loading, setLoading] = useState(false);
@@ -206,7 +211,7 @@ const CourseSearchComponent = () => {
     }, [searchTerm, selectedSchools, debouncedSearch]);
 
     const handleSchoolToggle = (school: SchoolKey) => {
-        setSelectedSchools(prev => {
+        setSelectedSchools((prev) => {
             const allSelected = Object.values(prev).every(Boolean);
 
             if (allSelected) {
@@ -229,27 +234,31 @@ const CourseSearchComponent = () => {
     };
 
     const handleRequirementToggle = (req: string) => {
-        setSelectedRequirements(prev => {
+        setSelectedRequirements((prev) => {
             const newState = { ...prev, [req]: !prev[req] };
             return newState;
         });
     };
 
-    const anyRequirementSelected = Object.values(selectedRequirements).some(Boolean);
+    const anyRequirementSelected =
+        Object.values(selectedRequirements).some(Boolean);
 
     const filteredResults = useMemo(() => {
         if (!anyRequirementSelected) return results;
-        return results.filter(course =>
-            course.requirement_names?.some(req =>
+        return results.filter((course) =>
+            course.requirement_names?.some((req) =>
                 Object.entries(poRequirementMapping).some(
-                    ([key, mapped]) => selectedRequirements[key] && req.includes(mapped)
+                    ([key, mapped]) =>
+                        selectedRequirements[key] && req.includes(mapped)
                 )
             )
         );
     }, [results, selectedRequirements, anyRequirementSelected]);
 
     const sortedResults = useMemo(() => {
-        return [...filteredResults].sort((a, b) => a.code.localeCompare(b.code));
+        return [...filteredResults].sort((a, b) =>
+            a.code.localeCompare(b.code)
+        );
     }, [filteredResults]);
 
     const extractSchoolCode = (code: string): SchoolKey => {
@@ -313,23 +322,23 @@ const CourseSearchComponent = () => {
 
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Pomona Requirements:
+                            Pomona Requirements:
                         </label>
                         <div className="flex flex-wrap gap-2">
-                        {Object.keys(poRequirementMapping).map((req) => (
-                            <button
-                            key={req}
-                            type="button"
-                            onClick={() => handleRequirementToggle(req)}
-                            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                                selectedRequirements[req]
-                                ? 'bg-blue-100 text-blue-800 border border-blue-300 shadow-sm'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 border border-transparent'
-                            }`}
-                            >
-                            {req}
-                            </button>
-                        ))}
+                            {Object.keys(poRequirementMapping).map((req) => (
+                                <button
+                                    key={req}
+                                    type="button"
+                                    onClick={() => handleRequirementToggle(req)}
+                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                                        selectedRequirements[req]
+                                            ? 'bg-blue-100 text-blue-800 border border-blue-300 shadow-sm'
+                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300 border border-transparent'
+                                    }`}
+                                >
+                                    {req}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>
