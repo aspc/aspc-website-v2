@@ -13,6 +13,7 @@ interface ICourses extends Document {
     term_keys: string[];
     description: string;
     all_instructor_ids: number[];
+    review_count: number;
 }
 
 const CoursesSchema = new Schema<ICourses>(
@@ -66,6 +67,11 @@ const CoursesSchema = new Schema<ICourses>(
                 ref: 'Instructors',
             },
         ],
+        review_count: {
+            type: Number,
+            default: 0,
+            index: true,
+        },
     },
     {
         timestamps: true,

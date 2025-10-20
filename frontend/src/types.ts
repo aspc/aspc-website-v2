@@ -124,6 +124,7 @@ export type Course = {
     all_instructor_ids: number[];
     createdAt?: Date;
     updatedAt?: Date;
+    review_count: number;
 };
 
 export type CourseReview = {
