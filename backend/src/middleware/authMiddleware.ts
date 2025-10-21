@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { SAMLUser } from '../models/People';
 import { CourseReviews } from '../models/Courses';
 import { HousingReviews } from '../models/Housing';
+import { EventReview } from '../models/Forum';
 
 export const isAuthenticated = async (
     req: Request,
@@ -116,6 +117,39 @@ export const isHousingReviewOwner = async (
         res.status(403).json({
             message: 'You are not authorized to modify this review',
         });
+        return;
+    }
+
+    next();
+};
+
+export const hasNotRatedEvent = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    // First check if user is authenticated
+    if (!(req.session as any).user) {
+        res.status(401).json({ message: 'Authentication required' });
+        return;
+    }
+
+    // First check if user is authenticated and get the user ID from session
+    const sessionUserEmail = (req.session as any).user.email;
+    if (!sessionUserEmail) {
+        res.status(401).json({ message: 'Authentication required' });
+        return;
+    }
+
+    const { id } = req.params;
+
+    const review = await EventReview.findOne({
+        id: id,
+        author: sessionUserEmail,
+    });
+
+    if (review) {
+        res.status(403).json({ message: 'User has already rated event' });
         return;
     }
 

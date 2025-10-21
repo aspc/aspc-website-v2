@@ -84,7 +84,7 @@ interface ICustomRating {
 interface IEventReview extends Document {
     _id: mongoose.Types.ObjectId;
     eventId: mongoose.Types.ObjectId;
-    author: mongoose.Types.ObjectId;
+    author: string;
     isAnonymous: boolean;
     content: string;
     isHidden: boolean;
@@ -102,7 +102,7 @@ const EventReviewSchema = new Schema<IEventReview>(
             required: true,
         },
         author: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: String,
             ref: 'SAMLUser',
             required: true,
         },
@@ -162,14 +162,6 @@ EventReviewSchema.index({ eventId: 1, wouldRepeat: 1 });
 // ============================================
 // Static Methods for Rating Aggregation
 // ============================================
-
-EventReviewSchema.statics.hasUserRated = async function (
-    eventId: string | mongoose.Types.ObjectId,
-    userId: string | mongoose.Types.ObjectId
-): Promise<boolean> {
-    const comment = await this.findOne({ eventId, author: userId });
-    return comment !== null;
-};
 
 EventReviewSchema.statics.getAverageRatings = async function (
     eventId: string | mongoose.Types.ObjectId
@@ -264,7 +256,7 @@ const EventReview = mongoose.model<IEventReview, IEventReviewModel>(
 interface IEventReviewModel extends mongoose.Model<IEventReview> {
     hasUserRated(
         eventId: string | mongoose.Types.ObjectId,
-        userId: string | mongoose.Types.ObjectId
+        userEmail: string
     ): Promise<boolean>;
 
     getAverageRatings(eventId: string | mongoose.Types.ObjectId): Promise<{

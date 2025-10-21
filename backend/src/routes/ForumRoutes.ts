@@ -1,6 +1,10 @@
 import express, { Request, Response } from 'express';
 import { ForumEvent, EventReview } from '../models/Forum';
-import { isAuthenticated, isAdmin } from '../middleware/authMiddleware';
+import {
+    isAuthenticated,
+    isAdmin,
+    hasNotRatedEvent,
+} from '../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -98,7 +102,7 @@ router.get(
  */
 router.post(
     '/:id/review',
-    isAuthenticated,
+    hasNotRatedEvent,
     async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
@@ -109,20 +113,12 @@ router.post(
                 wouldRepeat,
                 customRatings,
             } = req.body;
-            const author = (req.session as any).user;
 
-            const userHasRated = await EventReview.hasUserRated(id, author);
-
-            if (userHasRated) {
-                res.status(400).json({
-                    message: 'User has already rated this event',
-                });
-                return;
-            }
+            const email = (req.session as any).user.email;
 
             const newReview = new EventReview({
                 eventId: id,
-                author: author,
+                author: email,
                 isAnonymous: isAnonymous,
                 content: content,
                 overall: overall,
