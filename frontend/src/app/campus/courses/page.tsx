@@ -144,7 +144,7 @@ const CourseSearchComponent = () => {
                     'Operation canceled due to new request'
                 );
 
-            const cleanedTerm = term.replace(/\\/g, '').trim();
+            const cleanedTerm = term.replace(/\\/g, '').replace(/\s+/g, ' ').trim();
             const source = axios.CancelToken.source();
             cancelTokenSourceRef.current = source;
 
