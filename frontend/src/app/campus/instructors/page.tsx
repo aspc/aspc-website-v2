@@ -138,111 +138,113 @@ const InstructorSearch = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto p-4 md:p-6">
-            <div className="bg-gray-50 rounded-lg shadow-md p-6 mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
-                    Instructor Search
-                </h1>
+        <div className="min-h-screen bg-gray-100 text-gray-900">
+            <div className="max-w-6xl mx-auto p-4 md:p-6">
+                <div className="bg-gray-50 rounded-lg shadow-md p-6 mb-6">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
+                        Instructor Search
+                    </h1>
 
-                <div className="flex flex-col gap-4 mb-4">
-                    <div>
-                        <label
-                            htmlFor="instructor-search"
-                            className="block text-sm font-medium text-gray-700 mb-1"
-                        >
-                            Instructor Name
-                        </label>
-                        <input
-                            id="instructor-search"
-                            type="text"
-                            placeholder="Search by instructor name (min 2 chars)"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            autoComplete="off"
-                        />
+                    <div className="flex flex-col gap-4 mb-4">
+                        <div>
+                            <label
+                                htmlFor="instructor-search"
+                                className="block text-sm font-medium text-gray-700 mb-1"
+                            >
+                                Instructor Name
+                            </label>
+                            <input
+                                id="instructor-search"
+                                type="text"
+                                placeholder="Search by instructor name (min 2 chars)"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                autoComplete="off"
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {loading && (
-                <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                </div>
-            )}
-
-            {error && (
-                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
-                    <p>{error}</p>
-                </div>
-            )}
-
-            <div className="space-y-4">
-                {!loading && filteredResults.length > 0 ? (
-                    <>
-                        <div className="flex justify-between items-center">
-                            <p className="text-gray-600 text-sm">
-                                Showing {filteredResults.length}{' '}
-                                {filteredResults.length === 1
-                                    ? 'instructor'
-                                    : 'instructors'}
-                            </p>
-                        </div>
-
-                        <div className="space-y-4">
-                            {filteredResults.map((instructor) => {
-                                const schoolStyle = getSchoolStyling(
-                                    instructor.school
-                                );
-
-                                return (
-                                    <div
-                                        key={instructor.id}
-                                        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow relative"
-                                    >
-                                        <div
-                                            className={`${schoolStyle.bgColor} h-2 w-full`}
-                                        ></div>
-
-                                        <div className="p-6 flex justify-between items-center">
-                                            <div>
-                                                <h3 className="text-lg font-semibold text-gray-800">
-                                                    {instructor.name}
-                                                </h3>
-                                                {instructor.school && (
-                                                    <span
-                                                        className={`${schoolStyle.buttonColor} text-xs px-2 py-1 rounded-full border mt-1 inline-block`}
-                                                    >
-                                                        {schoolData[
-                                                            instructor.school as SchoolKey
-                                                        ]?.name ||
-                                                            instructor.school}
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <a
-                                                href={`/campus/instructors/${instructor.id}`}
-                                                className={`${schoolStyle.buttonColor} px-4 py-2 rounded-md font-medium hover:opacity-90 transition-opacity text-center`}
-                                            >
-                                                View Reviews
-                                            </a>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </>
-                ) : (
-                    !loading &&
-                    searchTerm && (
-                        <div className="text-center py-8 text-gray-500">
-                            No instructors found matching {'"'}
-                            {searchTerm}
-                            {'"'}
-                        </div>
-                    )
+                {loading && (
+                    <div className="flex justify-center py-8">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    </div>
                 )}
+
+                {error && (
+                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
+                        <p>{error}</p>
+                    </div>
+                )}
+
+                <div className="space-y-4">
+                    {!loading && filteredResults.length > 0 ? (
+                        <>
+                            <div className="flex justify-between items-center">
+                                <p className="text-gray-600 text-sm">
+                                    Showing {filteredResults.length}{' '}
+                                    {filteredResults.length === 1
+                                        ? 'instructor'
+                                        : 'instructors'}
+                                </p>
+                            </div>
+
+                            <div className="space-y-4">
+                                {filteredResults.map((instructor) => {
+                                    const schoolStyle = getSchoolStyling(
+                                        instructor.school
+                                    );
+
+                                    return (
+                                        <div
+                                            key={instructor.id}
+                                            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow relative"
+                                        >
+                                            <div
+                                                className={`${schoolStyle.bgColor} h-2 w-full`}
+                                            ></div>
+
+                                            <div className="p-6 flex justify-between items-center">
+                                                <div>
+                                                    <h3 className="text-lg font-semibold text-gray-800">
+                                                        {instructor.name}
+                                                    </h3>
+                                                    {instructor.school && (
+                                                        <span
+                                                            className={`${schoolStyle.buttonColor} text-xs px-2 py-1 rounded-full border mt-1 inline-block`}
+                                                        >
+                                                            {schoolData[
+                                                                instructor.school as SchoolKey
+                                                            ]?.name ||
+                                                                instructor.school}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <a
+                                                    href={`/campus/instructors/${instructor.id}`}
+                                                    className={`${schoolStyle.buttonColor} px-4 py-2 rounded-md font-medium hover:opacity-90 transition-opacity text-center`}
+                                                >
+                                                    View Reviews
+                                                </a>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </>
+                    ) : (
+                        !loading &&
+                        searchTerm && (
+                            <div className="text-center py-8 text-gray-500">
+                                No instructors found matching {'"'}
+                                {searchTerm}
+                                {'"'}
+                            </div>
+                        )
+                    )}
+                </div>
             </div>
         </div>
     );

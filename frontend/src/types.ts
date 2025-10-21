@@ -11,6 +11,7 @@ export interface StaffMember {
     name: string;
     position: string;
     bio: string;
+    email: string;
     profilePic: string;
     group: string;
 }
@@ -123,6 +124,7 @@ export type Course = {
     all_instructor_ids: number[];
     createdAt?: Date;
     updatedAt?: Date;
+    review_count: number;
 };
 
 export type CourseReview = {

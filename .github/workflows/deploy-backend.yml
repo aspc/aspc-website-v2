@@ -1,5 +1,4 @@
 name: Deploy Backend to AWS Lightsail
-
 on:
   pull_request:
     types: [closed]
@@ -7,11 +6,15 @@ on:
       - main
     paths:
       - 'backend/**'
-
+  workflow_dispatch:  # Add this to allow manual runs
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: false
+        default: 'test'
 jobs:
   build-and-deploy:
-    # Made it so that it only runs if the PR was merged (not if it was closed without merging)
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     
     steps:
@@ -42,13 +45,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
       
-      - name: Install AWS CLI
-        run: |
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install
-          aws --version
-      
       - name: Install Lightsail Control plugin
         run: |
           curl "https://s3.us-west-2.amazonaws.com/lightsailctl/latest/linux-amd64/lightsailctl" -o "lightsailctl"
@@ -57,38 +53,39 @@ jobs:
       
       - name: Create deployment configuration
         run: |
-          cat > deployment.json << EOF
+          cat > containers.json << EOF
           {
-            "containers": {
-              "backend": {
-                "image": "${{ secrets.DOCKERHUB_USERNAME }}/aspc-backend:latest",
-                "ports": {
-                  "5000": "HTTP"
-                },
-                "environment": {
-                  "ENTITY_ID": "https://api.pomonastudents.org",
-                  "FRONTEND_LINK": "https://pomonastudents.org",
-                  "NEXT_PUBLIC_TINYMCE_API_KEY": "${{ secrets.TINYMCE_API_KEY }}",
-                  "SESSION_SECRET": "${{ secrets.SESSION_SECRET }}",
-                  "MONGODB_URI": "${{ secrets.MONGODB_URI }}",
-                  "NODE_ENV": "production",
-                  "IDP_METADATA_URL": "${{ secrets.IDP_METADATA_URL }}",
-                  "ENGAGE_API_KEY": "${{ secrets.ENGAGE_API_KEY }}",
-                  "ENGAGE_API_URL": "${{ secrets.ENGAGE_API_URL }}"
-                }
+            "backend": {
+              "image": "${{ secrets.DOCKERHUB_USERNAME }}/aspc-backend:latest",
+              "ports": {
+                "5000": "HTTP"
+              },
+              "environment": {
+                "ENTITY_ID": "https://api.pomonastudents.org",
+                "FRONTEND_LINK": "https://pomonastudents.org",
+                "NEXT_PUBLIC_TINYMCE_API_KEY": "${{ secrets.TINYMCE_API_KEY }}",
+                "SESSION_SECRET": "${{ secrets.SESSION_SECRET }}",
+                "MONGODB_URI": "${{ secrets.MONGODB_URI }}",
+                "NODE_ENV": "production",
+                "IDP_METADATA_URL": "${{ secrets.IDP_METADATA_URL }}",
+                "ENGAGE_API_KEY": "${{ secrets.ENGAGE_API_KEY }}",
+                "ENGAGE_API_URL": "${{ secrets.ENGAGE_API_URL }}"
               }
-            },
-            "publicEndpoint": {
-              "containerName": "backend",
-              "containerPort": 5000,
-              "healthCheck": {
-                "path": "/",
-                "timeoutSeconds": 2,
-                "intervalSeconds": 5,
-                "successCodes": "200-499",
-                "healthyThreshold": 2,
-                "unhealthyThreshold": 2
-              }
+            }
+          }
+          EOF
+
+          cat > public-endpoint.json << EOF
+          {
+            "containerName": "backend",
+            "containerPort": 5000,
+            "healthCheck": {
+              "path": "/",
+              "timeoutSeconds": 2,
+              "intervalSeconds": 5,
+              "successCodes": "200-499",
+              "healthyThreshold": 2,
+              "unhealthyThreshold": 2
             }
           }
           EOF
@@ -97,7 +94,7 @@ jobs:
         run: |
           aws lightsail create-container-service-deployment \
             --service-name aspc-backend-v1 \
-            --containers file://deployment.json \
-            --public-endpoint file://deployment.json
+            --containers file://containers.json \
+            --public-endpoint file://public-endpoint.json
             
           echo "Deployment initiated. Check the AWS Lightsail console for status."

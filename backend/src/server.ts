@@ -20,6 +20,7 @@ import fs from 'fs';
 import path from 'path';
 dotenv.config();
 
+// MAIN SERVER FILE
 const app: Express = express();
 
 // Middleware

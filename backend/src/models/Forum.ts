@@ -254,11 +254,6 @@ const EventReview = mongoose.model<IEventReview, IEventReviewModel>(
 // ============================================
 
 interface IEventReviewModel extends mongoose.Model<IEventReview> {
-    hasUserRated(
-        eventId: string | mongoose.Types.ObjectId,
-        userEmail: string
-    ): Promise<boolean>;
-
     getAverageRatings(eventId: string | mongoose.Types.ObjectId): Promise<{
         overall: number;
         wouldRepeat: number;
