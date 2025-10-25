@@ -4,23 +4,10 @@ import { Calendar, momentLocalizer, View, Views } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import Loading from '@/components/Loading';
-import { Event } from '@/types';
+import { Event, CalendarEvent } from '@/types';
 import { FormattedReviewText } from '@/utils/textFormatting';
 
 const localizer = momentLocalizer(moment);
-
-interface CalendarEvent {
-    title: string;
-    start: Date;
-    end: Date;
-    resource: {
-        location: string;
-        host: string;
-        description: string;
-        details_url: string;
-        status: string;
-    };
-}
 
 const EventsPage = () => {
     const [events, setEvents] = useState<CalendarEvent[]>([]);

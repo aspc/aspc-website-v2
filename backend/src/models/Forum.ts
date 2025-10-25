@@ -9,7 +9,7 @@ interface IForumEvent extends Document {
     _id: mongoose.Types.ObjectId;
     title: string;
     description: string;
-    createdBy: mongoose.Types.ObjectId;
+    createdBy: string;
     staffHost?: mongoose.Types.ObjectId;
     eventDate: Date;
     location: string;
@@ -31,7 +31,7 @@ const ForumEventSchema = new Schema<IForumEvent>(
             required: true,
         },
         createdBy: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: String,
             ref: 'SAMLUser',
             required: true,
         },

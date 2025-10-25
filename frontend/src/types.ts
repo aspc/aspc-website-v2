@@ -7,6 +7,7 @@ export interface PageContent {
 }
 
 export interface StaffMember {
+    _id: string;
     id: string;
     name: string;
     position: string;
@@ -176,4 +177,41 @@ export type Instructor = {
 export interface InstructorWithReviews {
     instructor: Instructor;
     reviews: CourseReview[];
+}
+
+export interface ForumEvent {
+    _id: string;
+    title: string;
+    description: string;
+    createdBy: string;
+    staffHost?: string;
+    eventDate: Date;
+    location: string;
+    engageEventId?: string;
+    ratingUntil: Date;
+    customQuestions: string[];
+}
+
+export interface CalendarEvent {
+    title: string;
+    start: Date;
+    end: Date;
+    resource: {
+        location: string;
+        host: string;
+        description: string;
+        details_url: string;
+        status: string;
+    };
+}
+
+export interface EngageEvent {
+    name: string;
+    location: string;
+    description: string;
+    host: string;
+    details_url: string;
+    start: string;
+    end: string;
+    status: string;
 }
