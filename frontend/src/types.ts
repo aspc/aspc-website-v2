@@ -204,14 +204,3 @@ export interface CalendarEvent {
         status: string;
     };
 }
-
-export interface EngageEvent {
-    name: string;
-    location: string;
-    description: string;
-    host: string;
-    details_url: string;
-    start: string;
-    end: string;
-    status: string;
-}

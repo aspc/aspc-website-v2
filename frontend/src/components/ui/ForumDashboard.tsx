@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Loading from '@/components/Loading';
-import { StaffMember, EngageEvent, ForumEvent } from '@/types';
+import { StaffMember, Event, ForumEvent } from '@/types';
 import { FormattedReviewText, formatReviewText } from '@/utils/textFormatting';
 
 const ForumDashboard = () => {
@@ -15,7 +15,7 @@ const ForumDashboard = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isEngagePopupOpen, setIsEngagePopupOpen] = useState(false);
     const [isEngageLoading, setIsEngageLoading] = useState(false);
-    const [engageEvents, setEngageEvents] = useState<EngageEvent[]>([]);
+    const [engageEvents, setEngageEvents] = useState<Event[]>([]);
 
     // Form state
     const [title, setTitle] = useState<string>('');
@@ -397,98 +397,88 @@ const ForumDashboard = () => {
                                 </p>
                             ) : engageEvents.length > 0 ? (
                                 <ul className="space-y-4">
-                                    {engageEvents.map(
-                                        (event: EngageEvent, index) => (
-                                            <li
-                                                key={index}
-                                                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50"
-                                            >
-                                                <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                                                    {event.name}
-                                                </h3>
+                                    {engageEvents.map((event: Event, index) => (
+                                        <li
+                                            key={index}
+                                            className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50"
+                                        >
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                                {event.name}
+                                            </h3>
 
-                                                <p className="text-sm text-gray-600 mb-1">
-                                                    <strong>Date:</strong>{' '}
-                                                    {new Date(
-                                                        event.start
-                                                    ).toLocaleString()}{' '}
-                                                    →{' '}
-                                                    {new Date(
-                                                        event.end
-                                                    ).toLocaleString()}
-                                                </p>
+                                            <p className="text-sm text-gray-600 mb-1">
+                                                <strong>Date:</strong>{' '}
+                                                event.start → event.end
+                                            </p>
 
-                                                <p className="text-sm text-gray-600 mb-1">
-                                                    <strong>Location:</strong>{' '}
-                                                    {event.location || 'N/A'}
-                                                </p>
+                                            <p className="text-sm text-gray-600 mb-1">
+                                                <strong>Location:</strong>{' '}
+                                                {event.location || 'N/A'}
+                                            </p>
 
-                                                <p className="text-sm text-gray-600 mb-1">
-                                                    <strong>Host:</strong>{' '}
-                                                    {event.host || 'Unknown'}
-                                                </p>
+                                            <p className="text-sm text-gray-600 mb-1">
+                                                <strong>Host:</strong>{' '}
+                                                {event.host || 'Unknown'}
+                                            </p>
 
-                                                <div className="text-sm text-gray-700 mt-2 line-clamp-3">
-                                                    <FormattedReviewText
-                                                        text={event.description}
-                                                    />
-                                                </div>
+                                            <div className="text-sm text-gray-700 mt-2 line-clamp-3">
+                                                <FormattedReviewText
+                                                    text={event.description}
+                                                />
+                                            </div>
 
-                                                <div className="flex justify-between items-center mt-3">
-                                                    <a
-                                                        href={event.details_url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-blue-500 hover:underline text-sm"
-                                                    >
-                                                        View on Engage ↗
-                                                    </a>
+                                            <div className="flex justify-between items-center mt-3">
+                                                <a
+                                                    href={event.details_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-500 hover:underline text-sm"
+                                                >
+                                                    View on Engage ↗
+                                                </a>
 
-                                                    <button
-                                                        onClick={() => {
-                                                            setEngageEventId(
-                                                                event.details_url
-                                                            );
-                                                            setTitle(
-                                                                event.name
-                                                            );
-                                                            setDescription(
-                                                                event.description
-                                                            );
-                                                            setLocation(
-                                                                event.location
+                                                <button
+                                                    onClick={() => {
+                                                        setEngageEventId(
+                                                            event.details_url
+                                                        );
+                                                        setTitle(event.name);
+                                                        setDescription(
+                                                            event.description
+                                                        );
+                                                        setLocation(
+                                                            event.location
+                                                        );
+
+                                                        const localDate =
+                                                            new Date(
+                                                                event.start
                                                             );
 
-                                                            const localDate =
-                                                                new Date(
-                                                                    event.start
-                                                                );
+                                                        const utcDateStr =
+                                                            new Date(
+                                                                localDate.getTime() -
+                                                                    localDate.getTimezoneOffset() *
+                                                                        60000
+                                                            ).toISOString();
 
-                                                            const utcDateStr =
-                                                                new Date(
-                                                                    localDate.getTime() -
-                                                                        localDate.getTimezoneOffset() *
-                                                                            60000
-                                                                ).toISOString();
-
-                                                            setEventDate(
-                                                                utcDateStr.slice(
-                                                                    0,
-                                                                    10
-                                                                )
-                                                            );
-                                                            setIsEngagePopupOpen(
-                                                                false
-                                                            );
-                                                        }}
-                                                        className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 text-sm"
-                                                    >
-                                                        Select
-                                                    </button>
-                                                </div>
-                                            </li>
-                                        )
-                                    )}
+                                                        setEventDate(
+                                                            utcDateStr.slice(
+                                                                0,
+                                                                10
+                                                            )
+                                                        );
+                                                        setIsEngagePopupOpen(
+                                                            false
+                                                        );
+                                                    }}
+                                                    className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 text-sm"
+                                                >
+                                                    Select
+                                                </button>
+                                            </div>
+                                        </li>
+                                    ))}
                                 </ul>
                             ) : (
                                 <p className="text-gray-500 text-center my-8">
