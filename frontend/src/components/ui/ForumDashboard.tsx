@@ -64,6 +64,7 @@ const ForumDashboard = () => {
     // Fetch existing events
     useEffect(() => {
         fetchEvents();
+        fetchMembers();
     }, []);
 
     // Fetch selected event data
@@ -408,7 +409,13 @@ const ForumDashboard = () => {
 
                                             <p className="text-sm text-gray-600 mb-1">
                                                 <strong>Date:</strong>{' '}
-                                                event.start → event.end
+                                                {new Date(
+                                                    event.start
+                                                ).toLocaleString()}{' '}
+                                                →{' '}
+                                                {new Date(
+                                                    event.end
+                                                ).toLocaleString()}
                                             </p>
 
                                             <p className="text-sm text-gray-600 mb-1">
