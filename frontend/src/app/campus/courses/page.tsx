@@ -61,6 +61,15 @@ interface CoursesResponse {
     pagination: PaginationInfo;
 }
 
+interface SearchParams {
+    schools: string;
+    page: number;
+    limit: number;
+    search?: string;
+    code?: string;
+    name?: string;
+}
+
 const CourseSearchComponent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -165,7 +174,7 @@ const CourseSearchComponent = () => {
                     .map(([school]) => school);
 
                 // Build search parameters
-                const searchParams: any = {
+                const searchParams: SearchParams = {
                     schools: activeSchools.join(','),
                     page: page,
                     limit: itemLimit,
