@@ -29,7 +29,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
 
             // Build search criteria with priority for exact code matches
             const searchCriteria: any[] = [];
-            
+
             // If we have a specific code search, prioritize exact matches
             if (code) {
                 const codeTerm = String(code).trim();
@@ -40,7 +40,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                         score: { boost: { value: 10 } }, // Highest priority for exact code matches
                     },
                 });
-                
+
                 // Also add fuzzy search for code with lower priority
                 searchCriteria.push({
                     text: {
@@ -53,7 +53,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                     },
                 });
             }
-            
+
             // If we have a specific name search, use fuzzy search
             if (name) {
                 const nameTerm = String(name).trim();
@@ -68,11 +68,11 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                     },
                 });
             }
-            
+
             // If we have a general search term, search both code and name
             if (search && !code && !name) {
                 const searchTerm = String(search).trim();
-                
+
                 // First try exact code match with highest priority
                 searchCriteria.push({
                     text: {
@@ -81,7 +81,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                         score: { boost: { value: 10 } },
                     },
                 });
-                
+
                 // Then fuzzy code search
                 searchCriteria.push({
                     text: {
@@ -93,7 +93,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                         score: { boost: { value: 5 } },
                     },
                 });
-                
+
                 // Then fuzzy name search
                 searchCriteria.push({
                     text: {
@@ -105,7 +105,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                         score: { boost: { value: 1 } },
                     },
                 });
-                
+
                 // Also search individual terms
                 searchTerm.split(' ').forEach((term) => {
                     if (term.length > 1) {

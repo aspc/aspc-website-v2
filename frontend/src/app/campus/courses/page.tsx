@@ -140,7 +140,7 @@ const CourseSearchComponent = () => {
             const hasSearchTerm = searchTerm && searchTerm.length >= 2;
             const hasCodeTerm = codeTerm && codeTerm.length >= 2;
             const hasNameTerm = nameTerm && nameTerm.length >= 2;
-            
+
             if (!hasSearchTerm && !hasCodeTerm && !hasNameTerm) {
                 setResults([]);
                 setPagination(null);
@@ -151,8 +151,8 @@ const CourseSearchComponent = () => {
             if (cancelTokenSourceRef.current)
                 cancelTokenSourceRef.current.cancel(
                     'Operation canceled due to new request'
-                )
-         
+                );
+
             const source = axios.CancelToken.source();
             cancelTokenSourceRef.current = source;
 
@@ -245,13 +245,28 @@ const CourseSearchComponent = () => {
     );
 
     useEffect(() => {
-        debouncedSearch(searchTerm, codeTerm, nameTerm, selectedSchools, currentPage, limit);
+        debouncedSearch(
+            searchTerm,
+            codeTerm,
+            nameTerm,
+            selectedSchools,
+            currentPage,
+            limit
+        );
         return () => {
             debouncedSearch.cancel();
             if (cancelTokenSourceRef.current)
                 cancelTokenSourceRef.current.cancel('Component unmounted');
         };
-    }, [searchTerm, codeTerm, nameTerm, selectedSchools, currentPage, limit, debouncedSearch]);
+    }, [
+        searchTerm,
+        codeTerm,
+        nameTerm,
+        selectedSchools,
+        currentPage,
+        limit,
+        debouncedSearch,
+    ]);
 
     const handleSchoolToggle = (school: SchoolKey) => {
         setSelectedSchools((prev) => {
