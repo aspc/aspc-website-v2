@@ -16,44 +16,118 @@ const router = express.Router();
  */
 router.get('/', isAuthenticated, async (req: Request, res: Response) => {
     try {
-        const { search, schools, limit = 20, page = 1 } = req.query;
+        const { search, code, name, schools, limit = 20, page = 1 } = req.query;
 
         const numericLimit = parseInt(limit as string);
         const numericPage = parseInt(page as string);
         const skip = (numericPage - 1) * numericLimit;
         const schoolList = schools ? (schools as string).split(',') : [];
 
-        // Use Atlas Search for typo-resilient fuzzy search whenever a search term is provided
-        if (search) {
+        // Use Atlas Search for prioritized search whenever search terms are provided
+        if (search || code || name) {
             const pipeline: any[] = [];
 
-            // $search stage with compound should for text across name/code and school filter
+            // Build search criteria with priority for exact code matches
+            const searchCriteria: any[] = [];
+            
+            // If we have a specific code search, prioritize exact matches
+            if (code) {
+                const codeTerm = String(code).trim();
+                searchCriteria.push({
+                    text: {
+                        query: codeTerm,
+                        path: 'code',
+                        score: { boost: { value: 10 } }, // Highest priority for exact code matches
+                    },
+                });
+                
+                // Also add fuzzy search for code with lower priority
+                searchCriteria.push({
+                    text: {
+                        query: codeTerm,
+                        path: 'code',
+                        fuzzy: {
+                            maxEdits: 2,
+                        },
+                        score: { boost: { value: 3 } },
+                    },
+                });
+            }
+            
+            // If we have a specific name search, use fuzzy search
+            if (name) {
+                const nameTerm = String(name).trim();
+                searchCriteria.push({
+                    text: {
+                        query: nameTerm,
+                        path: 'name',
+                        fuzzy: {
+                            maxEdits: 2,
+                        },
+                        score: { boost: { value: 2 } },
+                    },
+                });
+            }
+            
+            // If we have a general search term, search both code and name
+            if (search && !code && !name) {
+                const searchTerm = String(search).trim();
+                
+                // First try exact code match with highest priority
+                searchCriteria.push({
+                    text: {
+                        query: searchTerm,
+                        path: 'code',
+                        score: { boost: { value: 10 } },
+                    },
+                });
+                
+                // Then fuzzy code search
+                searchCriteria.push({
+                    text: {
+                        query: searchTerm,
+                        path: 'code',
+                        fuzzy: {
+                            maxEdits: 2,
+                        },
+                        score: { boost: { value: 5 } },
+                    },
+                });
+                
+                // Then fuzzy name search
+                searchCriteria.push({
+                    text: {
+                        query: searchTerm,
+                        path: 'name',
+                        fuzzy: {
+                            maxEdits: 2,
+                        },
+                        score: { boost: { value: 1 } },
+                    },
+                });
+                
+                // Also search individual terms
+                searchTerm.split(' ').forEach((term) => {
+                    if (term.length > 1) {
+                        searchCriteria.push({
+                            text: {
+                                query: term,
+                                path: ['code', 'name'],
+                                fuzzy: {
+                                    maxEdits: 2,
+                                },
+                                score: { boost: { value: 0.5 } },
+                            },
+                        });
+                    }
+                });
+            }
+
             const searchStage: any = {
                 $search: {
                     index: 'courses',
                     compound: {
-                        should: [
-                            // Full phrase match with score boost
-                            {
-                                text: {
-                                    query: String(search),
-                                    path: ['name', 'code'],
-                                    score: { boost: { value: 5 } },
-                                },
-                            },
-                            // Individual term matches with fuzzy search
-                            ...String(search)
-                                .split(' ')
-                                .map((term) => ({
-                                    text: {
-                                        query: term,
-                                        path: ['name', 'code'],
-                                        fuzzy: {
-                                            maxEdits: term.length < 6 ? 1 : 2,
-                                        },
-                                    },
-                                })),
-                        ],
+                        should: searchCriteria,
                         minimumShouldMatch: 1,
                     },
                 },
@@ -77,9 +151,6 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             }
 
             pipeline.push(searchStage);
-
-            // IF WE WANT TO sort courses by number of reviews (descending)
-            // pipeline.push({ $sort: { review_count: -1 } });
 
             // Add a $facet stage to get both the paginated results and total count
             pipeline.push({
