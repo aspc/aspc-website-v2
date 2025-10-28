@@ -151,8 +151,8 @@ const CourseSearchComponent = () => {
             if (cancelTokenSourceRef.current)
                 cancelTokenSourceRef.current.cancel(
                     'Operation canceled due to new request'
-                );
-
+                )
+         
             const source = axios.CancelToken.source();
             cancelTokenSourceRef.current = source;
 
