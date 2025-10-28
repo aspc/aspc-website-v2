@@ -14,18 +14,18 @@ import Loading from '@/components/Loading';
 
 // 🎯 Pomona requirement mapping
 const poRequirementMapping = {
-    'Analyzing Difference': 'PO Analyzing Difference',
     'Area 1': 'PO Area 1 Requirement',
     'Area 2': 'PO Area 2 Requirement',
     'Area 3': 'PO Area 3 Requirement',
     'Area 4': 'PO Area 4 Requirement',
     'Area 5': 'PO Area 5 Requirement',
     'Area 6': 'PO Area 6 Requirement',
+    'Analyzing Difference': 'PO Analyzing Difference',
+    'Speaking Intensive': 'PO Speaking Intensive',
+    'Writing Intensive': 'PO Writing Intensive Req',
     'Community Partnership': 'PO Community Partnership',
     'Language': 'PO Language Requirement',
     'Physical Education': 'PO Phys Ed Requirement',
-    'Speaking Intensive': 'PO Speaking Intensive',
-    'Writing Intensive': 'PO Writing Intensive Req',
 };
 
 const schoolData = {
@@ -80,6 +80,9 @@ const CourseSearchComponent = () => {
             {}
         )
     );
+
+    const showRequirementWarning = Object.values(selectedRequirements).some(Boolean);
+
     const [results, setResults] = useState<Course[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -340,6 +343,13 @@ const CourseSearchComponent = () => {
                                 </button>
                             ))}
                         </div>
+                            {showRequirementWarning && (
+                            <div className="mt-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-3 rounded">
+                                <p className="text-sm">
+                                    ⚠️ Not all courses that fulfill the requirement will be displayed due to some courses missing information.
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
