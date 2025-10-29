@@ -279,6 +279,16 @@ const Header = () => {
                                         >
                                             Instructor Reviews
                                         </Link>
+
+                                        <Link
+                                            href="/open-forum"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
+                                        >
+                                            Open Forum
+                                        </Link>
                                     </div>
                                 )}
                             </div>
@@ -316,14 +326,40 @@ const Header = () => {
                                     </div>
                                 )}
                             </div>
+                            {/* Events Dropdown */}
+                            <div className="relative dropdown-container">
+                                <button
+                                    className="flex items-center space-x-1 hover:text-blue-500"
+                                    onClick={() => handleDropdownClick('Events')}
+                                >
+                                    <span>Events</span>
+                                </button>
 
-                            {/* Events */}
-                            <Link
-                                href="/events"
-                                className="hover:text-blue-500"
-                            >
-                                Events
-                            </Link>
+                                {/* Events Dropdown */}
+                                {openDropdown === 'Events' && (
+                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
+                                        <Link
+                                            href="/events"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
+                                        >
+                                            Events
+                                        </Link>
+
+                                        <Link
+                                            href="/open-forum"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
+                                        >
+                                            Open Forum
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
 
                             {user ? (
                                 <>
@@ -559,13 +595,41 @@ const Header = () => {
                                 )}
                             </div>
 
-                            <Link
-                                href="/events"
-                                className="text-lg"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                Events
-                            </Link>
+                            {/* Events dropdown */}
+                            <div className="relative dropdown-container">
+                                <button
+                                    className="text-lg flex items-center space-x-1"
+                                    onClick={() =>
+                                        handleDropdownClick('EventsMobile')
+                                    }
+                                >
+                                    <span>Events</span>
+                                </button>
+
+                                {openDropdown === 'EventsMobile' && (
+                                    <div className="ml-2 mt-2">
+                                        <Link
+                                            href="/events"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Events
+                                        </Link>
+
+                                        <Link
+                                            href="/open-forum"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Open Forum
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
 
                             {user?.isAdmin && (
                                 <Link
