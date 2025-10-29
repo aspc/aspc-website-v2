@@ -9,7 +9,7 @@ import { FormattedReviewText } from '@/utils/textFormatting';
 const OpenForumPage = () => {
     const [events, setEvents] = useState<ForumEvent[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-    const [filter, setFilter] = useState<'all' | 'past' | 'upcoming'>('past');
+    const [filter, setFilter] = useState<'all' | 'past' | 'upcoming'>('all');
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -39,9 +39,9 @@ const OpenForumPage = () => {
         fetchEvents();
     }, []);
 
-    const filterEvents = (events: ForumEvent[]) => {
+    const filteredEvents = React.useMemo(() => {
         const now = new Date();
-        return events.filter(event => {
+        const filtered = events.filter(event => {
             const eventDate = new Date(event.eventDate);
             switch (filter) {
                 case 'past':
@@ -53,9 +53,14 @@ const OpenForumPage = () => {
                     return true;
             }
         });
-    };
-
-    const filteredEvents = filterEvents(events);
+        
+        // Sort events chronologically (most recent first)
+        return filtered.sort((a, b) => {
+            const dateA = new Date(a.eventDate).getTime();
+            const dateB = new Date(b.eventDate).getTime();
+            return dateB - dateA; // Descending order (most recent first)
+        });
+    }, [events, filter]);
 
     const getEventStatusColor = (eventDate: Date) => {
         const now = new Date();
@@ -214,13 +219,11 @@ const OpenForumPage = () => {
                                     <div className="flex justify-between items-center pt-3 border-t border-gray-200">
                                         <div className="flex items-center text-sm text-gray-600">
                                             <span className="font-medium mr-1">⭐</span>
-                                            <span>
-                                                {event.ratings?.length || 0} rating{(event.ratings?.length || 0) !== 1 ? 's' : ''}
-                                            </span>
+                                            <span>View ratings</span>
                                         </div>
                                         
                                         <div className="text-sm text-gray-500">
-                                            Click to view reviews
+                                            Click to view details
                                         </div>
                                     </div>
                                 </div>

@@ -364,27 +364,73 @@ const EventDetailsPage = () => {
                                                     </span>
                                                 </div>
 
-                                                {user.email === rating.author && (
-                                                    <div className="flex p-2 gap-4">
-                                                        <button
-                                                            className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
-                                                            onClick={() => {
-                                                                setSelectedReview(rating);
-                                                                setIsModalOpen(true);
-                                                            }}
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                        <button
-                                                            className="bg-red-500 text-white text-m px-4 rounded-md hover:bg-red-600"
-                                                            onClick={() => {
-                                                                handleDelete(rating._id);
-                                                            }}
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    </div>
-                                                )}
+                                                {(() => {
+                                                    const authorEmail = typeof rating.author === 'string' 
+                                                        ? rating.author 
+                                                        : rating.author.email || '';
+                                                    return user.email === authorEmail && (
+                                                        <div className="flex p-2 gap-4">
+                                                            <button
+                                                                className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
+                                                                onClick={() => {
+                                                                    setSelectedReview(rating);
+                                                                    setIsModalOpen(true);
+                                                                }}
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                            <button
+                                                                className="bg-red-500 text-white text-m px-4 rounded-md hover:bg-red-600"
+                                                                onClick={() => {
+                                                                    handleDelete(rating._id);
+                                                                }}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </div>
+
+                                            {/* Author information */}
+                                            <div className="mt-2 mb-2">
+                                                <p className="text-sm text-gray-600">
+                                                    {(() => {
+                                                        const authorName = typeof rating.author === 'string' 
+                                                            ? rating.author 
+                                                            : rating.author.firstName + ' ' + rating.author.lastName || 'Unknown';
+                                                        const isUserReview = user.email === (typeof rating.author === 'object' ? rating.author.email : '');
+                                                        
+                                                        if (rating?.isAnonymous) {
+                                                            return (
+                                                                <>
+                                                                    <span className="italic">Anonymous User</span>
+                                                                    {isUserReview && (
+                                                                        <span className="ml-2 text-xs text-blue-600">
+                                                                            (Your review)
+                                                                        </span>
+                                                                    )}
+                                                                </>
+                                                            );
+                                                        } else {
+                                                            return (
+                                                                <>
+                                                                    <span>
+                                                                        Review by{' '}
+                                                                        <span className="font-medium">
+                                                                            {authorName}
+                                                                        </span>
+                                                                    </span>
+                                                                    {isUserReview && (
+                                                                        <span className="ml-2 text-xs text-blue-600">
+                                                                            (Your review)
+                                                                        </span>
+                                                                    )}
+                                                                </>
+                                                            );
+                                                        }
+                                                    })()}
+                                                </p>
                                             </div>
 
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">

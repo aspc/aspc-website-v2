@@ -60,7 +60,12 @@ export interface ForumEvent {
 export interface EventReview {
     _id: string;
     eventId: string;
-    author: string; // email
+    author: string | {         
+        id: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+    };
     isAnonymous: boolean;
     content: string;
     isHidden: boolean;
