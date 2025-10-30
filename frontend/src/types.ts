@@ -33,100 +33,6 @@ export interface Event {
     status: string;
 }
 
-export interface ForumEvent {
-    _id: string;
-    title: string;
-    description: string;
-    createdBy: {
-        id: string;
-        email: string;
-        firstName: string;
-        lastName: string;
-    };
-    staffHost?: {
-        name: string;
-        position: string;
-    };
-    eventDate: Date;
-    location: string;
-    engageEventId?: string;
-    ratingUntil: Date;
-    ratings?: EventReview[];
-    customQuestions: string[];
-    createdAt: Date;  // Added by Mongoose timestamps
-    updatedAt: Date;  // Added by Mongoose timestamps
-}
-
-export interface EventReview {
-    _id: string;
-    eventId: string;
-    author: string | {         
-        id: string;
-        email: string;
-        firstName: string;
-        lastName: string;
-    };
-    isAnonymous: boolean;
-    content: string;
-    isHidden: boolean;
-    overall: number;
-    wouldRepeat: number;
-    customRatings: CustomRating[];
-    createdAt?: Date;
-    updatedAt?: Date;
-}
-
-export interface EventRating {
-    _id: string;
-    userId: string;
-    isAnonymous: boolean;
-    overall: number;
-    wouldRepeat: number;
-    customRatings: CustomRating[];
-    createdAt: Date;
-}
-
-export interface CustomRating {
-    question: string;
-    rating: number;
-}
-
-export interface EventComment {
-    _id: string;
-    eventId: string;
-    author: {
-        _id: string;
-        email: string;
-        firstName: string;
-        lastName: string;
-    };
-    isAnonymous: boolean;
-    content: string;
-    isHidden: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-}
-
-export interface EventWithReviews {
-    event: ForumEvent;
-    reviews: EventReview[];
-    averages: EventReviewAverages;
-}
-
-export interface EventReviewAverages {
-    overall: number;
-    wouldRepeat: number;
-    customQuestions: { [key: string]: number };
-    totalResponses: number;
-}
-
-export interface EventReviewFormProps {
-    eventId: string;
-    existingRating?: EventRating;
-    review?: EventRating;
-    onSubmitSuccess?: () => void;
-}
-
 export interface User {
     id: string;
     email: string;
@@ -265,4 +171,83 @@ export type Instructor = {
 export interface InstructorWithReviews {
     instructor: Instructor;
     reviews: CourseReview[];
+}
+
+export interface ForumEvent {
+    _id: string;
+    title: string;
+    description: string;
+    createdBy: {
+        id: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+    };
+    staffHost?: {
+        name: string;
+        position: string;
+    };
+    eventDate: Date;
+    location: string;
+    engageEventId?: string;
+    ratingUntil: Date;
+    ratings?: EventReview[];
+    customQuestions: string[];
+    createdAt: Date;  // Added by Mongoose timestamps
+    updatedAt: Date;  // Added by Mongoose timestamps
+}
+
+export interface EventReview {
+    _id: string;
+    eventId: string;
+    author: string | {         
+        id: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+    };
+    isAnonymous: boolean;
+    content: string;
+    isHidden: boolean;
+    overall: number;
+    wouldRepeat: number;
+    customRatings: CustomRating[];
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+export interface EventRating {
+    _id: string;
+    userId: string;
+    isAnonymous: boolean;
+    overall: number;
+    wouldRepeat: number;
+    customRatings: CustomRating[];
+    createdAt: Date;
+}
+
+export interface CustomRating {
+    question: string;
+    rating: number;
+}
+
+
+export interface EventWithReviews {
+    event: ForumEvent;
+    reviews: EventReview[];
+    averages: EventReviewAverages;
+}
+
+export interface EventReviewAverages {
+    overall: number;
+    wouldRepeat: number;
+    customQuestions: { [key: string]: number };
+    totalResponses: number;
+}
+
+export interface EventReviewFormProps {
+    eventId: string;
+    existingRating?: EventRating;
+    review?: EventRating;
+    onSubmitSuccess?: () => void;
 }

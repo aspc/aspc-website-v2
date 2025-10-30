@@ -20,12 +20,7 @@ const EventDetailsPage = () => {
     const [selectedReview, setSelectedReview] = useState<EventReview | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { user, loading: authLoading } = useAuth();
-    const [averageRatings, setAverageRatings] = useState<EventReviewAverages>({
-        overall: 0,
-        wouldRepeat: 0,
-        customQuestions: {},
-        totalResponses: 0,
-    });
+    const [averageRatings, setAverageRatings] = useState<EventReviewAverages | null>(null);
 
     const handleModalClose = () => {
         setIsModalOpen(false);
@@ -73,6 +68,7 @@ const EventDetailsPage = () => {
 
                 const eventData: ForumEvent = await eventResponse.json();
                 setEventName(eventData.title);
+                console.log(eventData);
 
                 // Fetch event reviews
                 const reviewsResponse = await fetch(
@@ -299,7 +295,7 @@ const EventDetailsPage = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            {Object.keys(averageRatings.customQuestions).length > 0 && (
+                                            {averageRatings.customQuestions.length > 0 && (
                                                 <div className="mt-4">
                                                     <h5 className="text-md font-medium mb-2">Custom Questions</h5>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -323,7 +319,7 @@ const EventDetailsPage = () => {
                                             )}
                                             <p className="text-gray-500 mt-3">
                                                 Based on {averageRatings.totalResponses} rating
-                                                {averageRatings.totalResponses !== 1 ? 's' : ''}
+                                                {averageRatings.totalResponses > 1 ? 's' : ''}
                                             </p>
                                         </>
                                     )}
@@ -454,7 +450,7 @@ const EventDetailsPage = () => {
                                                     <div className="space-y-1">
                                                         {rating.customRatings.map((customRating, index) => (
                                                             <div key={index} className="text-sm flex items-center">
-                                                                <span className="text-gray-600 mr-2 w-32 truncate">
+                                                                <span className="text-gray-600 mr-2">
                                                                     {customRating.question}:
                                                                 </span>
                                                                 <StarRating
