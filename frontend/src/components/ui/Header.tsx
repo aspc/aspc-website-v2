@@ -345,7 +345,7 @@ const Header = () => {
                                                 setOpenDropdown(null)
                                             }
                                         >
-                                            Events
+                                            Calendar
                                         </Link>
 
                                         <Link
