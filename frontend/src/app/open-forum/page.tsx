@@ -202,7 +202,9 @@ const OpenForumPage = () => {
                                             <div className="flex items-center text-sm text-gray-600">
                                                 <span className="font-medium mr-2">👤</span>
                                                 <span>
-                                                    {event.createdBy?.firstName} {event.createdBy?.lastName}
+                                                    {typeof event.createdBy === 'string'
+                                                        ? event.createdBy
+                                                        : `${event.createdBy?.firstName} ${event.createdBy?.lastName}`}
                                                 </span>
                                             </div>
                                         )}

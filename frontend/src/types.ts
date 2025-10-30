@@ -177,8 +177,7 @@ export interface ForumEvent {
     _id: string;
     title: string;
     description: string;
-    createdBy: {
-        id: string;
+    createdBy: string | {
         email: string;
         firstName: string;
         lastName: string;
@@ -201,7 +200,6 @@ export interface EventReview {
     _id: string;
     eventId: string;
     author: string | {         
-        id: string;
         email: string;
         firstName: string;
         lastName: string;
@@ -216,21 +214,10 @@ export interface EventReview {
     updatedAt?: Date;
 }
 
-export interface EventRating {
-    _id: string;
-    userId: string;
-    isAnonymous: boolean;
-    overall: number;
-    wouldRepeat: number;
-    customRatings: CustomRating[];
-    createdAt: Date;
-}
-
 export interface CustomRating {
     question: string;
     rating: number;
 }
-
 
 export interface EventWithReviews {
     event: ForumEvent;
@@ -243,11 +230,4 @@ export interface EventReviewAverages {
     wouldRepeat: number;
     customQuestions: { [key: string]: number };
     totalResponses: number;
-}
-
-export interface EventReviewFormProps {
-    eventId: string;
-    existingRating?: EventRating;
-    review?: EventRating;
-    onSubmitSuccess?: () => void;
 }

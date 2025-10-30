@@ -213,7 +213,11 @@ const EventDetailsPage = () => {
                                             <p className="text-gray-600 font-medium">
                                                 Created By:
                                             </p>
-                                            <p>{eventDetails.event.createdBy?.firstName} {eventDetails.event.createdBy?.lastName}</p>
+                                            <p>
+                                                {typeof eventDetails.event.createdBy === 'string'
+                                                    ? eventDetails.event.createdBy
+                                                    : `${eventDetails.event.createdBy?.firstName} ${eventDetails.event.createdBy?.lastName}`}
+                                            </p>
                                         </div>
                                         <div>
                                             <p className="text-gray-600 font-medium">
