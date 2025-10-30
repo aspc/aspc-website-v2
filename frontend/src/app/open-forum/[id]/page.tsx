@@ -462,6 +462,16 @@ const EventDetailsPage = () => {
                                                 </div>
                                             )}
 
+                                            {rating.content && (
+                                                <div className="mt-2 mb-2">
+                                                    <h5 className="text-sm font-medium mb-2">Review</h5>
+                                                    <FormattedReviewText
+                                                        text={rating.content}
+                                                        className="text-gray-800"
+                                                    />
+                                                </div>
+                                            )}
+
                                             {/* Date written */}
                                             <div className="flex flex-wrap gap-4 mt-4">
                                                 <p className="text-gray-500">
