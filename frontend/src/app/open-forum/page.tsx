@@ -10,6 +10,7 @@ const OpenForumPage = () => {
     const [events, setEvents] = useState<ForumEvent[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [filter, setFilter] = useState<'all' | 'past' | 'upcoming'>('all');
+    const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -165,7 +166,7 @@ const OpenForumPage = () => {
                                 href={`/open-forum/${event._id}`}
                                 className="block"
                             >
-                                <div className={`border-2 rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:scale-105 cursor-pointer ${getEventStatusColor(event.eventDate)}`}>
+                                <div className={`border-2 rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:scale-105 cursor-pointer h-full flex flex-col ${getEventStatusColor(event.eventDate)}`}>
                                     {/* Event Header */}
                                     <div className="flex justify-between items-start mb-3">
                                         <h3 className="text-lg font-bold text-gray-800 line-clamp-2 flex-1 mr-2">
@@ -207,24 +208,36 @@ const OpenForumPage = () => {
                                         )}
                                     </div>
 
-                                    {/* Description */}
-                                    <div className="mb-4">
-                                        <FormattedReviewText
-                                            text={event.description}
-                                            className="text-gray-700"
-                                        />  
+                                    {/* Description (collapsible) */}
+                                    <div className="mb-4 flex-1">
+                                        <div className={`${expandedCards[event._id] ? '' : 'line-clamp-3'} text-gray-700`}>
+                                            <FormattedReviewText
+                                                text={event.description}
+                                                className="text-gray-700"
+                                            />
+                                        </div>
                                     </div>
 
-                                    {/* Rating Info */}
-                                    <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                                    {/* Footer: Rating Info + Expand toggle */}
+                                    <div className="mt-auto pt-3 border-t border-gray-200 flex items-center justify-between">
                                         <div className="flex items-center text-sm text-gray-600">
                                             <span className="font-medium mr-1">⭐</span>
                                             <span>View ratings</span>
                                         </div>
-                                        
-                                        <div className="text-sm text-gray-500">
-                                            Click to view details
-                                        </div>
+                                        <button
+                                            type="button"
+                                            className="text-sm text-blue-600 hover:text-blue-700 underline"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setExpandedCards((prev) => ({
+                                                    ...prev,
+                                                    [event._id]: !prev[event._id],
+                                                }));
+                                            }}
+                                        >
+                                            {expandedCards[event._id] ? 'Show less' : 'Show more'}
+                                        </button>
                                     </div>
                                 </div>
                             </Link>
