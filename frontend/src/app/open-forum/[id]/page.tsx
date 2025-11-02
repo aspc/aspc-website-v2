@@ -144,7 +144,7 @@ const EventDetailsPage = () => {
             try {
                 setLoading(true);
                 const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/openforum/${id}/ratings`,
+                    `${process.env.BACKEND_LINK}/api/openforum/${ratingId}/ratings`,
                     {
                         method: 'DELETE',
                         headers: {
