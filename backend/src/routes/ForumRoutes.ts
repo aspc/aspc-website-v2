@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import { SAMLUser } from '../models/People';
 import { ForumEvent, EventReview } from '../models/Forum';
 import {
     isAuthenticated,
@@ -114,11 +115,17 @@ router.post(
                 customRatings,
             } = req.body;
 
-            const email = (req.session as any).user.email;
+            const azureId = (req.session as any).user.id;
+            const user = await SAMLUser.findOne({ id: azureId });
+
+            if (!user) {
+                res.status(403).json({ message: 'User not found' });
+                return;
+            }
 
             const newReview = new EventReview({
                 eventId: id,
-                author: email,
+                author: user._id,
                 isAnonymous: isAnonymous,
                 content: content,
                 overall: overall,
@@ -159,12 +166,19 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
             res.status(400).json({ message: 'Missing required fields.' });
             return;
         }
-        const email = (req.session as any).user.email;
+
+        const azureId = (req.session as any).user.id;
+        const user = await SAMLUser.findOne({ id: azureId });
+
+        if (!user) {
+            res.status(403).json({ message: 'User not found' });
+            return;
+        }
 
         const event = new ForumEvent({
             title: title,
             description: description,
-            createdBy: email,
+            createdBy: user._id,
             staffHost: staffHost,
             eventDate: eventDate,
             location: location,
