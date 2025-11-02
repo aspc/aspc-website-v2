@@ -61,13 +61,14 @@ interface CoursesResponse {
     pagination: PaginationInfo;
 }
 
+type SearchType = 'all' | 'name' | 'code' | 'department';
+
 interface SearchParams {
     schools: string;
     page: number;
     limit: number;
-    search?: string;
-    code?: string;
-    name?: string;
+    search: string;
+    searchType: SearchType;
 }
 
 const CourseSearchComponent = () => {
@@ -75,8 +76,7 @@ const CourseSearchComponent = () => {
     const searchParams = useSearchParams();
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [codeTerm, setCodeTerm] = useState('');
-    const [nameTerm, setNameTerm] = useState('');
+    const [searchType, setSearchType] = useState<SearchType>('all');
     const [selectedSchools, setSelectedSchools] = useState<
         Record<SchoolKey, boolean>
     >({
@@ -139,18 +139,15 @@ const CourseSearchComponent = () => {
     const performSearch = useCallback(
         async (
             searchTerm: string,
-            codeTerm: string,
-            nameTerm: string,
+            searchType: SearchType,
             schools: Record<SchoolKey, boolean>,
             page: number,
             itemLimit: number
         ) => {
-            // Check if we have any search terms
+            // Check if we have a search term
             const hasSearchTerm = searchTerm && searchTerm.length >= 2;
-            const hasCodeTerm = codeTerm && codeTerm.length >= 2;
-            const hasNameTerm = nameTerm && nameTerm.length >= 2;
 
-            if (!hasSearchTerm && !hasCodeTerm && !hasNameTerm) {
+            if (!hasSearchTerm) {
                 setResults([]);
                 setPagination(null);
                 setLoading(false);
@@ -178,18 +175,9 @@ const CourseSearchComponent = () => {
                     schools: activeSchools.join(','),
                     page: page,
                     limit: itemLimit,
+                    search: searchTerm.replace(/\\/g, '').trim(),
+                    searchType: searchType,
                 };
-
-                // Add search parameters based on what's provided
-                if (hasSearchTerm) {
-                    searchParams.search = searchTerm.replace(/\\/g, '').trim();
-                }
-                if (hasCodeTerm) {
-                    searchParams.code = codeTerm.replace(/\\/g, '').trim();
-                }
-                if (hasNameTerm) {
-                    searchParams.name = nameTerm.replace(/\\/g, '').trim();
-                }
 
                 const response = await axios.get<CoursesResponse>(
                     `${process.env.BACKEND_LINK}/api/courses`,
@@ -256,8 +244,7 @@ const CourseSearchComponent = () => {
     useEffect(() => {
         debouncedSearch(
             searchTerm,
-            codeTerm,
-            nameTerm,
+            searchType,
             selectedSchools,
             currentPage,
             limit
@@ -269,8 +256,7 @@ const CourseSearchComponent = () => {
         };
     }, [
         searchTerm,
-        codeTerm,
-        nameTerm,
+        searchType,
         selectedSchools,
         currentPage,
         limit,
@@ -339,18 +325,18 @@ const CourseSearchComponent = () => {
                         5C Course Search
                     </h1>
 
-                    <div className="flex flex-col md:flex-row gap-4 mb-4">
-                        <div className="flex-1">
+                    <div className="flex flex-col gap-4 mb-4">
+                        <div>
                             <label
                                 htmlFor="search-term"
                                 className="block text-sm font-medium text-gray-700 mb-1"
                             >
-                                General Search
+                                Search Courses
                             </label>
                             <input
                                 id="search-term"
                                 type="text"
-                                placeholder="Search by name or code (min 2 chars)"
+                                placeholder="Enter search term (min 2 chars)"
                                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 value={searchTerm}
                                 onChange={(e) => {
@@ -366,60 +352,36 @@ const CourseSearchComponent = () => {
                                 autoComplete="off"
                             />
                         </div>
-                    </div>
-
-                    <div className="flex flex-col md:flex-row gap-4 mb-4">
-                        <div className="flex-1">
-                            <label
-                                htmlFor="code-term"
-                                className="block text-sm font-medium text-gray-700 mb-1"
-                            >
-                                Course Code (Exact Match Priority)
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Search By:
                             </label>
-                            <input
-                                id="code-term"
-                                type="text"
-                                placeholder="e.g., CS51PO, MATH030PO (min 2 chars)"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                value={codeTerm}
-                                onChange={(e) => {
-                                    setCodeTerm(e.target.value);
-                                    const params = new URLSearchParams(
-                                        searchParams.toString()
-                                    );
-                                    params.set('page', '1');
-                                    router.push(
-                                        `/campus/courses?${params.toString()}`
-                                    );
-                                }}
-                                autoComplete="off"
-                            />
-                        </div>
-                        <div className="flex-1">
-                            <label
-                                htmlFor="name-term"
-                                className="block text-sm font-medium text-gray-700 mb-1"
-                            >
-                                Course Name (Fuzzy Search)
-                            </label>
-                            <input
-                                id="name-term"
-                                type="text"
-                                placeholder="e.g., Introduction to Computer Science (min 2 chars)"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                                value={nameTerm}
-                                onChange={(e) => {
-                                    setNameTerm(e.target.value);
-                                    const params = new URLSearchParams(
-                                        searchParams.toString()
-                                    );
-                                    params.set('page', '1');
-                                    router.push(
-                                        `/campus/courses?${params.toString()}`
-                                    );
-                                }}
-                                autoComplete="off"
-                            />
+                            <div className="flex flex-wrap gap-2">
+                                {(['all', 'name', 'code', 'department'] as SearchType[]).map((type) => (
+                                    <button
+                                        key={type}
+                                        type="button"
+                                        onClick={() => {
+                                            setSearchType(type);
+                                            const params = new URLSearchParams(
+                                                searchParams.toString()
+                                            );
+                                            params.set('page', '1');
+                                            router.push(
+                                                `/campus/courses?${params.toString()}`
+                                            );
+                                        }}
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                            searchType === type
+                                                ? 'bg-blue-600 text-white border-2 border-blue-600'
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 border-2 border-transparent'
+                                        }`}
+                                    >
+                                        {type === 'all' ? 'All' : type === 'name' ? 'Course Name' : type === 'code' ? 'Course Code' : 'Department'}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
@@ -618,7 +580,7 @@ const CourseSearchComponent = () => {
                         </>
                     ) : (
                         !loading &&
-                        (searchTerm || codeTerm || nameTerm) && (
+                        (searchTerm) && (
                             <div className="text-center py-8 text-gray-500">
                                 No courses found matching your search criteria.
                             </div>
