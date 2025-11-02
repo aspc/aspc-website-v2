@@ -74,7 +74,6 @@ interface SearchParams {
 const CourseSearchComponent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-
     const [searchTerm, setSearchTerm] = useState('');
     const [searchType, setSearchType] = useState<SearchType>('all');
     const [selectedSchools, setSelectedSchools] = useState<
@@ -405,13 +404,20 @@ const CourseSearchComponent = () => {
                                 autoComplete="off"
                             />
                         </div>
-                        
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Search By:
                             </label>
                             <div className="flex flex-wrap gap-2">
-                                {(['all', 'name', 'code', 'department'] as SearchType[]).map((type) => (
+                                {(
+                                    [
+                                        'all',
+                                        'name',
+                                        'code',
+                                        'department',
+                                    ] as SearchType[]
+                                ).map((type) => (
                                     <button
                                         key={type}
                                         type="button"
@@ -431,7 +437,13 @@ const CourseSearchComponent = () => {
                                                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300 border-2 border-transparent'
                                         }`}
                                     >
-                                        {type === 'all' ? 'All' : type === 'name' ? 'Course Name' : type === 'code' ? 'Course Code' : 'Department'}
+                                        {type === 'all'
+                                            ? 'All'
+                                            : type === 'name'
+                                              ? 'Course Name'
+                                              : type === 'code'
+                                                ? 'Course Code'
+                                                : 'Department'}
                                     </button>
                                 ))}
                             </div>
@@ -633,7 +645,7 @@ const CourseSearchComponent = () => {
                         </>
                     ) : (
                         !loading &&
-                        (searchTerm) && (
+                        searchTerm && (
                             <div className="text-center py-8 text-gray-500">
                                 No courses found matching your search criteria.
                             </div>

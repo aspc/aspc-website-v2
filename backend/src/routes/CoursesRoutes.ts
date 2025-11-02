@@ -17,7 +17,13 @@ const router = express.Router();
  */
 router.get('/', isAuthenticated, async (req: Request, res: Response) => {
     try {
-        const { search, searchType = 'all', schools, limit = 20, page = 1 } = req.query;
+        const {
+            search,
+            searchType = 'all',
+            schools,
+            limit = 20,
+            page = 1,
+        } = req.query;
 
         const numericLimit = parseInt(limit as string);
         const numericPage = parseInt(page as string);
@@ -41,13 +47,20 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
         }
 
         const searchTerm = String(search).trim();
-        const type = String(searchType) as 'all' | 'name' | 'code' | 'department';
+        const type = String(searchType) as
+            | 'all'
+            | 'name'
+            | 'code'
+            | 'department';
 
         // Build base query filter for schools
         const schoolFilter: any = {};
         if (schoolList.length > 0) {
             schoolFilter.code = {
-                $regex: new RegExp(schoolList.map(s => `.*${s}$`).join('|'), 'i')
+                $regex: new RegExp(
+                    schoolList.map((s) => `.*${s}$`).join('|'),
+                    'i'
+                ),
             };
         }
 
@@ -58,19 +71,23 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
         switch (type) {
             case 'code':
                 exactMatchQuery.code = {
-                    $regex: new RegExp(`^${escapedTerm}`, 'i')
+                    $regex: new RegExp(`^${escapedTerm}`, 'i'),
                 };
                 if (schoolFilter.code) {
                     exactMatchQuery.$and = [
-                        { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
-                        schoolFilter
+                        {
+                            code: {
+                                $regex: new RegExp(`^${escapedTerm}`, 'i'),
+                            },
+                        },
+                        schoolFilter,
                     ];
                     delete exactMatchQuery.code;
                 }
                 break;
             case 'name':
                 exactMatchQuery.name = {
-                    $regex: new RegExp(`^${escapedTerm}`, 'i')
+                    $regex: new RegExp(`^${escapedTerm}`, 'i'),
                 };
                 if (schoolFilter.code) {
                     Object.assign(exactMatchQuery, schoolFilter);
@@ -78,7 +95,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                 break;
             case 'department':
                 exactMatchQuery.department_names = {
-                    $regex: new RegExp(`^${escapedTerm}`, 'i')
+                    $regex: new RegExp(`^${escapedTerm}`, 'i'),
                 };
                 if (schoolFilter.code) {
                     Object.assign(exactMatchQuery, schoolFilter);
@@ -89,7 +106,11 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                 exactMatchQuery.$or = [
                     { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
                     { name: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
-                    { department_names: { $regex: new RegExp(`^${escapedTerm}`, 'i') } }
+                    {
+                        department_names: {
+                            $regex: new RegExp(`^${escapedTerm}`, 'i'),
+                        },
+                    },
                 ];
                 if (schoolFilter.code) {
                     Object.assign(exactMatchQuery, schoolFilter);
@@ -101,15 +122,20 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             .lean();
 
         // Step 2: Get fuzzy matches (exclude exact matches by ID)
-        const exactMatchIds = new Set(exactMatches.map((c: any) => c._id.toString()));
-        
+        const exactMatchIds = new Set(
+            exactMatches.map((c: any) => c._id.toString())
+        );
+
         const fuzzyQuery: any = {
             _id: { $nin: Array.from(exactMatchIds) },
         };
 
         if (schoolList.length > 0) {
             fuzzyQuery.code = {
-                $regex: new RegExp(schoolList.map(s => `.*${s}$`).join('|'), 'i')
+                $regex: new RegExp(
+                    schoolList.map((s) => `.*${s}$`).join('|'),
+                    'i'
+                ),
             };
         }
 
@@ -201,15 +227,23 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
         // Get fuzzy matches using aggregation
         const fuzzyPipeline: any[] = [
             searchStage,
-            { $match: { _id: { $nin: Array.from(exactMatchIds).map((id: string) => new mongoose.Types.ObjectId(id)) } } },
-            { $limit: numericLimit * 2 }
+            {
+                $match: {
+                    _id: {
+                        $nin: Array.from(exactMatchIds).map(
+                            (id: string) => new mongoose.Types.ObjectId(id)
+                        ),
+                    },
+                },
+            },
+            { $limit: numericLimit * 2 },
         ];
 
         const fuzzyResults = await Courses.aggregate(fuzzyPipeline).exec();
 
         // Combine results: exact matches first, then fuzzy matches
         const allCourses = [...exactMatches, ...fuzzyResults];
-        
+
         // Remove duplicates (by _id) while preserving order
         const seenIds = new Set();
         const uniqueCourses = allCourses.filter((course: any) => {
