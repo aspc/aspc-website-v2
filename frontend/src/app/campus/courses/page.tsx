@@ -79,13 +79,28 @@ const CourseSearchComponent = () => {
     const [searchType, setSearchType] = useState<SearchType>('all');
     const [selectedSchools, setSelectedSchools] = useState<
         Record<SchoolKey, boolean>
-    >({
-        PO: true,
-        CM: true,
-        HM: true,
-        SC: true,
-        PZ: true,
+    >(() => {
+        const schoolsParam = searchParams.get('schools');
+        if (schoolsParam) {
+            const schoolsList = schoolsParam.split(',');
+            return {
+                PO: schoolsList.includes('PO'),
+                CM: schoolsList.includes('CM'),
+                HM: schoolsList.includes('HM'),
+                SC: schoolsList.includes('SC'),
+                PZ: schoolsList.includes('PZ'),
+            };
+        }
+        // Default: all selected
+        return {
+            PO: true,
+            CM: true,
+            HM: true,
+            SC: true,
+            PZ: true,
+        };
     });
+
     const [results, setResults] = useState<Course[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -96,6 +111,7 @@ const CourseSearchComponent = () => {
 
     const instructorCacheRef = useRef(instructorCache);
     const cancelTokenSourceRef = useRef<CancelTokenSource | null>(null);
+    const urlSyncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const currentPage = Number(searchParams.get('page')) || 1;
     const limit = Number(searchParams.get('limit')) || 20;
@@ -103,6 +119,58 @@ const CourseSearchComponent = () => {
     useEffect(() => {
         instructorCacheRef.current = instructorCache;
     }, [instructorCache]);
+
+    // Sync URL with search state (debounced)
+    useEffect(() => {
+        if (urlSyncTimeoutRef.current) {
+            clearTimeout(urlSyncTimeoutRef.current);
+        }
+
+        urlSyncTimeoutRef.current = setTimeout(() => {
+            const params = new URLSearchParams(searchParams.toString());
+
+            if (searchTerm) {
+                params.set('search', searchTerm);
+            } else {
+                params.delete('search');
+            }
+
+            const activeSchools = Object.entries(selectedSchools)
+                .filter(([_, isSelected]) => isSelected)
+                .map(([school]) => school);
+
+            const allSelected = activeSchools.length === 5;
+            if (!allSelected && activeSchools.length > 0) {
+                params.set('schools', activeSchools.join(','));
+            } else {
+                params.delete('schools');
+            }
+
+            // Reset to page 1 when search changes
+            const currentSearchParam = searchParams.get('search') || '';
+            const currentSchoolsParam = searchParams.get('schools') || '';
+            const newSchoolsParam = allSelected ? '' : activeSchools.join(',');
+
+            if (
+                searchTerm !== currentSearchParam ||
+                newSchoolsParam !== currentSchoolsParam
+            ) {
+                params.set('page', '1');
+            }
+
+            // Use replace to avoid creating history entries for each keystroke
+            router.replace(`/campus/courses?${params.toString()}`, {
+                scroll: false, // Prevent scroll jumping
+            });
+        }, 500);
+
+        // Cleanup
+        return () => {
+            if (urlSyncTimeoutRef.current) {
+                clearTimeout(urlSyncTimeoutRef.current);
+            }
+        };
+    }, [searchTerm, selectedSchools, searchParams, router]);
 
     const fetchInstructors = useCallback(async (ids: number[]) => {
         try {
@@ -188,8 +256,6 @@ const CourseSearchComponent = () => {
                         withCredentials: true,
                     }
                 );
-
-                console.log('API Response:', response.data); // Debug log
 
                 let coursesData: Course[] = [];
                 let paginationData: PaginationInfo | null = null;
@@ -279,7 +345,8 @@ const CourseSearchComponent = () => {
                 newState[school] = true;
             } else {
                 newState = { ...prev, [school]: !prev[school] };
-                if (!Object.values(newState).some(Boolean))
+                // If none would be selected, select all
+                if (!Object.values(newState).some(Boolean)) {
                     newState = {
                         PO: true,
                         CM: true,
@@ -287,14 +354,11 @@ const CourseSearchComponent = () => {
                         SC: true,
                         PZ: true,
                     };
+                }
             }
 
             return newState;
         });
-
-        const params = new URLSearchParams(searchParams.toString());
-        params.set('page', '1');
-        router.push(`/campus/courses?${params.toString()}`);
     };
 
     const handlePageChange = (newPage: number) => {
@@ -309,8 +373,6 @@ const CourseSearchComponent = () => {
         params.set('limit', newLimit.toString());
         router.push(`/campus/courses?${params.toString()}`);
     };
-
-    // const sortedResults = useMemo(() => [...results].sort((a, b) => a.code.localeCompare(b.code)), [results]);
 
     const extractSchoolCode = (code: string): SchoolKey => {
         const schoolCode = code.slice(-2) as SchoolKey;
@@ -339,16 +401,7 @@ const CourseSearchComponent = () => {
                                 placeholder="Enter search term (min 2 chars)"
                                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 value={searchTerm}
-                                onChange={(e) => {
-                                    setSearchTerm(e.target.value);
-                                    const params = new URLSearchParams(
-                                        searchParams.toString()
-                                    );
-                                    params.set('page', '1');
-                                    router.push(
-                                        `/campus/courses?${params.toString()}`
-                                    );
-                                }}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                                 autoComplete="off"
                             />
                         </div>
