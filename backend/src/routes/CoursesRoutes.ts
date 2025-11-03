@@ -11,6 +11,49 @@ import {
 const router = express.Router();
 
 /**
+ * Normalizes a course code search term to match variations
+ * Examples: "cs51" matches "CSCI051", "CS051", "CS51", etc.
+ * @param searchTerm - The search term (e.g., "cs51", "CSCI051")
+ * @returns A regex pattern that matches normalized course codes
+ */
+function createNormalizedCodeRegex(searchTerm: string): RegExp {
+    // Extract letters (department) and numbers (course number) from search term
+    const letters = searchTerm.match(/[a-zA-Z]+/)?.[0] || '';
+    const numbers = searchTerm.match(/\d+/)?.[0] || '';
+    
+    // If no letters or numbers, fall back to simple prefix match
+    if (!letters && !numbers) {
+        const escaped = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return new RegExp(`^${escaped}`, 'i');
+    }
+    
+    // Build regex pattern
+    // Department part: match letters case-insensitively, allow additional letters
+    // Number part: match numbers with optional leading zeros
+    let pattern = '^';
+    
+    if (letters) {
+        // Match department that starts with the search letters
+        // e.g., "cs" matches "CS", "CSCI", "CS", etc.
+        const letterPattern = letters
+            .split('')
+            .map((char) => `[${char.toUpperCase()}${char.toLowerCase()}]`)
+            .join('');
+        pattern += `${letterPattern}[A-Za-z]*`;
+    }
+    
+    if (numbers) {
+        // Match course number with optional leading zeros
+        // e.g., "51" matches "51", "051", "0051", etc.
+        // Remove leading zeros from the number to match more variations
+        const numWithoutLeadingZeros = numbers.replace(/^0+/, '') || '0';
+        pattern += `0*${numWithoutLeadingZeros}`;
+    }
+    
+    return new RegExp(pattern, 'i');
+}
+
+/**
  * @route   GET /api/courses
  * @desc    Get all courses with optional filters (search and department) with pagination
  * @access  Public
@@ -65,24 +108,29 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
         }
 
         // Step 1: Get exact prefix matches (starts with, case-insensitive)
+        // For code searches, also use normalized matching to handle abbreviations
         const exactMatchQuery: any = {};
         const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const normalizedCodeRegex = createNormalizedCodeRegex(searchTerm);
 
         switch (type) {
             case 'code':
-                exactMatchQuery.code = {
-                    $regex: new RegExp(`^${escapedTerm}`, 'i'),
-                };
+                // Use normalized regex to match variations like "cs51" -> "CSCI051"
+                exactMatchQuery.$or = [
+                    { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } }, // Exact prefix match
+                    { code: { $regex: normalizedCodeRegex } }, // Normalized match
+                ];
                 if (schoolFilter.code) {
                     exactMatchQuery.$and = [
                         {
-                            code: {
-                                $regex: new RegExp(`^${escapedTerm}`, 'i'),
-                            },
+                            $or: [
+                                { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
+                                { code: { $regex: normalizedCodeRegex } },
+                            ],
                         },
                         schoolFilter,
                     ];
-                    delete exactMatchQuery.code;
+                    delete exactMatchQuery.$or;
                 }
                 break;
             case 'name':
@@ -103,8 +151,10 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                 break;
             case 'all':
             default:
+                // For 'all' search, include both exact prefix and normalized code matches
                 exactMatchQuery.$or = [
-                    { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
+                    { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } }, // Exact prefix match
+                    { code: { $regex: normalizedCodeRegex } }, // Normalized match for codes
                     { name: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
                     {
                         department_names: {
