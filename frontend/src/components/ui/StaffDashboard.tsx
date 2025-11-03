@@ -181,46 +181,64 @@ const StaffDashboard = () => {
 
     if (loading || isLoading) return <Loading />;
 
-    if (!isEditing) {
+    if (!isEditing && !isCreatingNew) {
         return (
-            <div className="p-8">
-                <h1 className="text-2xl font-bold">Staff Management</h1>
-                <div className="space-y-4">
-                    <button
-                        onClick={() => {
-                            setIsEditing(true);
-                            setIsCreatingNew(true);
-                            resetForm();
-                        }}
-                        className="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600 w-full"
-                    >
-                        Add New Staff Member
-                    </button>
+            <div className="bg-gray-100 p-6 lg:p-8">
+                {/* Header */}
+                <header className="mb-6 border-b border-gray-300 pb-4">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                        Staff Management
+                    </h1>
+                </header>
 
-                    <div>
-                        <h2 className="text-xl font-bold mb-4">
-                            Edit Existing Staff
+                {/* Add / Edit Events */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <section className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
+                        <h2 className="text-xl font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                            Add New Staff/Senate Member
                         </h2>
+                        <p className="text-gray-600 text-sm mb-4">
+                            Create a profile for a new ASPC member.
+                        </p>
+                        <button
+                            onClick={() => {
+                                setIsEditing(false);
+                                setIsCreatingNew(true);
+                                setSelectedMemberId('');
+                                resetForm();
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className="bg-blue-600 text-white px-5 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors w-full sm:w-auto"
+                        >
+                            + Add New Member
+                        </button>
+                    </section>
+
+                    <section className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
+                        <h2 className="text-xl font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                            Edit Existing Member
+                        </h2>
+                        <p className="text-gray-600 text-sm mb-4">
+                            Select an existing member to edit their information.
+                        </p>
+
                         <select
-                            className="w-full p-4 border rounded mb-4"
+                            className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                             value={selectedMemberId}
                             onChange={(e) => {
                                 setSelectedMemberId(e.target.value);
-                                if (e.target.value) {
-                                    setIsEditing(true);
-                                }
+                                if (e.target.value) setIsEditing(true);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
                             }}
                         >
-                            <option value="">
-                                Select a staff member to edit
-                            </option>
+                            <option value="">Select a member to edit</option>
                             {existingMembers.map((member) => (
                                 <option key={member.id} value={member.id}>
                                     {member.position}
                                 </option>
                             ))}
                         </select>
-                    </div>
+                    </section>
                 </div>
             </div>
         );
