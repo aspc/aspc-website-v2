@@ -129,7 +129,11 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                         throw new Error('Error fetching course instructors');
                     }
 
-                    const instructors: Instructor[] = await response.json();
+                    const data = await response.json();
+                    // Backend returns { instructors: [...], pagination: {...} }
+                    const instructors: Instructor[] = Array.isArray(data)
+                        ? data
+                        : data.instructors || [];
                     setCourseInstructors(instructors);
                 }
             } catch (error) {
