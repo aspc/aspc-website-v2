@@ -60,6 +60,12 @@ const ForumDashboard = () => {
             console.error('Error fetching forum events:', error);
         }
     };
+    const toDatetimeLocal = (dateString: string) => {
+        const date = new Date(dateString);
+        const offset = date.getTimezoneOffset();
+        const localDate = new Date(date.getTime() - offset * 60 * 1000);
+        return localDate.toISOString().slice(0, 16);
+    };
 
     // Fetch existing events
     useEffect(() => {
@@ -86,10 +92,9 @@ const ForumDashboard = () => {
                     const data = await response.json();
                     setTitle(data.title);
                     setDescription(data.description);
-                    // event date is at midnight pst, not at event time
-                    setEventDate(data.eventDate.slice(0, 10) || '');
+                    setEventDate(toDatetimeLocal(data.eventDate));
                     setLocation(data.location);
-                    setRatingUntil(data.ratingUntil.slice(0, 10) || '');
+                    setRatingUntil(toDatetimeLocal(data.ratingUntil));
                     setCustomQuestions(data.customQuestions);
                     setStaffHost(data.staffHost);
                     setEngageEventId(data.engageEventId);
@@ -184,15 +189,12 @@ const ForumDashboard = () => {
 
             const method = selectedEvent ? 'PUT' : 'POST';
 
-            const eventDateUTC = new Date(`${eventDate}T00:00:00`);
-            const ratingUntilUTC = new Date(`${ratingUntil}T00:00:00`);
-
             const payload = {
                 title,
                 description,
-                eventDate: eventDateUTC.toISOString(),
+                eventDate: new Date(eventDate).toISOString(),
                 location,
-                ratingUntil: ratingUntilUTC.toISOString(),
+                ratingUntil: new Date(ratingUntil).toISOString(),
                 customQuestions,
                 ...(staffHost && { staffHost }),
                 ...(engageEventId && { engageEventId }),
@@ -258,7 +260,7 @@ const ForumDashboard = () => {
                         </li>
                         <li>
                             <strong>Set up polls</strong> to gauge student
-                            satisfaction with past and future events.
+                            satisfaction with past events.
                         </li>
                     </ul>
 
@@ -457,24 +459,14 @@ const ForumDashboard = () => {
                                                             event.location
                                                         );
 
-                                                        const localDate =
-                                                            new Date(
-                                                                event.start
-                                                            );
-
-                                                        const utcDateStr =
-                                                            new Date(
-                                                                localDate.getTime() -
-                                                                    localDate.getTimezoneOffset() *
-                                                                        60000
-                                                            ).toISOString();
-
                                                         setEventDate(
-                                                            utcDateStr.slice(
-                                                                0,
-                                                                10
+                                                            toDatetimeLocal(
+                                                                new Date(
+                                                                    event.start
+                                                                ).toISOString()
                                                             )
                                                         );
+
                                                         setIsEngagePopupOpen(
                                                             false
                                                         );
@@ -564,9 +556,12 @@ const ForumDashboard = () => {
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                     Date
                 </h2>
+                <p className="text-sm text-gray-500 mt-2 mb-4">
+                    Note: Forum postings are intended for past events
+                </p>
                 <input
                     className="w-full p-4 border rounded"
-                    type="date"
+                    type="datetime-local"
                     value={eventDate}
                     onChange={(e) => setEventDate(e.target.value)}
                     required
@@ -591,9 +586,12 @@ const ForumDashboard = () => {
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                     Allow users to submit ratings until
                 </h2>
+                <p className="text-sm text-gray-500 mt-2 mb-4">
+                    ex. 1 week after event
+                </p>
                 <input
                     className="w-full p-4 border rounded"
-                    type="date"
+                    type="datetime-local"
                     value={ratingUntil}
                     onChange={(e) => setRatingUntil(e.target.value)}
                     required
