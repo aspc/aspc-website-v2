@@ -146,8 +146,13 @@ const CoursePage = () => {
                     );
                 }
 
-                const instructorData: Instructor[] =
-                    await instructorResponse.json();
+                const instructorResponseData = await instructorResponse.json();
+                // Backend returns { instructors: [...], pagination: {...} }
+                const instructorData: Instructor[] = Array.isArray(
+                    instructorResponseData
+                )
+                    ? instructorResponseData
+                    : instructorResponseData.instructors || [];
                 setInstructors(instructorData);
 
                 // TODO: Delete Staff from instructor list
