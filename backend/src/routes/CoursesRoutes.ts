@@ -20,18 +20,18 @@ function createNormalizedCodeRegex(searchTerm: string): RegExp {
     // Extract letters (department) and numbers (course number) from search term
     const letters = searchTerm.match(/[a-zA-Z]+/)?.[0] || '';
     const numbers = searchTerm.match(/\d+/)?.[0] || '';
-    
+
     // If no letters or numbers, fall back to simple prefix match
     if (!letters && !numbers) {
         const escaped = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         return new RegExp(`^${escaped}`, 'i');
     }
-    
+
     // Build regex pattern
     // Department part: match letters case-insensitively, allow additional letters
     // Number part: match numbers with optional leading zeros
     let pattern = '^';
-    
+
     if (letters) {
         // Match department that starts with the search letters
         // e.g., "cs" matches "CS", "CSCI", "CS", etc.
@@ -41,7 +41,7 @@ function createNormalizedCodeRegex(searchTerm: string): RegExp {
             .join('');
         pattern += `${letterPattern}[A-Za-z]*`;
     }
-    
+
     if (numbers) {
         // Match course number with optional leading zeros
         // e.g., "51" matches "51", "051", "0051", etc.
@@ -49,7 +49,7 @@ function createNormalizedCodeRegex(searchTerm: string): RegExp {
         const numWithoutLeadingZeros = numbers.replace(/^0+/, '') || '0';
         pattern += `0*${numWithoutLeadingZeros}`;
     }
-    
+
     return new RegExp(pattern, 'i');
 }
 
@@ -124,7 +124,14 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                     exactMatchQuery.$and = [
                         {
                             $or: [
-                                { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
+                                {
+                                    code: {
+                                        $regex: new RegExp(
+                                            `^${escapedTerm}`,
+                                            'i'
+                                        ),
+                                    },
+                                },
                                 { code: { $regex: normalizedCodeRegex } },
                             ],
                         },
