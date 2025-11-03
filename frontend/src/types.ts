@@ -7,6 +7,7 @@ export interface PageContent {
 }
 
 export interface StaffMember {
+    _id: string;
     id: string;
     name: string;
     position: string;
@@ -177,57 +178,24 @@ export interface ForumEvent {
     _id: string;
     title: string;
     description: string;
-    createdBy: string | {
-        email: string;
-        firstName: string;
-        lastName: string;
-    };
-    staffHost?: {
-        name: string;
-        position: string;
-    };
+    createdBy: string;
+    staffHost?: string;
     eventDate: Date;
     location: string;
     engageEventId?: string;
     ratingUntil: Date;
-    ratings?: EventReview[];
     customQuestions: string[];
-    createdAt: Date;  // Added by Mongoose timestamps
-    updatedAt: Date;  // Added by Mongoose timestamps
 }
 
-export interface EventReview {
-    _id: string;
-    eventId: string;
-    author: string | {         
-        email: string;
-        firstName: string;
-        lastName: string;
+export interface CalendarEvent {
+    title: string;
+    start: Date;
+    end: Date;
+    resource: {
+        location: string;
+        host: string;
+        description: string;
+        details_url: string;
+        status: string;
     };
-    isAnonymous: boolean;
-    content: string;
-    isHidden: boolean;
-    overall: number;
-    wouldRepeat: number;
-    customRatings: CustomRating[];
-    createdAt?: Date;
-    updatedAt?: Date;
-}
-
-export interface CustomRating {
-    question: string;
-    rating: number;
-}
-
-export interface EventWithReviews {
-    event: ForumEvent;
-    reviews: EventReview[];
-    averages: EventReviewAverages;
-}
-
-export interface EventReviewAverages {
-    overall: number;
-    wouldRepeat: number;
-    customQuestions: { [key: string]: number };
-    totalResponses: number;
 }

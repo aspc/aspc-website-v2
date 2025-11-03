@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import { SAMLUser } from '../models/People';
 import { ForumEvent, EventReview } from '../models/Forum';
 import {
     isAuthenticated,
@@ -114,11 +115,17 @@ router.post(
                 customRatings,
             } = req.body;
 
-            const email = (req.session as any).user.email;
+            const azureId = (req.session as any).user.id;
+            const user = await SAMLUser.findOne({ id: azureId });
+
+            if (!user) {
+                res.status(403).json({ message: 'User not found' });
+                return;
+            }
 
             const newReview = new EventReview({
                 eventId: id,
-                author: email,
+                author: user._id,
                 isAnonymous: isAnonymous,
                 content: content,
                 overall: overall,
@@ -147,7 +154,6 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
         const {
             title,
             description,
-            createdBy,
             staffHost,
             eventDate,
             location,
@@ -156,22 +162,23 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
             engageEventId,
         } = req.body;
 
-        if (
-            !title ||
-            !description ||
-            !createdBy ||
-            !eventDate ||
-            !location ||
-            !ratingUntil
-        ) {
+        if (!title || !description || !eventDate || !location || !ratingUntil) {
             res.status(400).json({ message: 'Missing required fields.' });
+            return;
+        }
+
+        const azureId = (req.session as any).user.id;
+        const user = await SAMLUser.findOne({ id: azureId });
+
+        if (!user) {
+            res.status(403).json({ message: 'User not found' });
             return;
         }
 
         const event = new ForumEvent({
             title: title,
             description: description,
-            createdBy: createdBy,
+            createdBy: user._id,
             staffHost: staffHost,
             eventDate: eventDate,
             location: location,
@@ -199,22 +206,15 @@ router.put('/:id', isAdmin, async (req: Request, res: Response) => {
         const {
             title,
             description,
-            createdBy,
             staffHost,
             eventDate,
             location,
             ratingUntil,
             customQuestions,
+            engageEventId,
         } = req.body;
 
-        if (
-            !title ||
-            !description ||
-            !createdBy ||
-            !eventDate ||
-            !location ||
-            !ratingUntil
-        ) {
+        if (!title || !description || !eventDate || !location || !ratingUntil) {
             res.status(400).json({ message: 'Missing required fields.' });
             return;
         }
@@ -224,12 +224,12 @@ router.put('/:id', isAdmin, async (req: Request, res: Response) => {
             {
                 title: title,
                 description: description,
-                createdBy: createdBy,
                 staffHost: staffHost,
                 eventDate: eventDate,
                 location: location,
                 ratingUntil: ratingUntil,
                 customQuestions: customQuestions || [],
+                engageEventId: engageEventId,
             },
             { new: true, runValidators: true }
         );
@@ -279,5 +279,26 @@ router.patch(
         }
     }
 );
+
+/**
+ * @route   DELETE /api/openforum/:id
+ * @desc    Delete openforum event
+ * @access  Admin
+ */
+router.delete('/:eventId', isAdmin, async (req: Request, res: Response) => {
+    try {
+        const event = await ForumEvent.findOneAndDelete({
+            _id: req.params.eventId,
+        });
+
+        if (!event) {
+            res.status(404).json({ message: 'Event not found' });
+        }
+
+        res.status(200).json({ message: 'Event deleted' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 
 export default router;
