@@ -36,6 +36,7 @@ export interface Event {
 
 export interface User {
     id: string;
+    _id?: string; // MongoDB ObjectId (when available)
     email: string;
     firstName: string;
     lastName: string;
@@ -185,6 +186,8 @@ export interface ForumEvent {
     engageEventId?: string;
     ratingUntil: Date;
     customQuestions: string[];
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export interface CalendarEvent {
@@ -198,4 +201,36 @@ export interface CalendarEvent {
         details_url: string;
         status: string;
     };
+}
+
+export interface EventReview {
+    _id: string;
+    eventId: string;
+    author: string;
+    isAnonymous: boolean;
+    content: string;
+    isHidden: boolean;
+    overall: number;
+    wouldRepeat: number;
+    customRatings: CustomRating[];
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+export interface CustomRating {
+    question: string;
+    rating: number;
+}
+
+export interface EventWithReviews {
+    event: ForumEvent;
+    reviews: EventReview[];
+    averages: EventReviewAverages;
+}
+
+export interface EventReviewAverages {
+    overall: number;
+    wouldRepeat: number;
+    customQuestions: { [key: string]: number };
+    totalResponses: number;
 }

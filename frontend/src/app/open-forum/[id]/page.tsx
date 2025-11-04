@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Loading from '@/components/Loading';
-import { ForumEvent, EventWithReviews, EventReview, EventReviewAverages } from '@/types';
+import { ForumEvent, EventWithReviews, EventReview, EventReviewAverages, User } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import LoginRequired from '@/components/LoginRequired';
 import { StarRating } from '@/components/housing/Rooms';
@@ -21,6 +21,8 @@ const EventDetailsPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { user, loading: authLoading } = useAuth();
     const [averageRatings, setAverageRatings] = useState<EventReviewAverages | null>(null);
+    const [creatorInfo, setCreatorInfo] = useState<User | null>(null);
+    const [reviewAuthorsCache, setReviewAuthorsCache] = useState<Record<string, User>>({});
 
     const handleModalClose = () => {
         setIsModalOpen(false);
@@ -68,7 +70,26 @@ const EventDetailsPage = () => {
 
                 const eventData: ForumEvent = await eventResponse.json();
                 setEventName(eventData.title);
-                console.log(eventData);
+
+                // Fetch creator user info
+                if (eventData.createdBy) {
+                    try {
+                        const userResponse = await fetch(
+                            `${process.env.BACKEND_LINK}/api/auth/users/${eventData.createdBy}`,
+                            {
+                                method: 'GET',
+                                credentials: 'include',
+                            }
+                        );
+
+                        if (userResponse.ok) {
+                            const userInfo: User = await userResponse.json();
+                            setCreatorInfo(userInfo);
+                        }
+                    } catch (err) {
+                        console.error('Failed to fetch creator info:', err);
+                    }
+                }
 
                 // Fetch event reviews
                 const reviewsResponse = await fetch(
@@ -86,6 +107,52 @@ const EventDetailsPage = () => {
                 }
 
                 const reviews: EventReview[] = await reviewsResponse.json();
+
+                // Fetch author details for all reviews (excluding anonymous ones)
+                const authorIds = Array.from(
+                    new Set(
+                        reviews
+                            .filter((review) => !review.isAnonymous && review.author)
+                            .map((review) => {
+                                // Handle both ObjectId and string formats
+                                if (typeof review.author === 'object' && (review.author as any)._id) {
+                                    return (review.author as any)._id.toString();
+                                }
+                                return typeof review.author === 'string' 
+                                    ? review.author 
+                                    : (review.author as any)?.toString();
+                            })
+                            .filter((id): id is string => Boolean(id))
+                    )
+                );
+
+                // Fetch all author details in parallel
+                const authorPromises = authorIds.map(async (authorId) => {
+                    if (reviewAuthorsCache[authorId]) {
+                        return;
+                    }
+                    try {
+                        const userResponse = await fetch(
+                            `${process.env.BACKEND_LINK}/api/auth/users/${authorId}`,
+                            {
+                                method: 'GET',
+                                credentials: 'include',
+                            }
+                        );
+
+                        if (userResponse.ok) {
+                            const userInfo: User = await userResponse.json();
+                            setReviewAuthorsCache((prev) => ({
+                                ...prev,
+                                [authorId]: userInfo,
+                            }));
+                        }
+                    } catch (err) {
+                        console.error(`Failed to fetch author info for ${authorId}:`, err);
+                    }
+                });
+
+                await Promise.all(authorPromises);
 
                 // Fetch average ratings
                 const ratingsResponse = await fetch(
@@ -214,9 +281,9 @@ const EventDetailsPage = () => {
                                                 Created By:
                                             </p>
                                             <p>
-                                                {typeof eventDetails.event.createdBy === 'string'
-                                                    ? eventDetails.event.createdBy
-                                                    : `${eventDetails.event.createdBy?.firstName} ${eventDetails.event.createdBy?.lastName}`}
+                                                {creatorInfo
+                                                    ? `${creatorInfo.firstName} ${creatorInfo.lastName}`
+                                                    : eventDetails.event.createdBy}
                                             </p>
                                         </div>
                                         <div>
@@ -237,14 +304,6 @@ const EventDetailsPage = () => {
                                             </p>
                                             <p>{moment(eventDetails.event.ratingUntil).format('LLLL')}</p>
                                         </div>
-                                        {eventDetails.event.staffHost && (
-                                            <div>
-                                                <p className="text-gray-600 font-medium">
-                                                    Staff Host:
-                                                </p>
-                                                <p>{eventDetails.event.staffHost.name}</p>
-                                            </div>
-                                        )}
                                     </div>
 
                                     {eventDetails.event.description && (
@@ -365,10 +424,13 @@ const EventDetailsPage = () => {
                                                 </div>
 
                                                 {(() => {
-                                                    const authorEmail = typeof rating.author === 'string' 
-                                                        ? rating.author 
-                                                        : rating.author.email || '';
-                                                    return user.email === authorEmail && (
+                                                    // Extract author ID - rating.author is a MongoDB ObjectId
+                                                    // Convert to string for comparison
+                                                    const authorId = rating.author;
+                                                    
+                                                    // Compare MongoDB ObjectIds: rating.author vs user._id
+                                                    const isAuthor = user._id === authorId;
+                                                    return isAuthor && (
                                                         <div className="flex p-2 gap-4">
                                                             <button
                                                                 className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
@@ -396,10 +458,17 @@ const EventDetailsPage = () => {
                                             <div className="mt-2 mb-2">
                                                 <p className="text-sm text-gray-600">
                                                     {(() => {
-                                                        const authorName = typeof rating.author === 'string' 
-                                                            ? rating.author 
-                                                            : rating.author.firstName + ' ' + rating.author.lastName || 'Unknown';
-                                                        const isUserReview = user.email === (typeof rating.author === 'object' ? rating.author.email : '');
+                                                        // Extract author ID - rating.author is a MongoDB ObjectId
+                                                        // Convert to string for comparison and caching
+                                                        const authorId = rating.author;
+                                                        
+                                                        const authorInfo = authorId ? reviewAuthorsCache[authorId] : null;
+                                                        const authorName = authorInfo
+                                                            ? `${authorInfo.firstName} ${authorInfo.lastName}`
+                                                            : authorId || 'Unknown';
+                                                        
+                                                        // Compare MongoDB ObjectIds: rating.author vs user._id
+                                                        const isUserReview = user._id === authorId;
                                                         
                                                         if (rating?.isAnonymous) {
                                                             return (

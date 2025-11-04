@@ -167,29 +167,26 @@ export const ReviewModal = ({
                 customRatings: customRatingsArray,
             };
 
-            const url = review 
-                ? `${process.env.BACKEND_LINK}/api/openforum/${eventId}/ratings`
-                : `${process.env.BACKEND_LINK}/api/openforum/${eventId}/review`;
-
-            const response = await fetch(url, {
-                method: review ? 'PUT' : 'POST',
+            const response = await fetch(`${process.env.BACKEND_LINK}/api/openforum/${eventId}/review`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 credentials: 'include',
                 body: JSON.stringify(body),
             });
-
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.message || 'Failed to submit rating');
+                alert('Error: ' + error.message);
+                return;
+            }
+            else {
+                alert('Review submitted successfully!');
+                onSubmitSuccess();
             }
 
-            alert(review ? 'Rating updated successfully!' : 'Rating submitted successfully!');
-            onSubmitSuccess();
         } catch (error) {
-            console.error('Error submitting rating:', error);
-            alert('Failed to submit rating. Please try again.');
+            console.error('Error submitting review:', error);
         } finally {
             setSubmitting(false);
         }

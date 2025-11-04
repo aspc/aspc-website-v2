@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Loading from '@/components/Loading';
-import { ForumEvent } from '@/types';
+import { ForumEvent, User } from '@/types';
 import moment from 'moment';
 import { FormattedReviewText } from '@/utils/textFormatting';
 
@@ -11,6 +11,38 @@ const OpenForumPage = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [filter, setFilter] = useState<'all' | 'past' | 'upcoming'>('all');
     const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+    const [userCache, setUserCache] = useState<Record<string, User>>({});
+
+    // Fetch user details for a user ID
+    const fetchUserInfo = async (userId: string): Promise<User | null> => {
+        if (userCache[userId]) {
+            return userCache[userId];
+        }
+
+        try {
+            const response = await fetch(
+                `${process.env.BACKEND_LINK}/api/auth/users/${userId}`,
+                {
+                    method: 'GET',
+                    credentials: 'include',
+                }
+            );
+
+            if (!response.ok) {
+                return null;
+            }
+
+            const userInfo: User = await response.json();
+            setUserCache((prev) => ({
+                ...prev,
+                [userId]: userInfo,
+            }));
+            return userInfo;
+        } catch (err) {
+            console.error('Failed to fetch user info:', err);
+            return null;
+        }
+    };
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -30,6 +62,20 @@ const OpenForumPage = () => {
                 
                 const data = await response.json();
                 setEvents(data);
+
+                // Fetch user details for all unique createdBy IDs
+                const uniqueUserIds = Array.from(
+                    new Set(
+                        data
+                            .map((event: ForumEvent) => event.createdBy)
+                            .filter((id: string) => id)
+                    )
+                ) as string[];
+
+                await Promise.all(
+                    uniqueUserIds.map((userId) => fetchUserInfo(userId))
+                );
+
                 setLoading(false);
             } catch (err) {
                 console.error('Failed to fetch events:', err);
@@ -202,9 +248,9 @@ const OpenForumPage = () => {
                                             <div className="flex items-center text-sm text-gray-600">
                                                 <span className="font-medium mr-2">👤</span>
                                                 <span>
-                                                    {typeof event.createdBy === 'string'
-                                                        ? event.createdBy
-                                                        : `${event.createdBy?.firstName} ${event.createdBy?.lastName}`}
+                                                    {userCache[event.createdBy]
+                                                        ? `${userCache[event.createdBy].firstName} ${userCache[event.createdBy].lastName}`
+                                                        : event.createdBy}
                                                 </span>
                                             </div>
                                         )}
