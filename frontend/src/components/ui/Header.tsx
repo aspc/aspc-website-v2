@@ -330,7 +330,9 @@ const Header = () => {
                             <div className="relative dropdown-container">
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
-                                    onClick={() => handleDropdownClick('Events')}
+                                    onClick={() =>
+                                        handleDropdownClick('Events')
+                                    }
                                 >
                                     <span>Events</span>
                                 </button>

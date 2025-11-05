@@ -140,7 +140,6 @@ export const hasNotRatedEvent = async (
         return;
     }
 
-  
     // Get the user's MongoDB _id from the database
     const user = await SAMLUser.findOne({ id: azureId });
 

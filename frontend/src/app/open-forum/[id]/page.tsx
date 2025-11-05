@@ -2,7 +2,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Loading from '@/components/Loading';
-import { ForumEvent, EventWithReviews, EventReview, EventReviewAverages, User } from '@/types';
+import {
+    ForumEvent,
+    EventWithReviews,
+    EventReview,
+    EventReviewAverages,
+    User,
+} from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import LoginRequired from '@/components/LoginRequired';
 import { StarRating } from '@/components/housing/Rooms';
@@ -16,13 +22,20 @@ const EventDetailsPage = () => {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [eventName, setEventName] = useState<string>('');
-    const [eventDetails, setEventDetails] = useState<EventWithReviews | null>(null);
-    const [selectedReview, setSelectedReview] = useState<EventReview | null>(null);
+    const [eventDetails, setEventDetails] = useState<EventWithReviews | null>(
+        null
+    );
+    const [selectedReview, setSelectedReview] = useState<EventReview | null>(
+        null
+    );
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { user, loading: authLoading } = useAuth();
-    const [averageRatings, setAverageRatings] = useState<EventReviewAverages | null>(null);
+    const [averageRatings, setAverageRatings] =
+        useState<EventReviewAverages | null>(null);
     const [creatorInfo, setCreatorInfo] = useState<User | null>(null);
-    const [reviewAuthorsCache, setReviewAuthorsCache] = useState<Record<string, User>>({});
+    const [reviewAuthorsCache, setReviewAuthorsCache] = useState<
+        Record<string, User>
+    >({});
 
     const handleModalClose = () => {
         setIsModalOpen(false);
@@ -39,7 +52,9 @@ const EventDetailsPage = () => {
 
     const handleAddNewReviewClick = () => {
         if (!isRatingPeriodValid()) {
-            alert('Rating period has expired. You can no longer add or edit reviews for this event.');
+            alert(
+                'Rating period has expired. You can no longer add or edit reviews for this event.'
+            );
             return;
         }
 
@@ -125,14 +140,21 @@ const EventDetailsPage = () => {
                 const authorIds = Array.from(
                     new Set(
                         reviews
-                            .filter((review) => !review.isAnonymous && review.author)
+                            .filter(
+                                (review) => !review.isAnonymous && review.author
+                            )
                             .map((review) => {
                                 // Handle both ObjectId and string formats
-                                if (typeof review.author === 'object' && (review.author as any)._id) {
-                                    return (review.author as any)._id.toString();
+                                if (
+                                    typeof review.author === 'object' &&
+                                    (review.author as any)._id
+                                ) {
+                                    return (
+                                        review.author as any
+                                    )._id.toString();
                                 }
-                                return typeof review.author === 'string' 
-                                    ? review.author 
+                                return typeof review.author === 'string'
+                                    ? review.author
                                     : (review.author as any)?.toString();
                             })
                             .filter((id): id is string => Boolean(id))
@@ -161,7 +183,10 @@ const EventDetailsPage = () => {
                             }));
                         }
                     } catch (err) {
-                        console.error(`Failed to fetch author info for ${authorId}:`, err);
+                        console.error(
+                            `Failed to fetch author info for ${authorId}:`,
+                            err
+                        );
                     }
                 });
 
@@ -182,7 +207,8 @@ const EventDetailsPage = () => {
                     );
                 }
 
-                const averages: EventReviewAverages = await ratingsResponse.json();
+                const averages: EventReviewAverages =
+                    await ratingsResponse.json();
 
                 setAverageRatings(averages);
 
@@ -203,7 +229,6 @@ const EventDetailsPage = () => {
         fetchEventDetails();
     }, [id]);
 
-
     if (loading || authLoading) {
         return <Loading />;
     }
@@ -221,7 +246,9 @@ const EventDetailsPage = () => {
 
     const handleDelete = async (reviewId: string) => {
         if (!isRatingPeriodValid()) {
-            alert('Rating period has expired. You can no longer delete this review.');
+            alert(
+                'Rating period has expired. You can no longer delete this review.'
+            );
             return;
         }
         if (window.confirm('Are you sure you want to delete this review?')) {
@@ -229,7 +256,7 @@ const EventDetailsPage = () => {
                 setLoading(true);
                 const response = await fetch(
                     `${process.env.BACKEND_LINK}/api/openforum/${reviewId}/review`,
-                    {   
+                    {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
@@ -300,7 +327,8 @@ const EventDetailsPage = () => {
                                             <p>
                                                 {creatorInfo
                                                     ? `${creatorInfo.firstName} ${creatorInfo.lastName}`
-                                                    : eventDetails.event.createdBy}
+                                                    : eventDetails.event
+                                                          .createdBy}
                                             </p>
                                         </div>
                                         <div>
@@ -313,13 +341,22 @@ const EventDetailsPage = () => {
                                             <p className="text-gray-600 font-medium">
                                                 Event Date:
                                             </p>
-                                            <p>{moment(eventDetails.event.eventDate).format('LLLL')}</p>
+                                            <p>
+                                                {moment(
+                                                    eventDetails.event.eventDate
+                                                ).format('LLLL')}
+                                            </p>
                                         </div>
                                         <div>
                                             <p className="text-gray-600 font-medium">
                                                 Rating Until:
                                             </p>
-                                            <p>{moment(eventDetails.event.ratingUntil).format('LLLL')}</p>
+                                            <p>
+                                                {moment(
+                                                    eventDetails.event
+                                                        .ratingUntil
+                                                ).format('LLLL')}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -330,79 +367,113 @@ const EventDetailsPage = () => {
                                             </p>
                                             <div className="text-gray-800">
                                                 <FormattedReviewText
-                                                    text={eventDetails.event.description}
+                                                    text={
+                                                        eventDetails.event
+                                                            .description
+                                                    }
                                                     className="text-gray-800"
                                                 />
                                             </div>
                                         </div>
                                     )}
 
-
-                                    {averageRatings && averageRatings.totalResponses > 0 && (
-                                        <>
-                                            <h4 className="text-lg font-medium mb-3 mt-6">
-                                                Review Summary
-                                            </h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-gray-600">
-                                                        Overall Rating
-                                                    </p>
-                                                    <div className="flex items-center">
-                                                        <StarRating
-                                                            rating={Math.round(
-                                                                averageRatings.overall
+                                    {averageRatings &&
+                                        averageRatings.totalResponses > 0 && (
+                                            <>
+                                                <h4 className="text-lg font-medium mb-3 mt-6">
+                                                    Review Summary
+                                                </h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <p className="text-gray-600">
+                                                            Overall Rating
+                                                        </p>
+                                                        <div className="flex items-center">
+                                                            <StarRating
+                                                                rating={Math.round(
+                                                                    averageRatings.overall
+                                                                )}
+                                                            />
+                                                            <span className="ml-2">
+                                                                {averageRatings.overall.toFixed(
+                                                                    1
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-gray-600">
+                                                            Would Repeat
+                                                        </p>
+                                                        <div className="flex items-center">
+                                                            <StarRating
+                                                                rating={Math.round(
+                                                                    averageRatings.wouldRepeat
+                                                                )}
+                                                            />
+                                                            <span className="ml-2">
+                                                                {averageRatings.wouldRepeat.toFixed(
+                                                                    1
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {averageRatings.customQuestions
+                                                    .length > 0 && (
+                                                    <div className="mt-4">
+                                                        <h5 className="text-md font-medium mb-2">
+                                                            Custom Questions
+                                                        </h5>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            {Object.entries(
+                                                                averageRatings.customQuestions
+                                                            ).map(
+                                                                ([
+                                                                    question,
+                                                                    rating,
+                                                                ]) => (
+                                                                    <div
+                                                                        key={
+                                                                            question
+                                                                        }
+                                                                    >
+                                                                        <p className="text-gray-600">
+                                                                            {
+                                                                                question
+                                                                            }
+                                                                        </p>
+                                                                        <div className="flex items-center">
+                                                                            <StarRating
+                                                                                rating={Math.round(
+                                                                                    rating
+                                                                                )}
+                                                                            />
+                                                                            <span className="ml-2">
+                                                                                {rating.toFixed(
+                                                                                    1
+                                                                                )}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                )
                                                             )}
-                                                        />
-                                                        <span className="ml-2">
-                                                            {averageRatings.overall.toFixed(1)}
-                                                        </span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div>
-                                                    <p className="text-gray-600">
-                                                        Would Repeat
-                                                    </p>
-                                                    <div className="flex items-center">
-                                                        <StarRating
-                                                            rating={Math.round(
-                                                                averageRatings.wouldRepeat
-                                                            )}
-                                                        />
-                                                        <span className="ml-2">
-                                                            {averageRatings.wouldRepeat.toFixed(1)}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {averageRatings.customQuestions.length > 0 && (
-                                                <div className="mt-4">
-                                                    <h5 className="text-md font-medium mb-2">Custom Questions</h5>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        {Object.entries(averageRatings.customQuestions).map(([question, rating]) => (
-                                                            <div key={question}>
-                                                                <p className="text-gray-600">
-                                                                    {question}
-                                                                </p>
-                                                                <div className="flex items-center">
-                                                                    <StarRating
-                                                                        rating={Math.round(rating)}
-                                                                    />
-                                                                    <span className="ml-2">
-                                                                        {rating.toFixed(1)}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                            <p className="text-gray-500 mt-3">
-                                                Based on {averageRatings.totalResponses} rating
-                                                {averageRatings.totalResponses > 1 ? 's' : ''}
-                                            </p>
-                                        </>
-                                    )}
+                                                )}
+                                                <p className="text-gray-500 mt-3">
+                                                    Based on{' '}
+                                                    {
+                                                        averageRatings.totalResponses
+                                                    }{' '}
+                                                    rating
+                                                    {averageRatings.totalResponses >
+                                                    1
+                                                        ? 's'
+                                                        : ''}
+                                                </p>
+                                            </>
+                                        )}
                                 </div>
 
                                 <div className="py-4">
@@ -431,7 +502,8 @@ const EventDetailsPage = () => {
                                                     <span>
                                                         <StarRating
                                                             rating={Math.round(
-                                                                rating.overall || 0
+                                                                rating.overall ||
+                                                                    0
                                                             )}
                                                         />
                                                     </span>
@@ -443,30 +515,41 @@ const EventDetailsPage = () => {
                                                 {(() => {
                                                     // Extract author ID - rating.author is a MongoDB ObjectId
                                                     // Convert to string for comparison
-                                                    const authorId = rating.author;
-                                                    
+                                                    const authorId =
+                                                        rating.author;
+
                                                     // Compare MongoDB ObjectIds: rating.author vs user._id
-                                                    const isAuthor = user._id === authorId;
-                                                    return isAuthor && isRatingPeriodValid() && (
-                                                        <div className="flex p-2 gap-4">
-                                                            <button
-                                                                className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
-                                                                onClick={() => {
-                                                                    setSelectedReview(rating);
-                                                                    setIsModalOpen(true);
-                                                                }}
-                                                            >
-                                                                Edit
-                                                            </button>
-                                                            <button
-                                                                className="bg-red-500 text-white text-m px-4 rounded-md hover:bg-red-600"
-                                                                onClick={() => {
-                                                                    handleDelete(rating._id);
-                                                                }}
-                                                            >
-                                                                Delete
-                                                            </button>
-                                                        </div>
+                                                    const isAuthor =
+                                                        user._id === authorId;
+                                                    return (
+                                                        isAuthor &&
+                                                        isRatingPeriodValid() && (
+                                                            <div className="flex p-2 gap-4">
+                                                                <button
+                                                                    className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
+                                                                    onClick={() => {
+                                                                        setSelectedReview(
+                                                                            rating
+                                                                        );
+                                                                        setIsModalOpen(
+                                                                            true
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    Edit
+                                                                </button>
+                                                                <button
+                                                                    className="bg-red-500 text-white text-m px-4 rounded-md hover:bg-red-600"
+                                                                    onClick={() => {
+                                                                        handleDelete(
+                                                                            rating._id
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </div>
+                                                        )
                                                     );
                                                 })()}
                                             </div>
@@ -477,23 +560,39 @@ const EventDetailsPage = () => {
                                                     {(() => {
                                                         // Extract author ID - rating.author is a MongoDB ObjectId
                                                         // Convert to string for comparison and caching
-                                                        const authorId = rating.author;
-                                                        
-                                                        const authorInfo = authorId ? reviewAuthorsCache[authorId] : null;
-                                                        const authorName = authorInfo
-                                                            ? `${authorInfo.firstName} ${authorInfo.lastName}`
-                                                            : authorId || 'Unknown';
-                                                        
+                                                        const authorId =
+                                                            rating.author;
+
+                                                        const authorInfo =
+                                                            authorId
+                                                                ? reviewAuthorsCache[
+                                                                      authorId
+                                                                  ]
+                                                                : null;
+                                                        const authorName =
+                                                            authorInfo
+                                                                ? `${authorInfo.firstName} ${authorInfo.lastName}`
+                                                                : authorId ||
+                                                                  'Unknown';
+
                                                         // Compare MongoDB ObjectIds: rating.author vs user._id
-                                                        const isUserReview = user._id === authorId;
-                                                        
-                                                        if (rating?.isAnonymous) {
+                                                        const isUserReview =
+                                                            user._id ===
+                                                            authorId;
+
+                                                        if (
+                                                            rating?.isAnonymous
+                                                        ) {
                                                             return (
                                                                 <>
-                                                                    <span className="italic">Anonymous Review</span>
+                                                                    <span className="italic">
+                                                                        Anonymous
+                                                                        Review
+                                                                    </span>
                                                                     {isUserReview && (
                                                                         <span className="ml-2 text-xs text-blue-600">
-                                                                            (Your review)
+                                                                            (Your
+                                                                            review)
                                                                         </span>
                                                                     )}
                                                                 </>
@@ -502,14 +601,18 @@ const EventDetailsPage = () => {
                                                             return (
                                                                 <>
                                                                     <span>
-                                                                        Review by{' '}
+                                                                        Review
+                                                                        by{' '}
                                                                         <span className="font-medium">
-                                                                            {authorName}
+                                                                            {
+                                                                                authorName
+                                                                            }
                                                                         </span>
                                                                     </span>
                                                                     {isUserReview && (
                                                                         <span className="ml-2 text-xs text-blue-600">
-                                                                            (Your review)
+                                                                            (Your
+                                                                            review)
                                                                         </span>
                                                                     )}
                                                                 </>
@@ -527,34 +630,57 @@ const EventDetailsPage = () => {
                                                     <span className="inline">
                                                         <StarRating
                                                             rating={Math.round(
-                                                                rating.wouldRepeat || 0
+                                                                rating.wouldRepeat ||
+                                                                    0
                                                             )}
                                                         />
                                                     </span>
                                                 </div>
                                             </div>
 
-                                            {rating.customRatings && rating.customRatings.length > 0 && (
-                                                <div className="mt-2 mb-2">
-                                                    <h5 className="text-sm font-medium mb-2">Custom Ratings</h5>
-                                                    <div className="space-y-1">
-                                                        {rating.customRatings.map((customRating, index) => (
-                                                            <div key={index} className="text-sm flex items-center">
-                                                                <span className="text-gray-600 mr-2">
-                                                                    {customRating.question}:
-                                                                </span>
-                                                                <StarRating
-                                                                    rating={Math.round(customRating.rating || 0)}
-                                                                />
-                                                            </div>
-                                                        ))}
+                                            {rating.customRatings &&
+                                                rating.customRatings.length >
+                                                    0 && (
+                                                    <div className="mt-2 mb-2">
+                                                        <h5 className="text-sm font-medium mb-2">
+                                                            Custom Ratings
+                                                        </h5>
+                                                        <div className="space-y-1">
+                                                            {rating.customRatings.map(
+                                                                (
+                                                                    customRating,
+                                                                    index
+                                                                ) => (
+                                                                    <div
+                                                                        key={
+                                                                            index
+                                                                        }
+                                                                        className="text-sm flex items-center"
+                                                                    >
+                                                                        <span className="text-gray-600 mr-2">
+                                                                            {
+                                                                                customRating.question
+                                                                            }
+                                                                            :
+                                                                        </span>
+                                                                        <StarRating
+                                                                            rating={Math.round(
+                                                                                customRating.rating ||
+                                                                                    0
+                                                                            )}
+                                                                        />
+                                                                    </div>
+                                                                )
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
 
                                             {rating.content && (
                                                 <div className="mt-2 mb-2">
-                                                    <h5 className="text-sm font-medium mb-2">Review</h5>
+                                                    <h5 className="text-sm font-medium mb-2">
+                                                        Review
+                                                    </h5>
                                                     <FormattedReviewText
                                                         text={rating.content}
                                                         className="text-gray-800"
@@ -567,7 +693,9 @@ const EventDetailsPage = () => {
                                                 <p className="text-gray-500">
                                                     Rating submitted{' '}
                                                     {rating.createdAt &&
-                                                        formatDate(rating.createdAt)}
+                                                        formatDate(
+                                                            rating.createdAt
+                                                        )}
                                                 </p>
                                             </div>
                                         </div>
@@ -600,12 +728,15 @@ const EventDetailsPage = () => {
                             className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
                             onClick={handleAddNewReviewClick}
                         >
-                            {selectedReview ? 'Cancel rating edit' : 'Add new rating'}
+                            {selectedReview
+                                ? 'Cancel rating edit'
+                                : 'Add new rating'}
                         </button>
                     ) : (
                         <div className="mt-4 mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
                             <p className="text-yellow-800 font-medium">
-                                ⚠️ This event is closed for reviews. The rating period has expired.
+                                ⚠️ This event is closed for reviews. The rating
+                                period has expired.
                             </p>
                         </div>
                     )}

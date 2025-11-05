@@ -162,9 +162,18 @@ router.put(
             } = req.body;
 
             const { reviewId } = req.params;
-    
-            const UpdatedReview = await EventReview.findOneAndUpdate({ _id: reviewId }, 
-                { isAnonymous: isAnonymous, content: content, overall: overall, wouldRepeat: wouldRepeat, customRatings: customRatings }, { new: true, runValidators: true });
+
+            const UpdatedReview = await EventReview.findOneAndUpdate(
+                { _id: reviewId },
+                {
+                    isAnonymous: isAnonymous,
+                    content: content,
+                    overall: overall,
+                    wouldRepeat: wouldRepeat,
+                    customRatings: customRatings,
+                },
+                { new: true, runValidators: true }
+            );
 
             if (!UpdatedReview) {
                 res.status(404).json({ message: 'Review not updated' });
@@ -190,8 +199,10 @@ router.delete(
     async (req: Request, res: Response) => {
         try {
             const { reviewId } = req.params;
-            
-            const review = await EventReview.findOneAndDelete({ _id: reviewId });
+
+            const review = await EventReview.findOneAndDelete({
+                _id: reviewId,
+            });
             if (!review) {
                 res.status(404).json({ message: 'Review not found' });
                 return;
