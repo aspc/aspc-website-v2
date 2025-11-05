@@ -9,7 +9,7 @@ import { FormattedReviewText } from '@/utils/textFormatting';
 const OpenForumPage = () => {
     const [events, setEvents] = useState<ForumEvent[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-    const [filter, setFilter] = useState<'all' | 'past' | 'upcoming'>('all');
+    const [filter, setFilter] = useState<'all' | 'past'>('all');
     const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
     const [userCache, setUserCache] = useState<Record<string, User>>({});
 
@@ -90,14 +90,21 @@ const OpenForumPage = () => {
         const now = new Date();
         const filtered = events.filter(event => {
             const eventDate = new Date(event.eventDate);
+            const ratingUntil = new Date(event.ratingUntil);
+            
+            // Never show future events
+            if (eventDate >= now) {
+                return false;
+            }
+            
             switch (filter) {
                 case 'past':
-                    return eventDate < now;
-                case 'upcoming':
-                    return eventDate >= now;
+                    // Show only past events where ratingUntil is still valid (not expired)
+                    return eventDate < now && ratingUntil >= now;
                 case 'all':
                 default:
-                    return true;
+                    // Show all past events (regardless of ratingUntil status)
+                    return eventDate < now;
             }
         });
         
@@ -150,10 +157,6 @@ const OpenForumPage = () => {
                     <h1 className="text-3xl font-bold text-gray-800 mb-2">
                         Open Forum - Event Bulletin Board
                     </h1>
-                    <p className="text-gray-600 mb-4">
-                        Browse past and upcoming events. Click on any event to view reviews and details.
-                    </p>
-                    
                     {/* Filter buttons */}
                     <div className="flex gap-2 mb-6">
                         <button
@@ -164,17 +167,7 @@ const OpenForumPage = () => {
                                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                             }`}
                         >
-                            Past Events
-                        </button>
-                        <button
-                            onClick={() => setFilter('upcoming')}
-                            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                                filter === 'upcoming'
-                                    ? 'bg-gray-800 text-white'
-                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                        >
-                            Upcoming Events
+                            Past Events (Can Still Rate)
                         </button>
                         <button
                             onClick={() => setFilter('all')}
@@ -184,7 +177,7 @@ const OpenForumPage = () => {
                                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                             }`}
                         >
-                            All Events
+                            All Past Events
                         </button>
                     </div>
                 </div>
@@ -193,14 +186,12 @@ const OpenForumPage = () => {
                     <div className="text-center py-12">
                         <div className="text-gray-400 text-6xl mb-4">📅</div>
                         <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                            No {filter === 'all' ? '' : filter} events found
+                            No {filter === 'all' ? 'past' : 'past events with open ratings'} found
                         </h3>
                         <p className="text-gray-500">
                             {filter === 'past' 
-                                ? 'No past events are available at the moment.'
-                                : filter === 'upcoming'
-                                ? 'No upcoming events are scheduled.'
-                                : 'No events are available at the moment.'
+                                ? 'No past events with open ratings are available at the moment.'
+                                : 'No past events are available at the moment.'
                             }
                         </p>
                     </div>
