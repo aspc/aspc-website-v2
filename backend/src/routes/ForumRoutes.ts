@@ -16,7 +16,7 @@ const router = express.Router();
  * @access  Public
  */
 router.get('/', isAuthenticated, async (req: Request, res: Response) => {
-    try { 
+    try {
         const events = await ForumEvent.find({});
         res.json(events);
     } catch (error) {
@@ -113,8 +113,8 @@ router.get(
                 eventId: id,
                 isHidden: false,
             })
-            .populate('author', 'email firstName lastName')
-            .sort({ createdAt: -1 });
+                .populate('author', 'email firstName lastName')
+                .sort({ createdAt: -1 });
 
             if (!reviews) {
                 res.status(404).json({ message: 'No reviews found' });

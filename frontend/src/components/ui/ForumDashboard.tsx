@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import  Link from 'next/link';
+import Link from 'next/link';
 import Loading from '@/components/Loading';
 import { StaffMember, Event, ForumEvent } from '@/types';
 import { FormattedReviewText, formatReviewText } from '@/utils/textFormatting';
@@ -335,10 +335,12 @@ const ForumDashboard = () => {
                             View Event Insights
                         </h2>
                         <p className="text-gray-600 text-sm mb-4">
-                            See rating distribution and feedback for past events to find which were most successful.
+                            See rating distribution and feedback for past events
+                            to find which were most successful.
                         </p>
                         <Link
-                            className="bg-blue-600 text-white px-5 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors w-full sm:w-auto" href="/dashboard/events"
+                            className="bg-blue-600 text-white px-5 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors w-full sm:w-auto"
+                            href="/dashboard/events"
                         >
                             View Event Ratings
                         </Link>

@@ -39,17 +39,19 @@ interface RatingDistribution {
 interface EventReview {
     _id: string;
     eventId: string;
-    author: string | {
-        _id: string;
-        email: string;
-        firstName: string;
-        lastName: string;
-    };
+    author:
+        | string
+        | {
+              _id: string;
+              email: string;
+              firstName: string;
+              lastName: string;
+          };
     isAnonymous: boolean;
     content?: string;
     overall: number;
     wouldRepeat: number;
-    customRatings?: CustomRating[]; 
+    customRatings?: CustomRating[];
     isHidden: boolean;
     createdAt: Date;
     updatedAt: Date;
@@ -135,9 +137,10 @@ const EventDetailPage = () => {
                     // Check if user has already reviewed
                     if (user) {
                         const userReview = reviewsData.find((r) => {
-                            const authorEmail = typeof r.author === 'string' 
-                                ? r.author 
-                                : r.author?.email;
+                            const authorEmail =
+                                typeof r.author === 'string'
+                                    ? r.author
+                                    : r.author?.email;
                             return authorEmail === user.email;
                         });
                         setHasUserReviewed(!!userReview);
@@ -195,12 +198,22 @@ const EventDetailPage = () => {
         return `${month} ${year}`;
     };
 
-    const getAuthorDisplay = (author: string | { _id: string; email: string; firstName: string; lastName: string }): string => {
+    const getAuthorDisplay = (
+        author:
+            | string
+            | {
+                  _id: string;
+                  email: string;
+                  firstName: string;
+                  lastName: string;
+              }
+    ): string => {
         if (typeof author === 'string') {
             return author;
         }
         if (author && typeof author === 'object') {
-            const fullName = `${author.firstName || ''} ${author.lastName || ''}`.trim();
+            const fullName =
+                `${author.firstName || ''} ${author.lastName || ''}`.trim();
             return fullName || author.email || 'Unknown User';
         }
         return 'Unknown User';
@@ -217,10 +230,16 @@ const EventDetailPage = () => {
         return now > eventDate && now < ratingDeadline && !hasUserReviewed;
     };
 
-    const RatingHistogram = ({ distribution }: { distribution: RatingDistribution }) => {
+    const RatingHistogram = ({
+        distribution,
+    }: {
+        distribution: RatingDistribution;
+    }) => {
         if (!distribution) return null;
 
-        const maxCount = Math.max(...Object.values(distribution).map(v => Number(v)));
+        const maxCount = Math.max(
+            ...Object.values(distribution).map((v) => Number(v))
+        );
         const total = Object.values(distribution).reduce(
             (a, b) => Number(a) + Number(b),
             0
@@ -352,7 +371,9 @@ const EventDetailPage = () => {
                                                 )}
                                             />
                                             <span className="ml-2 text-lg font-semibold">
-                                                {stats.averageOverall.toFixed(1)}
+                                                {stats.averageOverall.toFixed(
+                                                    1
+                                                )}
                                             </span>
                                         </div>
                                     </div>
@@ -453,7 +474,10 @@ const EventDetailPage = () => {
                                                                 className="flex items-center"
                                                             >
                                                                 <span className="text-sm text-gray-600 mr-2">
-                                                                    {cr.question}:
+                                                                    {
+                                                                        cr.question
+                                                                    }
+                                                                    :
                                                                 </span>
                                                                 <StarRating
                                                                     rating={Math.round(
@@ -485,7 +509,9 @@ const EventDetailPage = () => {
                                         <p className="text-gray-500 text-sm">
                                             {review.isAnonymous
                                                 ? 'Anonymous'
-                                                : getAuthorDisplay(review.author)}
+                                                : getAuthorDisplay(
+                                                      review.author
+                                                  )}
                                         </p>
                                         <p className="text-gray-500 text-sm">
                                             Posted{' '}
