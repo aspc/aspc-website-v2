@@ -206,7 +206,7 @@ export interface CalendarEvent {
 export interface EventReview {
     _id: string;
     eventId: string;
-    author: string;
+    author: string | User;
     isAnonymous: boolean;
     content: string;
     isHidden: boolean;
