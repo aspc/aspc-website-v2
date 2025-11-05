@@ -143,20 +143,7 @@ const EventDetailsPage = () => {
                             .filter(
                                 (review) => !review.isAnonymous && review.author
                             )
-                            .map((review) => {
-                                // Handle both ObjectId and string formats
-                                if (
-                                    typeof review.author === 'object' &&
-                                    (review.author as any)._id
-                                ) {
-                                    return (
-                                        review.author as any
-                                    )._id.toString();
-                                }
-                                return typeof review.author === 'string'
-                                    ? review.author
-                                    : (review.author as any)?.toString();
-                            })
+                            .map((review) => review.author)
                             .filter((id): id is string => Boolean(id))
                     )
                 );
