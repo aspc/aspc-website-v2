@@ -10,7 +10,6 @@ const OpenForumPage = () => {
     const [events, setEvents] = useState<ForumEvent[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [filter, setFilter] = useState<'past' | 'all'>('past');
-    const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
     const [userCache, setUserCache] = useState<Record<string, User>>({});
 
     // Fetch user details for a user ID
@@ -247,9 +246,9 @@ const OpenForumPage = () => {
                                         )}
                                     </div>
 
-                                    {/* Description (collapsible) */}
+                                    {/* Description */}
                                     <div className="mb-4 flex-1">
-                                        <div className={`${expandedCards[event._id] ? '' : 'line-clamp-3'} text-gray-700`}>
+                                        <div className="line-clamp-3 text-gray-700">
                                             <FormattedReviewText
                                                 text={event.description}
                                                 className="text-gray-700"
@@ -257,26 +256,21 @@ const OpenForumPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* Footer: Rating Info + Expand toggle */}
+                                    {/* Footer: Rating Info + Show more link */}
                                     <div className="mt-auto pt-3 border-t border-gray-200 flex items-center justify-between">
                                         <div className="flex items-center text-sm text-gray-600">
                                             <span className="font-medium mr-1">⭐</span>
                                             <span>View ratings</span>
                                         </div>
-                                        <button
-                                            type="button"
+                                        <Link
+                                            href={`/open-forum/${event._id}`}
                                             className="text-sm text-blue-600 hover:text-blue-700 underline"
                                             onClick={(e) => {
-                                                e.preventDefault();
                                                 e.stopPropagation();
-                                                setExpandedCards((prev) => ({
-                                                    ...prev,
-                                                    [event._id]: !prev[event._id],
-                                                }));
                                             }}
                                         >
-                                            {expandedCards[event._id] ? 'Show less' : 'Show more'}
-                                        </button>
+                                            Show more
+                                        </Link>
                                     </div>
                                 </div>
                             </Link>
