@@ -49,7 +49,7 @@ const Footer = () => {
                 <div className="flex flex-col items-center md:items-end space-y-2 mt-2 md:mt-0">
                     {/* Contact Us Link */}
                     <Link
-                        href="https://docs.google.com/forms/d/e/1FAIpQLSf7gi6lZMBscnEaFcyMBzJe3BlvnlZ5vxba7UjYbLfBDGmNlQ/viewform?usp=sharing"
+                        href="https://docs.google.com/forms/u/1/d/e/1FAIpQLSfl1dBB59Davy3OXjn2TAbwZ_SU1YOk0CO5XQdXRnFBRwUuSw/viewform?usp=send_form"
                         target="_blank"
                         className="flex items-center space-x-2 text-white hover:text-blue-200 transition duration-200 bg-blue-800 px-2 py-1 rounded-lg text-sm"
                     >
