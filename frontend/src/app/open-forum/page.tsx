@@ -260,17 +260,8 @@ const OpenForumPage = () => {
                                     <div className="mt-auto pt-3 border-t border-gray-200 flex items-center justify-between">
                                         <div className="flex items-center text-sm text-gray-600">
                                             <span className="font-medium mr-1">⭐</span>
-                                            <span>View ratings</span>
+                                            <span className="text-blue-600 hover:text-blue-700">View ratings</span>
                                         </div>
-                                        <Link
-                                            href={`/open-forum/${event._id}`}
-                                            className="text-sm text-blue-600 hover:text-blue-700 underline"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                            }}
-                                        >
-                                            Show more
-                                        </Link>
                                     </div>
                                 </div>
                             </Link>
