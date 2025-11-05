@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import  Link from 'next/link';
 import Loading from '@/components/Loading';
 import { StaffMember, Event, ForumEvent } from '@/types';
 import { FormattedReviewText, formatReviewText } from '@/utils/textFormatting';
@@ -276,7 +277,7 @@ const ForumDashboard = () => {
                 </section>
 
                 {/* Add / Edit Events */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     <section className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
                         <h2 className="text-xl font-semibold text-gray-800 mb-2 flex items-center gap-2">
                             Add New Forum Event
@@ -328,6 +329,19 @@ const ForumDashboard = () => {
                                 </option>
                             ))}
                         </select>
+                    </section>
+                    <section className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow transition-shadow">
+                        <h2 className="text-xl font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                            View Event Insights
+                        </h2>
+                        <p className="text-gray-600 text-sm mb-4">
+                            See rating distribution and feedback for past events to find which were most successful.
+                        </p>
+                        <Link
+                            className="bg-blue-600 text-white px-5 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors w-full sm:w-auto" href="/dashboard/events"
+                        >
+                            View Event Ratings
+                        </Link>
                     </section>
                 </div>
             </div>

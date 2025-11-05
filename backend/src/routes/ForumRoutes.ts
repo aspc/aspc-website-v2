@@ -16,7 +16,7 @@ const router = express.Router();
  * @access  Public
  */
 router.get('/', isAuthenticated, async (req: Request, res: Response) => {
-    try {
+    try { 
         const events = await ForumEvent.find({});
         res.json(events);
     } catch (error) {
@@ -61,7 +61,36 @@ router.get(
 
             const stats = await EventReview.getAverageRatings(id);
 
-            res.json(stats);
+            // Calculate rating distribution
+            const reviews = await EventReview.find({
+                eventId: id,
+                isHidden: false,
+            });
+
+            const ratingDistribution: { [key: number]: number } = {
+                1: 0,
+                2: 0,
+                3: 0,
+                4: 0,
+                5: 0,
+            };
+
+            reviews.forEach((review) => {
+                if (review.overall) {
+                    const roundedRating = Math.round(review.overall);
+                    if (roundedRating >= 1 && roundedRating <= 5) {
+                        ratingDistribution[roundedRating]++;
+                    }
+                }
+            });
+
+            res.json({
+                averageOverall: stats.overall,
+                averageWouldRepeat: stats.wouldRepeat,
+                totalReviews: stats.totalResponses,
+                ratingDistribution,
+                customQuestions: stats.customQuestions,
+            });
         } catch (error) {
             res.status(500).json({ message: 'Server error' });
         }
@@ -83,10 +112,12 @@ router.get(
             const reviews = await EventReview.find({
                 eventId: id,
                 isHidden: false,
-            });
+            })
+            .populate('author', 'email firstName lastName')
+            .sort({ createdAt: -1 });
 
             if (!reviews) {
-                res.status(404).json({ message: 'Event not found' });
+                res.status(404).json({ message: 'No reviews found' });
                 return;
             }
 
