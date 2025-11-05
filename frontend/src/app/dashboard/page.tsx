@@ -5,10 +5,13 @@ import { useAuth } from '@/hooks/useAuth';
 import Loading from '@/components/Loading';
 import PageDashboard from '@/components/ui/PageDashboard';
 import StaffDashboard from '@/components/ui/StaffDashboard';
+import ForumDashboard from '@/components/ui/ForumDashboard';
 
 const Dashboard = () => {
     const { user, loading } = useAuth(true);
-    const [activeTab, setActiveTab] = useState<'pages' | 'staff'>('pages');
+    const [activeTab, setActiveTab] = useState<'pages' | 'staff' | 'openforum'>(
+        'pages'
+    );
 
     if (loading) return <Loading />;
 
@@ -39,7 +42,7 @@ const Dashboard = () => {
                                 : 'bg-gray-200'
                         }`}
                     >
-                        Edit Pages
+                        Pages
                     </button>
                     <button
                         onClick={() => setActiveTab('staff')}
@@ -49,13 +52,24 @@ const Dashboard = () => {
                                 : 'bg-gray-200'
                         }`}
                     >
-                        Edit Staff
+                        Staff
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('openforum')}
+                        className={`px-4 py-2 rounded ${
+                            activeTab === 'openforum'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-gray-200'
+                        }`}
+                    >
+                        Open Forum
                     </button>
                 </div>
 
                 <div className="bg-white rounded-lg shadow p-6">
                     {activeTab === 'pages' && <PageDashboard />}
                     {activeTab === 'staff' && <StaffDashboard />}
+                    {activeTab === 'openforum' && <ForumDashboard />}
                 </div>
             </div>
         </div>

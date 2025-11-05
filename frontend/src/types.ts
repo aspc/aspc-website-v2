@@ -7,6 +7,7 @@ export interface PageContent {
 }
 
 export interface StaffMember {
+    _id: string;
     id: string;
     name: string;
     position: string;
@@ -35,6 +36,7 @@ export interface Event {
 
 export interface User {
     id: string;
+    _id?: string; // MongoDB ObjectId (when available)
     email: string;
     firstName: string;
     lastName: string;
@@ -153,11 +155,6 @@ export interface CourseReviewFormProps {
     instructorId?: number;
     courseId?: number;
 }
-// export interface CourseReviewFormProps {
-//     review?: any;
-//     courseId?: string;
-//     instructorId?: string;
-// }
 
 export type Instructor = {
     id: number;
@@ -176,4 +173,64 @@ export type Instructor = {
 export interface InstructorWithReviews {
     instructor: Instructor;
     reviews: CourseReview[];
+}
+
+export interface ForumEvent {
+    _id: string;
+    title: string;
+    description: string;
+    createdBy: string;
+    staffHost?: string;
+    eventDate: Date;
+    location: string;
+    engageEventId?: string;
+    ratingUntil: Date;
+    customQuestions: string[];
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+export interface CalendarEvent {
+    title: string;
+    start: Date;
+    end: Date;
+    resource: {
+        location: string;
+        host: string;
+        description: string;
+        details_url: string;
+        status: string;
+    };
+}
+
+export interface EventReview {
+    _id: string;
+    eventId: string;
+    author: string | User;
+    isAnonymous: boolean;
+    content: string;
+    isHidden: boolean;
+    overall: number;
+    wouldRepeat: number;
+    customRatings: CustomRating[];
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+export interface CustomRating {
+    question: string;
+    rating: number;
+}
+
+export interface EventWithReviews {
+    event: ForumEvent;
+    reviews: EventReview[];
+    averages: EventReviewAverages;
+}
+
+export interface EventReviewAverages {
+    overall: number;
+    wouldRepeat: number;
+    customQuestions: { [key: string]: number };
+    totalResponses: number;
 }

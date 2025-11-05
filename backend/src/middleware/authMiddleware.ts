@@ -134,22 +134,77 @@ export const hasNotRatedEvent = async (
         return;
     }
 
-    // First check if user is authenticated and get the user ID from session
-    const sessionUserEmail = (req.session as any).user.email;
-    if (!sessionUserEmail) {
+    const azureId = (req.session as any).user.id;
+    if (!azureId) {
         res.status(401).json({ message: 'Authentication required' });
         return;
     }
 
-    const { id } = req.params;
+    // Get the user's MongoDB _id from the database
+    const user = await SAMLUser.findOne({ id: azureId });
 
+    if (!user) {
+        res.status(401).json({ message: 'User not found' });
+        return;
+    }
+
+    const { id } = req.params; // This is the eventId
+
+    // Check if user has already rated this event
+    // Use the user's MongoDB _id (not Azure ID) to query
     const review = await EventReview.findOne({
-        id: id,
-        author: sessionUserEmail,
+        eventId: id,
+        author: user._id, // MongoDB ObjectId, not Azure ID
     });
 
     if (review) {
-        res.status(403).json({ message: 'User has already rated event' });
+        res.status(403).json({ message: 'You have already rated this event' });
+        return;
+    }
+
+    next();
+};
+
+export const isEventReviewOwner = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    // First check if user is authenticated
+    if (!(req.session as any).user) {
+        res.status(401).json({ message: 'Authentication required' });
+        return;
+    }
+
+    const azureId = (req.session as any).user.id;
+    if (!azureId) {
+        res.status(401).json({ message: 'Authentication required' });
+        return;
+    }
+
+    // Get the user's MongoDB _id from the database
+    const user = await SAMLUser.findOne({ id: azureId });
+
+    if (!user) {
+        res.status(401).json({ message: 'User not found' });
+        return;
+    }
+
+    const { reviewId } = req.params;
+
+    // Find the review and check if the user owns it
+    const review = await EventReview.findById(reviewId);
+
+    if (!review) {
+        res.status(404).json({ message: 'Review not found' });
+        return;
+    }
+
+    // Compare MongoDB ObjectIds (convert to string for comparison)
+    if (review.author.toString() !== (user._id as any).toString()) {
+        res.status(403).json({
+            message: 'You are not authorized to modify this review',
+        });
         return;
     }
 

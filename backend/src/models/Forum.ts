@@ -84,7 +84,7 @@ interface ICustomRating {
 interface IEventReview extends Document {
     _id: mongoose.Types.ObjectId;
     eventId: mongoose.Types.ObjectId;
-    author: string;
+    author: mongoose.Types.ObjectId;
     isAnonymous: boolean;
     content: string;
     isHidden: boolean;
@@ -102,7 +102,7 @@ const EventReviewSchema = new Schema<IEventReview>(
             required: true,
         },
         author: {
-            type: String,
+            type: mongoose.Schema.Types.ObjectId,
             ref: 'SAMLUser',
             required: true,
         },

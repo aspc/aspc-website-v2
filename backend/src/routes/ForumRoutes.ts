@@ -1,9 +1,11 @@
 import express, { Request, Response } from 'express';
+import { SAMLUser } from '../models/People';
 import { ForumEvent, EventReview } from '../models/Forum';
 import {
     isAuthenticated,
     isAdmin,
     hasNotRatedEvent,
+    isEventReviewOwner,
 } from '../middleware/authMiddleware';
 
 const router = express.Router();
@@ -59,7 +61,36 @@ router.get(
 
             const stats = await EventReview.getAverageRatings(id);
 
-            res.json(stats);
+            // Calculate rating distribution
+            const reviews = await EventReview.find({
+                eventId: id,
+                isHidden: false,
+            });
+
+            const ratingDistribution: { [key: number]: number } = {
+                1: 0,
+                2: 0,
+                3: 0,
+                4: 0,
+                5: 0,
+            };
+
+            reviews.forEach((review) => {
+                if (review.overall) {
+                    const roundedRating = Math.round(review.overall);
+                    if (roundedRating >= 1 && roundedRating <= 5) {
+                        ratingDistribution[roundedRating]++;
+                    }
+                }
+            });
+
+            res.json({
+                averageOverall: stats.overall,
+                averageWouldRepeat: stats.wouldRepeat,
+                totalReviews: stats.totalResponses,
+                ratingDistribution,
+                customQuestions: stats.customQuestions,
+            });
         } catch (error) {
             res.status(500).json({ message: 'Server error' });
         }
@@ -81,10 +112,12 @@ router.get(
             const reviews = await EventReview.find({
                 eventId: id,
                 isHidden: false,
-            });
+            })
+                .populate('author', 'email firstName lastName')
+                .sort({ createdAt: -1 });
 
             if (!reviews) {
-                res.status(404).json({ message: 'Event not found' });
+                res.status(404).json({ message: 'No reviews found' });
                 return;
             }
 
@@ -114,11 +147,17 @@ router.post(
                 customRatings,
             } = req.body;
 
-            const email = (req.session as any).user.email;
+            const azureId = (req.session as any).user.id;
+            const user = await SAMLUser.findOne({ id: azureId });
+
+            if (!user) {
+                res.status(403).json({ message: 'User not found' });
+                return;
+            }
 
             const newReview = new EventReview({
                 eventId: id,
-                author: email,
+                author: user._id,
                 isAnonymous: isAnonymous,
                 content: content,
                 overall: overall,
@@ -128,6 +167,78 @@ router.post(
 
             const savedReview = await newReview.save();
             res.status(201).json(savedReview);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
+);
+
+/**
+ * @route   PUT /api/openforum/:reviewId/review
+ * @desc    Update an existing review for an event
+ * @access  Authenticated (review owner)
+ */
+router.put(
+    '/:reviewId/review',
+    isEventReviewOwner,
+    async (req: Request, res: Response) => {
+        try {
+            const {
+                isAnonymous,
+                content,
+                overall,
+                wouldRepeat,
+                customRatings,
+            } = req.body;
+
+            const { reviewId } = req.params;
+
+            const UpdatedReview = await EventReview.findOneAndUpdate(
+                { _id: reviewId },
+                {
+                    isAnonymous: isAnonymous,
+                    content: content,
+                    overall: overall,
+                    wouldRepeat: wouldRepeat,
+                    customRatings: customRatings,
+                },
+                { new: true, runValidators: true }
+            );
+
+            if (!UpdatedReview) {
+                res.status(404).json({ message: 'Review not updated' });
+                return;
+            }
+
+            res.status(200).json({ message: 'Review updated successfully' });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
+);
+
+/**
+ * @route   DELETE /api/openforum/:reviewId/review
+ * @desc    Delete a review for an event
+ * @access  Authenticated (review owner)
+ */
+router.delete(
+    '/:reviewId/review',
+    isEventReviewOwner,
+    async (req: Request, res: Response) => {
+        try {
+            const { reviewId } = req.params;
+
+            const review = await EventReview.findOneAndDelete({
+                _id: reviewId,
+            });
+            if (!review) {
+                res.status(404).json({ message: 'Review not found' });
+                return;
+            }
+            res.status(200).json({ message: 'Review deleted successfully' });
         } catch (err) {
             console.error(err);
             res.status(500).json({ message: 'Server error' });
@@ -147,7 +258,6 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
         const {
             title,
             description,
-            createdBy,
             staffHost,
             eventDate,
             location,
@@ -156,22 +266,23 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
             engageEventId,
         } = req.body;
 
-        if (
-            !title ||
-            !description ||
-            !createdBy ||
-            !eventDate ||
-            !location ||
-            !ratingUntil
-        ) {
+        if (!title || !description || !eventDate || !location || !ratingUntil) {
             res.status(400).json({ message: 'Missing required fields.' });
+            return;
+        }
+
+        const azureId = (req.session as any).user.id;
+        const user = await SAMLUser.findOne({ id: azureId });
+
+        if (!user) {
+            res.status(403).json({ message: 'User not found' });
             return;
         }
 
         const event = new ForumEvent({
             title: title,
             description: description,
-            createdBy: createdBy,
+            createdBy: user._id,
             staffHost: staffHost,
             eventDate: eventDate,
             location: location,
@@ -199,22 +310,15 @@ router.put('/:id', isAdmin, async (req: Request, res: Response) => {
         const {
             title,
             description,
-            createdBy,
             staffHost,
             eventDate,
             location,
             ratingUntil,
             customQuestions,
+            engageEventId,
         } = req.body;
 
-        if (
-            !title ||
-            !description ||
-            !createdBy ||
-            !eventDate ||
-            !location ||
-            !ratingUntil
-        ) {
+        if (!title || !description || !eventDate || !location || !ratingUntil) {
             res.status(400).json({ message: 'Missing required fields.' });
             return;
         }
@@ -224,12 +328,12 @@ router.put('/:id', isAdmin, async (req: Request, res: Response) => {
             {
                 title: title,
                 description: description,
-                createdBy: createdBy,
                 staffHost: staffHost,
                 eventDate: eventDate,
                 location: location,
                 ratingUntil: ratingUntil,
                 customQuestions: customQuestions || [],
+                engageEventId: engageEventId,
             },
             { new: true, runValidators: true }
         );
@@ -279,5 +383,26 @@ router.patch(
         }
     }
 );
+
+/**
+ * @route   DELETE /api/openforum/:id
+ * @desc    Delete openforum event
+ * @access  Admin
+ */
+router.delete('/:eventId', isAdmin, async (req: Request, res: Response) => {
+    try {
+        const event = await ForumEvent.findOneAndDelete({
+            _id: req.params.eventId,
+        });
+
+        if (!event) {
+            res.status(404).json({ message: 'Event not found' });
+        }
+
+        res.status(200).json({ message: 'Event deleted' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 
 export default router;

@@ -16,7 +16,6 @@ const Header = () => {
         members: [],
         resources: [],
         press: [],
-        scs: [],
     });
 
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -41,7 +40,6 @@ const Header = () => {
                     members: [],
                     resources: [],
                     press: [],
-                    scs: [],
                 };
 
                 data.forEach((page) => {
@@ -300,30 +298,42 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/*SCS Internship Program Section */}
+                            {/* Events Dropdown */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
-                                    onClick={() => handleDropdownClick('SCS')}
+                                    onClick={() =>
+                                        handleDropdownClick('Events')
+                                    }
                                 >
-                                    <span>SCS Internship</span>
+                                    <span>Events</span>
                                 </button>
 
-                                {/* SCS Pages Dropdown */}
-                                {openDropdown === 'SCS' && (
+                                {/* Events Dropdown */}
+                                {openDropdown === 'Events' && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        {renderSectionLinks('scs')}
+                                        <Link
+                                            href="/events"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
+                                        >
+                                            Calendar
+                                        </Link>
+
+                                        <Link
+                                            href="/open-forum"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
+                                        >
+                                            Open Forum
+                                        </Link>
                                     </div>
                                 )}
                             </div>
-
-                            {/* Events */}
-                            <Link
-                                href="/events"
-                                className="hover:text-blue-500"
-                            >
-                                Events
-                            </Link>
 
                             {user ? (
                                 <>
@@ -541,31 +551,41 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/* SCS dropdown */}
+                            {/* Events dropdown */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="text-lg flex items-center space-x-1"
                                     onClick={() =>
-                                        handleDropdownClick('SCSMobile')
+                                        handleDropdownClick('EventsMobile')
                                     }
                                 >
-                                    <span>SCS Internship</span>
+                                    <span>Events</span>
                                 </button>
 
-                                {openDropdown === 'SCSMobile' && (
+                                {openDropdown === 'EventsMobile' && (
                                     <div className="ml-2 mt-2">
-                                        {renderSectionLinks('scs', true)}
+                                        <Link
+                                            href="/events"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Events
+                                        </Link>
+
+                                        <Link
+                                            href="/open-forum"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Open Forum
+                                        </Link>
                                     </div>
                                 )}
                             </div>
-
-                            <Link
-                                href="/events"
-                                className="text-lg"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                Events
-                            </Link>
 
                             {user?.isAdmin && (
                                 <Link

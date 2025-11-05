@@ -210,7 +210,19 @@ router.get('/current_user', async (req: Request, res: Response) => {
             }
         }
 
-        res.status(200).json({ user });
+        if (!user) {
+            res.status(500).json({
+                message: 'Failed to retrieve or create user',
+            });
+            return;
+        }
+
+        res.status(200).json({
+            user: {
+                ...user.toObject(),
+                _id: (user._id as any).toString(),
+            },
+        });
     } catch (error) {
         console.error('User creation error:', error);
         res.status(500).json({ message: 'Server error' });
@@ -223,6 +235,29 @@ router.get('/users', async (req: Request, res: Response) => {
         const users = await SAMLUser.find();
         res.json(users);
     } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Get user by ID
+router.get('/users/:id', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const user = await SAMLUser.findOne({ _id: id }).select(
+            'firstName lastName email'
+        );
+        if (!user) {
+            res.status(404).json({ message: 'User not found' });
+            return;
+        }
+
+        res.json({
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+        });
+    } catch (error) {
+        console.error('Error fetching user:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
