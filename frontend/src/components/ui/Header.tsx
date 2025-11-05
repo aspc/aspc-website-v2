@@ -16,7 +16,6 @@ const Header = () => {
         members: [],
         resources: [],
         press: [],
-        scs: [],
     });
 
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -41,7 +40,6 @@ const Header = () => {
                     members: [],
                     resources: [],
                     press: [],
-                    scs: [],
                 };
 
                 data.forEach((page) => {
@@ -279,16 +277,6 @@ const Header = () => {
                                         >
                                             Instructor Reviews
                                         </Link>
-
-                                        <Link
-                                            href="/open-forum"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                            onClick={() =>
-                                                setOpenDropdown(null)
-                                            }
-                                        >
-                                            Open Forum
-                                        </Link>
                                     </div>
                                 )}
                             </div>
@@ -310,22 +298,6 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/*SCS Internship Program Section */}
-                            <div className="relative dropdown-container">
-                                <button
-                                    className="flex items-center space-x-1 hover:text-blue-500"
-                                    onClick={() => handleDropdownClick('SCS')}
-                                >
-                                    <span>SCS Internship</span>
-                                </button>
-
-                                {/* SCS Pages Dropdown */}
-                                {openDropdown === 'SCS' && (
-                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        {renderSectionLinks('scs')}
-                                    </div>
-                                )}
-                            </div>
                             {/* Events Dropdown */}
                             <div className="relative dropdown-container">
                                 <button
@@ -575,24 +547,6 @@ const Header = () => {
                                 {openDropdown === 'PressMobile' && (
                                     <div className="ml-2 mt-2">
                                         {renderSectionLinks('press', true)}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* SCS dropdown */}
-                            <div className="relative dropdown-container">
-                                <button
-                                    className="text-lg flex items-center space-x-1"
-                                    onClick={() =>
-                                        handleDropdownClick('SCSMobile')
-                                    }
-                                >
-                                    <span>SCS Internship</span>
-                                </button>
-
-                                {openDropdown === 'SCSMobile' && (
-                                    <div className="ml-2 mt-2">
-                                        {renderSectionLinks('scs', true)}
                                     </div>
                                 )}
                             </div>

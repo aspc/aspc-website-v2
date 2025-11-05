@@ -20,7 +20,7 @@ const PageDashboard = () => {
     const [loading, setLoading] = useState(false);
 
     // Available page sections
-    const pageSections = ['about', 'members', 'resources', 'press', 'scs'];
+    const pageSections = ['about', 'members', 'resources', 'press'];
 
     const fetchPages = async () => {
         try {
