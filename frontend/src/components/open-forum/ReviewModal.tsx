@@ -61,6 +61,8 @@ export const ReviewModal = ({
     const [overallRating, setOverallRating] = useState(0);
     const [wouldRepeat, setWouldRepeat] = useState(0);
     const [customRatings, setCustomRatings] = useState<{ [key: string]: number }>({});
+    const [isAnonymous, setIsAnonymous] = useState(false);
+    const [content, setContent] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
@@ -71,6 +73,8 @@ export const ReviewModal = ({
             if (review) {
                 setOverallRating(review.overall || 0);
                 setWouldRepeat(review.wouldRepeat || 0);
+                setIsAnonymous(review.isAnonymous || false);
+                setContent(review.content || '');
                 if (review.customRatings) {
                     const customRatingsObj: { [key: string]: number } = {};
                     review.customRatings.forEach(cr => {
@@ -82,6 +86,8 @@ export const ReviewModal = ({
                 // Reset form for new review
                 setOverallRating(0);
                 setWouldRepeat(0);
+                setIsAnonymous(false);
+                setContent('');
                 setCustomRatings({});
             }
         }
@@ -131,6 +137,16 @@ export const ReviewModal = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Check if rating period is still valid
+        if (eventDetails) {
+            const now = new Date();
+            const ratingUntil = new Date(eventDetails.ratingUntil);
+            if (ratingUntil < now) {
+                alert('Rating period has expired. You can no longer submit reviews for this event.');
+                return;
+            }
+        }
+
         // Validate required ratings
         if (overallRating === 0) {
             alert('Please provide an overall rating');
@@ -162,26 +178,43 @@ export const ReviewModal = ({
             })) || [];
 
             const body = {
+                isAnonymous: isAnonymous,
+                content: content,
                 overall: overallRating,
                 wouldRepeat,
                 customRatings: customRatingsArray,
             };
 
-            const response = await fetch(`${process.env.BACKEND_LINK}/api/openforum/${eventId}/review`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify(body),
-            });
+            let response;
+            if (review) {
+                // Editing existing review - use PUT
+                response = await fetch(`${process.env.BACKEND_LINK}/api/openforum/${review._id}/review`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(body),
+                });
+            } else {    
+                // Creating new review - use POST
+                response = await fetch(`${process.env.BACKEND_LINK}/api/openforum/${eventId}/review`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(body),
+                });
+            }
+
             if (!response.ok) {
                 const error = await response.json();
                 alert('Error: ' + error.message);
                 return;
             }
             else {
-                alert('Review submitted successfully!');
+                alert(review ? 'Review updated successfully!' : 'Review submitted successfully!');
                 onSubmitSuccess();
             }
 
@@ -251,6 +284,36 @@ export const ReviewModal = ({
                                 ))}
                             </div>
                         )}
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Review Content
+                            </label>
+                            <textarea
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                rows={5}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Share your thoughts about this event..."
+                            />
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={isAnonymous}
+                                    onChange={(e) => setIsAnonymous(e.target.checked)}
+                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                />
+                                <span className="ml-2 text-sm text-gray-700">
+                                    Post anonymously
+                                </span>
+                            </label>
+                            <p className="mt-1 text-xs text-gray-500">
+                                Your name will not be displayed if you choose to post anonymously
+                            </p>
+                        </div>
                     </div>
 
                     <div className="flex justify-end space-x-4 mt-6">

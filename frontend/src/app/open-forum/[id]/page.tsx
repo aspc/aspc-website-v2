@@ -29,7 +29,20 @@ const EventDetailsPage = () => {
         setSelectedReview(null);
     };
 
+    // Check if ratingUntil is still valid (not expired)
+    const isRatingPeriodValid = () => {
+        if (!eventDetails) return false;
+        const now = new Date();
+        const ratingUntil = new Date(eventDetails.event.ratingUntil);
+        return ratingUntil >= now;
+    };
+
     const handleAddNewReviewClick = () => {
+        if (!isRatingPeriodValid()) {
+            alert('Rating period has expired. You can no longer add or edit reviews for this event.');
+            return;
+        }
+
         if (selectedReview) {
             if (
                 window.confirm(
@@ -206,13 +219,17 @@ const EventDetailsPage = () => {
         return `${month} ${year}`;
     };
 
-    const handleDelete = async (ratingId: string) => {
-        if (window.confirm('Are you sure you want to delete this rating?')) {
+    const handleDelete = async (reviewId: string) => {
+        if (!isRatingPeriodValid()) {
+            alert('Rating period has expired. You can no longer delete this review.');
+            return;
+        }
+        if (window.confirm('Are you sure you want to delete this review?')) {
             try {
                 setLoading(true);
                 const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/openforum/${ratingId}/ratings`,
-                    {
+                    `${process.env.BACKEND_LINK}/api/openforum/${reviewId}/review`,
+                    {   
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
@@ -222,14 +239,14 @@ const EventDetailsPage = () => {
                 );
 
                 if (!response.ok) {
-                    throw new Error('Failed to delete rating');
+                    throw new Error('Failed to delete review');
                 }
 
-                alert('Rating deleted successfully!');
+                alert('Review deleted successfully!');
                 setTimeout(() => window.location.reload(), 1000);
             } catch (error) {
-                console.error('Error deleting rating', error);
-                alert('Failed to delete rating');
+                console.error('Error deleting review', error);
+                alert('Failed to delete review');
             } finally {
                 setLoading(false);
             }
@@ -430,7 +447,7 @@ const EventDetailsPage = () => {
                                                     
                                                     // Compare MongoDB ObjectIds: rating.author vs user._id
                                                     const isAuthor = user._id === authorId;
-                                                    return isAuthor && (
+                                                    return isAuthor && isRatingPeriodValid() && (
                                                         <div className="flex p-2 gap-4">
                                                             <button
                                                                 className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
@@ -473,7 +490,7 @@ const EventDetailsPage = () => {
                                                         if (rating?.isAnonymous) {
                                                             return (
                                                                 <>
-                                                                    <span className="italic">Anonymous User</span>
+                                                                    <span className="italic">Anonymous Review</span>
                                                                     {isUserReview && (
                                                                         <span className="ml-2 text-xs text-blue-600">
                                                                             (Your review)
@@ -578,12 +595,14 @@ const EventDetailsPage = () => {
                         )}
                     </div>
 
-                    <button
-                        className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
-                        onClick={handleAddNewReviewClick}
-                    >
-                        {selectedReview ? 'Cancel rating edit' : 'Add new rating'}
-                    </button>
+                    {isRatingPeriodValid() && (
+                        <button
+                            className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
+                            onClick={handleAddNewReviewClick}
+                        >
+                            {selectedReview ? 'Cancel rating edit' : 'Add new rating'}
+                        </button>
+                    )}
 
                     {/* Review Modal */}
                     {isModalOpen && (

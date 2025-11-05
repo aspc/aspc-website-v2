@@ -5,6 +5,7 @@ import {
     isAuthenticated,
     isAdmin,
     hasNotRatedEvent,
+    isEventReviewOwner,
 } from '../middleware/authMiddleware';
 
 const router = express.Router();
@@ -135,6 +136,67 @@ router.post(
 
             const savedReview = await newReview.save();
             res.status(201).json(savedReview);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
+);
+
+/**
+ * @route   PUT /api/openforum/:reviewId/review
+ * @desc    Update an existing review for an event
+ * @access  Authenticated (review owner)
+ */
+router.put(
+    '/:reviewId/review',
+    isEventReviewOwner,
+    async (req: Request, res: Response) => {
+        try {
+            const {
+                isAnonymous,
+                content,
+                overall,
+                wouldRepeat,
+                customRatings,
+            } = req.body;
+
+            const { reviewId } = req.params;
+    
+            const UpdatedReview = await EventReview.findOneAndUpdate({ _id: reviewId }, 
+                { isAnonymous: isAnonymous, content: content, overall: overall, wouldRepeat: wouldRepeat, customRatings: customRatings }, { new: true, runValidators: true });
+
+            if (!UpdatedReview) {
+                res.status(404).json({ message: 'Review not updated' });
+                return;
+            }
+
+            res.status(200).json({ message: 'Review updated successfully' });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
+);
+
+/**
+ * @route   DELETE /api/openforum/:reviewId/review
+ * @desc    Delete a review for an event
+ * @access  Authenticated (review owner)
+ */
+router.delete(
+    '/:reviewId/review',
+    isEventReviewOwner,
+    async (req: Request, res: Response) => {
+        try {
+            const { reviewId } = req.params;
+            
+            const review = await EventReview.findOneAndDelete({ _id: reviewId });
+            if (!review) {
+                res.status(404).json({ message: 'Review not found' });
+                return;
+            }
+            res.status(200).json({ message: 'Review deleted successfully' });
         } catch (err) {
             console.error(err);
             res.status(500).json({ message: 'Server error' });
