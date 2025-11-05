@@ -9,7 +9,7 @@ import { FormattedReviewText } from '@/utils/textFormatting';
 const OpenForumPage = () => {
     const [events, setEvents] = useState<ForumEvent[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-    const [filter, setFilter] = useState<'all' | 'past'>('all');
+    const [filter, setFilter] = useState<'past' | 'all'>('past');
     const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
     const [userCache, setUserCache] = useState<Record<string, User>>({});
 

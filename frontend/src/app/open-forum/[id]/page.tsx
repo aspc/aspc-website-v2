@@ -595,13 +595,19 @@ const EventDetailsPage = () => {
                         )}
                     </div>
 
-                    {isRatingPeriodValid() && (
+                    {isRatingPeriodValid() ? (
                         <button
                             className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
                             onClick={handleAddNewReviewClick}
                         >
                             {selectedReview ? 'Cancel rating edit' : 'Add new rating'}
                         </button>
+                    ) : (
+                        <div className="mt-4 mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                            <p className="text-yellow-800 font-medium">
+                                ⚠️ This event is closed for reviews. The rating period has expired.
+                            </p>
+                        </div>
                     )}
 
                     {/* Review Modal */}
