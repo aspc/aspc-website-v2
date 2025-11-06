@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { Courses, CourseReviews } from '../models/Courses';
 import { Instructors } from '../models/People';
 import {
@@ -10,106 +11,70 @@ import {
 const router = express.Router();
 
 /**
+ * Normalizes a course code search term to match variations
+ * Examples: "cs51" matches "CSCI051", "CS051", "CS51", etc.
+ * @param searchTerm - The search term (e.g., "cs51", "CSCI051")
+ * @returns A regex pattern that matches normalized course codes
+ */
+function createNormalizedCodeRegex(searchTerm: string): RegExp {
+    // Extract letters (department) and numbers (course number) from search term
+    const letters = searchTerm.match(/[a-zA-Z]+/)?.[0] || '';
+    const numbers = searchTerm.match(/\d+/)?.[0] || '';
+
+    // If no letters or numbers, fall back to simple prefix match
+    if (!letters && !numbers) {
+        const escaped = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return new RegExp(`^${escaped}`, 'i');
+    }
+
+    // Build regex pattern
+    // Department part: match letters case-insensitively, allow additional letters
+    // Number part: match numbers with optional leading zeros
+    let pattern = '^';
+
+    if (letters) {
+        // Match department that starts with the search letters
+        // e.g., "cs" matches "CS", "CSCI", "CS", etc.
+        const letterPattern = letters
+            .split('')
+            .map((char) => `[${char.toUpperCase()}${char.toLowerCase()}]`)
+            .join('');
+        pattern += `${letterPattern}[A-Za-z]*`;
+    }
+
+    if (numbers) {
+        // Match course number with optional leading zeros
+        // e.g., "51" matches "51", "051", "0051", etc.
+        // Remove leading zeros from the number to match more variations
+        const numWithoutLeadingZeros = numbers.replace(/^0+/, '') || '0';
+        pattern += `0*${numWithoutLeadingZeros}`;
+    }
+
+    return new RegExp(pattern, 'i');
+}
+
+/**
  * @route   GET /api/courses
  * @desc    Get all courses with optional filters (search and department) with pagination
  * @access  Public
  */
 router.get('/', isAuthenticated, async (req: Request, res: Response) => {
     try {
-        const { search, schools, limit = 20, page = 1 } = req.query;
+        const {
+            search,
+            searchType = 'all',
+            schools,
+            limit = 20,
+            page = 1,
+        } = req.query;
 
         const numericLimit = parseInt(limit as string);
         const numericPage = parseInt(page as string);
         const skip = (numericPage - 1) * numericLimit;
         const schoolList = schools ? (schools as string).split(',') : [];
 
-        // Use Atlas Search for typo-resilient fuzzy search whenever a search term is provided
-        if (search) {
-            const pipeline: any[] = [];
-
-            // $search stage with compound should for text across name/code and school filter
-            const searchStage: any = {
-                $search: {
-                    index: 'courses',
-                    compound: {
-                        should: [
-                            // Full phrase match with score boost
-                            {
-                                text: {
-                                    query: String(search),
-                                    path: ['name', 'code'],
-                                    score: { boost: { value: 5 } },
-                                },
-                            },
-                            // Individual term matches with fuzzy search
-                            ...String(search)
-                                .split(' ')
-                                .map((term) => ({
-                                    text: {
-                                        query: term,
-                                        path: ['name', 'code'],
-                                        fuzzy: {
-                                            maxEdits: term.length < 6 ? 1 : 2,
-                                        },
-                                    },
-                                })),
-                        ],
-                        minimumShouldMatch: 1,
-                    },
-                },
-            };
-
-            if (schoolList.length > 0) {
-                searchStage.$search.compound.filter = [
-                    {
-                        compound: {
-                            should: schoolList.map((school) => ({
-                                wildcard: {
-                                    query: `*${school}`,
-                                    path: 'code',
-                                    allowAnalyzedField: true,
-                                },
-                            })),
-                            minimumShouldMatch: 1,
-                        },
-                    },
-                ];
-            }
-
-            pipeline.push(searchStage);
-
-            // IF WE WANT TO sort courses by number of reviews (descending)
-            // pipeline.push({ $sort: { review_count: -1 } });
-
-            // Add a $facet stage to get both the paginated results and total count
-            pipeline.push({
-                $facet: {
-                    metadata: [{ $count: 'totalCount' }],
-                    courses: [{ $skip: skip }, { $limit: numericLimit }],
-                },
-            });
-
-            const result = await Courses.aggregate(pipeline).exec();
-
-            const totalCount = result[0]?.metadata[0]?.totalCount || 0;
-            const courses = result[0]?.courses || [];
-            const totalPages = Math.ceil(totalCount / numericLimit);
-
-            const paginationInfo = {
-                currentPage: numericPage,
-                totalPages: totalPages,
-                totalCount: totalCount,
-                limit: numericLimit,
-                hasNextPage: numericPage < totalPages,
-                hasPrevPage: numericPage > 1,
-            };
-
-            res.json({
-                courses,
-                pagination: paginationInfo,
-            });
-        } else {
-            // If no search term, return empty results
+        // If no search term, return empty results
+        if (!search || String(search).trim().length < 2) {
             res.json({
                 courses: [],
                 pagination: {
@@ -121,7 +86,250 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                     hasPrevPage: false,
                 },
             });
+            return;
         }
+
+        const searchTerm = String(search).trim();
+        const type = String(searchType) as
+            | 'all'
+            | 'name'
+            | 'code'
+            | 'department';
+
+        // Build base query filter for schools
+        const schoolFilter: any = {};
+        if (schoolList.length > 0) {
+            schoolFilter.code = {
+                $regex: new RegExp(
+                    schoolList.map((s) => `.*${s}$`).join('|'),
+                    'i'
+                ),
+            };
+        }
+
+        // Step 1: Get exact prefix matches (starts with, case-insensitive)
+        // For code searches, also use normalized matching to handle abbreviations
+        const exactMatchQuery: any = {};
+        const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const normalizedCodeRegex = createNormalizedCodeRegex(searchTerm);
+
+        switch (type) {
+            case 'code':
+                // Use normalized regex to match variations like "cs51" -> "CSCI051"
+                exactMatchQuery.$or = [
+                    { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } }, // Exact prefix match
+                    { code: { $regex: normalizedCodeRegex } }, // Normalized match
+                ];
+                if (schoolFilter.code) {
+                    exactMatchQuery.$and = [
+                        {
+                            $or: [
+                                {
+                                    code: {
+                                        $regex: new RegExp(
+                                            `^${escapedTerm}`,
+                                            'i'
+                                        ),
+                                    },
+                                },
+                                { code: { $regex: normalizedCodeRegex } },
+                            ],
+                        },
+                        schoolFilter,
+                    ];
+                    delete exactMatchQuery.$or;
+                }
+                break;
+            case 'name':
+                exactMatchQuery.name = {
+                    $regex: new RegExp(`^${escapedTerm}`, 'i'),
+                };
+                if (schoolFilter.code) {
+                    Object.assign(exactMatchQuery, schoolFilter);
+                }
+                break;
+            case 'department':
+                exactMatchQuery.department_names = {
+                    $regex: new RegExp(`^${escapedTerm}`, 'i'),
+                };
+                if (schoolFilter.code) {
+                    Object.assign(exactMatchQuery, schoolFilter);
+                }
+                break;
+            case 'all':
+            default:
+                // For 'all' search, include both exact prefix and normalized code matches
+                exactMatchQuery.$or = [
+                    { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } }, // Exact prefix match
+                    { code: { $regex: normalizedCodeRegex } }, // Normalized match for codes
+                    { name: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
+                    {
+                        department_names: {
+                            $regex: new RegExp(`^${escapedTerm}`, 'i'),
+                        },
+                    },
+                ];
+                if (schoolFilter.code) {
+                    Object.assign(exactMatchQuery, schoolFilter);
+                }
+        }
+
+        const exactMatches = await Courses.find(exactMatchQuery)
+            .limit(numericLimit * 2) // Get more to account for duplicates
+            .lean();
+
+        // Step 2: Get fuzzy matches (exclude exact matches by ID)
+        const exactMatchIds = new Set(
+            exactMatches.map((c: any) => c._id.toString())
+        );
+
+        const fuzzyQuery: any = {
+            _id: { $nin: Array.from(exactMatchIds) },
+        };
+
+        if (schoolList.length > 0) {
+            fuzzyQuery.code = {
+                $regex: new RegExp(
+                    schoolList.map((s) => `.*${s}$`).join('|'),
+                    'i'
+                ),
+            };
+        }
+
+        // Build fuzzy search criteria using Atlas Search
+        const searchCriteria: any[] = [];
+
+        switch (type) {
+            case 'code':
+                searchCriteria.push({
+                    text: {
+                        query: searchTerm,
+                        path: 'code',
+                        fuzzy: { maxEdits: 2 },
+                    },
+                });
+                break;
+            case 'name':
+                searchCriteria.push({
+                    text: {
+                        query: searchTerm,
+                        path: 'name',
+                        fuzzy: { maxEdits: 2 },
+                    },
+                });
+                break;
+            case 'department':
+                searchCriteria.push({
+                    text: {
+                        query: searchTerm,
+                        path: 'department_names',
+                        fuzzy: { maxEdits: 2 },
+                    },
+                });
+                break;
+            case 'all':
+            default:
+                searchCriteria.push(
+                    {
+                        text: {
+                            query: searchTerm,
+                            path: 'code',
+                            fuzzy: { maxEdits: 2 },
+                        },
+                    },
+                    {
+                        text: {
+                            query: searchTerm,
+                            path: 'name',
+                            fuzzy: { maxEdits: 2 },
+                        },
+                    },
+                    {
+                        text: {
+                            query: searchTerm,
+                            path: 'department_names',
+                            fuzzy: { maxEdits: 2 },
+                        },
+                    }
+                );
+        }
+
+        const searchStage: any = {
+            $search: {
+                index: 'courses',
+                compound: {
+                    should: searchCriteria,
+                    minimumShouldMatch: 1,
+                },
+            },
+        };
+
+        if (schoolList.length > 0) {
+            searchStage.$search.compound.filter = [
+                {
+                    compound: {
+                        should: schoolList.map((school) => ({
+                            wildcard: {
+                                query: `*${school}`,
+                                path: 'code',
+                                allowAnalyzedField: true,
+                            },
+                        })),
+                        minimumShouldMatch: 1,
+                    },
+                },
+            ];
+        }
+
+        // Get fuzzy matches using aggregation
+        const fuzzyPipeline: any[] = [
+            searchStage,
+            {
+                $match: {
+                    _id: {
+                        $nin: Array.from(exactMatchIds).map(
+                            (id: string) => new mongoose.Types.ObjectId(id)
+                        ),
+                    },
+                },
+            },
+            { $limit: numericLimit * 2 },
+        ];
+
+        const fuzzyResults = await Courses.aggregate(fuzzyPipeline).exec();
+
+        // Combine results: exact matches first, then fuzzy matches
+        const allCourses = [...exactMatches, ...fuzzyResults];
+
+        // Remove duplicates (by _id) while preserving order
+        const seenIds = new Set();
+        const uniqueCourses = allCourses.filter((course: any) => {
+            const id = course._id.toString();
+            if (seenIds.has(id)) {
+                return false;
+            }
+            seenIds.add(id);
+            return true;
+        });
+
+        // Paginate the combined results
+        const paginatedCourses = uniqueCourses.slice(skip, skip + numericLimit);
+        const totalCount = uniqueCourses.length;
+        const totalPages = Math.ceil(totalCount / numericLimit);
+
+        const paginationInfo = {
+            currentPage: numericPage,
+            totalPages: totalPages,
+            totalCount: totalCount,
+            limit: numericLimit,
+            hasNextPage: numericPage < totalPages,
+            hasPrevPage: numericPage > 1,
+        };
+
+        res.json({
+            courses: paginatedCourses,
+            pagination: paginationInfo,
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
