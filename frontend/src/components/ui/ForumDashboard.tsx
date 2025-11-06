@@ -119,7 +119,7 @@ const ForumDashboard = () => {
                 setIsLoading(true);
 
                 const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/events/`
+                    `${process.env.BACKEND_LINK}/api/events`
                 );
 
                 if (response.ok) {
