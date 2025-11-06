@@ -632,13 +632,6 @@ const ForumDashboard = () => {
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                     Custom Questions
                 </h2>
-                {/* <textarea
-                    className="w-full p-4 border rounded"
-                    value={customQuestions}
-                    onChange={(e) => setCustomQuestions(e.target.value)}
-                    required
-                /> */}
-
                 {customQuestions.map((question, index) => (
                     <div
                         key={index}
