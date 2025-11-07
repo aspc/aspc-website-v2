@@ -426,7 +426,7 @@ const ForumDashboard = () => {
                             <div className="mb-4">
                                 <input
                                     type="text"
-                                    placeholder="Search events by name, location, or host..."
+                                    placeholder="Search events by name, location, or host"
                                     className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                                     value={searchTerm}
                                     onChange={(e) =>
