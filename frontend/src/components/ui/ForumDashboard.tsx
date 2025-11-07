@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Loading from '@/components/Loading';
 import { StaffMember, Event, ForumEvent } from '@/types';
 import { FormattedReviewText, formatReviewText } from '@/utils/textFormatting';
+import { useMemo } from 'react';
 
 const ForumDashboard = () => {
     const { loading } = useAuth();
@@ -17,6 +18,7 @@ const ForumDashboard = () => {
     const [isEngagePopupOpen, setIsEngagePopupOpen] = useState(false);
     const [isEngageLoading, setIsEngageLoading] = useState(false);
     const [engageEvents, setEngageEvents] = useState<Event[]>([]);
+    const [searchTerm, setSearchTerm] = useState<string>('');
 
     // Form state
     const [title, setTitle] = useState<string>('');
@@ -136,6 +138,18 @@ const ForumDashboard = () => {
 
         fetchEngageEvents();
     }, [isEngagePopupOpen]);
+
+    // Filter Engage events dynamically
+    const filteredEngageEvents = useMemo(() => {
+        const term = searchTerm.toLowerCase();
+        return engageEvents.filter(
+            (event) =>
+                event.name.toLowerCase().includes(term) ||
+                (event.location &&
+                    event.location.toLowerCase().includes(term)) ||
+                (event.host && event.host.toLowerCase().includes(term))
+        );
+    }, [searchTerm, engageEvents]);
 
     const resetForm = () => {
         setTitle('');
@@ -409,91 +423,107 @@ const ForumDashboard = () => {
                                 </button>
                             </div>
 
+                            <div className="mb-4">
+                                <input
+                                    type="text"
+                                    placeholder="Search events by name, location, or host..."
+                                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                                    value={searchTerm}
+                                    onChange={(e) =>
+                                        setSearchTerm(e.target.value)
+                                    }
+                                />
+                            </div>
+
                             {/* Popup body */}
                             {isEngageLoading ? (
                                 <p className="text-gray-500 text-center my-8">
                                     Loading events from Engage...
                                 </p>
-                            ) : engageEvents.length > 0 ? (
+                            ) : filteredEngageEvents.length > 0 ? (
                                 <ul className="space-y-4">
-                                    {engageEvents.map((event: Event, index) => (
-                                        <li
-                                            key={index}
-                                            className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50"
-                                        >
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                                                {event.name}
-                                            </h3>
+                                    {filteredEngageEvents.map(
+                                        (event: Event, index) => (
+                                            <li
+                                                key={index}
+                                                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50"
+                                            >
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                                    {event.name}
+                                                </h3>
 
-                                            <p className="text-sm text-gray-600 mb-1">
-                                                <strong>Date:</strong>{' '}
-                                                {new Date(
-                                                    event.start
-                                                ).toLocaleString()}{' '}
-                                                →{' '}
-                                                {new Date(
-                                                    event.end
-                                                ).toLocaleString()}
-                                            </p>
+                                                <p className="text-sm text-gray-600 mb-1">
+                                                    <strong>Date:</strong>{' '}
+                                                    {new Date(
+                                                        event.start
+                                                    ).toLocaleString()}{' '}
+                                                    →{' '}
+                                                    {new Date(
+                                                        event.end
+                                                    ).toLocaleString()}
+                                                </p>
 
-                                            <p className="text-sm text-gray-600 mb-1">
-                                                <strong>Location:</strong>{' '}
-                                                {event.location || 'N/A'}
-                                            </p>
+                                                <p className="text-sm text-gray-600 mb-1">
+                                                    <strong>Location:</strong>{' '}
+                                                    {event.location || 'N/A'}
+                                                </p>
 
-                                            <p className="text-sm text-gray-600 mb-1">
-                                                <strong>Host:</strong>{' '}
-                                                {event.host || 'Unknown'}
-                                            </p>
+                                                <p className="text-sm text-gray-600 mb-1">
+                                                    <strong>Host:</strong>{' '}
+                                                    {event.host || 'Unknown'}
+                                                </p>
 
-                                            <div className="text-sm text-gray-700 mt-2 line-clamp-3">
-                                                <FormattedReviewText
-                                                    text={event.description}
-                                                />
-                                            </div>
+                                                <div className="text-sm text-gray-700 mt-2 line-clamp-3">
+                                                    <FormattedReviewText
+                                                        text={event.description}
+                                                    />
+                                                </div>
 
-                                            <div className="flex justify-between items-center mt-3">
-                                                <a
-                                                    href={event.details_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-blue-500 hover:underline text-sm"
-                                                >
-                                                    View on Engage ↗
-                                                </a>
+                                                <div className="flex justify-between items-center mt-3">
+                                                    <a
+                                                        href={event.details_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-500 hover:underline text-sm"
+                                                    >
+                                                        View on Engage ↗
+                                                    </a>
 
-                                                <button
-                                                    onClick={() => {
-                                                        setEngageEventId(
-                                                            event.details_url
-                                                        );
-                                                        setTitle(event.name);
-                                                        setDescription(
-                                                            event.description
-                                                        );
-                                                        setLocation(
-                                                            event.location
-                                                        );
+                                                    <button
+                                                        onClick={() => {
+                                                            setEngageEventId(
+                                                                event.details_url
+                                                            );
+                                                            setTitle(
+                                                                event.name
+                                                            );
+                                                            setDescription(
+                                                                event.description
+                                                            );
+                                                            setLocation(
+                                                                event.location
+                                                            );
 
-                                                        setEventDate(
-                                                            toDatetimeLocal(
-                                                                new Date(
-                                                                    event.start
-                                                                ).toISOString()
-                                                            )
-                                                        );
+                                                            setEventDate(
+                                                                toDatetimeLocal(
+                                                                    new Date(
+                                                                        event.start
+                                                                    ).toISOString()
+                                                                )
+                                                            );
 
-                                                        setIsEngagePopupOpen(
-                                                            false
-                                                        );
-                                                    }}
-                                                    className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 text-sm"
-                                                >
-                                                    Select
-                                                </button>
-                                            </div>
-                                        </li>
-                                    ))}
+                                                            setIsEngagePopupOpen(
+                                                                false
+                                                            );
+                                                        }}
+                                                        className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 text-sm"
+                                                    >
+                                                        Select
+                                                    </button>
+                                                </div>
+                                            </li>
+                                        )
+                                    )}
                                 </ul>
                             ) : (
                                 <p className="text-gray-500 text-center my-8">
