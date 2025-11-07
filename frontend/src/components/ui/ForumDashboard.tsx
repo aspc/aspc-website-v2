@@ -416,7 +416,10 @@ const ForumDashboard = () => {
                                     Import from Engage
                                 </h2>
                                 <button
-                                    onClick={() => setIsEngagePopupOpen(false)}
+                                    onClick={() => {
+                                        setIsEngagePopupOpen(false);
+                                        setSearchTerm('');
+                                    }}
                                     className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
                                 >
                                     ×
@@ -515,6 +518,8 @@ const ForumDashboard = () => {
                                                             setIsEngagePopupOpen(
                                                                 false
                                                             );
+
+                                                            setSearchTerm('');
                                                         }}
                                                         className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 text-sm"
                                                     >
@@ -533,7 +538,10 @@ const ForumDashboard = () => {
 
                             <div className="flex justify-end mt-6">
                                 <button
-                                    onClick={() => setIsEngagePopupOpen(false)}
+                                    onClick={() => {
+                                        setIsEngagePopupOpen(false);
+                                        setSearchTerm('');
+                                    }}
                                     className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
                                 >
                                     Close
