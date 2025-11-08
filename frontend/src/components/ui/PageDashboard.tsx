@@ -104,6 +104,7 @@ const PageDashboard = () => {
             console.error('Error fetching page content:', error);
             alert('Error loading page content');
         } finally {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             setLoading(false);
         }
     };
