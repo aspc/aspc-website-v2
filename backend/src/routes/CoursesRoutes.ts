@@ -278,8 +278,11 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             },
         };
 
+        // Build filter array for compound query
+        const filters: any[] = [];
+
         if (schoolList.length > 0) {
-            searchStage.$search.compound.filter = [
+            filters.push(
                 {
                     compound: {
                         should: schoolList.map((school) => ({
@@ -291,26 +294,40 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                         })),
                         minimumShouldMatch: 1,
                     },
+                });
+        }
+
+       if (requirements.length > 0) {
+            filters.push({
+                compound: {
+                    should: requirements.map((req) => ({
+                        queryString: {
+                            defaultPath: 'requirement_names',
+                            query: `"${req}"` 
+                        }
+                    })),
+                    minimumShouldMatch: 1,
                 },
-            ];
+            });
+        }
+
+        if (filters.length > 0) {
+            searchStage.$search.compound.filter = filters;
         }
 
         // Get fuzzy matches using aggregation
-        const fuzzyMatch: any = {
-            _id: {
-                $nin: Array.from(exactMatchIds).map(
-                    (id: string) => new mongoose.Types.ObjectId(id)
-                ),
-            },
-        };
-
-        if (requirements.length > 0) {
-            fuzzyMatch.requirement_names = { $in: requirements };
-        }
-
+       
         const fuzzyPipeline: any[] = [
             searchStage,
-            { $match: fuzzyMatch },
+            {
+                $match: {
+                    _id: {
+                        $nin: Array.from(exactMatchIds).map(
+                            (id: string) => new mongoose.Types.ObjectId(id)
+                        ),
+                    },
+                },
+            },
             { $limit: numericLimit * 2 },
         ];
 
