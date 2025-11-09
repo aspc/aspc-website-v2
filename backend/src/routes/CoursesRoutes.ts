@@ -68,6 +68,10 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             page = 1,
         } = req.query;
 
+        const requirements = req.query.requirements
+            ? (req.query.requirements as string).split(',').map(r => r.trim())
+            : [];
+
         const numericLimit = parseInt(limit as string);
         const numericPage = parseInt(page as string);
         const skip = (numericPage - 1) * numericLimit;
@@ -109,7 +113,13 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
 
         // Step 1: Get exact prefix matches (starts with, case-insensitive)
         // For code searches, also use normalized matching to handle abbreviations
+
         const exactMatchQuery: any = {};
+
+        if (requirements.length > 0) {
+            exactMatchQuery.requirement_names = { $in: requirements };
+        }
+        
         const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const normalizedCodeRegex = createNormalizedCodeRegex(searchTerm);
 
@@ -194,6 +204,10 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                     'i'
                 ),
             };
+        }
+
+        if (requirements.length > 0) {
+            fuzzyQuery.requirement_names = { $in: requirements };
         }
 
         // Build fuzzy search criteria using Atlas Search
@@ -282,19 +296,24 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
         }
 
         // Get fuzzy matches using aggregation
+        const fuzzyMatch: any = {
+            _id: {
+                $nin: Array.from(exactMatchIds).map(
+                    (id: string) => new mongoose.Types.ObjectId(id)
+                ),
+            },
+        };
+
+        if (requirements.length > 0) {
+            fuzzyMatch.requirement_names = { $in: requirements };
+        }
+
         const fuzzyPipeline: any[] = [
             searchStage,
-            {
-                $match: {
-                    _id: {
-                        $nin: Array.from(exactMatchIds).map(
-                            (id: string) => new mongoose.Types.ObjectId(id)
-                        ),
-                    },
-                },
-            },
+            { $match: fuzzyMatch },
             { $limit: numericLimit * 2 },
         ];
+
 
         const fuzzyResults = await Courses.aggregate(fuzzyPipeline).exec();
 
