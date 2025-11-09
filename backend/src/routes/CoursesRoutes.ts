@@ -69,7 +69,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
         } = req.query;
 
         const requirements = req.query.requirements
-            ? (req.query.requirements as string).split(',').map(r => r.trim())
+            ? (req.query.requirements as string).split(',').map((r) => r.trim())
             : [];
 
         const numericLimit = parseInt(limit as string);
@@ -119,7 +119,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
         if (requirements.length > 0) {
             exactMatchQuery.requirement_names = { $in: requirements };
         }
-        
+
         const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const normalizedCodeRegex = createNormalizedCodeRegex(searchTerm);
 
@@ -313,7 +313,6 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             { $match: fuzzyMatch },
             { $limit: numericLimit * 2 },
         ];
-
 
         const fuzzyResults = await Courses.aggregate(fuzzyPipeline).exec();
 
