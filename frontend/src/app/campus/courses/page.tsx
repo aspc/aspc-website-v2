@@ -48,34 +48,32 @@ const schoolData = {
 };
 
 const requirementOptions = [
-  "PO Area 1 Requirement",
-  "PO Area 2 Requirement",
-  "PO Area 3 Requirement",
-  "PO Area 4 Requirement",
-  "PO Area 5 Requirement",
-  "PO Writing Intensive Req",
-  "PO Speaking Intensive",
-  "PO Analyzing Differences",
-  "PO Language Requirement",
-  "PO Phys Ed Requirement"
+    'PO Area 1 Requirement',
+    'PO Area 2 Requirement',
+    'PO Area 3 Requirement',
+    'PO Area 4 Requirement',
+    'PO Area 5 Requirement',
+    'PO Area 6 Requirement',
+    'PO Writing Intensive Req',
+    'PO Speaking Intensive',
+    'PO Analyzing Differences',
+    'PO Language Requirement',
+    'PO Phys Ed Requirement',
 ];
 
 const requirementShortNames: Record<string, string> = {
-  "PO Area 1 Requirement": "Area 1",
-  "PO Area 2 Requirement": "Area 2",
-  "PO Area 3 Requirement": "Area 3",
-  "PO Area 4 Requirement": "Area 4",
-  "PO Area 5 Requirement": "Area 5",
-  "PO Writing Intensive Req": "Writing Intensive",
-  "PO Speaking Intensive": "Speaking Intensive",
-  "PO Analyzing Differences": "Analyzing Differences",
-  "PO Language Requirement": "Language Requirement",
-  "PO Phys Ed Requirement": "PE Requirement",
+    'PO Area 1 Requirement': 'Area 1',
+    'PO Area 2 Requirement': 'Area 2',
+    'PO Area 3 Requirement': 'Area 3',
+    'PO Area 4 Requirement': 'Area 4',
+    'PO Area 5 Requirement': 'Area 5',
+    'PO Area 6 Requirement': 'Area 6',
+    'PO Writing Intensive Req': 'Writing Intensive',
+    'PO Speaking Intensive': 'Speaking Intensive',
+    'PO Analyzing Differences': 'Analyzing Differences',
+    'PO Language Requirement': 'Language Requirement',
+    'PO Phys Ed Requirement': 'PE Requirement',
 };
-
-const [showRequirements, setShowRequirements] = useState(false);
-
-
 
 interface PaginationInfo {
     currentPage: number;
@@ -101,8 +99,6 @@ interface SearchParams {
     searchType: SearchType;
     requirements?: string;
 }
-
-
 
 const CourseSearchComponent = () => {
     const router = useRouter();
@@ -133,9 +129,11 @@ const CourseSearchComponent = () => {
         };
     });
 
-    const [selectedRequirements, setSelectedRequirements] = useState<Set<string>>(
-  () => new Set(searchParams.get("requirements")?.split(",") ?? [])
-);
+    const [selectedRequirements, setSelectedRequirements] = useState<
+        Set<string>
+    >(() => new Set(searchParams.get('requirements')?.split(',') ?? []));
+
+    const [showRequirements, setShowRequirements] = useState(false);
 
     const [results, setResults] = useState<Course[]>([]);
     const [loading, setLoading] = useState(false);
@@ -174,11 +172,11 @@ const CourseSearchComponent = () => {
             const activeSchools = Object.entries(selectedSchools)
                 .filter(([_, isSelected]) => isSelected)
                 .map(([school]) => school);
-            
+
             const activeReqs = Array.from(selectedRequirements);
-                activeReqs.length
-                ? params.set("requirements", activeReqs.join(","))
-                : params.delete("requirements");
+            activeReqs.length
+                ? params.set('requirements', activeReqs.join(','))
+                : params.delete('requirements');
 
             if (activeReqs.length > 0) {
                 params.set('requirements', activeReqs.join(','));
@@ -196,8 +194,6 @@ const CourseSearchComponent = () => {
             const currentReqParam = searchParams.get('requirements') || '';
             const newReqParam = activeReqs.join(',');
 
-            
-
             // Reset to page 1 when search changes
             const currentSearchParam = searchParams.get('search') || '';
             const currentSchoolsParam = searchParams.get('schools') || '';
@@ -206,7 +202,7 @@ const CourseSearchComponent = () => {
             if (
                 searchTerm !== currentSearchParam ||
                 newSchoolsParam !== currentSchoolsParam ||
-                newReqParam !== currentReqParam    
+                newReqParam !== currentReqParam
             ) {
                 params.set('page', '1');
             }
@@ -223,7 +219,13 @@ const CourseSearchComponent = () => {
                 clearTimeout(urlSyncTimeoutRef.current);
             }
         };
-    }, [searchTerm, selectedSchools, selectedRequirements, searchParams, router]);
+    }, [
+        searchTerm,
+        selectedSchools,
+        selectedRequirements,
+        searchParams,
+        router,
+    ]);
 
     const fetchInstructors = useCallback(async (ids: number[]) => {
         try {
@@ -534,65 +536,71 @@ const CourseSearchComponent = () => {
                         </div>
                     </div>
                     <div className="mb-4">
-  <div
-    className="flex items-center justify-between cursor-pointer select-none"
-    onClick={() => setShowRequirements(prev => !prev)}
-  >
-    <label className="block text-sm font-medium text-gray-700 mb-2">
-      Graduation Requirements
-    </label>
+                        <div
+                            className="flex items-center gap-2 cursor-pointer select-none"
+                            onClick={() => setShowRequirements((prev) => !prev)}
+                        >
+                            {/* Triangle icon */}
+                            <span className="text-gray-600 text-sm">
+                                {showRequirements ? '▲' : '▼'}
+                            </span>
 
-    <span className="text-gray-600 text-sm">
-      {showRequirements ? "▲" : "▼"}
-    </span>
-  </div>
+                            {/* Label + hint */}
+                            <span className="text-sm font-medium text-gray-700">
+                                Filter by Graduation Requirements
+                            </span>
+                        </div>
 
-  {/* Collapsible content */}
-  {showRequirements && (
-    <div className="mt-2">
+                        {showRequirements && (
+                            <div className="mt-3">
+                                <div className="flex flex-wrap gap-2">
+                                    {requirementOptions.map((req) => {
+                                        const isSelected =
+                                            selectedRequirements.has(req);
+                                        return (
+                                            <button
+                                                key={req}
+                                                type="button"
+                                                onClick={() =>
+                                                    setSelectedRequirements(
+                                                        (prev) => {
+                                                            const next =
+                                                                new Set(prev);
+                                                            next.has(req)
+                                                                ? next.delete(
+                                                                      req
+                                                                  )
+                                                                : next.add(req);
+                                                            return next;
+                                                        }
+                                                    )
+                                                }
+                                                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                                                    isSelected
+                                                        ? 'bg-blue-100 text-blue-800 border-2 border-blue-300 shadow-md'
+                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300 border-2 border-transparent'
+                                                }`}
+                                            >
+                                                {requirementShortNames[req]}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
 
-      <div className="flex flex-wrap gap-2">
-        {requirementOptions.map((req) => {
-          const isSelected = selectedRequirements.has(req);
-          return (
-            <button
-              key={req}
-              type="button"
-              onClick={() =>
-                setSelectedRequirements(prev => {
-                  const next = new Set(prev);
-                  next.has(req) ? next.delete(req) : next.add(req);
-                  return next;
-                })
-              }
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                isSelected
-                  ? "bg-blue-100 text-blue-800 border-2 border-blue-300 shadow-md"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300 border-2 border-transparent"
-              }`}
-            >
-              {requirementShortNames[req]}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* warning */}
-      {selectedRequirements.size > 0 && (
-        <div className="mt-4 p-3 rounded-md bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800">
-          <p className="text-sm">
-            Some courses may be missing graduation requirement information.  
-            Results may not be fully accurate.
-          </p>
-        </div>
-      )}
-
-    </div>
-  )}
-                           
+                                {selectedRequirements.size > 0 && (
+                                    <div className="mt-4 p-3 rounded-md bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800">
+                                        <p className="text-sm">
+                                            Some courses may be missing
+                                            graduation requirement information.
+                                            Results may not be fully
+                                            representative of all classes.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
-
 
                 {error && (
                     <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded">
