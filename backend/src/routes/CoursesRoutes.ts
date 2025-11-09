@@ -282,29 +282,28 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
         const filters: any[] = [];
 
         if (schoolList.length > 0) {
-            filters.push(
-                {
-                    compound: {
-                        should: schoolList.map((school) => ({
-                            wildcard: {
-                                query: `*${school}`,
-                                path: 'code',
-                                allowAnalyzedField: true,
-                            },
-                        })),
-                        minimumShouldMatch: 1,
-                    },
-                });
+            filters.push({
+                compound: {
+                    should: schoolList.map((school) => ({
+                        wildcard: {
+                            query: `*${school}`,
+                            path: 'code',
+                            allowAnalyzedField: true,
+                        },
+                    })),
+                    minimumShouldMatch: 1,
+                },
+            });
         }
 
-       if (requirements.length > 0) {
+        if (requirements.length > 0) {
             filters.push({
                 compound: {
                     should: requirements.map((req) => ({
                         queryString: {
                             defaultPath: 'requirement_names',
-                            query: `"${req}"` 
-                        }
+                            query: `"${req}"`,
+                        },
                     })),
                     minimumShouldMatch: 1,
                 },
@@ -316,7 +315,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
         }
 
         // Get fuzzy matches using aggregation
-       
+
         const fuzzyPipeline: any[] = [
             searchStage,
             {
