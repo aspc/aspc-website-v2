@@ -174,9 +174,6 @@ const CourseSearchComponent = () => {
                 .map(([school]) => school);
 
             const activeReqs = Array.from(selectedRequirements);
-            activeReqs.length
-                ? params.set('requirements', activeReqs.join(','))
-                : params.delete('requirements');
 
             if (activeReqs.length > 0) {
                 params.set('requirements', activeReqs.join(','));
@@ -769,12 +766,14 @@ const CourseSearchComponent = () => {
                             )}
                         </>
                     ) : (
-                        !loading &&
-                        searchTerm && (
-                            <div className="text-center py-8 text-gray-500">
-                                No courses found matching your search criteria.
-                            </div>
-                        )
+                        <>
+                            {!loading && searchTerm && (
+                                <div className="text-center py-8 text-gray-500">
+                                    No courses found matching your search
+                                    criteria.
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
