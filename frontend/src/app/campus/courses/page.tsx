@@ -131,7 +131,10 @@ const CourseSearchComponent = () => {
 
     const [selectedRequirements, setSelectedRequirements] = useState<
         Set<string>
-    >(() => new Set(searchParams.get('requirements')?.split(',') ?? []));
+    >(() => {
+        const reqs = searchParams.get('requirements');
+        return new Set(reqs ? reqs.split(',').filter(Boolean) : []);
+    });
 
     const [showRequirements, setShowRequirements] = useState(false);
 
@@ -537,12 +540,10 @@ const CourseSearchComponent = () => {
                             className="flex items-center gap-2 cursor-pointer select-none"
                             onClick={() => setShowRequirements((prev) => !prev)}
                         >
-                            {/* Triangle icon */}
                             <span className="text-gray-600 text-sm">
                                 {showRequirements ? '▲' : '▼'}
                             </span>
 
-                            {/* Label + hint */}
                             <span className="text-sm font-medium text-gray-700">
                                 Filter by Graduation Requirements
                             </span>
@@ -563,11 +564,13 @@ const CourseSearchComponent = () => {
                                                         (prev) => {
                                                             const next =
                                                                 new Set(prev);
-                                                            next.has(req)
-                                                                ? next.delete(
-                                                                      req
-                                                                  )
-                                                                : next.add(req);
+                                                            if (next.has(req)) {
+                                                                next.delete(
+                                                                    req
+                                                                );
+                                                            } else {
+                                                                next.add(req);
+                                                            }
                                                             return next;
                                                         }
                                                     )
