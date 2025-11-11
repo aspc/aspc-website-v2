@@ -597,6 +597,11 @@ router.post(
                 { $inc: { review_count: 1 } }
             );
 
+            await Instructors.updateOne(
+                { id: Number(instructorId) },   
+                { $inc: { numReviews: 1 } }
+            );
+
             res.status(201).json({ message: 'Review saved successfully' });
         } catch (error) {
             res.status(400).json({ message: 'Error creating review' });
@@ -679,6 +684,13 @@ router.delete(
                 { id: review.course_id },
                 { $inc: { reviews_count: -1 } }
             );
+
+            if (review.instructor_id) {
+                await Instructors.findOneAndUpdate(
+                    { id: review.instructor_id },
+                    { $inc: { numReviews: -1 } }
+                );
+            }
 
             res.status(200).json({ message: 'Review deleted' });
         } catch (error) {
