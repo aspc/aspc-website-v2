@@ -226,7 +226,9 @@ const InstructorSearch = () => {
                                                     href={`/campus/instructors/${instructor.id}`}
                                                     className={`${schoolStyle.buttonColor} px-4 py-2 rounded-md font-medium hover:opacity-90 transition-opacity text-center`}
                                                 >
-                                                    View Reviews
+                                                    {instructor.numReviews > 0
+                                                        ? `View ${instructor.numReviews} Course Review${instructor.numReviews === 1 ? '' : 's'}`
+                                                        : 'Be the first to leave a review'}
                                                 </a>
                                             </div>
                                         </div>
