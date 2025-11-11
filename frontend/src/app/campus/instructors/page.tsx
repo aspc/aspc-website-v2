@@ -51,6 +51,41 @@ const InstructorSearch = () => {
     const [error, setError] = useState<string | null>(null);
     const cancelTokenSourceRef = useRef<CancelTokenSource | null>(null);
 
+    const [selectedSchools, setSelectedSchools] = useState<
+        Record<SchoolKey, boolean>
+    >({
+        PO: true,
+        CM: true,
+        HM: true,
+        SC: true,
+        PZ: true,
+    });
+
+    const handleSchoolToggle = (school: SchoolKey) => {
+        setSelectedSchools((prev) => {
+            const allSelected = Object.values(prev).every(Boolean);
+            const newState = { ...prev };
+
+            if (allSelected) {
+                for (const key in newState) {
+                    newState[key as SchoolKey] = false;
+                }
+                newState[school] = true;
+                return newState;
+            }
+
+            newState[school] = !newState[school];
+
+            if (!Object.values(newState).some(Boolean)) {
+                for (const key in newState) {
+                    newState[key as SchoolKey] = true;
+                }
+            }
+
+            return newState;
+        });
+    };
+
     const createCancelTokenSource = () => {
         if (cancelTokenSourceRef.current) {
             cancelTokenSourceRef.current.cancel(
@@ -126,8 +161,18 @@ const InstructorSearch = () => {
     }, [searchTerm, debouncedSearch]);
 
     const filteredResults = useMemo(() => {
-        return [...results].sort((a, b) => a.name.localeCompare(b.name));
-    }, [results]);
+        const activeSchools = Object.entries(selectedSchools)
+            .filter(([, active]) => active)
+            .map(([school]) => school);
+
+        return results
+            .filter(
+                (instructor) =>
+                    !instructor.school ||
+                    activeSchools.includes(instructor.school)
+            )
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [results, selectedSchools]);
 
     // Helper function to get school styling or default to Pomona if school is missing
     const getSchoolStyling = (school?: string) => {
@@ -162,6 +207,32 @@ const InstructorSearch = () => {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 autoComplete="off"
                             />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Schools:
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {(Object.keys(selectedSchools) as SchoolKey[]).map(
+                                (school) => (
+                                    <button
+                                        key={school}
+                                        type="button"
+                                        onClick={() =>
+                                            handleSchoolToggle(school)
+                                        }
+                                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                                            selectedSchools[school]
+                                                ? `${schoolData[school].buttonColor} border-2 border-white shadow-md`
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 border-2 border-transparent'
+                                        }`}
+                                    >
+                                        {schoolData[school].name}
+                                    </button>
+                                )
+                            )}
                         </div>
                     </div>
                 </div>
