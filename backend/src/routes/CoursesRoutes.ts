@@ -598,7 +598,7 @@ router.post(
             );
 
             await Instructors.updateOne(
-                { id: Number(instructorId) },   
+                { id: Number(instructorId) },
                 { $inc: { numReviews: 1 } }
             );
 
