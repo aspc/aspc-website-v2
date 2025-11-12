@@ -47,6 +47,34 @@ const schoolData = {
     },
 };
 
+const requirementOptions = [
+    'PO Area 1 Requirement',
+    'PO Area 2 Requirement',
+    'PO Area 3 Requirement',
+    'PO Area 4 Requirement',
+    'PO Area 5 Requirement',
+    'PO Area 6 Requirement',
+    'PO Writing Intensive Req',
+    'PO Speaking Intensive',
+    'PO Analyzing Differences',
+    'PO Language Requirement',
+    'PO Phys Ed Requirement',
+];
+
+const requirementShortNames: Record<string, string> = {
+    'PO Area 1 Requirement': 'Area 1',
+    'PO Area 2 Requirement': 'Area 2',
+    'PO Area 3 Requirement': 'Area 3',
+    'PO Area 4 Requirement': 'Area 4',
+    'PO Area 5 Requirement': 'Area 5',
+    'PO Area 6 Requirement': 'Area 6',
+    'PO Writing Intensive Req': 'Writing Intensive',
+    'PO Speaking Intensive': 'Speaking Intensive',
+    'PO Analyzing Differences': 'Analyzing Differences',
+    'PO Language Requirement': 'Language Requirement',
+    'PO Phys Ed Requirement': 'PE Requirement',
+};
+
 interface PaginationInfo {
     currentPage: number;
     totalPages: number;
@@ -69,6 +97,7 @@ interface SearchParams {
     limit: number;
     search: string;
     searchType: SearchType;
+    requirements?: string;
 }
 
 const CourseSearchComponent = () => {
@@ -99,6 +128,15 @@ const CourseSearchComponent = () => {
             PZ: true,
         };
     });
+
+    const [selectedRequirements, setSelectedRequirements] = useState<
+        Set<string>
+    >(() => {
+        const reqs = searchParams.get('requirements');
+        return new Set(reqs ? reqs.split(',').filter(Boolean) : []);
+    });
+
+    const [showRequirements, setShowRequirements] = useState(false);
 
     const [results, setResults] = useState<Course[]>([]);
     const [loading, setLoading] = useState(false);
@@ -138,12 +176,23 @@ const CourseSearchComponent = () => {
                 .filter(([_, isSelected]) => isSelected)
                 .map(([school]) => school);
 
+            const activeReqs = Array.from(selectedRequirements);
+
+            if (activeReqs.length > 0) {
+                params.set('requirements', activeReqs.join(','));
+            } else {
+                params.delete('requirements');
+            }
+
             const allSelected = activeSchools.length === 5;
             if (!allSelected && activeSchools.length > 0) {
                 params.set('schools', activeSchools.join(','));
             } else {
                 params.delete('schools');
             }
+
+            const currentReqParam = searchParams.get('requirements') || '';
+            const newReqParam = activeReqs.join(',');
 
             // Reset to page 1 when search changes
             const currentSearchParam = searchParams.get('search') || '';
@@ -152,7 +201,8 @@ const CourseSearchComponent = () => {
 
             if (
                 searchTerm !== currentSearchParam ||
-                newSchoolsParam !== currentSchoolsParam
+                newSchoolsParam !== currentSchoolsParam ||
+                newReqParam !== currentReqParam
             ) {
                 params.set('page', '1');
             }
@@ -169,7 +219,13 @@ const CourseSearchComponent = () => {
                 clearTimeout(urlSyncTimeoutRef.current);
             }
         };
-    }, [searchTerm, selectedSchools, searchParams, router]);
+    }, [
+        searchTerm,
+        selectedSchools,
+        selectedRequirements,
+        searchParams,
+        router,
+    ]);
 
     const fetchInstructors = useCallback(async (ids: number[]) => {
         try {
@@ -237,6 +293,8 @@ const CourseSearchComponent = () => {
                     .filter(([_, isSelected]) => isSelected)
                     .map(([school]) => school);
 
+                const activeReqs = Array.from(selectedRequirements);
+
                 // Build search parameters
                 const searchParams: SearchParams = {
                     schools: activeSchools.join(','),
@@ -244,6 +302,7 @@ const CourseSearchComponent = () => {
                     limit: itemLimit,
                     search: searchTerm.replace(/\\/g, '').trim(),
                     searchType: searchType,
+                    requirements: activeReqs.join(','),
                 };
 
                 const response = await axios.get<CoursesResponse>(
@@ -298,7 +357,7 @@ const CourseSearchComponent = () => {
                 setLoading(false);
             }
         },
-        [fetchInstructors]
+        [fetchInstructors, selectedRequirements]
     );
 
     const debouncedSearch = useMemo(
@@ -323,6 +382,7 @@ const CourseSearchComponent = () => {
         searchTerm,
         searchType,
         selectedSchools,
+        selectedRequirements,
         currentPage,
         limit,
         debouncedSearch,
@@ -474,6 +534,71 @@ const CourseSearchComponent = () => {
                                 )
                             )}
                         </div>
+                    </div>
+                    <div className="mb-4">
+                        <div
+                            className="flex items-center gap-2 cursor-pointer select-none"
+                            onClick={() => setShowRequirements((prev) => !prev)}
+                        >
+                            <span className="text-gray-600 text-sm">
+                                {showRequirements ? '▲' : '▼'}
+                            </span>
+
+                            <span className="text-sm font-medium text-gray-700">
+                                Filter by Graduation Requirements
+                            </span>
+                        </div>
+
+                        {showRequirements && (
+                            <div className="mt-3">
+                                <div className="flex flex-wrap gap-2">
+                                    {requirementOptions.map((req) => {
+                                        const isSelected =
+                                            selectedRequirements.has(req);
+                                        return (
+                                            <button
+                                                key={req}
+                                                type="button"
+                                                onClick={() =>
+                                                    setSelectedRequirements(
+                                                        (prev) => {
+                                                            const next =
+                                                                new Set(prev);
+                                                            if (next.has(req)) {
+                                                                next.delete(
+                                                                    req
+                                                                );
+                                                            } else {
+                                                                next.add(req);
+                                                            }
+                                                            return next;
+                                                        }
+                                                    )
+                                                }
+                                                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                                                    isSelected
+                                                        ? 'bg-blue-100 text-blue-800 border-2 border-blue-300 shadow-md'
+                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300 border-2 border-transparent'
+                                                }`}
+                                            >
+                                                {requirementShortNames[req]}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {selectedRequirements.size > 0 && (
+                                    <div className="mt-4 p-3 rounded-md bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800">
+                                        <p className="text-sm">
+                                            Some courses may be missing
+                                            graduation requirement information.
+                                            Results may not be fully
+                                            representative of all classes.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -644,12 +769,14 @@ const CourseSearchComponent = () => {
                             )}
                         </>
                     ) : (
-                        !loading &&
-                        searchTerm && (
-                            <div className="text-center py-8 text-gray-500">
-                                No courses found matching your search criteria.
-                            </div>
-                        )
+                        <>
+                            {!loading && searchTerm && (
+                                <div className="text-center py-8 text-gray-500">
+                                    No courses found matching your search
+                                    criteria.
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

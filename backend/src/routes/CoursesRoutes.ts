@@ -68,6 +68,10 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             page = 1,
         } = req.query;
 
+        const requirements = req.query.requirements
+            ? (req.query.requirements as string).split(',').map((r) => r.trim())
+            : [];
+
         const numericLimit = parseInt(limit as string);
         const numericPage = parseInt(page as string);
         const skip = (numericPage - 1) * numericLimit;
@@ -109,7 +113,13 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
 
         // Step 1: Get exact prefix matches (starts with, case-insensitive)
         // For code searches, also use normalized matching to handle abbreviations
+
         const exactMatchQuery: any = {};
+
+        if (requirements.length > 0) {
+            exactMatchQuery.requirement_names = { $in: requirements };
+        }
+
         const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const normalizedCodeRegex = createNormalizedCodeRegex(searchTerm);
 
@@ -196,6 +206,10 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             };
         }
 
+        if (requirements.length > 0) {
+            fuzzyQuery.requirement_names = { $in: requirements };
+        }
+
         // Build fuzzy search criteria using Atlas Search
         const searchCriteria: any[] = [];
 
@@ -264,24 +278,44 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             },
         };
 
+        // Build filter array for compound query
+        const filters: any[] = [];
+
         if (schoolList.length > 0) {
-            searchStage.$search.compound.filter = [
-                {
-                    compound: {
-                        should: schoolList.map((school) => ({
-                            wildcard: {
-                                query: `*${school}`,
-                                path: 'code',
-                                allowAnalyzedField: true,
-                            },
-                        })),
-                        minimumShouldMatch: 1,
-                    },
+            filters.push({
+                compound: {
+                    should: schoolList.map((school) => ({
+                        wildcard: {
+                            query: `*${school}`,
+                            path: 'code',
+                            allowAnalyzedField: true,
+                        },
+                    })),
+                    minimumShouldMatch: 1,
                 },
-            ];
+            });
+        }
+
+        if (requirements.length > 0) {
+            filters.push({
+                compound: {
+                    should: requirements.map((req) => ({
+                        queryString: {
+                            defaultPath: 'requirement_names',
+                            query: `"${req}"`,
+                        },
+                    })),
+                    minimumShouldMatch: 1,
+                },
+            });
+        }
+
+        if (filters.length > 0) {
+            searchStage.$search.compound.filter = filters;
         }
 
         // Get fuzzy matches using aggregation
+
         const fuzzyPipeline: any[] = [
             searchStage,
             {
