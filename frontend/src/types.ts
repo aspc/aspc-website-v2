@@ -168,6 +168,7 @@ export type Instructor = {
         courseCode: string;
         courseName: string;
     }>;
+    numReviews: number;
 };
 
 export interface InstructorWithReviews {

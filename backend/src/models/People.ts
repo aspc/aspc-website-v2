@@ -109,6 +109,7 @@ interface IInstructors extends Document {
         courseCode: string;
         courseName: string;
     }>;
+    numReviews: number;
 }
 
 const InstructorsSchema = new Schema<IInstructors>({
@@ -140,6 +141,11 @@ const InstructorsSchema = new Schema<IInstructors>({
             courseName: String,
         },
     ],
+    numReviews: {
+        type: Number,
+        default: 0,
+        index: true,
+    },
 });
 
 const Instructors = mongoose.model<IInstructors>(
