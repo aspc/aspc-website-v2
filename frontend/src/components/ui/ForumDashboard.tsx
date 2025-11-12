@@ -437,7 +437,7 @@ const ForumDashboard = () => {
                                 />
                             </div>
 
-                            {/* Popup body */}
+                            {/* List of events */}
                             <div className="flex-1 flex flex-col overflow-y-auto">
                                 {isEngageLoading ? (
                                     <div className="flex-1 flex items-center justify-center">
