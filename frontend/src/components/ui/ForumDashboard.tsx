@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Loading from '@/components/Loading';
 import { StaffMember, Event, ForumEvent } from '@/types';
 import { FormattedReviewText, formatReviewText } from '@/utils/textFormatting';
+import { useMemo } from 'react';
 
 const ForumDashboard = () => {
     const { loading } = useAuth();
@@ -17,6 +18,7 @@ const ForumDashboard = () => {
     const [isEngagePopupOpen, setIsEngagePopupOpen] = useState(false);
     const [isEngageLoading, setIsEngageLoading] = useState(false);
     const [engageEvents, setEngageEvents] = useState<Event[]>([]);
+    const [searchTerm, setSearchTerm] = useState<string>('');
 
     // Form state
     const [title, setTitle] = useState<string>('');
@@ -134,6 +136,18 @@ const ForumDashboard = () => {
             fetchEngageEvents();
         }
     }, [isEngagePopupOpen]);
+
+    // Filter Engage events based on search term
+    const filteredEngageEvents = useMemo(() => {
+        const term = searchTerm.toLowerCase();
+        return engageEvents.filter(
+            (event) =>
+                event.name.toLowerCase().includes(term) ||
+                (event.location &&
+                    event.location.toLowerCase().includes(term)) ||
+                (event.host && event.host.toLowerCase().includes(term))
+        );
+    }, [searchTerm, engageEvents]);
 
     const resetForm = () => {
         setTitle('');
@@ -401,22 +415,37 @@ const ForumDashboard = () => {
                                     Import from Engage
                                 </h2>
                                 <button
-                                    onClick={() => setIsEngagePopupOpen(false)}
+                                    onClick={() => {
+                                        setIsEngagePopupOpen(false);
+                                        setSearchTerm('');
+                                    }}
                                     className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
                                 >
                                     ×
                                 </button>
                             </div>
 
-                            {/* List of Events */}
+                            <div className="mb-4">
+                                <input
+                                    type="text"
+                                    placeholder="Search events by name, location, or host"
+                                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                                    value={searchTerm}
+                                    onChange={(e) =>
+                                        setSearchTerm(e.target.value)
+                                    }
+                                />
+                            </div>
+
+                            {/* List of events */}
                             <div className="flex-1 flex flex-col overflow-y-auto">
                                 {isEngageLoading ? (
                                     <div className="flex-1 flex items-center justify-center">
                                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
                                     </div>
-                                ) : engageEvents.length > 0 ? (
+                                ) : filteredEngageEvents.length > 0 ? (
                                     <ul className="space-y-4">
-                                        {engageEvents.map(
+                                        {filteredEngageEvents.map(
                                             (event: Event, index) => (
                                                 <li
                                                     key={index}
@@ -485,6 +514,7 @@ const ForumDashboard = () => {
                                                                 setLocation(
                                                                     event.location
                                                                 );
+
                                                                 setEventDate(
                                                                     toDatetimeLocal(
                                                                         new Date(
@@ -492,8 +522,13 @@ const ForumDashboard = () => {
                                                                         ).toISOString()
                                                                     )
                                                                 );
+
                                                                 setIsEngagePopupOpen(
                                                                     false
+                                                                );
+
+                                                                setSearchTerm(
+                                                                    ''
                                                                 );
                                                             }}
                                                             className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 text-sm"
@@ -517,7 +552,10 @@ const ForumDashboard = () => {
                             {/* Footer */}
                             <div className="flex justify-end mt-4">
                                 <button
-                                    onClick={() => setIsEngagePopupOpen(false)}
+                                    onClick={() => {
+                                        setIsEngagePopupOpen(false);
+                                        setSearchTerm('');
+                                    }}
                                     className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
                                 >
                                     Close
