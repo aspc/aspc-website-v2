@@ -527,12 +527,26 @@ const InstructorPage = (): JSX.Element => {
                                                 <span className="text-gray-600 mr-2">
                                                     Course:
                                                 </span>
-                                                <a
-                                                    href={`../courses/${review.course_id}`}
-                                                    className="text-blue-500 hover:underline"
-                                                >
-                                                    {review.course_id}
-                                                </a>
+                                                {(() => {
+                                                    const course =
+                                                        instructorCourses.find(
+                                                            (c) =>
+                                                                c.courseId ===
+                                                                review.course_id
+                                                        );
+                                                    return course ? (
+                                                        <a
+                                                            href={`../courses/${course.courseId}`}
+                                                            className="text-blue-500 hover:underline"
+                                                        >
+                                                            {course.courseName}
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-gray-400">
+                                                            Unknown Course
+                                                        </span>
+                                                    );
+                                                })()}
                                             </div>
 
                                             {review.comments && (
