@@ -232,6 +232,53 @@ const Header = () => {
                                 )}
                             </div>
 
+                            {/* Reviews Section */}
+                            <div className="relative dropdown-container">
+                                <button
+                                    className="flex items-center space-x-1 hover:text-blue-500"
+                                    onClick={() =>
+                                        handleDropdownClick('Reviews')
+                                    }
+                                >
+                                    <span>Reviews</span>
+                                </button>
+
+                                {/* Reviews Dropdown */}
+                                {openDropdown === 'Reviews' && (
+                                    <div className="absolute top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                                        <Link
+                                            href="/campus/courses"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100"
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
+                                        >
+                                            Course Reviews
+                                        </Link>
+
+                                        <Link
+                                            href="/campus/instructors"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100"
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
+                                        >
+                                            Instructor Reviews
+                                        </Link>
+
+                                        <Link
+                                            href="/campus/housing"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 last:border-b-0"
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
+                                        >
+                                            Housing Reviews
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Resources Section */}
                             <div className="relative dropdown-container">
                                 <button
@@ -247,36 +294,6 @@ const Header = () => {
                                 {openDropdown === 'Resources' && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         {renderSectionLinks('resources')}
-
-                                        <Link
-                                            href="/campus/courses"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                            onClick={() =>
-                                                setOpenDropdown(null)
-                                            }
-                                        >
-                                            Course Reviews
-                                        </Link>
-
-                                        <Link
-                                            href="/campus/housing"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                            onClick={() =>
-                                                setOpenDropdown(null)
-                                            }
-                                        >
-                                            Housing Reviews
-                                        </Link>
-
-                                        <Link
-                                            href="/campus/instructors"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                            onClick={() =>
-                                                setOpenDropdown(null)
-                                            }
-                                        >
-                                            Instructor Reviews
-                                        </Link>
                                     </div>
                                 )}
                             </div>
@@ -487,6 +504,50 @@ const Header = () => {
                                 )}
                             </div>
 
+                            {/* Reviews dropdown */}
+                            <div className="relative dropdown-container">
+                                <button
+                                    className="text-lg flex items-center space-x-1"
+                                    onClick={() =>
+                                        handleDropdownClick('ReviewsMobile')
+                                    }
+                                >
+                                    <span>Reviews</span>
+                                </button>
+
+                                {openDropdown === 'ReviewsMobile' && (
+                                    <div className="ml-2 mt-2">
+                                        <Link
+                                            href="/campus/courses"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Course Reviews
+                                        </Link>
+                                        <Link
+                                            href="/campus/instructors"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Instructor Reviews
+                                        </Link>
+                                        <Link
+                                            href="/campus/housing"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Housing Reviews
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Resources dropdown */}
                             <div className="relative dropdown-container">
                                 <button
@@ -501,34 +562,6 @@ const Header = () => {
                                 {openDropdown === 'ResourcesMobile' && (
                                     <div className="ml-2 mt-2">
                                         {renderSectionLinks('resources', true)}
-
-                                        <Link
-                                            href="/campus/courses"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                            onClick={() =>
-                                                setIsMobileMenuOpen(false)
-                                            }
-                                        >
-                                            Course Reviews
-                                        </Link>
-                                        <Link
-                                            href="/campus/housing"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                            onClick={() =>
-                                                setIsMobileMenuOpen(false)
-                                            }
-                                        >
-                                            Housing Reviews
-                                        </Link>
-                                        <Link
-                                            href="/campus/instructors"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                            onClick={() =>
-                                                setIsMobileMenuOpen(false)
-                                            }
-                                        >
-                                            Instructor Reviews
-                                        </Link>
                                     </div>
                                 )}
                             </div>
