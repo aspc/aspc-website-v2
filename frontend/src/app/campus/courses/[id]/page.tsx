@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Loading from '@/components/Loading';
 import { CourseWithReviews, Course, CourseReview, Instructor } from '@/types';
@@ -18,6 +18,16 @@ const CoursePage = () => {
     const [courseReviews, setCourseReviews] =
         useState<CourseWithReviews | null>(null);
     const [instructors, setInstructors] = useState<Instructor[]>([]);
+    // Map instructor id -> instructor object for O(1) lookups
+    const instructorById = useMemo(() => {
+        const map: Record<number, Instructor> = {};
+        for (const inst of instructors || []) {
+            // Make sure keys are numeric; coerce if your ids sometimes come as strings
+            map[Number(inst.id)] = inst;
+        }
+        return map;
+    }, [instructors]);
+
     const [isCreatingNew, setIsCreatingNew] = useState(false);
     const [selectedReview, setSelectedReview] = useState<CourseReview | null>(
         null
@@ -543,130 +553,163 @@ const CoursePage = () => {
                                     Student Reviews
                                 </h2>
                                 {courseReviews.reviews.length > 0 ? (
-                                    courseReviews.reviews.map((review) => (
-                                        <div
-                                            key={review._id}
-                                            className="border-b pb-4 bg-white p-4 rounded-lg shadow-sm"
-                                        >
-                                            <div className="flex justify-between mb-2">
-                                                <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                                    <span className="text-m text-gray-600 mr-2">
-                                                        Overall Rating:
-                                                    </span>
-                                                    <span>
-                                                        <StarRating
-                                                            rating={Math.round(
-                                                                review.overall_rating ||
-                                                                    0
-                                                            )}
-                                                        />
-                                                    </span>
-                                                    <span className="ml-2">
-                                                        {review.overall_rating ||
-                                                            ''}
-                                                    </span>
+                                    courseReviews.reviews.map((review) => {
+                                        const inst =
+                                            instructorById[
+                                                Number(review.instructor_id)
+                                            ];
+
+                                        return (
+                                            <div
+                                                key={review._id}
+                                                className="border-b pb-4 bg-white p-4 rounded-lg shadow-sm"
+                                            >
+                                                <div className="flex justify-between mb-2">
+                                                    <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                                                        <span className="text-m text-gray-600 mr-2">
+                                                            Overall Rating:
+                                                        </span>
+                                                        <span>
+                                                            <StarRating
+                                                                rating={Math.round(
+                                                                    review.overall_rating ||
+                                                                        0
+                                                                )}
+                                                            />
+                                                        </span>
+                                                        <span className="ml-2">
+                                                            {review.overall_rating ||
+                                                                ''}
+                                                        </span>
+                                                    </div>
+
+                                                    {user.email ==
+                                                        review.user_email && (
+                                                        <div className="flex p-2 gap-4">
+                                                            <button
+                                                                className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
+                                                                onClick={() => {
+                                                                    setSelectedReview(
+                                                                        review
+                                                                    );
+                                                                    scrollToReviewForm();
+                                                                }}
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                            <button
+                                                                className="bg-red-500 text-white text-m px-4 rounded-md hover:bg-red-600"
+                                                                onClick={() => {
+                                                                    handleDelete(
+                                                                        review.id
+                                                                    );
+                                                                }}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
 
-                                                {user.email ==
-                                                    review.user_email && (
-                                                    <div className="flex p-2 gap-4">
-                                                        <button
-                                                            className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
-                                                            onClick={() => {
-                                                                setSelectedReview(
-                                                                    review
-                                                                );
-                                                                scrollToReviewForm();
-                                                            }}
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                        <button
-                                                            className="bg-red-500 text-white text-m px-4 rounded-md hover:bg-red-600"
-                                                            onClick={() => {
-                                                                handleDelete(
-                                                                    review.id
-                                                                );
-                                                            }}
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-2 items-center">
+                                                    {/* Instructor */}
+                                                    {inst ? (
+                                                        <p className="text-gray-700 text-sm flex items-center">
+                                                            <span className="font-medium mr-1">
+                                                                Instructor:
+                                                            </span>
+                                                            <a
+                                                                href={`/campus/instructors/${inst.id}`}
+                                                                className="text-blue-600 hover:underline"
+                                                            >
+                                                                {inst.name}
+                                                            </a>
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-gray-500 text-sm flex items-center">
+                                                            <span className="font-medium mr-1">
+                                                                Instructor ID:
+                                                            </span>
+                                                            {review.instructor_id ??
+                                                                'N/A'}
+                                                        </p>
+                                                    )}
 
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
-                                                {review.challenge_rating !==
-                                                    undefined && (
-                                                    <div className="text-sm flex items-center mb-2">
-                                                        <span className="text-gray-600 mr-2">
-                                                            Difficulty:
-                                                        </span>
-                                                        <span className="inline">
+                                                    {/* Difficulty */}
+                                                    {review.challenge_rating !==
+                                                        undefined && (
+                                                        <div className="text-sm flex items-center">
+                                                            <span className="text-gray-600 mr-2">
+                                                                Difficulty:
+                                                            </span>
                                                             <StarRating
                                                                 rating={Math.round(
                                                                     review.challenge_rating ||
                                                                         0
                                                                 )}
                                                             />
-                                                        </span>
-                                                    </div>
-                                                )}
-                                                {review.inclusivity_rating && (
-                                                    <div className="text-sm flex items-center mb-1">
-                                                        <span className="text-gray-600 mr-2">
-                                                            Inclusivity:
-                                                        </span>
-                                                        <span className="inline">
+                                                        </div>
+                                                    )}
+
+                                                    {/* Inclusivity */}
+                                                    {review.inclusivity_rating && (
+                                                        <div className="text-sm flex items-center">
+                                                            <span className="text-gray-600 mr-2">
+                                                                Inclusivity:
+                                                            </span>
                                                             <StarRating
                                                                 rating={Math.round(
                                                                     review.inclusivity_rating ||
                                                                         0
                                                                 )}
                                                             />
+                                                        </div>
+                                                    )}
+
+                                                    {/* Work per week */}
+                                                    <div className="text-sm flex items-center">
+                                                        <span className="text-gray-600 mr-2">
+                                                            Work per week:
+                                                        </span>
+                                                        <span>
+                                                            {review.work_per_week
+                                                                ? `${formatWorkPerWeek(review.work_per_week)}`
+                                                                : 'N/A'}
                                                         </span>
                                                     </div>
+                                                </div>
+
+                                                {review.comments && (
+                                                    <div className="mt-2 mb-2">
+                                                        <FormattedReviewText
+                                                            text={
+                                                                review.comments
+                                                            }
+                                                            className="text-gray-800"
+                                                        />
+                                                    </div>
                                                 )}
-                                                <div className="text-sm flex items-center mb-2">
-                                                    <span className="text-gray-600 mr-2">
-                                                        Work per week:
-                                                    </span>
-                                                    <span className="inline">
-                                                        {review.work_per_week
-                                                            ? `${formatWorkPerWeek(review.work_per_week)}`
-                                                            : 'N/A'}
-                                                    </span>
+
+                                                {/* Date written, last updated */}
+                                                <div className="flex flex-wrap gap-4 mt-4">
+                                                    <p className="text-gray-500">
+                                                        Review written{' '}
+                                                        {review.createdAt &&
+                                                            formatDate(
+                                                                review.createdAt
+                                                            )}
+                                                    </p>
+                                                    <p className="text-gray-500">
+                                                        Last updated{' '}
+                                                        {review.updatedAt &&
+                                                            formatDate(
+                                                                review.updatedAt
+                                                            )}
+                                                    </p>
                                                 </div>
                                             </div>
-
-                                            {review.comments && (
-                                                <div className="mt-2 mb-2">
-                                                    <FormattedReviewText
-                                                        text={review.comments}
-                                                        className="text-gray-800"
-                                                    />
-                                                </div>
-                                            )}
-
-                                            {/* Date written, last updated */}
-                                            <div className="flex flex-wrap gap-4 mt-4">
-                                                <p className="text-gray-500">
-                                                    Review written{' '}
-                                                    {review.createdAt &&
-                                                        formatDate(
-                                                            review.createdAt
-                                                        )}
-                                                </p>
-                                                <p className="text-gray-500">
-                                                    Last updated{' '}
-                                                    {review.updatedAt &&
-                                                        formatDate(
-                                                            review.updatedAt
-                                                        )}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 ) : (
                                     <div className="flex flex-col items-center justify-center h-40">
                                         <p className="text-gray-500 text-lg">
