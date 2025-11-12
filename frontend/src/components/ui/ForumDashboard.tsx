@@ -80,7 +80,7 @@ const ForumDashboard = () => {
             if (!selectedEvent) return;
 
             try {
-                setIsEngageLoading(true);
+                setIsLoading(true);
 
                 const response = await fetch(
                     `${process.env.BACKEND_LINK}/api/openforum/${selectedEvent}`,
@@ -103,21 +103,17 @@ const ForumDashboard = () => {
             } catch (error) {
                 console.error('Error fetching event data:', error);
             } finally {
-                setIsEngageLoading(false);
+                setIsLoading(false);
             }
         };
 
         fetchEventData();
     }, [selectedEvent]);
 
-    // Fetch selected event data
+    // Fetch Engage data
     useEffect(() => {
         const fetchEngageEvents = async () => {
-            if (!isEngagePopupOpen) return;
-
             try {
-                setIsLoading(true);
-
                 const response = await fetch(
                     `${process.env.BACKEND_LINK}/api/events`
                 );
@@ -130,11 +126,13 @@ const ForumDashboard = () => {
             } catch (error) {
                 console.error('Error fetching Engage events:', error);
             } finally {
-                setIsLoading(false);
+                setIsEngageLoading(false);
             }
         };
 
-        fetchEngageEvents();
+        if (isEngagePopupOpen) {
+            fetchEngageEvents();
+        }
     }, [isEngagePopupOpen]);
 
     const resetForm = () => {
@@ -361,7 +359,7 @@ const ForumDashboard = () => {
                         <button
                             type="button"
                             onClick={() => {
-                                setIsCreatingNew(true);
+                                setIsEngageLoading(true);
                                 setIsEngagePopupOpen(true);
                             }}
                             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
@@ -396,7 +394,8 @@ const ForumDashboard = () => {
 
                 {isEngagePopupOpen && (
                     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-                        <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                        <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl w-full min-h-[80vh] max-h-[80vh] flex flex-col">
+                            {/* Header */}
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-xl font-bold text-gray-800">
                                     Import from Engage
@@ -409,99 +408,114 @@ const ForumDashboard = () => {
                                 </button>
                             </div>
 
-                            {/* Popup body */}
-                            {isEngageLoading ? (
-                                <p className="text-gray-500 text-center my-8">
-                                    Loading events from Engage...
-                                </p>
-                            ) : engageEvents.length > 0 ? (
-                                <ul className="space-y-4">
-                                    {engageEvents.map((event: Event, index) => (
-                                        <li
-                                            key={index}
-                                            className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50"
-                                        >
-                                            <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                                                {event.name}
-                                            </h3>
-
-                                            <p className="text-sm text-gray-600 mb-1">
-                                                <strong>Date:</strong>{' '}
-                                                {new Date(
-                                                    event.start
-                                                ).toLocaleString()}{' '}
-                                                →{' '}
-                                                {new Date(
-                                                    event.end
-                                                ).toLocaleString()}
-                                            </p>
-
-                                            <p className="text-sm text-gray-600 mb-1">
-                                                <strong>Location:</strong>{' '}
-                                                {event.location || 'N/A'}
-                                            </p>
-
-                                            <p className="text-sm text-gray-600 mb-1">
-                                                <strong>Host:</strong>{' '}
-                                                {event.host || 'Unknown'}
-                                            </p>
-
-                                            <div className="text-sm text-gray-700 mt-2 line-clamp-3">
-                                                <FormattedReviewText
-                                                    text={event.description}
-                                                />
-                                            </div>
-
-                                            <div className="flex justify-between items-center mt-3">
-                                                <a
-                                                    href={event.details_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-blue-500 hover:underline text-sm"
+                            {/* List of Events */}
+                            <div className="flex-1 flex flex-col overflow-y-auto">
+                                {isEngageLoading ? (
+                                    <div className="flex-1 flex items-center justify-center">
+                                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                                    </div>
+                                ) : engageEvents.length > 0 ? (
+                                    <ul className="space-y-4">
+                                        {engageEvents.map(
+                                            (event: Event, index) => (
+                                                <li
+                                                    key={index}
+                                                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50"
                                                 >
-                                                    View on Engage ↗
-                                                </a>
+                                                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                                        {event.name}
+                                                    </h3>
 
-                                                <button
-                                                    onClick={() => {
-                                                        setEngageEventId(
-                                                            event.details_url
-                                                        );
-                                                        setTitle(event.name);
-                                                        setDescription(
-                                                            event.description
-                                                        );
-                                                        setLocation(
-                                                            event.location
-                                                        );
+                                                    <p className="text-sm text-gray-600 mb-1">
+                                                        <strong>Date:</strong>{' '}
+                                                        {new Date(
+                                                            event.start
+                                                        ).toLocaleString()}{' '}
+                                                        →{' '}
+                                                        {new Date(
+                                                            event.end
+                                                        ).toLocaleString()}
+                                                    </p>
 
-                                                        setEventDate(
-                                                            toDatetimeLocal(
-                                                                new Date(
-                                                                    event.start
-                                                                ).toISOString()
-                                                            )
-                                                        );
+                                                    <p className="text-sm text-gray-600 mb-1">
+                                                        <strong>
+                                                            Location:
+                                                        </strong>{' '}
+                                                        {event.location ||
+                                                            'N/A'}
+                                                    </p>
 
-                                                        setIsEngagePopupOpen(
-                                                            false
-                                                        );
-                                                    }}
-                                                    className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 text-sm"
-                                                >
-                                                    Select
-                                                </button>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p className="text-gray-500 text-center my-8">
-                                    No Engage events found.
-                                </p>
-                            )}
+                                                    <p className="text-sm text-gray-600 mb-1">
+                                                        <strong>Host:</strong>{' '}
+                                                        {event.host ||
+                                                            'Unknown'}
+                                                    </p>
 
-                            <div className="flex justify-end mt-6">
+                                                    <div className="text-sm text-gray-700 mt-2 line-clamp-3">
+                                                        <FormattedReviewText
+                                                            text={
+                                                                event.description
+                                                            }
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex justify-between items-center mt-3">
+                                                        <a
+                                                            href={
+                                                                event.details_url
+                                                            }
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-blue-500 hover:underline text-sm"
+                                                        >
+                                                            View on Engage ↗
+                                                        </a>
+
+                                                        <button
+                                                            onClick={() => {
+                                                                setEngageEventId(
+                                                                    event.details_url
+                                                                );
+                                                                setTitle(
+                                                                    event.name
+                                                                );
+                                                                setDescription(
+                                                                    event.description
+                                                                );
+                                                                setLocation(
+                                                                    event.location
+                                                                );
+                                                                setEventDate(
+                                                                    toDatetimeLocal(
+                                                                        new Date(
+                                                                            event.start
+                                                                        ).toISOString()
+                                                                    )
+                                                                );
+                                                                setIsEngagePopupOpen(
+                                                                    false
+                                                                );
+                                                            }}
+                                                            className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 text-sm"
+                                                        >
+                                                            Select
+                                                        </button>
+                                                    </div>
+                                                </li>
+                                            )
+                                        )}
+                                    </ul>
+                                ) : (
+                                    <div className="flex-1 flex items-center justify-center">
+                                        <p className="text-gray-500 text-center">
+                                            No Engage events found.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="flex justify-end mt-4">
                                 <button
                                     onClick={() => setIsEngagePopupOpen(false)}
                                     className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
@@ -513,7 +527,6 @@ const ForumDashboard = () => {
                     </div>
                 )}
             </div>
-
             {engageEventId && (
                 <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded flex items-center justify-between">
                     <div>
@@ -619,13 +632,6 @@ const ForumDashboard = () => {
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                     Custom Questions
                 </h2>
-                {/* <textarea
-                    className="w-full p-4 border rounded"
-                    value={customQuestions}
-                    onChange={(e) => setCustomQuestions(e.target.value)}
-                    required
-                /> */}
-
                 {customQuestions.map((question, index) => (
                     <div
                         key={index}

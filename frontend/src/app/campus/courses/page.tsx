@@ -103,7 +103,9 @@ interface SearchParams {
 const CourseSearchComponent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(() => {
+        return searchParams.get('search') || '';
+    });
     const [searchType, setSearchType] = useState<SearchType>('all');
     const [selectedSchools, setSelectedSchools] = useState<
         Record<SchoolKey, boolean>
