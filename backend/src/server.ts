@@ -44,7 +44,15 @@ app.set('trust proxy', 1); // Required for secure cookies
 
 // Connect to MongoDB
 const MONGODB_URI =
-    process.env.MONGODB_URI || 'mongodb://localhost:27017/school-platform';
+    process.env.NODE_ENV === 'production'
+        ? process.env.MONGODB_URI
+        : process.env.MONGODB_TEST_URI;
+
+if (!MONGODB_URI) {
+    throw new Error(
+        'MONGODB_URI is not defined. Please check your environment variables.'
+    );
+}
 
 // Session
 app.use(
@@ -76,7 +84,7 @@ let housingReviewPictures: GridFSBucket;
 mongoose
     .connect(MONGODB_URI)
     .then(() => {
-        console.log('Connected to MongoDB');
+        console.log(`Connected to ${process.env.NODE_ENV} MongoDB`);
         const db = mongoose.connection.db;
 
         if (!db) {
