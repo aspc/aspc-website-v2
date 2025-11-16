@@ -121,7 +121,7 @@ const PageDashboard = () => {
                 // If it doesn't start with http:// or https://, add https://
                 finalLinkUrl = `https://${finalLinkUrl}`;
             }
-            
+
             // Try to fetch the "other-resource-link" page
             const otherResourcePageId = 'other-resource-links';
             const fetchResponse = await fetch(
@@ -139,8 +139,7 @@ const PageDashboard = () => {
                 return;
             }
 
-            const otherResourcePage: PageContent =
-                await fetchResponse.json();
+            const otherResourcePage: PageContent = await fetchResponse.json();
 
             if (!otherResourcePage.content) {
                 console.warn(
@@ -168,7 +167,10 @@ const PageDashboard = () => {
                 table.setAttribute('border', '1');
                 table.setAttribute('cellpadding', '5');
                 table.setAttribute('cellspacing', '0');
-                table.setAttribute('style', 'width: 100%; border-collapse: collapse;');
+                table.setAttribute(
+                    'style',
+                    'width: 100%; border-collapse: collapse;'
+                );
 
                 // Create table header
                 const thead = doc.createElement('thead');
@@ -258,14 +260,11 @@ const PageDashboard = () => {
             setLoading(true);
 
             if (isCreatingNew) {
-
                 // If it's a link page with resources header, add to other-resource-link page
-                if ( pageType === 'link' && (pageSection === 'resources')
-                ) {
+                if (pageType === 'link' && pageSection === 'resources') {
                     // Use the exact pageLink value as entered by the user
                     await addLinkToOtherResourcePage(pageName, pageLink);
-                }
-                else {
+                } else {
                     // Create new page
                     const createResponse = await fetch(
                         `${process.env.BACKEND_LINK}/api/admin/pages`,
@@ -279,7 +278,8 @@ const PageDashboard = () => {
                                 id: pageId,
                                 name: pageName,
                                 header: pageSection,
-                                content: pageType === 'content' ? content : null,
+                                content:
+                                    pageType === 'content' ? content : null,
                                 link: pageType === 'link' ? pageLink : null,
                                 section: pageSection,
                             }),
@@ -295,7 +295,9 @@ const PageDashboard = () => {
                             const errorData = await createResponse.json();
                             throw new Error(errorData.message);
                         }
-                        throw new Error(`Server error: ${createResponse.status}`);
+                        throw new Error(
+                            `Server error: ${createResponse.status}`
+                        );
                     }
                 }
 
