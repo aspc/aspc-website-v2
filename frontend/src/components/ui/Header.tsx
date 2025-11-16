@@ -19,6 +19,7 @@ const Header = () => {
     });
 
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
     const [loadingPages, setLoadingPages] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -66,6 +67,10 @@ const Header = () => {
 
     const handleDropdownClick = (dropdownName: string) => {
         setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
+        // Close submenu when dropdown closes
+        if (openDropdown === dropdownName) {
+            setOpenSubmenu(null);
+        }
     };
 
     // Close dropdown when clicking outside
@@ -76,6 +81,7 @@ const Header = () => {
                 !(event.target as Element).closest('.dropdown-container')
             ) {
                 setOpenDropdown(null);
+                setOpenSubmenu(null);
             }
         };
 
@@ -191,43 +197,44 @@ const Header = () => {
                                 {openDropdown === 'About' && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         {renderSectionLinks('about')}
-                                    </div>
-                                )}
-                            </div>
+                                        
+                                        {/* Officers Submenu Item */}
+                                        <div 
+                                            className="relative"
+                                            onMouseEnter={() => setOpenSubmenu('Officers')}
+                                            onMouseLeave={() => setOpenSubmenu(null)}
+                                        >
+                                            <div className="flex items-center justify-between px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-t border-gray-200 mt-1 pt-1">
+                                                <span>Officers</span>
+                                                <span className="text-gray-400">›</span>
+                                            </div>
+                                            
+                                            {/* Officers Submenu to the right */}
+                                            {openSubmenu === 'Officers' && (
+                                                <div className="absolute left-full top-0 ml-1 w-44 bg-white rounded-md shadow-lg py-1 z-50">
+                                                    {/* Senate Groups */}
+                                                    {groups.map((group, index) => (
+                                                        <Link
+                                                            key={`group-${index}`}
+                                                            href={`/staff/${group}`}
+                                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                                            onClick={() => {
+                                                                setOpenDropdown(null);
+                                                                setOpenSubmenu(null);
+                                                            }}
+                                                        >
+                                                            {group.replace(
+                                                                /([a-z])([A-Z])/g,
+                                                                '$1 $2'
+                                                            )}
+                                                        </Link>
+                                                    ))}
 
-                            {/* Members Section */}
-                            <div className="relative dropdown-container">
-                                <button
-                                    className="flex items-center space-x-1 hover:text-blue-500"
-                                    onClick={() =>
-                                        handleDropdownClick('Members')
-                                    }
-                                >
-                                    <span>Officers</span>
-                                </button>
-
-                                {/* Members Dropdown with ASPC Groups and Pages */}
-                                {openDropdown === 'Members' && (
-                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        {/* Senate Groups */}
-                                        {groups.map((group, index) => (
-                                            <Link
-                                                key={`group-${index}`}
-                                                href={`/staff/${group}`}
-                                                className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                                onClick={() =>
-                                                    setOpenDropdown(null)
-                                                }
-                                            >
-                                                {group.replace(
-                                                    /([a-z])([A-Z])/g,
-                                                    '$1 $2'
-                                                )}
-                                            </Link>
-                                        ))}
-
-                                        {/* Member Pages */}
-                                        {renderSectionLinks('members')}
+                                                    {/* Member Pages */}
+                                                    {renderSectionLinks('members')}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -460,46 +467,54 @@ const Header = () => {
                                 {openDropdown === 'AboutMobile' && (
                                     <div className="ml-2 mt-2">
                                         {renderSectionLinks('about', true)}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Members dropdown */}
-                            <div className="relative dropdown-container">
-                                <button
-                                    className="text-lg flex items-center space-x-1"
-                                    onClick={() =>
-                                        handleDropdownClick('MembersMobile')
-                                    }
-                                >
-                                    <span>Officers</span>
-                                </button>
-
-                                {openDropdown === 'MembersMobile' && (
-                                    <div className="ml-2 mt-2">
-                                        {/* Senate Groups */}
-                                        {groups.map(
-                                            (group: string, index: number) => (
-                                                <Link
-                                                    key={index}
-                                                    href={`/staff/${group}`}
-                                                    className="block px-4 py-2 hover:text-yellow-400"
-                                                    onClick={() =>
-                                                        setIsMobileMenuOpen(
-                                                            false
+                                        
+                                        {/* Officers Submenu Item */}
+                                        <div className="relative">
+                                            <button
+                                                className="text-base flex items-center justify-between w-full px-4 py-2 hover:text-yellow-400"
+                                                onClick={() =>
+                                                    setOpenSubmenu(
+                                                        openSubmenu === 'OfficersMobile'
+                                                            ? null
+                                                            : 'OfficersMobile'
+                                                    )
+                                                }
+                                            >
+                                                <span>Officers</span>
+                                                <span className="text-gray-400">
+                                                    {openSubmenu === 'OfficersMobile' ? '▼' : '▶'}
+                                                </span>
+                                            </button>
+                                            
+                                            {/* Officers Submenu */}
+                                            {openSubmenu === 'OfficersMobile' && (
+                                                <div className="ml-4 mt-1">
+                                                    {/* Senate Groups */}
+                                                    {groups.map(
+                                                        (group: string, index: number) => (
+                                                            <Link
+                                                                key={index}
+                                                                href={`/staff/${group}`}
+                                                                className="block px-4 py-2 hover:text-yellow-400"
+                                                                onClick={() =>
+                                                                    setIsMobileMenuOpen(
+                                                                        false
+                                                                    )
+                                                                }
+                                                            >
+                                                                {group.replace(
+                                                                    /([a-z])([A-Z])/g,
+                                                                    '$1 $2'
+                                                                )}
+                                                            </Link>
                                                         )
-                                                    }
-                                                >
-                                                    {group.replace(
-                                                        /([a-z])([A-Z])/g,
-                                                        '$1 $2'
                                                     )}
-                                                </Link>
-                                            )
-                                        )}
 
-                                        {/* Member Pages */}
-                                        {renderSectionLinks('members', true)}
+                                                    {/* Member Pages */}
+                                                    {renderSectionLinks('members', true)}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
