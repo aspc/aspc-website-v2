@@ -134,7 +134,11 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
                 codeQuery.$and = [
                     {
                         $or: [
-                            { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
+                            {
+                                code: {
+                                    $regex: new RegExp(`^${escapedTerm}`, 'i'),
+                                },
+                            },
                             { code: { $regex: normalizedCodeRegex } },
                         ],
                     },
@@ -154,7 +158,11 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
 
             // Step 2: Query name matches (excluding code matches)
             const nameQuery: any = {
-                _id: { $nin: Array.from(codeMatchIds).map((id: string) => new mongoose.Types.ObjectId(id)) },
+                _id: {
+                    $nin: Array.from(codeMatchIds).map(
+                        (id: string) => new mongoose.Types.ObjectId(id)
+                    ),
+                },
                 name: { $regex: new RegExp(`^${escapedTerm}`, 'i') },
             };
             if (requirements.length > 0) {
@@ -176,9 +184,10 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             // Step 3: Query department matches (excluding code and name matches)
             const deptQuery: any = {
                 _id: {
-                    $nin: [...Array.from(codeMatchIds), ...Array.from(nameMatchIds)].map(
-                        (id: string) => new mongoose.Types.ObjectId(id)
-                    ),
+                    $nin: [
+                        ...Array.from(codeMatchIds),
+                        ...Array.from(nameMatchIds),
+                    ].map((id: string) => new mongoose.Types.ObjectId(id)),
                 },
                 department_names: {
                     $regex: new RegExp(`^${escapedTerm}`, 'i'),
@@ -207,14 +216,25 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
             switch (type) {
                 case 'code':
                     exactMatchQuery.$or = [
-                        { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
+                        {
+                            code: {
+                                $regex: new RegExp(`^${escapedTerm}`, 'i'),
+                            },
+                        },
                         { code: { $regex: normalizedCodeRegex } },
                     ];
                     if (schoolFilter.code) {
                         exactMatchQuery.$and = [
                             {
                                 $or: [
-                                    { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
+                                    {
+                                        code: {
+                                            $regex: new RegExp(
+                                                `^${escapedTerm}`,
+                                                'i'
+                                            ),
+                                        },
+                                    },
                                     { code: { $regex: normalizedCodeRegex } },
                                 ],
                             },
