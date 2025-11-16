@@ -109,6 +109,141 @@ const PageDashboard = () => {
         }
     };
 
+    // Helper function to add link to other-resource-link page table
+    const addLinkToOtherResourcePage = async (
+        pageName: string,
+        linkUrl: string
+    ) => {
+        try {
+            // Ensure the linkUrl is a full URL (add http:// if missing)
+            let finalLinkUrl = linkUrl.trim();
+            if (finalLinkUrl && !finalLinkUrl.match(/^https?:\/\//i)) {
+                // If it doesn't start with http:// or https://, add https://
+                finalLinkUrl = `https://${finalLinkUrl}`;
+            }
+
+            // Try to fetch the "other-resource-link" page
+            const otherResourcePageId = 'other-resource-links';
+            const fetchResponse = await fetch(
+                `${process.env.BACKEND_LINK}/api/admin/pages/${otherResourcePageId}`,
+                {
+                    method: 'GET',
+                    credentials: 'include',
+                }
+            );
+
+            if (!fetchResponse.ok) {
+                console.warn(
+                    'Could not find other-resource-link page. Creating table update skipped.'
+                );
+                return;
+            }
+
+            const otherResourcePage: PageContent = await fetchResponse.json();
+
+            if (!otherResourcePage.content) {
+                console.warn(
+                    'other-resource-link page has no content. Creating table update skipped.'
+                );
+                return;
+            }
+
+            // Parse the HTML content - wrap in a container div to handle fragments
+            const parser = new DOMParser();
+            const wrappedContent = `<div id="content-wrapper">${otherResourcePage.content}</div>`;
+            const doc = parser.parseFromString(wrappedContent, 'text/html');
+            const wrapper = doc.getElementById('content-wrapper');
+
+            if (!wrapper) {
+                console.error('Failed to parse content');
+                return;
+            }
+
+            // Find or create a table
+            let table = wrapper.querySelector('table');
+            if (!table) {
+                // Create a new table if it doesn't exist
+                table = doc.createElement('table');
+                table.setAttribute('border', '1');
+                table.setAttribute('cellpadding', '5');
+                table.setAttribute('cellspacing', '0');
+                table.setAttribute(
+                    'style',
+                    'width: 100%; border-collapse: collapse;'
+                );
+
+                // Create table header
+                const thead = doc.createElement('thead');
+                const headerRow = doc.createElement('tr');
+                const th1 = doc.createElement('th');
+                th1.textContent = 'Page Name';
+                const th2 = doc.createElement('th');
+                th2.textContent = 'Link URL';
+                headerRow.appendChild(th1);
+                headerRow.appendChild(th2);
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                // Append table to wrapper
+                wrapper.appendChild(table);
+            }
+
+            // Update all existing links in the table to open in a new tab
+            const existingLinks = table.querySelectorAll('a');
+            existingLinks.forEach((existingLink) => {
+                existingLink.setAttribute('target', '_blank');
+                existingLink.setAttribute('rel', 'noopener noreferrer');
+            });
+
+            // Create a new row
+            let tbody = table.querySelector('tbody');
+            if (!tbody) {
+                tbody = doc.createElement('tbody');
+                table.appendChild(tbody);
+            }
+
+            const row = doc.createElement('tr');
+            const cell1 = doc.createElement('td');
+            cell1.textContent = pageName;
+            const cell2 = doc.createElement('td');
+            const link = doc.createElement('a');
+            // Use the finalLinkUrl (with protocol if needed)
+            link.setAttribute('href', finalLinkUrl);
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
+            link.textContent = finalLinkUrl;
+            cell2.appendChild(link);
+            row.appendChild(cell1);
+            row.appendChild(cell2);
+            tbody.appendChild(row);
+
+            // Get the updated HTML - extract content from wrapper
+            const updatedContent = wrapper.innerHTML;
+
+            // Update the other-resource-link page
+            const updateResponse = await fetch(
+                `${process.env.BACKEND_LINK}/api/admin/pages/${otherResourcePageId}`,
+                {
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: updatedContent,
+                    }),
+                }
+            );
+
+            if (!updateResponse.ok) {
+                console.error('Failed to update other-resource-link page');
+            }
+        } catch (error) {
+            console.error('Error updating other-resource-link page:', error);
+            // Don't throw - this is a secondary operation
+        }
+    };
+
     const handleSave = async () => {
         // Validate form
         if (
@@ -125,36 +260,45 @@ const PageDashboard = () => {
             setLoading(true);
 
             if (isCreatingNew) {
-                // Create new page
-                const createResponse = await fetch(
-                    `${process.env.BACKEND_LINK}/api/admin/pages`,
-                    {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            id: pageId,
-                            name: pageName,
-                            header: pageSection,
-                            content: pageType === 'content' ? content : null,
-                            link: pageType === 'link' ? pageLink : null,
-                            section: pageSection,
-                        }),
-                    }
-                );
+                // If it's a link page with resources header, add to other-resource-link page
+                if (pageType === 'link' && pageSection === 'resources') {
+                    // Use the exact pageLink value as entered by the user
+                    await addLinkToOtherResourcePage(pageName, pageLink);
+                } else {
+                    // Create new page
+                    const createResponse = await fetch(
+                        `${process.env.BACKEND_LINK}/api/admin/pages`,
+                        {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                id: pageId,
+                                name: pageName,
+                                header: pageSection,
+                                content:
+                                    pageType === 'content' ? content : null,
+                                link: pageType === 'link' ? pageLink : null,
+                                section: pageSection,
+                            }),
+                        }
+                    );
 
-                if (!createResponse.ok) {
-                    if (
-                        createResponse.headers
-                            .get('content-type')
-                            ?.includes('application/json')
-                    ) {
-                        const errorData = await createResponse.json();
-                        throw new Error(errorData.message);
+                    if (!createResponse.ok) {
+                        if (
+                            createResponse.headers
+                                .get('content-type')
+                                ?.includes('application/json')
+                        ) {
+                            const errorData = await createResponse.json();
+                            throw new Error(errorData.message);
+                        }
+                        throw new Error(
+                            `Server error: ${createResponse.status}`
+                        );
                     }
-                    throw new Error(`Server error: ${createResponse.status}`);
                 }
 
                 alert('Page created successfully!');
