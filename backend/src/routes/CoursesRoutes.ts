@@ -114,79 +114,137 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
         // Step 1: Get exact prefix matches (starts with, case-insensitive)
         // For code searches, also use normalized matching to handle abbreviations
 
-        const exactMatchQuery: any = {};
-
-        if (requirements.length > 0) {
-            exactMatchQuery.requirement_names = { $in: requirements };
-        }
-
         const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const normalizedCodeRegex = createNormalizedCodeRegex(searchTerm);
 
-        switch (type) {
-            case 'code':
-                // Use normalized regex to match variations like "cs51" -> "CSCI051"
-                exactMatchQuery.$or = [
-                    { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } }, // Exact prefix match
-                    { code: { $regex: normalizedCodeRegex } }, // Normalized match
-                ];
-                if (schoolFilter.code) {
-                    exactMatchQuery.$and = [
-                        {
-                            $or: [
-                                {
-                                    code: {
-                                        $regex: new RegExp(
-                                            `^${escapedTerm}`,
-                                            'i'
-                                        ),
-                                    },
-                                },
-                                { code: { $regex: normalizedCodeRegex } },
-                            ],
-                        },
-                        schoolFilter,
-                    ];
-                    delete exactMatchQuery.$or;
-                }
-                break;
-            case 'name':
-                exactMatchQuery.name = {
-                    $regex: new RegExp(`^${escapedTerm}`, 'i'),
-                };
-                if (schoolFilter.code) {
-                    Object.assign(exactMatchQuery, schoolFilter);
-                }
-                break;
-            case 'department':
-                exactMatchQuery.department_names = {
-                    $regex: new RegExp(`^${escapedTerm}`, 'i'),
-                };
-                if (schoolFilter.code) {
-                    Object.assign(exactMatchQuery, schoolFilter);
-                }
-                break;
-            case 'all':
-            default:
-                // For 'all' search, include both exact prefix and normalized code matches
-                exactMatchQuery.$or = [
-                    { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } }, // Exact prefix match
-                    { code: { $regex: normalizedCodeRegex } }, // Normalized match for codes
-                    { name: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
-                    {
-                        department_names: {
-                            $regex: new RegExp(`^${escapedTerm}`, 'i'),
-                        },
-                    },
-                ];
-                if (schoolFilter.code) {
-                    Object.assign(exactMatchQuery, schoolFilter);
-                }
-        }
+        let exactMatches: any[] = [];
 
-        const exactMatches = await Courses.find(exactMatchQuery)
-            .limit(numericLimit * 2) // Get more to account for duplicates
-            .lean();
+        if (type === 'all') {
+            // Step 1: Query code matches first (highest priority)
+            const codeQuery: any = {
+                $or: [
+                    { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
+                    { code: { $regex: normalizedCodeRegex } },
+                ],
+            };
+            if (requirements.length > 0) {
+                codeQuery.requirement_names = { $in: requirements };
+            }
+            if (schoolFilter.code) {
+                codeQuery.$and = [
+                    {
+                        $or: [
+                            { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
+                            { code: { $regex: normalizedCodeRegex } },
+                        ],
+                    },
+                    schoolFilter,
+                ];
+                delete codeQuery.$or;
+            }
+
+            const codeMatches = await Courses.find(codeQuery)
+                .limit(numericLimit * 2)
+                .lean();
+
+            exactMatches = [...codeMatches];
+            const codeMatchIds = new Set(
+                codeMatches.map((c: any) => c._id.toString())
+            );
+
+            // Step 2: Query name matches (excluding code matches)
+            const nameQuery: any = {
+                _id: { $nin: Array.from(codeMatchIds).map((id: string) => new mongoose.Types.ObjectId(id)) },
+                name: { $regex: new RegExp(`^${escapedTerm}`, 'i') },
+            };
+            if (requirements.length > 0) {
+                nameQuery.requirement_names = { $in: requirements };
+            }
+            if (schoolFilter.code) {
+                Object.assign(nameQuery, schoolFilter);
+            }
+
+            const nameMatches = await Courses.find(nameQuery)
+                .limit(numericLimit * 2)
+                .lean();
+
+            exactMatches = [...exactMatches, ...nameMatches];
+            const nameMatchIds = new Set(
+                nameMatches.map((c: any) => c._id.toString())
+            );
+
+            // Step 3: Query department matches (excluding code and name matches)
+            const deptQuery: any = {
+                _id: {
+                    $nin: [...Array.from(codeMatchIds), ...Array.from(nameMatchIds)].map(
+                        (id: string) => new mongoose.Types.ObjectId(id)
+                    ),
+                },
+                department_names: {
+                    $regex: new RegExp(`^${escapedTerm}`, 'i'),
+                },
+            };
+            if (requirements.length > 0) {
+                deptQuery.requirement_names = { $in: requirements };
+            }
+            if (schoolFilter.code) {
+                Object.assign(deptQuery, schoolFilter);
+            }
+
+            const deptMatches = await Courses.find(deptQuery)
+                .limit(numericLimit * 2)
+                .lean();
+
+            exactMatches = [...exactMatches, ...deptMatches];
+        } else {
+            // For specific search types (code, name, department), use the original query
+            const exactMatchQuery: any = {};
+
+            if (requirements.length > 0) {
+                exactMatchQuery.requirement_names = { $in: requirements };
+            }
+
+            switch (type) {
+                case 'code':
+                    exactMatchQuery.$or = [
+                        { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
+                        { code: { $regex: normalizedCodeRegex } },
+                    ];
+                    if (schoolFilter.code) {
+                        exactMatchQuery.$and = [
+                            {
+                                $or: [
+                                    { code: { $regex: new RegExp(`^${escapedTerm}`, 'i') } },
+                                    { code: { $regex: normalizedCodeRegex } },
+                                ],
+                            },
+                            schoolFilter,
+                        ];
+                        delete exactMatchQuery.$or;
+                    }
+                    break;
+                case 'name':
+                    exactMatchQuery.name = {
+                        $regex: new RegExp(`^${escapedTerm}`, 'i'),
+                    };
+                    if (schoolFilter.code) {
+                        Object.assign(exactMatchQuery, schoolFilter);
+                    }
+                    break;
+                case 'department':
+                    exactMatchQuery.department_names = {
+                        $regex: new RegExp(`^${escapedTerm}`, 'i'),
+                    };
+                    if (schoolFilter.code) {
+                        Object.assign(exactMatchQuery, schoolFilter);
+                    }
+                    break;
+            }
+
+            exactMatches = await Courses.find(exactMatchQuery)
+                .limit(numericLimit * 2)
+                .lean();
+        }
 
         // Step 2: Get fuzzy matches (exclude exact matches by ID)
         const exactMatchIds = new Set(
