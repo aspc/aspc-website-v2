@@ -4,7 +4,11 @@ import { isAdmin, isAuthenticated } from '../../middleware/authMiddleware';
 
 const router = express.Router();
 
-// Get all pages
+/**
+ * @route   GET /api/admin/pages
+ * @desc    Get all pages
+ * @access  isAuthenticated
+ */
 router.get('/', async (req: Request, res: Response) => {
     try {
         const pages = await PageContent.find({});
@@ -14,7 +18,11 @@ router.get('/', async (req: Request, res: Response) => {
     }
 });
 
-// Get the page by id
+/**
+ * @route   GET /api/admin/pages/:id
+ * @desc    Get page by id
+ * @access  isAuthenticated
+ */
 router.get('/:id', isAuthenticated, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -31,7 +39,11 @@ router.get('/:id', isAuthenticated, async (req: Request, res: Response) => {
     }
 });
 
-// Get all pages by header
+/**
+ * @route   GET /api/admin/pages/:header
+ * @desc    Get pages by header
+ * @access  isAuthenticated
+ */
 router.get('/header/:header', async (req: Request, res: Response) => {
     try {
         const { header } = req.params;
@@ -42,7 +54,11 @@ router.get('/header/:header', async (req: Request, res: Response) => {
     }
 });
 
-// Create a new page
+/**
+ * @route   POST /api/admin/pages
+ * @desc    Create a new page
+ * @access  isAdmin
+ */
 router.post('/', isAdmin, async (req: Request, res: Response) => {
     try {
         const { id, name, content, header, link } = req.body;
@@ -79,7 +95,11 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
     }
 });
 
-// Update an existing page
+/**
+ * @route   PUT /api/admin/pages/:id
+ * @desc    Update an existing page
+ * @access  isAdmin
+ */
 router.put('/:id', isAdmin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -116,7 +136,11 @@ router.put('/:id', isAdmin, async (req: Request, res: Response) => {
     }
 });
 
-// Delete a page by id
+/**
+ * @route   DELETE /api/admin/pages/:id
+ * @desc    Delete a page by id
+ * @access  isAdmin
+ */
 router.delete('/:id', isAdmin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;

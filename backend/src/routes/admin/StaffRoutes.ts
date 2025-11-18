@@ -10,8 +10,12 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// Get all ids and names and positions of staff members
-router.get('/', async (req: Request, res: Response) => {
+/**
+ * @route   GET /api/members
+ * @desc    Get all ids and names and positions of staff members
+ * @access  isAuthenticated
+ */
+router.get('/', isAuthenticated, async (req: Request, res: Response) => {
     try {
         const staff = await Staff.find({}, { id: 1, name: 1, position: 1 });
         res.json(staff);
@@ -20,7 +24,11 @@ router.get('/', async (req: Request, res: Response) => {
     }
 });
 
-// Get staff info by id
+/**
+ * @route   GET /api/members/:id
+ * @desc    Get staff member info by id
+ * @access  isAuthenticated
+ */
 router.get('/:id', isAuthenticated, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -36,7 +44,11 @@ router.get('/:id', isAuthenticated, async (req: Request, res: Response) => {
     }
 });
 
-// Get staff info by group
+/**
+ * @route   GET /api/members/:group
+ * @desc    Get staff members by group
+ * @access  isAuthenticated
+ */
 router.get(
     '/group/:group',
     isAuthenticated,
@@ -57,7 +69,11 @@ router.get(
     }
 );
 
-// Create staff member
+/**
+ * @route   POST /api/members
+ * @desc    Create a new staff member
+ * @access  isAdmin
+ */
 router.post(
     '/',
     isAdmin,
@@ -105,7 +121,11 @@ router.post(
     }
 );
 
-// Update staff info
+/**
+ * @route   PATCH /api/members/:id
+ * @desc    Update staff member info
+ * @access  isAdmin
+ */
 router.patch(
     '/:id',
     isAdmin,
@@ -177,37 +197,50 @@ router.patch(
     }
 );
 
-// Get profile picture by id
-router.get('/profile-pic/:id', async (req: Request, res: Response) => {
-    try {
-        const fileId = new ObjectId(req.params.id);
+/**
+ * @route   GET /api/members/profile-pic/:id
+ * @desc    Get profile picture of staff by id
+ * @access  isAuthenticated
+ */
+router.get(
+    '/profile-pic/:id',
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+        try {
+            const fileId = new ObjectId(req.params.id);
 
-        // Check if file exists
-        const files = await bucket.find({ _id: fileId }).toArray();
-        if (!files.length) {
-            res.status(404).json({ message: 'Profile picture not found' });
-            return;
-        }
+            // Check if file exists
+            const files = await bucket.find({ _id: fileId }).toArray();
+            if (!files.length) {
+                res.status(404).json({ message: 'Profile picture not found' });
+                return;
+            }
 
-        // Set appropriate headers
-        res.set('Content-Type', files[0].contentType);
+            // Set appropriate headers
+            res.set('Content-Type', files[0].contentType);
 
-        // Create download stream
-        const downloadStream = bucket.openDownloadStream(fileId);
+            // Create download stream
+            const downloadStream = bucket.openDownloadStream(fileId);
 
-        // Pipe the file to the response
-        downloadStream.pipe(res);
+            // Pipe the file to the response
+            downloadStream.pipe(res);
 
-        downloadStream.on('error', () => {
-            res.status(404).json({
-                message: 'Error retrieving profile picture',
+            downloadStream.on('error', () => {
+                res.status(404).json({
+                    message: 'Error retrieving profile picture',
+                });
             });
-        });
-    } catch (error) {
-        res.status(400).json({ message: 'Invalid profile picture ID' });
+        } catch (error) {
+            res.status(400).json({ message: 'Invalid profile picture ID' });
+        }
     }
-});
+);
 
+/**
+ * @route   DELETE /api/members/:id
+ * @desc    Delete member by id
+ * @access  isAdmin
+ */
 router.delete('/:id', isAdmin, async (req: Request, res: Response) => {
     try {
         const staff = await Staff.findOneAndDelete({ id: req.params.id });
