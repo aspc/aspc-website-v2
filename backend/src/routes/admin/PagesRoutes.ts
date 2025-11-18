@@ -7,7 +7,7 @@ const router = express.Router();
 /**
  * @route   GET /api/admin/pages
  * @desc    Get all pages
- * @access  isAuthenticated
+ * @access
  */
 router.get('/', async (req: Request, res: Response) => {
     try {
@@ -42,7 +42,7 @@ router.get('/:id', isAuthenticated, async (req: Request, res: Response) => {
 /**
  * @route   GET /api/admin/pages/:header
  * @desc    Get pages by header
- * @access  isAuthenticated
+ * @access
  */
 router.get('/header/:header', async (req: Request, res: Response) => {
     try {
