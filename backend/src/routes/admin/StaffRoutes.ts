@@ -13,9 +13,9 @@ const upload = multer({ storage: storage });
 /**
  * @route   GET /api/members
  * @desc    Get all ids and names and positions of staff members
- * @access  isAuthenticated
+ * @access
  */
-router.get('/', isAuthenticated, async (req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
     try {
         const staff = await Staff.find({}, { id: 1, name: 1, position: 1 });
         res.json(staff);
@@ -200,41 +200,37 @@ router.patch(
 /**
  * @route   GET /api/members/profile-pic/:id
  * @desc    Get profile picture of staff by id
- * @access  isAuthenticated
+ * @access
  */
-router.get(
-    '/profile-pic/:id',
-    isAuthenticated,
-    async (req: Request, res: Response) => {
-        try {
-            const fileId = new ObjectId(req.params.id);
+router.get('/profile-pic/:id', async (req: Request, res: Response) => {
+    try {
+        const fileId = new ObjectId(req.params.id);
 
-            // Check if file exists
-            const files = await bucket.find({ _id: fileId }).toArray();
-            if (!files.length) {
-                res.status(404).json({ message: 'Profile picture not found' });
-                return;
-            }
-
-            // Set appropriate headers
-            res.set('Content-Type', files[0].contentType);
-
-            // Create download stream
-            const downloadStream = bucket.openDownloadStream(fileId);
-
-            // Pipe the file to the response
-            downloadStream.pipe(res);
-
-            downloadStream.on('error', () => {
-                res.status(404).json({
-                    message: 'Error retrieving profile picture',
-                });
-            });
-        } catch (error) {
-            res.status(400).json({ message: 'Invalid profile picture ID' });
+        // Check if file exists
+        const files = await bucket.find({ _id: fileId }).toArray();
+        if (!files.length) {
+            res.status(404).json({ message: 'Profile picture not found' });
+            return;
         }
+
+        // Set appropriate headers
+        res.set('Content-Type', files[0].contentType);
+
+        // Create download stream
+        const downloadStream = bucket.openDownloadStream(fileId);
+
+        // Pipe the file to the response
+        downloadStream.pipe(res);
+
+        downloadStream.on('error', () => {
+            res.status(404).json({
+                message: 'Error retrieving profile picture',
+            });
+        });
+    } catch (error) {
+        res.status(400).json({ message: 'Invalid profile picture ID' });
     }
-);
+});
 
 /**
  * @route   DELETE /api/members/:id
