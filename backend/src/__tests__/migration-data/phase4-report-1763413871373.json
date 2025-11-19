@@ -1,0 +1,14 @@
+{
+  "phase": 4,
+  "description": "Update CourseReviews with Instructor CxIDs",
+  "dryRun": false,
+  "stats": {
+    "totalReviews": 10208,
+    "mappedToCxID": 10143,
+    "unmappedLegacy": 63,
+    "errors": 2,
+    "mappedPercentage": 99,
+    "unmappedPercentage": 1
+  },
+  "timestamp": "2025-11-17T21:11:11.353Z"
+}
