@@ -21,7 +21,7 @@ async function fixCodeSlugFormat(dryRun: boolean = true) {
 
     try {
         await mongoose.connect(
-            process.env.MONGODB_URI || 'mongodb://localhost:27017/coursereview'
+            'mongodb+srv://software:jxqDmaRabKr7BXuS@aspc.qm4l8.mongodb.net/school-platform?retryWrites=true&w=majority&appName=ASPC  '
         );
         console.log('✓ Connected to MongoDB\n');
 
