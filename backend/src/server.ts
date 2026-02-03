@@ -7,6 +7,7 @@ import { GridFSBucket } from 'mongodb';
 import authRoutes from './routes/AuthRoutes';
 import pageRoutes from './routes/admin/PagesRoutes';
 import staffRoutes from './routes/admin/StaffRoutes';
+import electionsDashboardRoutes from './routes/admin/ElectionsAdminRoutes';
 import eventRoutes from './routes/EventsRoutes';
 import housingRoutes from './routes/HousingRoutes';
 import coursesRoutes from './routes/CoursesRoutes';
@@ -117,6 +118,7 @@ app.use('/api/courses', coursesRoutes);
 app.use('/api/instructors', instructorsRoutes);
 app.use('/api/reviews', reviewsRoutes);
 app.use('/api/openforum', forumRoutes);
+app.use('/api/admin/elections', electionsDashboardRoutes);
 
 const PORT = process.env.PORT || 5000;
 
