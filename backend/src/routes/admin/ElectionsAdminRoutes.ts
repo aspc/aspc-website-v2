@@ -11,7 +11,6 @@ import { isAdmin, isAuthenticated } from '../../middleware/authMiddleware';
 const router = express.Router();
 
 // ELECTION ROUTES
-
 /**
  * @route   GET /api/admin/elections
  * @desc    Get all elections
@@ -54,7 +53,7 @@ router.get('/:id', isAdmin, async (req: Request, res: Response) => {
  */
 router.post('/', isAdmin, async (req: Request, res: Response) => {
     try {
-        const { name, description, startDate, endDate, isActive } = req.body;
+        const { name, description, startDate, endDate } = req.body;
 
         if (!name || !startDate || !endDate) {
             res.status(400).json({ message: 'Missing required fields.' });
@@ -73,7 +72,6 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
             description: description || '',
             startDate,
             endDate,
-            isActive: isActive || false,
         });
 
         const savedElection = await election.save();
@@ -92,7 +90,7 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
 router.put('/:id', isAdmin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, description, startDate, endDate, isActive } = req.body;
+        const { name, description, startDate, endDate } = req.body;
 
         if (!name || !startDate || !endDate) {
             res.status(400).json({ message: 'Missing required fields.' });
@@ -113,7 +111,6 @@ router.put('/:id', isAdmin, async (req: Request, res: Response) => {
                 description: description || '',
                 startDate,
                 endDate,
-                isActive: isActive !== undefined ? isActive : false,
             },
             { new: true, runValidators: true }
         );
