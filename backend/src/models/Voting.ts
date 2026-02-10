@@ -6,7 +6,6 @@ interface IElection extends Document {
     description: string;
     startDate: Date;
     endDate: Date;
-    isActive: boolean;
 }
 
 const ElectionSchema = new Schema<IElection>(
@@ -27,10 +26,6 @@ const ElectionSchema = new Schema<IElection>(
             type: Date,
             required: true,
         },
-        isActive: {
-            type: Boolean,
-            default: false,
-        },
     },
     {
         timestamps: true,
@@ -46,26 +41,24 @@ interface ICandidate extends Document {
     position: string;
 }
 
-const CandidateSchema = new Schema<ICandidate>(
-    {
-        electionId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Election',
-            required: true,
-        },
-        name: {
-            type: String,
-            required: true,
-        },
-        position: {
-            type: String,
-            required: true,
-        },
+const CandidateSchema = new Schema<ICandidate>({
+    electionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Election',
+        required: true,
     },
-    {
-        timestamps: true,
-    }
-);
+    name: {
+        type: String,
+        required: true,
+    },
+    position: {
+        type: String,
+        required: true,
+    },
+});
+
+// querying for candidates by election and position
+CandidateSchema.index({ electionId: 1, position: 1 });
 
 const Candidate = mongoose.model<ICandidate>('Candidate', CandidateSchema);
 
@@ -78,38 +71,38 @@ interface IStudentBallotInfo extends Document {
     hasVoted: boolean;
 }
 
-const StudentBallotInfoSchema = new Schema<IStudentBallotInfo>(
-    {
-        electionId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Election',
-            required: true,
-        },
-        email: {
-            type: String,
-            required: true,
-            lowercase: true,
-        },
-        campusRep: {
-            type: String,
-            enum: ['north', 'south'],
-            required: true,
-        },
-        year: {
-            type: Number,
-            required: true,
-        },
-        hasVoted: {
-            type: Boolean,
-            default: false,
-        },
+const StudentBallotInfoSchema = new Schema<IStudentBallotInfo>({
+    electionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Election',
+        required: true,
     },
-    {
-        timestamps: true,
-    }
-);
+    email: {
+        type: String,
+        required: true,
+        lowercase: true,
+    },
+    campusRep: {
+        type: String,
+        enum: ['north', 'south'],
+        required: true,
+    },
+    year: {
+        type: Number,
+        required: true,
+    },
+    hasVoted: {
+        type: Boolean,
+        default: false,
+    },
+});
 
+// Unique constraint and primary lookup index
 StudentBallotInfoSchema.index({ electionId: 1, email: 1 }, { unique: true });
+
+// Efficient querying for ballot distribution
+StudentBallotInfoSchema.index({ electionId: 1, campusRep: 1 });
+StudentBallotInfoSchema.index({ electionId: 1, year: 1 });
 
 const StudentBallotInfo = mongoose.model<IStudentBallotInfo>(
     'StudentBallotInfo',
@@ -120,37 +113,29 @@ const StudentBallotInfo = mongoose.model<IStudentBallotInfo>(
 interface IVote extends Document {
     electionId: mongoose.Types.ObjectId;
     position: string;
-    ranking: mongoose.Types.ObjectId[];
-    votes: number;
+    ranking: mongoose.Types.ObjectId[]; // Ordered array of Candidate IDs
 }
 
-const VoteSchema = new Schema<IVote>(
-    {
-        electionId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Election',
-            required: true,
-        },
-        position: {
-            type: String,
-            required: true,
-        },
-        ranking: {
-            type: [mongoose.Schema.Types.ObjectId],
-            ref: 'Candidate',
-            required: true,
-        },
-        votes: {
-            type: Number,
-            default: 0,
-        },
+// each student will have different vote document for each position they vote for
+const VoteSchema = new Schema<IVote>({
+    electionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Election',
+        required: true,
     },
-    {
-        timestamps: true,
-    }
-);
+    position: {
+        type: String,
+        required: true,
+    },
+    ranking: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: 'Candidate',
+        required: true,
+    },
+});
 
-VoteSchema.index({ electionId: 1, position: 1, ranking: 1 }, { unique: true });
+// Query optimization: fast vote tallying by election and position
+VoteSchema.index({ electionId: 1, position: 1 });
 
 const Vote = mongoose.model<IVote>('Vote', VoteSchema);
 
