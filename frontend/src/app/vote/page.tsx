@@ -25,30 +25,35 @@ const MOCK_CANDIDATES = [
         name: 'Marcus Thorne',
         position: 'President',
         description: 'Focused on campus sustainability and transparency.',
+        electionId: '65a123abc',
     },
     {
         _id: 'c2',
         name: 'Elena Rodriguez',
         position: 'President',
         description: 'Advocating for expanded mental health resources.',
+        electionId: '65a123abc',
     },
     {
         _id: 'c3',
         name: 'Jordan Smith',
         position: 'President',
         description: 'Aims to improve internship placement programs.',
+        electionId: '65a123abc',
     },
     {
         _id: 'c4',
         name: 'Sarah Jenkins',
         position: 'Vice President',
         description: 'Expert in student event coordination.',
+        electionId: '65a123abc',
     },
     {
         _id: 'c5',
         name: 'Kevin Zhao',
         position: 'Vice President',
         description: 'Dedicated to enhancing campus digital infrastructure.',
+        electionId: '65a123abc',
     },
 ];
 
@@ -64,11 +69,14 @@ export default function VotePage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
 
     useEffect(() => {
-        const grouped = MOCK_CANDIDATES.reduce((acc: any, c) => {
-            if (!acc[c.position]) acc[c.position] = [];
-            acc[c.position].push(c);
-            return acc;
-        }, {});
+        const grouped = MOCK_CANDIDATES.reduce(
+            (acc: Record<string, ICandidateFrontend[]>, c) => {
+                if (!acc[c.position]) acc[c.position] = [];
+                acc[c.position].push(c);
+                return acc;
+            },
+            {}
+        );
         setBallots(grouped);
     }, []);
 
