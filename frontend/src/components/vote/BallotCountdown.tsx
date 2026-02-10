@@ -32,7 +32,7 @@ export default function BallotCountdown({ endDate }: { endDate: string }) {
 
     return (
         <div className="flex gap-1.5">
-            {Object.entries(timeLeft).map(([label, val]: any) => (
+            {Object.entries(timeLeft).map(([label, val]: [string, number]) => (
                 <div
                     key={label}
                     className="bg-[#001f3f] text-white w-8 h-8 flex items-center justify-center font-bold rounded-md text-[10px]"

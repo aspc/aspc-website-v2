@@ -1,10 +1,18 @@
+interface ButtonProps {
+    children: React.ReactNode;
+    variant?: 'primary' | 'outline' | 'success' | 'ghost';
+    className?: string;
+    disabled?: boolean;
+    onClick?: () => void;
+}
+
 const Button = ({
     children,
     variant = 'primary',
     className = '',
     disabled,
     onClick,
-}: any) => {
+}: ButtonProps) => {
     const variants = {
         primary: 'bg-[#001f3f] text-white hover:bg-[#001429]',
         outline: 'border-2 border-[#001f3f] text-[#001f3f] hover:bg-slate-50',
