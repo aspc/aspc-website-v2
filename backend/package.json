@@ -1,39 +1,45 @@
 {
-  "name": "backend",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon",
-    "build": "tsc",
-    "start": "node dist/server.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "@authenio/samlify-xsd-schema-validator": "^1.0.5",
-    "axios": "^1.7.9",
-    "connect-mongo": "^5.1.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "express-session": "^1.18.1",
-    "mongodb": "^6.12.0",
-    "mongoose": "^8.9.5",
-    "multer": "^2.0.2",
-    "samlify": "^2.8.11"
-  },
-  "devDependencies": {
-    "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.0",
-    "@types/express-session": "^1.18.1",
-    "@types/mongoose": "^5.11.96",
-    "@types/multer": "^1.4.12",
-    "@types/node": "^22.10.2",
-    "nodemon": "^3.1.9",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.7.2"
-  }
+    "name": "backend",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "test": "jest",
+        "dev": "nodemon",
+        "build": "tsc",
+        "start": "node dist/server.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "dependencies": {
+        "@authenio/samlify-xsd-schema-validator": "^1.0.5",
+        "axios": "^1.7.9",
+        "connect-mongo": "^5.1.0",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2",
+        "express-session": "^1.18.1",
+        "mongodb": "^6.12.0",
+        "mongoose": "^8.9.5",
+        "multer": "^2.0.2",
+        "samlify": "^2.8.11"
+    },
+    "devDependencies": {
+        "@types/cors": "^2.8.17",
+        "@types/express": "^5.0.0",
+        "@types/express-session": "^1.18.1",
+        "@types/jest": "^30.0.0",
+        "@types/mongoose": "^5.11.96",
+        "@types/multer": "^1.4.12",
+        "@types/node": "^22.10.2",
+        "@types/supertest": "^6.0.3",
+        "jest": "^30.2.0",
+        "mongodb-memory-server": "^11.0.1",
+        "nodemon": "^3.1.9",
+        "supertest": "^7.2.2",
+        "ts-jest": "^29.4.6",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.7.2"
+    }
 }
