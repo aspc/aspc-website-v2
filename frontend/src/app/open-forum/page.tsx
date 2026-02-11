@@ -158,7 +158,7 @@ const OpenForumPage = () => {
             <div className="p-5">
                 <div className="mb-6">
                     <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                        Open Forum - Event Bulletin Board
+                        Event Bulletin Board
                     </h1>
                     {/* Filter buttons */}
                     <div className="flex gap-2 mb-6">
