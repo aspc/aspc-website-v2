@@ -6,7 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "count-votes": "ts-node -r dotenv/config src/scripts/countVotes.ts"
   },
   "keywords": [],
   "author": "",
