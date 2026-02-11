@@ -5,11 +5,8 @@ import {
     getClassRepCandidates,
     getAllOtherCandidates,
     isValidVote,
-    VoteRequest,
-    recordVote,
 } from '../controllers/VotingController';
-import { Candidate, StudentBallotInfo } from '../models/Voting';
-import { Request, Response } from 'express';
+import { Candidate } from '../models/Voting';
 import { SENATE_POSITIONS } from '../constants/election.constants';
 
 jest.mock('../models/Voting');

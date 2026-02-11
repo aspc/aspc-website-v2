@@ -1,6 +1,4 @@
-import mongoose from 'mongoose';
-
-import express, { Request, Response, Router } from 'express';
+import express, { Router } from 'express';
 import { isAuthenticated } from '../middleware/authMiddleware';
 import {
     studentHasVoted,

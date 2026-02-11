@@ -6,7 +6,7 @@ import {
     getAllOtherCandidates,
     getCampusRepCandidates,
     getClassRepCandidates,
-} from '../routes/VotingRoutes';
+} from '../controllers/VotingController';
 // import app from '../server';
 
 const mockElectionId = new mongoose.Types.ObjectId();
@@ -62,6 +62,9 @@ beforeAll(async () => {
 
 beforeEach(async () => {
     await Candidate.deleteMany({});
+    await StudentBallotInfo.deleteMany({});
+
+    await StudentBallotInfo.create(mockStudent);
     await Candidate.insertMany(mockCandidatesDB);
 });
 
@@ -72,7 +75,10 @@ afterAll(async () => {
 
 describe('getClassRepCandidates (integration test)', () => {
     it('returns all first-year class president candidates', async () => {
-        const candidates = await getClassRepCandidates(1);
+        const candidates = await getClassRepCandidates(
+            mockElectionId.toString(),
+            1
+        );
 
         expect(candidates).toHaveLength(2);
         const names = candidates.map((c) => c.name);
@@ -81,27 +87,39 @@ describe('getClassRepCandidates (integration test)', () => {
     });
 
     it('returns sophomore class president candidates', async () => {
-        const candidates = await getClassRepCandidates(2);
+        const candidates = await getClassRepCandidates(
+            mockElectionId.toString(),
+            2
+        );
 
         expect(candidates).toHaveLength(1);
         expect(candidates[0].name).toBe('Bob');
     });
 
     it('returns empty array for invalid year', async () => {
-        const candidates = await getClassRepCandidates(5);
+        const candidates = await getClassRepCandidates(
+            mockElectionId.toString(),
+            5
+        );
         expect(candidates).toEqual([]);
     });
 
     it('returns empty array if no candidates match the year', async () => {
         await Candidate.deleteMany({ position: 'first_year_class_president' });
-        const candidates = await getClassRepCandidates(1);
+        const candidates = await getClassRepCandidates(
+            mockElectionId.toString(),
+            1
+        );
         expect(candidates).toEqual([]);
     });
 });
 
 describe('getCampusRepCandidates (integration test)', () => {
     it('returns all north campus rep candidates', async () => {
-        const candidates = await getCampusRepCandidates('north');
+        const candidates = await getCampusRepCandidates(
+            mockElectionId.toString(),
+            'north'
+        );
 
         expect(candidates).toHaveLength(1);
         const names = candidates.map((c) => c.name);
@@ -109,27 +127,38 @@ describe('getCampusRepCandidates (integration test)', () => {
     });
 
     it('returns south campus rep candidates', async () => {
-        const candidates = await getCampusRepCandidates('south');
+        const candidates = await getCampusRepCandidates(
+            mockElectionId.toString(),
+            'south'
+        );
 
         expect(candidates).toHaveLength(1);
         expect(candidates[0].name).toBe('Eve');
     });
 
     it('returns empty array for non-north/south housing status', async () => {
-        const candidates = await getCampusRepCandidates('off-campus');
+        const candidates = await getCampusRepCandidates(
+            mockElectionId.toString(),
+            'off-campus'
+        );
         expect(candidates).toEqual([]);
     });
 
     it('returns empty array if no candidates', async () => {
         await Candidate.deleteMany({ position: 'south_campus_representative' });
-        const candidates = await getCampusRepCandidates('south');
+        const candidates = await getCampusRepCandidates(
+            mockElectionId.toString(),
+            'south'
+        );
         expect(candidates).toEqual([]);
     });
 });
 
 describe('getAllOtherCandidates (integration test)', () => {
     it('returns all non-campus/class rep rep candidates', async () => {
-        const candidates = await getAllOtherCandidates();
+        const candidates = await getAllOtherCandidates(
+            mockElectionId.toString()
+        );
 
         expect(candidates).toHaveLength(1);
         const names = candidates.map((c) => c.name);
