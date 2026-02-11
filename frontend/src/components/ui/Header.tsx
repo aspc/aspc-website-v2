@@ -289,12 +289,22 @@ const Header = () => {
 
                                         <Link
                                             href="/campus/housing"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 last:border-b-0"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100"
                                             onClick={() =>
                                                 setOpenDropdown(null)
                                             }
                                         >
                                             Housing Reviews
+                                        </Link>
+
+                                        <Link
+                                            href="/open-forum"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 last:border-b-0"
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
+                                        >
+                                            Event Reviews
                                         </Link>
                                     </div>
                                 )}
@@ -352,22 +362,12 @@ const Header = () => {
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         <Link
                                             href="/events"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 last:border-b-0"
                                             onClick={() =>
                                                 setOpenDropdown(null)
                                             }
                                         >
                                             Calendar
-                                        </Link>
-
-                                        <Link
-                                            href="/open-forum"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                            onClick={() =>
-                                                setOpenDropdown(null)
-                                            }
-                                        >
-                                            Open Forum
                                         </Link>
                                     </div>
                                 )}
@@ -584,6 +584,15 @@ const Header = () => {
                                         >
                                             Housing Reviews
                                         </Link>
+                                        <Link
+                                            href="/open-forum"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Event Reviews
+                                        </Link>
                                     </div>
                                 )}
                             </div>
@@ -645,16 +654,6 @@ const Header = () => {
                                             }
                                         >
                                             Events
-                                        </Link>
-
-                                        <Link
-                                            href="/open-forum"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                            onClick={() =>
-                                                setIsMobileMenuOpen(false)
-                                            }
-                                        >
-                                            Open Forum
                                         </Link>
                                     </div>
                                 )}
