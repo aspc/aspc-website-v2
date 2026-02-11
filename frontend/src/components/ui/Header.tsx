@@ -346,32 +346,13 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/* Events Dropdown */}
-                            <div className="relative dropdown-container">
-                                <button
-                                    className="flex items-center space-x-1 hover:text-blue-500"
-                                    onClick={() =>
-                                        handleDropdownClick('Events')
-                                    }
-                                >
-                                    <span>Events</span>
-                                </button>
-
-                                {/* Events Dropdown */}
-                                {openDropdown === 'Events' && (
-                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        <Link
-                                            href="/events"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 last:border-b-0"
-                                            onClick={() =>
-                                                setOpenDropdown(null)
-                                            }
-                                        >
-                                            Calendar
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
+                            {/* Events - direct link to calendar */}
+                            <Link
+                                href="/events"
+                                className="flex items-center space-x-1 hover:text-blue-500"
+                            >
+                                <span>Events</span>
+                            </Link>
 
                             {user ? (
                                 <>
@@ -633,31 +614,14 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/* Events dropdown */}
-                            <div className="relative dropdown-container">
-                                <button
-                                    className="text-lg flex items-center space-x-1"
-                                    onClick={() =>
-                                        handleDropdownClick('EventsMobile')
-                                    }
-                                >
-                                    <span>Events</span>
-                                </button>
-
-                                {openDropdown === 'EventsMobile' && (
-                                    <div className="ml-2 mt-2">
-                                        <Link
-                                            href="/events"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                            onClick={() =>
-                                                setIsMobileMenuOpen(false)
-                                            }
-                                        >
-                                            Events
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
+                            {/* Events - direct link to calendar */}
+                            <Link
+                                href="/events"
+                                className="text-lg flex items-center space-x-1 hover:text-yellow-400"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                <span>Events</span>
+                            </Link>
 
                             {user?.isAdmin && (
                                 <Link
