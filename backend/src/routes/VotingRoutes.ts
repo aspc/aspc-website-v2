@@ -3,7 +3,7 @@ import { isAuthenticated } from '../middleware/authMiddleware';
 import {
     studentHasVoted,
     getBallot,
-    recordVote,
+    recordVotes,
 } from '../controllers/VotingController';
 
 const router: Router = express.Router();
@@ -27,6 +27,6 @@ router.get('/ballot/:electionId', isAuthenticated, getBallot);
  * @desc    Record a vote
  * @access  isAuthenticated
  */
-router.post('/:electionId', isAuthenticated, recordVote);
+router.post('/:electionId', isAuthenticated, recordVotes);
 
 export default router;

@@ -9,7 +9,6 @@ import {
     getClassRepCandidates,
     getBallot,
     studentHasVoted,
-    recordVote,
 } from '../controllers/VotingController';
 import { SENATE_POSITIONS } from '../constants/election.constants';
 

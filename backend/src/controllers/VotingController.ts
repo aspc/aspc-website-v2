@@ -176,7 +176,7 @@ export const isValidBallot = async (v: VoteRequest) => {
     return validCandidates.length === v.ranking.length;
 };
 
-export const recordVote = async (req: Request, res: Response) => {
+export const recordVotes = async (req: Request, res: Response) => {
     let session: ClientSession | undefined;
 
     try {
