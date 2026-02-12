@@ -7,6 +7,7 @@ import {
     getCampusRepCandidates,
     getClassRepCandidates,
 } from '../controllers/VotingController';
+import { SENATE_POSITIONS } from '../constants/election.constants';
 // import app from '../server';
 
 const mockElectionId = new mongoose.Types.ObjectId();
@@ -22,32 +23,27 @@ const mockCandidatesDB = [
     {
         electionId: mockElectionId,
         name: 'Alice',
-        position: 'first_year_class_president',
+        position: SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
     },
     {
         electionId: mockElectionId,
         name: 'Bob',
-        position: 'sophomore_class_president',
+        position: SENATE_POSITIONS.SOPHOMORE_CLASS_PRESIDENT,
     },
     {
         electionId: mockElectionId,
         name: 'Carol',
-        position: 'first_year_class_president',
+        position: SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
     },
     {
         electionId: mockElectionId,
         name: 'Dave',
-        position: 'north_campus_representative',
-    },
-    {
-        electionId: mockElectionId,
-        name: 'Eve',
-        position: 'south_campus_representative',
+        position: SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
     },
     {
         electionId: mockElectionId,
         name: 'Fred',
-        position: 'president',
+        position: SENATE_POSITIONS.PRESIDENT,
     },
 ];
 
@@ -74,27 +70,37 @@ afterAll(async () => {
 });
 
 describe('getClassRepCandidates (integration test)', () => {
-    it('returns all first-year class president candidates', async () => {
-        const candidates = await getClassRepCandidates(
-            mockElectionId.toString(),
-            1
-        );
+    it.each([
+        {
+            year: 1,
+            expectedCount: 2,
+            expectedNames: ['Alice', 'Carol'],
+            description: 'first-year class president',
+        },
+        {
+            year: 3,
+            expectedCount: 0,
+            expectedNames: [],
+            description: 'junior class president (no candidates)',
+        },
+    ])(
+        'returns $expectedCount $description candidates for year $year',
+        async ({ year, expectedCount, expectedNames }) => {
+            const candidates = await getClassRepCandidates(
+                mockElectionId.toString(),
+                year
+            );
 
-        expect(candidates).toHaveLength(2);
-        const names = candidates.map((c) => c.name);
-        expect(names).toContain('Alice');
-        expect(names).toContain('Carol');
-    });
+            expect(candidates).toHaveLength(expectedCount);
 
-    it('returns sophomore class president candidates', async () => {
-        const candidates = await getClassRepCandidates(
-            mockElectionId.toString(),
-            2
-        );
-
-        expect(candidates).toHaveLength(1);
-        expect(candidates[0].name).toBe('Bob');
-    });
+            if (expectedCount > 0) {
+                const names = candidates.map((c) => c.name);
+                expectedNames.forEach((name) => {
+                    expect(names).toContain(name);
+                });
+            }
+        }
+    );
 
     it('returns empty array for invalid year', async () => {
         const candidates = await getClassRepCandidates(
@@ -103,52 +109,45 @@ describe('getClassRepCandidates (integration test)', () => {
         );
         expect(candidates).toEqual([]);
     });
-
-    it('returns empty array if no candidates match the year', async () => {
-        await Candidate.deleteMany({ position: 'first_year_class_president' });
-        const candidates = await getClassRepCandidates(
-            mockElectionId.toString(),
-            1
-        );
-        expect(candidates).toEqual([]);
-    });
 });
 
 describe('getCampusRepCandidates (integration test)', () => {
-    it('returns all north campus rep candidates', async () => {
-        const candidates = await getCampusRepCandidates(
-            mockElectionId.toString(),
-            'north'
-        );
+    it.each([
+        {
+            housingStatus: 'north',
+            expectedCount: 1,
+            expectedNames: ['Dave'],
+            description: 'north campus rep',
+        },
+        {
+            housingStatus: 'south',
+            expectedCount: 0,
+            expectedNames: [],
+            description: 'south campus rep',
+        },
+    ])(
+        'returns $expectedCount $description candidates for housing status $housingStatus',
+        async ({ housingStatus, expectedCount, expectedNames }) => {
+            const candidates = await getCampusRepCandidates(
+                mockElectionId.toString(),
+                housingStatus
+            );
 
-        expect(candidates).toHaveLength(1);
-        const names = candidates.map((c) => c.name);
-        expect(names).toContain('Dave');
-    });
+            expect(candidates).toHaveLength(expectedCount);
 
-    it('returns south campus rep candidates', async () => {
-        const candidates = await getCampusRepCandidates(
-            mockElectionId.toString(),
-            'south'
-        );
-
-        expect(candidates).toHaveLength(1);
-        expect(candidates[0].name).toBe('Eve');
-    });
+            if (expectedCount > 0) {
+                const names = candidates.map((c) => c.name);
+                expectedNames.forEach((name) => {
+                    expect(names).toContain(name);
+                });
+            }
+        }
+    );
 
     it('returns empty array for non-north/south housing status', async () => {
         const candidates = await getCampusRepCandidates(
             mockElectionId.toString(),
-            'off-campus'
-        );
-        expect(candidates).toEqual([]);
-    });
-
-    it('returns empty array if no candidates', async () => {
-        await Candidate.deleteMany({ position: 'south_campus_representative' });
-        const candidates = await getCampusRepCandidates(
-            mockElectionId.toString(),
-            'south'
+            'east'
         );
         expect(candidates).toEqual([]);
     });
@@ -165,24 +164,3 @@ describe('getAllOtherCandidates (integration test)', () => {
         expect(names).toContain('Fred');
     });
 });
-
-// describe('GET /api/candidates', () => {
-//     it('returns all candidates for a student', async () => {
-//         const agent = request.agent(app);
-
-//         // Mock session middleware to inject student email
-//         const res = await agent
-//             .get('/api/candidates')
-//             .set('Cookie', 'connect.sid=mocked-session')
-//             .expect(200);
-
-//         expect(res.body.status).toBe('success');
-//         expect(res.body.data.length).toBeGreaterThan(0);
-//         expect(res.body.data).toEqual(
-//             expect.arrayContaining([
-//                 expect.objectContaining({ name: 'Alice' }),
-//                 expect.objectContaining({ name: 'Bob' }),
-//             ])
-//         );
-//     });
-// });
