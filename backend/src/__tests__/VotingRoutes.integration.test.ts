@@ -1,14 +1,15 @@
 import mongoose from 'mongoose';
-import request from 'supertest';
+import { Request, Response } from 'express';
+
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { Candidate, StudentBallotInfo } from '../models/Voting';
 import {
     getAllOtherCandidates,
     getCampusRepCandidates,
     getClassRepCandidates,
+    getBallot,
 } from '../controllers/VotingController';
 import { SENATE_POSITIONS } from '../constants/election.constants';
-// import app from '../server';
 
 const mockElectionId = new mongoose.Types.ObjectId();
 const mockStudent = {
@@ -39,6 +40,11 @@ const mockCandidatesDB = [
         electionId: mockElectionId,
         name: 'Dave',
         position: SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
+    },
+    {
+        electionId: mockElectionId,
+        name: 'Eve',
+        position: SENATE_POSITIONS.SOUTH_CAMPUS_REPRESENTATIVE,
     },
     {
         electionId: mockElectionId,
@@ -121,8 +127,8 @@ describe('getCampusRepCandidates (integration test)', () => {
         },
         {
             housingStatus: 'south',
-            expectedCount: 0,
-            expectedNames: [],
+            expectedCount: 1,
+            expectedNames: ['Eve'],
             description: 'south campus rep',
         },
     ])(
@@ -162,5 +168,145 @@ describe('getAllOtherCandidates (integration test)', () => {
         expect(candidates).toHaveLength(1);
         const names = candidates.map((c) => c.name);
         expect(names).toContain('Fred');
+    });
+});
+
+describe('getBallot (integration test)', () => {
+    let req: Partial<Request>;
+    let res: Partial<Response>;
+    let jsonMock: jest.Mock;
+    let statusMock: jest.Mock;
+
+    beforeEach(() => {
+        jsonMock = jest.fn();
+        statusMock = jest.fn().mockReturnValue({ json: jsonMock });
+
+        req = {
+            params: { electionId: mockElectionId.toString() },
+            session: { user: { email: 'student@test.com' } } as any,
+        };
+
+        res = {
+            status: statusMock,
+            json: jsonMock,
+        };
+    });
+
+    it('returns all candidates for north campus first-year student', async () => {
+        await getBallot(req as Request, res as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(200);
+
+        const responseData = jsonMock.mock.calls[0][0];
+        expect(responseData.status).toBe('success');
+        expect(responseData.data).toHaveLength(4); // Dave + Alice + Carol + Fred
+
+        const names = responseData.data.map((c: any) => c.name);
+        expect(names).toContain('Dave'); // North campus rep
+        expect(names).toContain('Alice'); // First-year president
+        expect(names).toContain('Carol'); // First-year president
+        expect(names).toContain('Fred'); // President
+        expect(names).not.toContain('Eve'); // South campus (shouldn't be included)
+        expect(names).not.toContain('Bob'); // Sophomore (shouldn't be included)
+    });
+
+    it('returns correct candidates for south campus sophomore student', async () => {
+        // Update student to be south campus sophomore
+        await StudentBallotInfo.updateOne(
+            { email: 'student@test.com' },
+            { $set: { campusRep: 'south', year: 2 } }
+        );
+
+        await getBallot(req as Request, res as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(200);
+
+        const responseData = jsonMock.mock.calls[0][0];
+        expect(responseData.data).toHaveLength(3); // Eve + Bob + Fred
+
+        const names = responseData.data.map((c: any) => c.name);
+        expect(names).toContain('Eve'); // South campus rep
+        expect(names).toContain('Bob'); // Sophomore president
+        expect(names).toContain('Fred'); // President
+        expect(names).not.toContain('Dave'); // North campus
+        expect(names).not.toContain('Alice'); // First-year
+        expect(names).not.toContain('Carol'); // First-year
+    });
+
+    it('returns 404 when student not registered', async () => {
+        req.session = { user: { email: 'unregistered@test.com' } } as any;
+
+        await getBallot(req as Request, res as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(404);
+        expect(jsonMock).toHaveBeenCalledWith({
+            status: 'error',
+            message: 'Student info not found',
+        });
+    });
+
+    it('returns only other candidates when no class/campus match', async () => {
+        // Update student to invalid year and housing
+        await StudentBallotInfo.updateOne(
+            { email: 'student@test.com' },
+            { $set: { campusRep: 'off-campus', year: 5 } }
+        );
+
+        await getBallot(req as Request, res as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(200);
+
+        const responseData = jsonMock.mock.calls[0][0];
+        expect(responseData.data).toHaveLength(1); // Only Fred
+
+        const names = responseData.data.map((c: any) => c.name);
+        expect(names).toContain('Fred');
+    });
+
+    it('returns empty array when no candidates exist', async () => {
+        await Candidate.deleteMany({});
+
+        await getBallot(req as Request, res as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(200);
+        expect(jsonMock).toHaveBeenCalledWith({
+            status: 'success',
+            data: [],
+        });
+    });
+
+    it('only returns candidates from the specified election', async () => {
+        const otherElectionId = new mongoose.Types.ObjectId();
+
+        // Add candidates from another election
+        await Candidate.insertMany([
+            {
+                electionId: otherElectionId,
+                name: 'OtherElection1',
+                position: SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
+            },
+            {
+                electionId: otherElectionId,
+                name: 'OtherElection2',
+                position: SENATE_POSITIONS.PRESIDENT,
+            },
+        ]);
+
+        await getBallot(req as Request, res as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(200);
+
+        const responseData = jsonMock.mock.calls[0][0];
+        const names = responseData.data.map((c: any) => c.name);
+
+        // Should not include candidates from other election
+        expect(names).not.toContain('OtherElection1');
+        expect(names).not.toContain('OtherElection2');
+
+        // All candidates should be from mockElectionId
+        const allFromCorrectElection = responseData.data.every(
+            (c: any) => c.electionId.toString() === mockElectionId.toString()
+        );
+        expect(allFromCorrectElection).toBe(true);
     });
 });
