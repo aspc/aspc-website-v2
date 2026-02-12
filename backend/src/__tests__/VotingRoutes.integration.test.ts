@@ -2,12 +2,14 @@ import mongoose from 'mongoose';
 import { Request, Response } from 'express';
 
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { Candidate, StudentBallotInfo } from '../models/Voting';
+import { Candidate, StudentBallotInfo, Vote } from '../models/Voting';
 import {
     getAllOtherCandidates,
     getCampusRepCandidates,
     getClassRepCandidates,
     getBallot,
+    studentHasVoted,
+    recordVote,
 } from '../controllers/VotingController';
 import { SENATE_POSITIONS } from '../constants/election.constants';
 
@@ -308,5 +310,79 @@ describe('getBallot (integration test)', () => {
             (c: any) => c.electionId.toString() === mockElectionId.toString()
         );
         expect(allFromCorrectElection).toBe(true);
+    });
+});
+
+describe('studentHasVoted (integration test)', () => {
+    let req: Partial<Request>;
+    let res: Partial<Response>;
+    let jsonMock: jest.Mock;
+    let statusMock: jest.Mock;
+
+    beforeEach(() => {
+        jsonMock = jest.fn();
+        statusMock = jest.fn().mockReturnValue({ json: jsonMock });
+
+        req = {
+            params: { electionId: mockElectionId.toString() },
+            session: { user: { email: 'student@test.com' } } as any,
+        };
+
+        res = {
+            status: statusMock,
+            json: jsonMock,
+        };
+    });
+
+    it('returns hasVoted true when student has voted', async () => {
+        // Update student to have voted
+        await StudentBallotInfo.updateOne(
+            { email: 'student@test.com' },
+            { $set: { hasVoted: true } }
+        );
+
+        await studentHasVoted(req as Request, res as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(200);
+        expect(jsonMock).toHaveBeenCalledWith({
+            status: 'success',
+            hasVoted: true,
+        });
+    });
+
+    it('returns hasVoted false when student has not voted', async () => {
+        // Ensure student hasn't voted (default from beforeEach)
+        await studentHasVoted(req as Request, res as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(200);
+        expect(jsonMock).toHaveBeenCalledWith({
+            status: 'success',
+            hasVoted: false,
+        });
+    });
+
+    it('returns 404 when student not registered in election', async () => {
+        req.session = { user: { email: 'unregistered@test.com' } } as any;
+
+        await studentHasVoted(req as Request, res as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(404);
+        expect(jsonMock).toHaveBeenCalledWith({
+            status: 'error',
+            message: 'Student not registered in election',
+        });
+    });
+
+    it('returns 404 when student registered in different election', async () => {
+        const differentElectionId = new mongoose.Types.ObjectId();
+        req.params = { electionId: differentElectionId.toString() };
+
+        await studentHasVoted(req as Request, res as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(404);
+        expect(jsonMock).toHaveBeenCalledWith({
+            status: 'error',
+            message: 'Student not registered in election',
+        });
     });
 });
