@@ -4,7 +4,7 @@ import {
     getCampusRepCandidates,
     getClassRepCandidates,
     getAllOtherCandidates,
-    isValidVote,
+    isValidBallot,
 } from '../controllers/VotingController';
 import { Candidate } from '../models/Voting';
 import { SENATE_POSITIONS } from '../constants/election.constants';
@@ -204,7 +204,7 @@ describe('Ballot helper functions', () => {
         });
     });
 
-    describe('isValidVote', () => {
+    describe('isValidBallot', () => {
         const position = SENATE_POSITIONS.PRESIDENT;
         const candidate1 = new mongoose.Types.ObjectId();
         const candidate2 = new mongoose.Types.ObjectId();
@@ -328,7 +328,7 @@ describe('Ballot helper functions', () => {
                     );
                 }
 
-                const result = await isValidVote(voteRequest);
+                const result = await isValidBallot(voteRequest);
 
                 if (shouldCallDB) {
                     expect(Candidate.find).toHaveBeenCalledWith({

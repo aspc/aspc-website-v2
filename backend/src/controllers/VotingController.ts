@@ -149,7 +149,7 @@ export const getBallot = async (req: Request, res: Response) => {
     }
 };
 
-export const isValidVote = async (v: VoteRequest) => {
+export const isValidBallot = async (v: VoteRequest) => {
     // Ensure that rankings are non-empty and at most 5 candidates
     const maxRanking = 5;
     if (!v.ranking || v.ranking.length === 0 || v.ranking.length > maxRanking) {
@@ -205,7 +205,7 @@ export const recordVote = async (req: Request, res: Response) => {
         }
 
         for (const v of votes) {
-            if (!(await isValidVote(v))) {
+            if (!(await isValidBallot(v))) {
                 res.status(400).json({
                     status: 'error',
                     message: `Invalid vote for position: ${v.position}`,
