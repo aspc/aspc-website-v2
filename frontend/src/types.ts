@@ -240,8 +240,8 @@ export interface IElectionFrontend {
     _id: string;
     name: string;
     description: string;
-    startDate: string | Date;
-    endDate: string | Date;
+    startDate: string;
+    endDate: string;
 }
 
 export interface ICandidateFrontend {

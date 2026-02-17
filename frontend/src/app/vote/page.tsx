@@ -1,63 +1,19 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Check, Timer, AlertCircle } from 'lucide-react';
+import { Check, Timer, AlertCircle, AlertTriangle } from 'lucide-react';
 import BallotSection from '@/components/vote/BallotSection';
 import BallotCountdown from '@/components/vote/BallotCountdown';
 import { Button } from '@/components/ui/Button';
-import { ICandidateFrontend, IRankingState } from '@/types';
-
-/**
- * --- MOCK DATA ---
- */
-const MOCK_ELECTION = {
-    _id: '65a123abc',
-    name: '2026 Student Union General Election',
-    description:
-        'Annual leadership election. You must rank all candidates within an activated category to complete that ballot.',
-    startDate: '2026-02-01T09:00:00.000Z',
-    endDate: '2026-02-15T17:00:00.000Z',
-};
-
-const MOCK_CANDIDATES = [
-    {
-        _id: 'c1',
-        name: 'Marcus Thorne',
-        position: 'President',
-        description: 'Focused on campus sustainability and transparency.',
-        electionId: '65a123abc',
-    },
-    {
-        _id: 'c2',
-        name: 'Elena Rodriguez',
-        position: 'President',
-        description: 'Advocating for expanded mental health resources.',
-        electionId: '65a123abc',
-    },
-    {
-        _id: 'c3',
-        name: 'Jordan Smith',
-        position: 'President',
-        description: 'Aims to improve internship placement programs.',
-        electionId: '65a123abc',
-    },
-    {
-        _id: 'c4',
-        name: 'Sarah Jenkins',
-        position: 'Vice President',
-        description: 'Expert in student event coordination.',
-        electionId: '65a123abc',
-    },
-    {
-        _id: 'c5',
-        name: 'Kevin Zhao',
-        position: 'Vice President',
-        description: 'Dedicated to enhancing campus digital infrastructure.',
-        electionId: '65a123abc',
-    },
-];
+import Loading from '@/components/Loading';
+import LoginRequired from '@/components/LoginRequired';
+import { useAuth } from '@/hooks/useAuth';
+import { ICandidateFrontend, IRankingState, IElectionFrontend } from '@/types';
 
 export default function VotePage() {
+    const { user, loading: authLoading } = useAuth();
+
+    const [election, setElection] = useState<IElectionFrontend | null>(null);
     const [ballots, setBallots] = useState<
         Record<string, ICandidateFrontend[]>
     >({});
@@ -66,19 +22,96 @@ export default function VotePage() {
     );
     const [rankings, setRankings] = useState<Record<string, IRankingState>>({});
     const [showConfirm, setShowConfirm] = useState(false);
-    const [isSubmitted, setIsSubmitted] = useState(false);
+
+    // States for election status
+    const [hasVoted, setHasVoted] = useState(false);
+    const [isElectionOver, setIsElectionOver] = useState(false);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
-        const grouped = MOCK_CANDIDATES.reduce(
-            (acc: Record<string, ICandidateFrontend[]>, c) => {
-                if (!acc[c.position]) acc[c.position] = [];
-                acc[c.position].push(c);
-                return acc;
-            },
-            {}
-        );
-        setBallots(grouped);
-    }, []);
+        if (authLoading || !user) return;
+
+        const fetchData = async () => {
+            try {
+                const backendLink = process.env.BACKEND_LINK;
+
+                // 1. Get Most Recent Election
+                const electionRes = await fetch(
+                    `${backendLink}/api/voting/election`,
+                    {
+                        credentials: 'include',
+                    }
+                );
+
+                if (!electionRes.ok)
+                    throw new Error('Failed to fetch election');
+                const electionData: IElectionFrontend =
+                    await electionRes.json();
+                setElection(electionData);
+
+                // Check if election is over
+                const endDate = new Date(electionData.endDate).getTime();
+                const now = Date.now();
+                if (now > endDate) {
+                    setIsElectionOver(true);
+                    setIsLoadingData(false);
+                    return; // Stop here if election is over
+                }
+
+                // 2. Check Vote Status
+                const statusRes = await fetch(
+                    `${backendLink}/api/voting/votestatus/${electionData._id}`,
+                    {
+                        credentials: 'include',
+                    }
+                );
+
+                if (!statusRes.ok)
+                    throw new Error('Failed to fetch vote status');
+                const statusData = await statusRes.json();
+
+                if (statusData.hasVoted) {
+                    setHasVoted(true);
+                    setIsLoadingData(false);
+                    return; // Stop here if user already voted
+                }
+
+                // 3. Get Ballot/Candidates (Only if not voted)
+                const ballotRes = await fetch(
+                    `${backendLink}/api/voting/ballot/${electionData._id}`,
+                    {
+                        credentials: 'include',
+                    }
+                );
+
+                if (!ballotRes.ok) throw new Error('Failed to fetch ballot');
+                const ballotData = await ballotRes.json();
+                console.log('Ballot Data:', ballotData);
+
+                // Group candidates by position
+                const grouped = ballotData.data.reduce(
+                    (
+                        acc: Record<string, ICandidateFrontend[]>,
+                        c: ICandidateFrontend
+                    ) => {
+                        if (!acc[c.position]) acc[c.position] = [];
+                        acc[c.position].push(c);
+                        return acc;
+                    },
+                    {}
+                );
+                setBallots(grouped);
+            } catch (err) {
+                console.error(err);
+                setError('No active election found or failed to load data.');
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+
+        fetchData();
+    }, [user, authLoading]);
 
     const handleToggle = (pos: string) => {
         setActiveBallots((prev) => ({ ...prev, [pos]: !prev[pos] }));
@@ -91,6 +124,91 @@ export default function VotePage() {
         []
     );
 
+    const handleSubmitVote = async () => {
+        if (!election) return;
+
+        try {
+            // Prepare payload: map rankings to arrays of IDs
+            const payload = {
+                votes: Object.entries(rankings)
+                    .filter(([pos]) => activeBallots[pos])
+                    .map(([pos, state]) => ({
+                        position: pos,
+                        ranking: state.candidateIds,
+                    })),
+            };
+            console.log('Submitting payload:', payload);
+
+            const res = await fetch(
+                `${process.env.BACKEND_LINK}/api/voting/${election._id}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload),
+                }
+            );
+
+            if (res.ok) {
+                setHasVoted(true);
+                setShowConfirm(false);
+            } else {
+                const data = await res.json();
+                alert(
+                    data.message || 'Failed to submit vote. Please try again.'
+                );
+            }
+        } catch (e) {
+            console.error(e);
+            alert('An error occurred.');
+        }
+    };
+
+    if (authLoading || isLoadingData) return <Loading />;
+    if (!user) return <LoginRequired />;
+
+    if (error) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center text-slate-500">
+                <AlertTriangle className="w-12 h-12 mb-4 text-amber-500" />
+                <p>{error}</p>
+            </div>
+        );
+    }
+
+    if (isElectionOver) {
+        return (
+            <div className="max-w-xl mx-auto py-32 px-6 text-center">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-100 border-2 border-slate-200 mb-6">
+                    <Timer className="w-10 h-10 text-slate-500" />
+                </div>
+                <h1 className="text-3xl font-black text-[#001f3f] uppercase tracking-tighter">
+                    Election Ended
+                </h1>
+                <p className="text-slate-500 mt-2 font-medium">
+                    The voting period for <strong>{election?.name}</strong> has
+                    concluded.
+                </p>
+            </div>
+        );
+    }
+
+    if (hasVoted) {
+        return (
+            <div className="max-w-xl mx-auto py-32 px-6 text-center">
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-50 border-2 border-emerald-100 mb-6 animate-bounce">
+                    <Check className="w-10 h-10 text-emerald-600" />
+                </div>
+                <h1 className="text-3xl font-black text-slate-100 uppercase tracking-tighter">
+                    Vote Confirmed
+                </h1>
+                <p className="text-slate-300 mt-2 font-medium">
+                    Your ranked ballot has been securely processed.
+                </p>
+            </div>
+        );
+    }
+
     const activeKeys = Object.keys(activeBallots).filter(
         (k) => activeBallots[k]
     );
@@ -98,40 +216,26 @@ export default function VotePage() {
         activeKeys.length > 0 &&
         activeKeys.every((k) => rankings[k]?.isComplete);
 
-    if (isSubmitted) {
-        return (
-            <div className="max-w-xl mx-auto py-32 px-6 text-center">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-50 border-2 border-emerald-100 mb-6 animate-bounce">
-                    <Check className="w-10 h-10 text-emerald-600" />
-                </div>
-                <h1 className="text-3xl font-black text-[#001f3f] uppercase tracking-tighter">
-                    Vote Confirmed
-                </h1>
-                <p className="text-slate-500 mt-2 font-medium">
-                    Your ranked ballot has been securely processed.
-                </p>
-            </div>
-        );
-    }
-
     return (
         <main className="min-h-screen bg-white text-slate-900 font-sans pb-24">
             <div className="max-w-4xl mx-auto px-6 pt-16">
                 <header className="mb-12 border-b-2 border-slate-900 pb-10 flex flex-col md:flex-row justify-between items-start gap-8">
                     <div className="flex-1">
                         <h1 className="text-3xl font-black text-[#001f3f] uppercase tracking-tighter mb-4 leading-none">
-                            {MOCK_ELECTION.name}
+                            {election?.name}
                         </h1>
                         <p className="text-sm text-slate-500 font-medium italic">
-                            {MOCK_ELECTION.description}
+                            {election?.description}
                         </p>
                     </div>
-                    <div className="bg-slate-50 p-4 border border-slate-200 rounded-md">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
-                            <Timer className="w-3 h-3" /> Time Left
-                        </p>
-                        <BallotCountdown endDate={MOCK_ELECTION.endDate} />
-                    </div>
+                    {election && (
+                        <div className="bg-slate-50 p-4 border border-slate-200 rounded-md">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                <Timer className="w-3 h-3" /> Time Left
+                            </p>
+                            <BallotCountdown endDate={election.endDate} />
+                        </div>
+                    )}
                 </header>
 
                 {Object.entries(ballots).map(([pos, cands]) => (
@@ -182,7 +286,7 @@ export default function VotePage() {
                                         {pos}
                                     </div>
                                     {rankings[pos].candidateIds.map((id, i) => {
-                                        const c = MOCK_CANDIDATES.find(
+                                        const c = ballots[pos]?.find(
                                             (cand) => cand._id === id
                                         );
                                         return (
@@ -202,7 +306,7 @@ export default function VotePage() {
                             <div className="flex flex-col gap-3 pt-4 border-t">
                                 <Button
                                     variant="success"
-                                    onClick={() => setIsSubmitted(true)}
+                                    onClick={handleSubmitVote}
                                 >
                                     CONFIRM SUBMISSION
                                 </Button>
