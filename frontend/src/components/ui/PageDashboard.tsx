@@ -207,6 +207,7 @@ const PageDashboard = () => {
             alert(error instanceof Error ? error.message : 'Error saving page');
         } finally {
             setLoading(false);
+            window.location.reload();
         }
     };
 
@@ -381,7 +382,11 @@ const PageDashboard = () => {
         <form onSubmit={handleSave} className="min-h-screen bg-gray-100 p-8">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-900">
-                    {selectedPage ? 'Edit Page' : 'Add New Page'}
+                    {selectedPage
+                        ? pageType === 'content'
+                            ? 'Edit Content Page'
+                            : 'Edit Link Page'
+                        : 'Add New Page'}
                 </h1>
                 <div className="flex space-x-4 mb-6">
                     {!isCreatingNew && (
@@ -426,52 +431,54 @@ const PageDashboard = () => {
             </div>
 
             {/* Page Type */}
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                    Page Type
-                </h2>
-                <p className="text-sm text-gray-500 mt-2 mb-4">
-                    Content pages are text-based, link pages hyperlink to an
-                    external site
-                </p>
+            {isCreatingNew && (
+                <div className="bg-white rounded-lg shadow p-6 mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                        Page Type
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-2 mb-4">
+                        Content pages are text-based, link pages hyperlink to an
+                        external site
+                    </p>
 
-                {/* Page Type Selection */}
-                <div className="flex space-x-4">
-                    {/* Content Page Button */}
-                    <button
-                        type="button"
-                        onClick={() => {
-                            if (isCreatingNew) {
-                                setPageType('content');
-                            }
-                        }}
-                        className={`px-4 py-2 rounded-md font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                            pageType === 'content'
-                                ? 'bg-blue-600 text-white shadow-sm'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                        }`}
-                    >
-                        Content Page
-                    </button>
+                    {/* Page Type Selection */}
+                    <div className="flex space-x-4">
+                        {/* Content Page Button */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (isCreatingNew) {
+                                    setPageType('content');
+                                }
+                            }}
+                            className={`px-4 py-2 rounded-md font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                                pageType === 'content'
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                        >
+                            Content Page
+                        </button>
 
-                    {/* Link Page Button */}
-                    <button
-                        type="button"
-                        onClick={() => {
-                            if (isCreatingNew) {
-                                setPageType('link');
-                            }
-                        }}
-                        className={`px-4 py-2 rounded-md font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
-                            pageType === 'link'
-                                ? 'bg-blue-600 text-white shadow-sm'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                        }`}
-                    >
-                        Link Page
-                    </button>
+                        {/* Link Page Button */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (isCreatingNew) {
+                                    setPageType('link');
+                                }
+                            }}
+                            className={`px-4 py-2 rounded-md font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                                pageType === 'link'
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                        >
+                            Links Page
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Page Content or Link based on type */}
             {pageType === 'link' && (
