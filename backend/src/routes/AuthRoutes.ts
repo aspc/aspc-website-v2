@@ -60,7 +60,7 @@ router.get('/login/saml', async (req: Request, res: Response) => {
         }
 
         const { id, context } = sp.createLoginRequest(idp, 'redirect');
-        (req.session as any).authRequest = id;
+        req.session.authRequest = id;
         res.redirect(context);
     } catch (error) {
         res.status(500).json({ message: 'SAML login error', error });
@@ -84,7 +84,7 @@ router.post(
             // console.log('SAML extract:', extract);
 
             // Store user in session
-            (req.session as any).user = {
+            req.session.user = {
                 id: extract.attributes[
                     'http://schemas.microsoft.com/identity/claims/objectidentifier'
                 ],
@@ -95,7 +95,7 @@ router.post(
                 nameID: extract.nameID,
             };
 
-            console.log('SAML user:', (req.session as any).user);
+            console.log('SAML user:', req.session.user);
 
             req.session.save((err) => {
                 if (err) {
@@ -125,12 +125,13 @@ router.get('/logout/saml', async (req: Request, res: Response) => {
             throw new Error('SAML not initialized');
         }
 
-        const user = (req.session as any).user;
+        const user = req.session.user;
         if (!user) {
             res.redirect('/');
             return;
         }
         console.log('SAML user logged out:', user.nameID);
+        console.log('sessionindex', user.sessionIndex);
         const { id, context } = sp.createLogoutRequest(idp, 'redirect', {
             sessionIndex: user.sessionIndex.sessionIndex,
             nameID: user.nameID,
@@ -165,12 +166,12 @@ router.get('/logout/saml', async (req: Request, res: Response) => {
 
 // Get current user
 router.get('/current_user', async (req: Request, res: Response) => {
-    if (!(req.session as any).user) {
+    if (!req.session.user) {
         res.status(401).json({ message: 'No user is logged in' });
         return;
     }
 
-    const azureId = (req.session as any).user.id;
+    const azureId = req.session.user.id;
     // In AuthRoutes.ts, /current_user endpoint
     try {
         // First try to find user by Azure ID
@@ -179,16 +180,16 @@ router.get('/current_user', async (req: Request, res: Response) => {
         if (!user) {
             // Check by email first before creating
             user = await SAMLUser.findOne({
-                email: (req.session as any).user.email,
+                email: req.session.user.email,
             });
 
             if (!user) {
                 // Only create if no user exists with this email
                 const userData = {
                     id: azureId,
-                    email: (req.session as any).user.email,
-                    firstName: (req.session as any).user.firstName,
-                    lastName: (req.session as any).user.lastName,
+                    email: req.session.user.email,
+                    firstName: req.session.user.firstName,
+                    lastName: req.session.user.lastName,
                     isAdmin: false,
                 };
 
@@ -201,7 +202,7 @@ router.get('/current_user', async (req: Request, res: Response) => {
                     if ((err as { code?: number }).code === 11000) {
                         // If creation failed due to race condition, try finding again
                         user = await SAMLUser.findOne({
-                            email: (req.session as any).user.email,
+                            email: req.session.user.email,
                         });
                     } else {
                         throw err;
@@ -220,7 +221,7 @@ router.get('/current_user', async (req: Request, res: Response) => {
         res.status(200).json({
             user: {
                 ...user.toObject(),
-                _id: (user._id as any).toString(),
+                _id: user._id,
             },
         });
     } catch (error) {

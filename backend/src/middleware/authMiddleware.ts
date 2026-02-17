@@ -10,7 +10,7 @@ export const isAuthenticated = async (
     next: NextFunction
 ) => {
     // Check if user is in session
-    if (!(req.session as any).user) {
+    if (!req.session.user) {
         res.status(401).json({ message: 'Authentication required' });
         return;
     }
@@ -24,12 +24,12 @@ export const isAdmin = async (
     next: NextFunction
 ) => {
     // First check if user is authenticated
-    if (!(req.session as any).user) {
+    if (!req.session.user) {
         res.status(401).json({ message: 'Authentication required' });
         return;
     }
 
-    const azureId = (req.session as any).user.id;
+    const azureId = req.session.user.id;
 
     try {
         // Find the user in the database
@@ -56,12 +56,12 @@ export const isCourseReviewOwner = async (
     next: NextFunction
 ) => {
     // First check if user is authenticated
-    if (!(req.session as any).user) {
+    if (!req.session.user) {
         res.status(401).json({ message: 'Authentication required' });
         return;
     }
     // First check if user is authenticated and get the user ID from session
-    const sessionUserEmail = (req.session as any).user.email;
+    const sessionUserEmail = req.session.user.email;
     if (!sessionUserEmail) {
         res.status(401).json({ message: 'Authentication required' });
         return;
@@ -92,13 +92,13 @@ export const isHousingReviewOwner = async (
     next: NextFunction
 ) => {
     // First check if user is authenticated
-    if (!(req.session as any).user) {
+    if (!req.session.user) {
         res.status(401).json({ message: 'Authentication required' });
         return;
     }
 
     // First check if user is authenticated and get the user ID from session
-    const sessionUserEmail = (req.session as any).user.email;
+    const sessionUserEmail = req.session.user.email;
     if (!sessionUserEmail) {
         res.status(401).json({ message: 'Authentication required' });
         return;
@@ -129,12 +129,12 @@ export const hasNotRatedEvent = async (
     next: NextFunction
 ) => {
     // First check if user is authenticated
-    if (!(req.session as any).user) {
+    if (!req.session.user) {
         res.status(401).json({ message: 'Authentication required' });
         return;
     }
 
-    const azureId = (req.session as any).user.id;
+    const azureId = req.session.user.id;
     if (!azureId) {
         res.status(401).json({ message: 'Authentication required' });
         return;
@@ -171,12 +171,12 @@ export const isEventReviewOwner = async (
     next: NextFunction
 ) => {
     // First check if user is authenticated
-    if (!(req.session as any).user) {
+    if (!req.session.user) {
         res.status(401).json({ message: 'Authentication required' });
         return;
     }
 
-    const azureId = (req.session as any).user.id;
+    const azureId = req.session.user.id;
     if (!azureId) {
         res.status(401).json({ message: 'Authentication required' });
         return;
@@ -201,7 +201,7 @@ export const isEventReviewOwner = async (
     }
 
     // Compare MongoDB ObjectIds (convert to string for comparison)
-    if (review.author.toString() !== (user._id as any).toString()) {
+    if (review.author.toString() !== user._id) {
         res.status(403).json({
             message: 'You are not authorized to modify this review',
         });
