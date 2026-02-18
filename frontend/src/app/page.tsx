@@ -2,18 +2,17 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Event } from '@/types';
+import { Event, IElectionFrontend } from '@/types';
 import HomepageEvents from '@/components/ui/HomepageEvents';
 import Loading from '@/components/Loading';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/Button';
 import BallotCountdown from '@/components/vote/BallotCountdown';
 
 export default function HomePage() {
     const [loading, setLoading] = useState(true);
     const { user, loading: authLoading } = useAuth();
     const [events, setEvents] = useState<Event[]>([]);
-    const [election, setElection] = useState<any>(null);
+    const [election, setElection] = useState<IElectionFrontend | null>(null);
     const [showElection, setShowElection] = useState(false);
 
     useEffect(() => {
