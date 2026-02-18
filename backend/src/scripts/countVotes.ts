@@ -17,8 +17,7 @@ import path from 'path';
 
 // Load .env from backend root when script is run via ts-node
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-
-import { Election , Candidate, Vote } from ../models/Voting.ts;
+import { Election, Candidate, Vote } from '../models/Voting';
 
 const MONGODB_URI =
     process.env.NODE_ENV === 'production'
