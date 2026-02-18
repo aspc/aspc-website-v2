@@ -235,3 +235,24 @@ export interface EventReviewAverages {
     customQuestions: { [key: string]: number };
     totalResponses: number;
 }
+
+export interface IElectionFrontend {
+    _id: string;
+    name: string;
+    description: string;
+    startDate: string;
+    endDate: string;
+}
+
+export interface ICandidateFrontend {
+    _id: string;
+    electionId: string;
+    name: string;
+    position: string;
+    description?: string;
+}
+
+export interface IRankingState {
+    candidateIds: string[];
+    isComplete: boolean;
+}
