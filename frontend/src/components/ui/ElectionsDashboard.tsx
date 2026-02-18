@@ -31,6 +31,8 @@ const SENATE_POSITIONS = {
         'trustee_representative_educational_quality',
 } as const;
 
+type SenatePosition = (typeof SENATE_POSITIONS)[keyof typeof SENATE_POSITIONS];
+
 const formatPositionLabel = (value: string) =>
     value
         .split('_')
@@ -532,9 +534,13 @@ const ElectionsDashboard = () => {
 
     const handleEditCandidate = (candidate: ICandidateFrontend) => {
         setCandidateName(candidate.name);
-        const isPresetPosition = Object.values(SENATE_POSITIONS).includes(
-            candidate.position as any
+        const presetPositions: SenatePosition[] =
+            Object.values(SENATE_POSITIONS);
+
+        const isPresetPosition = presetPositions.includes(
+            candidate.position as SenatePosition
         );
+
         const isKnownCustom = customPositions.includes(candidate.position);
         if (isPresetPosition || isKnownCustom) {
             setCandidatePosition(candidate.position);
