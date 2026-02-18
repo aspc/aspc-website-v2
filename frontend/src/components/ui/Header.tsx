@@ -6,6 +6,7 @@ import Loading from '@/components/Loading';
 import { useAuth } from '@/hooks/useAuth';
 import { PageContent } from '@/types';
 import Image from 'next/image';
+import { Button } from './Button';
 
 const groups: string[] = ['Senate', 'Staff', 'CollegeStaff', 'Software'];
 
@@ -22,6 +23,7 @@ const Header = () => {
     const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
     const [loadingPages, setLoadingPages] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [showElectionButton, setShowElectionButton] = useState(false);
 
     useEffect(() => {
         const fetchPages = async () => {
@@ -64,6 +66,40 @@ const Header = () => {
 
         fetchPages();
     }, [user]);
+
+    useEffect(() => {
+        const fetchElection = async () => {
+            try {
+                const backendLink = process.env.BACKEND_LINK;
+                const electionRes = await fetch(
+                    `${backendLink}/api/voting/election`,
+                    {
+                        credentials: 'include',
+                    }
+                );
+
+                if (!electionRes.ok) {
+                    setShowElectionButton(false);
+                    return;
+                }
+
+                const data = await electionRes.json();
+                const now = new Date();
+                const endDate = new Date(data.endDate);
+
+                if (endDate > now) {
+                    setShowElectionButton(true);
+                } else {
+                    setShowElectionButton(false);
+                }
+            } catch (error) {
+                console.error('Error fetching election:', error);
+                setShowElectionButton(false);
+            }
+        };
+
+        fetchElection();
+    }, []);
 
     const handleDropdownClick = (dropdownName: string) => {
         setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
@@ -354,6 +390,13 @@ const Header = () => {
                                 <span>Events</span>
                             </Link>
 
+                            {/* Voting Button */}
+                            {showElectionButton && (
+                                <Link href="/vote">
+                                    <Button variant="ghost">VOTE HERE</Button>
+                                </Link>
+                            )}
+
                             {user ? (
                                 <>
                                     {user.isAdmin && (
@@ -448,6 +491,18 @@ const Header = () => {
 
                         {/* Mobile Menu Links */}
                         <nav className="flex flex-col p-4 space-y-6 text-white overflow-y-auto">
+                            {/* Voting Button */}
+                            {showElectionButton && (
+                                <Link
+                                    href="/vote"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    <Button variant="ghost" className="w-full">
+                                        Vote Now
+                                    </Button>
+                                </Link>
+                            )}
+
                             {/* About dropdown */}
                             <div className="relative dropdown-container">
                                 <button
