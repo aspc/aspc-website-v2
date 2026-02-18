@@ -100,14 +100,6 @@ export const deleteElection = async (req: Request, res: Response) => {
             return;
         }
 
-        if (new Date() >= new Date(election.startDate)) {
-            res.status(400).json({
-                message:
-                    'Cannot delete election after voting period has started.',
-            });
-            return;
-        }
-
         await Candidate.deleteMany({ electionId: id });
         await StudentBallotInfo.deleteMany({ electionId: id });
         await Vote.deleteMany({ electionId: id });
