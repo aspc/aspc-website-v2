@@ -2,13 +2,31 @@ import mongoose from 'mongoose';
 import { ClientSession } from 'mongoose';
 
 import { Request, Response } from 'express';
-import { Candidate, StudentBallotInfo, Vote } from '../models/Voting';
+import { Candidate, Election, StudentBallotInfo, Vote } from '../models/Voting';
 import { SENATE_POSITIONS } from '../constants/election.constants';
 
 export interface VoteRequest {
     position: string;
     ranking: string[];
 }
+
+export const getElection = async (req: Request, res: Response) => {
+    try {
+        // Find the most recently started election
+        const election = await Election.findOne({}).sort({ startDate: -1 });
+        console.log(election);
+
+        if (!election) {
+            res.status(404).json({ message: 'No election found.' });
+            return;
+        }
+
+        res.status(200).json(election);
+    } catch (error) {
+        console.error('Error fetching election:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
 
 export const studentHasVoted = async (req: Request, res: Response) => {
     try {
@@ -261,7 +279,7 @@ export const recordVotes = async (req: Request, res: Response) => {
 
         res.status(500).json({
             status: 'error',
-            message: 'Failed to record vote',
+            message: 'Failed to record vote rip',
         });
     } finally {
         if (session) {

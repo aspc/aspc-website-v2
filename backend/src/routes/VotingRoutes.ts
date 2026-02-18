@@ -1,12 +1,20 @@
 import express, { Router } from 'express';
 import { isAuthenticated } from '../middleware/authMiddleware';
 import {
+    getElection,
     studentHasVoted,
     getBallot,
     recordVotes,
 } from '../controllers/VotingController';
 
 const router: Router = express.Router();
+
+/**
+ * @route   GET /api/voting/election
+ * @desc    Get the most recent election
+ * @access  isAuthenticated
+ */
+router.get('/election', isAuthenticated, getElection);
 
 /**
  * @route   GET /api/voting/votestatus/:electionId

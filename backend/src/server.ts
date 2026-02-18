@@ -14,6 +14,7 @@ import coursesRoutes from './routes/CoursesRoutes';
 import instructorsRoutes from './routes/InstructorsRoutes';
 import reviewsRoutes from './routes/ReviewsRoutes';
 import forumRoutes from './routes/ForumRoutes';
+import votingRoutes from './routes/VotingRoutes';
 import session from 'express-session';
 import https from 'https';
 import http from 'http';
@@ -119,6 +120,7 @@ app.use('/api/instructors', instructorsRoutes);
 app.use('/api/reviews', reviewsRoutes);
 app.use('/api/openforum', forumRoutes);
 app.use('/api/admin/elections', electionsDashboardRoutes);
+app.use('/api/voting', votingRoutes);
 
 const PORT = process.env.PORT || 5000;
 
