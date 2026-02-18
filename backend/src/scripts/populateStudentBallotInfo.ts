@@ -3,10 +3,16 @@ import { StudentBallotInfo } from '../models/Voting';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const ELECTION_ID = '';
-const EMAILS: string[] = [];
+const ELECTION_ID = '698ba8595d9257bf8fb8be8d';
+const EMAILS: string[] = [
+    'ljbq2023@mymail.pomona.edu',
+    'gzfs2022@mymail.pomona.edu',
+    'smfk2024@mymail.pomona.edu',
+];
 
-const MONGO_URI = process.env.MONGODB_TEST_URI || '';
+const MONGO_URI =
+    process.env.MONGODB_TEST_URI ||
+    'mongodb+srv://software:jxqDmaRabKr7BXuS@aspc.qm4l8.mongodb.net/school-platform-test?retryWrites=true&w=majority&appName=ASPC';
 async function populateStudentBallotInfo() {
     if (!ELECTION_ID) throw new Error('ELECTION_ID is required');
     if (EMAILS.length === 0) throw new Error('EMAILS array is empty');
