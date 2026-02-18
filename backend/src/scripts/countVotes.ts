@@ -79,7 +79,9 @@ function runInstantRunoff(
     if (votes.length === 0 || candidateIds.length === 0) return undefined;
     const verbose = options?.verbose ?? false;
     let active = new Set(candidateIds);
-    const voteStack = votes.map((v) => [...v.ranking].map((id) => id.toString()));
+    const voteStack = votes.map((v) =>
+        [...v.ranking].map((id) => id.toString())
+    );
     let round = 0;
 
     while (active.size > 1) {
@@ -124,10 +126,12 @@ function runInstantRunoff(
     }
 
     const winner = active.values().next().value;
-    return winner ? candidateIdToName.get(winner) ?? winner : undefined;
+    return winner ? (candidateIdToName.get(winner) ?? winner) : undefined;
 }
 
-async function tallyElection(electionId: mongoose.Types.ObjectId): Promise<void> {
+async function tallyElection(
+    electionId: mongoose.Types.ObjectId
+): Promise<void> {
     const election = await Election.findById(electionId).lean();
     if (!election) {
         console.error('Election not found:', electionId);
@@ -135,7 +139,10 @@ async function tallyElection(electionId: mongoose.Types.ObjectId): Promise<void>
     }
 
     const candidates = await Candidate.find({ electionId }).lean();
-    const positionToCandidates = new Map<string, { id: string; name: string }[]>();
+    const positionToCandidates = new Map<
+        string,
+        { id: string; name: string }[]
+    >();
     const candidateIdToName = new Map<string, string>();
     for (const c of candidates) {
         const id = c._id.toString();
@@ -190,9 +197,7 @@ async function tallyElection(electionId: mongoose.Types.ObjectId): Promise<void>
         console.log('Total votes:', r.totalVotes);
         console.log('\nFirst-preference (plurality) counts:');
         for (const row of r.firstPreference) {
-            console.log(
-                `  ${row.candidateName}: ${row.firstPreferenceCount}`
-            );
+            console.log(`  ${row.candidateName}: ${row.firstPreferenceCount}`);
         }
         if (r.rcvWinner !== undefined) {
             console.log(
