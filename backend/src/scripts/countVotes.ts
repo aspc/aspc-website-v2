@@ -39,7 +39,8 @@ interface PositionTally {
     position: string;
     totalVotes: number;
     firstPreference: FirstPreferenceResult[];
-    rcvWinner?: string; // candidate name after instant-runoff
+    rcvWinner?: string; // winner (from first-preference or after runoff)
+    runoffUsed?: boolean; // true only when instant-runoff was run (no first-choice majority)
 }
 
 function countFirstPreference(
@@ -170,18 +171,27 @@ async function tallyElection(
             votes as { ranking: mongoose.Types.ObjectId[] }[],
             candidateIdToName
         );
-        const rcvWinner = runInstantRunoff(
-            votes as { ranking: mongoose.Types.ObjectId[] }[],
-            candidateIds,
-            candidateIdToName,
-            { verbose: true }
-        );
+        const totalVotes = votes.length;
+        const majority = totalVotes > 0 ? Math.floor(totalVotes / 2) + 1 : 0;
+        const leaderCount = firstPreference[0]?.firstPreferenceCount ?? 0;
+        const hasFirstChoiceWinner = totalVotes > 0 && leaderCount >= majority;
+        const needsRunoff = !hasFirstChoiceWinner;
+
+        const rcvWinner = needsRunoff
+            ? runInstantRunoff(
+                  votes as { ranking: mongoose.Types.ObjectId[] }[],
+                  candidateIds,
+                  candidateIdToName,
+                  { verbose: true }
+              )
+            : firstPreference[0]?.candidateName;
 
         results.push({
             position,
-            totalVotes: votes.length,
+            totalVotes,
             firstPreference,
             rcvWinner,
+            runoffUsed: needsRunoff,
         });
     }
 
@@ -200,10 +210,14 @@ async function tallyElection(
             console.log(`  ${row.candidateName}: ${row.firstPreferenceCount}`);
         }
         if (r.rcvWinner !== undefined) {
-            console.log(
+            if (r.runoffUsed) {
+                console.log(
                 '\nRCV (instant-runoff) winner (elimination: last place out, their votes go to each voter’s next choice):',
                 r.rcvWinner
             );
+            } else {
+                console.log('\nWinner (first-preference majority):', r.rcvWinner);
+            }
         }
         console.log('');
     }
