@@ -1,29 +1,24 @@
 import React, { useState, useEffect } from 'react';
 
+const computeTimeLeft = (endDate: string) => {
+    const distance = new Date(endDate).getTime() - new Date().getTime();
+    if (distance < 0) return null;
+    return {
+        d: Math.floor(distance / (1000 * 60 * 60 * 24)),
+        h: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        m: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+        s: Math.floor((distance % (1000 * 60)) / 1000),
+    };
+};
+
 export default function BallotCountdown({ endDate }: { endDate: string }) {
-    const [timeLeft, setTimeLeft] = useState<{
-        d: number;
-        h: number;
-        m: number;
-        s: number;
-    } | null>(null);
+    const [timeLeft, setTimeLeft] = useState(() => computeTimeLeft(endDate));
 
     useEffect(() => {
         const timer = setInterval(() => {
-            const distance = new Date(endDate).getTime() - new Date().getTime();
-            if (distance < 0) {
-                clearInterval(timer);
-                setTimeLeft(null);
-            } else {
-                setTimeLeft({
-                    d: Math.floor(distance / (1000 * 60 * 60 * 24)),
-                    h: Math.floor(
-                        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-                    ),
-                    m: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
-                    s: Math.floor((distance % (1000 * 60)) / 1000),
-                });
-            }
+            const next = computeTimeLeft(endDate);
+            setTimeLeft(next);
+            if (!next) clearInterval(timer);
         }, 1000);
         return () => clearInterval(timer);
     }, [endDate]);

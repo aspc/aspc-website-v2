@@ -61,11 +61,24 @@ export const getClassRepCandidates = async (
     electionId: string,
     year: number
 ) => {
+    // Seniors (year 4) vote for both commencement speaker and class name
+    if (year === 4) {
+        const candidates = await Candidate.find({
+            electionId: electionId,
+            position: {
+                $in: [
+                    SENATE_POSITIONS.COMMENCEMENT_SPEAKER,
+                    SENATE_POSITIONS.CLASS_NAME,
+                ],
+            },
+        });
+        return candidates;
+    }
+
     const yearToPosition: Record<number, string> = {
-        1: SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
-        2: SENATE_POSITIONS.SOPHOMORE_CLASS_PRESIDENT,
-        3: SENATE_POSITIONS.JUNIOR_CLASS_PRESIDENT,
-        4: SENATE_POSITIONS.SENIOR_CLASS_PRESIDENT,
+        1: SENATE_POSITIONS.SOPHOMORE_CLASS_PRESIDENT,
+        2: SENATE_POSITIONS.JUNIOR_CLASS_PRESIDENT,
+        3: SENATE_POSITIONS.SENIOR_CLASS_PRESIDENT,
     };
 
     if (!(year in yearToPosition)) {
@@ -112,6 +125,8 @@ export const getAllOtherCandidates = async (electionId: string) => {
                 SENATE_POSITIONS.SENIOR_CLASS_PRESIDENT,
                 SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
                 SENATE_POSITIONS.SOUTH_CAMPUS_REPRESENTATIVE,
+                SENATE_POSITIONS.COMMENCEMENT_SPEAKER,
+                SENATE_POSITIONS.CLASS_NAME,
             ],
         },
     });
