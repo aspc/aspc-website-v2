@@ -17,6 +17,7 @@ const Button = ({
         primary: 'bg-[#001f3f] text-white hover:bg-[#001429]',
         outline: 'border-2 border-[#001f3f] text-[#001f3f] hover:bg-slate-50',
         success: 'bg-emerald-700 text-white hover:bg-emerald-800',
+        danger: 'bg-red-600 text-white hover:bg-red-700',
         ghost: 'text-slate-400 hover:text-red-600 hover:bg-red-50',
     };
     return (

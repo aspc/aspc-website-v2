@@ -168,9 +168,8 @@ export const getBallot = async (req: Request, res: Response) => {
 };
 
 export const isValidBallot = async (v: VoteRequest) => {
-    // Ensure that rankings are non-empty and at most 5 candidates
-    const maxRanking = 5;
-    if (!v.ranking || v.ranking.length === 0 || v.ranking.length > maxRanking) {
+    // Ensure that rankings are non-empty
+    if (!v.ranking || v.ranking.length === 0) {
         return false;
     }
 
