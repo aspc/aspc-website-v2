@@ -1,7 +1,6 @@
 import express, { Router } from 'express';
 import { isAuthenticated } from '../middleware/authMiddleware';
 import {
-    getElection,
     studentHasVoted,
     getBallot,
     recordVotes,
