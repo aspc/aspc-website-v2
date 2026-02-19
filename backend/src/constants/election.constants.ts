@@ -20,5 +20,5 @@ export const SENATE_POSITIONS = {
     TRUSTEE_REPRESENTATIVE_EDUCATIONAL_QUALITY:
         'trustee_representative_educational_quality',
     COMMENCEMENT_SPEAKER: 'commencement_speaker',
-    CLASS_NAME: 'class_name'
+    CLASS_NAME: 'class_name',
 } as const;
