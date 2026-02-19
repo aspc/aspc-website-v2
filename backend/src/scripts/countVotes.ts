@@ -212,11 +212,14 @@ async function tallyElection(
         if (r.rcvWinner !== undefined) {
             if (r.runoffUsed) {
                 console.log(
-                '\nRCV (instant-runoff) winner (elimination: last place out, their votes go to each voter’s next choice):',
-                r.rcvWinner
-            );
+                    '\nRCV (instant-runoff) winner (elimination: last place out, their votes go to each voter’s next choice):',
+                    r.rcvWinner
+                );
             } else {
-                console.log('\nWinner (first-preference majority):', r.rcvWinner);
+                console.log(
+                    '\nWinner (first-preference majority):',
+                    r.rcvWinner
+                );
             }
         }
         console.log('');
