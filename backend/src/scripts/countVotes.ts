@@ -20,7 +20,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 import { Election, Candidate, Vote } from '../models/Voting';
 
 const MONGODB_URI =
-    process.env.NODE_ENV === 'production'
+    process.env.NODE_ENV === 'development'
         ? process.env.MONGODB_URI
         : process.env.MONGODB_TEST_URI;
 
@@ -40,6 +40,7 @@ interface PositionTally {
     totalVotes: number;
     firstPreference: FirstPreferenceResult[];
     rcvWinner?: string; // winner (from first-preference or after runoff)
+    rcvTie?: string[]; // when runoff ends in a tie (e.g. 50–50)
     runoffUsed?: boolean; // true only when instant-runoff was run (no first-choice majority)
 }
 
@@ -71,12 +72,14 @@ function countFirstPreference(
  * choice if still in the race, otherwise third, etc.) and giving the vote
  * to that candidate. Repeat until one candidate has a majority.
  */
+type RunoffResult = string | { tie: string[] } | undefined;
+
 function runInstantRunoff(
     votes: { ranking: mongoose.Types.ObjectId[] }[],
     candidateIds: string[],
     candidateIdToName: Map<string, string>,
     options?: { verbose?: boolean }
-): string | undefined {
+): RunoffResult {
     if (votes.length === 0 || candidateIds.length === 0) return undefined;
     const verbose = options?.verbose ?? false;
     let active = new Set(candidateIds);
@@ -113,6 +116,28 @@ function runInstantRunoff(
                 );
             }
             return candidateIdToName.get(sorted[0]) ?? sorted[0];
+        }
+
+        // Tie for last: if only two remain and they're tied, report a tie
+        const lastCount = counts.get(sorted[sorted.length - 1]) ?? 0;
+        const secondLastCount =
+            sorted.length >= 2
+                ? counts.get(sorted[sorted.length - 2]) ?? 0
+                : -1;
+        if (
+            active.size === 2 &&
+            lastCount === secondLastCount &&
+            lastCount === leaderCount
+        ) {
+            if (verbose) {
+                console.log(
+                    `    Round ${round}: Tie between ${candidateIdToName.get(sorted[0])} and ${candidateIdToName.get(sorted[1])} (${leaderCount} votes each).`
+                );
+            }
+            const tieNames = sorted.map(
+                (id) => candidateIdToName.get(id) ?? id
+            );
+            return { tie: tieNames };
         }
 
         const eliminated = sorted[sorted.length - 1];
@@ -177,7 +202,7 @@ async function tallyElection(
         const hasFirstChoiceWinner = totalVotes > 0 && leaderCount >= majority;
         const needsRunoff = !hasFirstChoiceWinner;
 
-        const rcvWinner = needsRunoff
+        const runoffResult = needsRunoff
             ? runInstantRunoff(
                   votes as { ranking: mongoose.Types.ObjectId[] }[],
                   candidateIds,
@@ -186,11 +211,21 @@ async function tallyElection(
               )
             : firstPreference[0]?.candidateName;
 
+        const rcvWinner =
+            typeof runoffResult === 'string' ? runoffResult : undefined;
+        const rcvTie =
+            typeof runoffResult === 'object' &&
+            runoffResult !== null &&
+            'tie' in runoffResult
+                ? runoffResult.tie
+                : undefined;
+
         results.push({
             position,
             totalVotes,
             firstPreference,
             rcvWinner,
+            rcvTie,
             runoffUsed: needsRunoff,
         });
     }
@@ -209,7 +244,12 @@ async function tallyElection(
         for (const row of r.firstPreference) {
             console.log(`  ${row.candidateName}: ${row.firstPreferenceCount}`);
         }
-        if (r.rcvWinner !== undefined) {
+        if (r.rcvTie !== undefined && r.rcvTie.length > 0) {
+            console.log(
+                '\nRCV (instant-runoff): Tie between',
+                r.rcvTie.join(' and ')
+            );
+        } else if (r.rcvWinner !== undefined) {
             if (r.runoffUsed) {
                 console.log(
                     '\nRCV (instant-runoff) winner (elimination: last place out, their votes go to each voter’s next choice):',
