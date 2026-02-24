@@ -122,7 +122,7 @@ function runInstantRunoff(
         const lastCount = counts.get(sorted[sorted.length - 1]) ?? 0;
         const secondLastCount =
             sorted.length >= 2
-                ? counts.get(sorted[sorted.length - 2]) ?? 0
+                ? (counts.get(sorted[sorted.length - 2]) ?? 0)
                 : -1;
         if (
             active.size === 2 &&
