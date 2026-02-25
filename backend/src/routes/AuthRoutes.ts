@@ -6,6 +6,7 @@ import { SAMLUser } from '../models/People';
 import { Router } from 'express';
 import { IdentityProvider } from 'samlify/types/src/entity-idp';
 import { ServiceProvider } from 'samlify/types/src/entity-sp';
+import { isAuthenticated } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -51,17 +52,20 @@ router.get('/login/saml', async (req: Request, res: Response) => {
             res.status(500).json({ message: 'SAML not initialized' });
             return;
         }
-        if (typeof document !== 'undefined' && document.hasStorageAccess) {
-            const hasAccess = await document.hasStorageAccess();
-            if (!hasAccess) {
-                // Request storage access if not available
-                await document.requestStorageAccess();
-            }
-        }
 
         const { id, context } = sp.createLoginRequest(idp, 'redirect');
         req.session.authRequest = id;
-        res.redirect(context);
+
+        // Save session before redirecting so it persists when the
+        // SAML response comes back to /saml/consume
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                res.status(500).json({ message: 'Failed to save session' });
+                return;
+            }
+            res.redirect(context);
+        });
     } catch (error) {
         res.status(500).json({ message: 'SAML login error', error });
     }
@@ -77,13 +81,31 @@ router.post(
                 res.status(500).json({ message: 'SAML not initialized' });
                 return;
             }
-
+            // Parse the SAML response
             const { extract } = await sp.parseLoginResponse(idp, 'post', req);
+
+            // production-> validate that the InResponseTo matches the authRequest ID stored in session
+            if (process.env.NODE_ENV === 'production') {
+                const expectedRequestId = req.session.authRequest;
+                if (!expectedRequestId) {
+                    res.status(403).json({
+                        message: 'No pending authentication request',
+                    });
+                    return;
+                }
+                const inResponseTo = extract.response?.inResponseTo;
+                if (!inResponseTo || inResponseTo !== expectedRequestId) {
+                    res.status(403).json({
+                        message: 'Invalid SAML response: InResponseTo mismatch',
+                    });
+                    return;
+                }
+                delete req.session.authRequest;
+            }
+
             const baseLink =
                 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/';
-            // console.log('SAML extract:', extract);
 
-            // Store user in session
             req.session.user = {
                 id: extract.attributes[
                     'http://schemas.microsoft.com/identity/claims/objectidentifier'
@@ -95,15 +117,12 @@ router.post(
                 nameID: extract.nameID,
             };
 
-            console.log('SAML user:', req.session.user);
-
             req.session.save((err) => {
                 if (err) {
                     console.error('Session save error:', err);
                     res.status(500).json({ message: 'Failed to save session' });
                     return;
                 }
-                // Redirect to your frontend app
                 res.redirect(
                     process.env.FRONTEND_LINK || 'http://localhost:3000'
                 );
@@ -127,23 +146,20 @@ router.get('/logout/saml', async (req: Request, res: Response) => {
 
         const user = req.session.user;
         if (!user) {
-            res.redirect('/');
+            res.redirect(process.env.FRONTEND_LINK || '/');
             return;
         }
-        console.log('SAML user logged out:', user.nameID);
-        console.log('sessionindex', user.sessionIndex);
-        const { id, context } = sp.createLogoutRequest(idp, 'redirect', {
+
+        const { context } = sp.createLogoutRequest(idp, 'redirect', {
             sessionIndex: user.sessionIndex.sessionIndex,
             nameID: user.nameID,
         });
 
-        // Clear the session
         req.session.destroy((err) => {
             if (err) {
                 console.error('Session destruction error:', err);
             }
 
-            // Clear the cookie with the EXACT same settings as when it was created
             res.clearCookie('connect.sid', {
                 path: '/',
                 httpOnly: true,
@@ -156,6 +172,7 @@ router.get('/logout/saml', async (req: Request, res: Response) => {
                         : undefined,
             });
 
+            // Redirect to IdP to terminate their session.
             res.redirect(process.env.FRONTEND_LINK || context);
         });
     } catch (error) {
@@ -230,37 +247,31 @@ router.get('/current_user', async (req: Request, res: Response) => {
     }
 });
 
-// All Users
-router.get('/users', async (req: Request, res: Response) => {
-    try {
-        const users = await SAMLUser.find();
-        res.json(users);
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
-});
-
 // Get user by ID
-router.get('/users/:id', async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const user = await SAMLUser.findOne({ _id: id }).select(
-            'firstName lastName email'
-        );
-        if (!user) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
+router.get(
+    '/users/:id',
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const user = await SAMLUser.findOne({ _id: id }).select(
+                'firstName lastName email'
+            );
+            if (!user) {
+                res.status(404).json({ message: 'User not found' });
+                return;
+            }
 
-        res.json({
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-        });
-    } catch (error) {
-        console.error('Error fetching user:', error);
-        res.status(500).json({ message: 'Server error' });
+            res.json({
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+            });
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            res.status(500).json({ message: 'Server error' });
+        }
     }
-});
+);
 
 export default router;
