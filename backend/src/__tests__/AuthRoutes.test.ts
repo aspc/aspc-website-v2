@@ -42,7 +42,7 @@ jest.mock('../config/samlConfig', () => ({
 }));
 
 // Mock SAMLUser model
-jest.mock('../../models/People', () => ({
+jest.mock('../models/People', () => ({
     SAMLUser: {
         findOne: jest.fn(),
         findOneAndUpdate: jest.fn(),
@@ -103,7 +103,7 @@ describe('POST /api/auth/saml/consume', () => {
 
     it('rejects in production if InResponseTo does not match', async () => {
         process.env.NODE_ENV = 'production';
-        const { sp } = require('../../config/samlConfig').initializeSAML();
+        const { sp } = require('../config/samlConfig').initializeSAML();
         sp.parseLoginResponse.mockResolvedValueOnce({
             extract: {
                 response: { inResponseTo: 'wrong-id' },
@@ -149,7 +149,7 @@ describe('GET /api/auth/current_user', () => {
     });
 
     it('returns user data if logged in and user exists in DB', async () => {
-        const { SAMLUser } = require('../../models/People');
+        const { SAMLUser } = require('../models/People');
         SAMLUser.findOne.mockResolvedValue({
             _id: 'mongo-id',
             id: 'azure-id-123',
