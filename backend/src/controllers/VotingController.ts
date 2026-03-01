@@ -208,6 +208,55 @@ export const isValidBallot = async (v: VoteRequest) => {
     return validCandidates.length === v.ranking.length;
 };
 
+export const createWriteInCandidate = async (req: Request, res: Response) => {
+    try {
+        const { electionId } = req.params;
+        const { firstName, lastName, position } = req.body;
+
+        if (!firstName?.trim() || !lastName?.trim() || !position?.trim()) {
+            res.status(400).json({
+                status: 'error',
+                message: 'First name, last name, and position are required',
+            });
+            return;
+        }
+
+        const name = `${firstName.trim()} ${lastName.trim()}`;
+
+        const existing = await Candidate.findOne({
+            electionId,
+            name: { $regex: new RegExp(`^${name}$`, 'i') },
+            position,
+        });
+
+        if (existing) {
+            res.status(200).json({
+                status: 'success',
+                data: existing,
+            });
+            return;
+        }
+
+        const candidate = await Candidate.create({
+            electionId,
+            name,
+            position,
+            writeIn: true,
+        });
+
+        res.status(201).json({
+            status: 'success',
+            data: candidate,
+        });
+    } catch (error) {
+        console.error('Error creating write-in candidate:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to create write-in candidate',
+        });
+    }
+};
+
 export const recordVotes = async (req: Request, res: Response) => {
     let session: ClientSession | undefined;
 

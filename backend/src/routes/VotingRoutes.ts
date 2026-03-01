@@ -5,6 +5,7 @@ import {
     getBallot,
     recordVotes,
     getElection,
+    createWriteInCandidate,
 } from '../controllers/VotingController';
 
 const router: Router = express.Router();
@@ -29,6 +30,13 @@ router.get('/votestatus/:electionId', isAuthenticated, studentHasVoted);
  * @access  isAuthenticated
  */
 router.get('/ballot/:electionId', isAuthenticated, getBallot);
+
+/**
+ * @route   POST /api/voting/:electionId/write-in
+ * @desc    Create or find a write-in candidate for a position
+ * @access  isAuthenticated
+ */
+router.post('/:electionId/write-in', isAuthenticated, createWriteInCandidate);
 
 /**
  * @route   POST /api/voting/:electionId
