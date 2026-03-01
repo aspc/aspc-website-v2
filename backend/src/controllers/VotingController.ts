@@ -205,7 +205,16 @@ export const isValidBallot = async (v: VoteRequest) => {
         position: v.position,
     });
 
-    return validCandidates.length === v.ranking.length;
+    if (validCandidates.length !== v.ranking.length) {
+        return false;
+    }
+
+    const writeInCount = validCandidates.filter((c) => c.writeIn).length;
+    if (writeInCount > 1) {
+        return false;
+    }
+
+    return true;
 };
 
 export const createWriteInCandidate = async (req: Request, res: Response) => {
