@@ -65,6 +65,7 @@ export const getClassRepCandidates = async (
     if (year === 4) {
         const candidates = await Candidate.find({
             electionId: electionId,
+            writeIn: { $ne: true },
             position: {
                 $in: [
                     SENATE_POSITIONS.COMMENCEMENT_SPEAKER,
@@ -87,6 +88,7 @@ export const getClassRepCandidates = async (
 
     const candidates = await Candidate.find({
         electionId: electionId,
+        writeIn: { $ne: true },
         position: yearToPosition[year],
     });
 
@@ -108,6 +110,7 @@ export const getCampusRepCandidates = async (
 
     const candidates = await Candidate.find({
         electionId: electionId,
+        writeIn: { $ne: true },
         position: housingStatusToCampusRep[housingStatus],
     });
 
@@ -117,6 +120,7 @@ export const getCampusRepCandidates = async (
 export const getAllOtherCandidates = async (electionId: string) => {
     const candidates = await Candidate.find({
         electionId: electionId,
+        writeIn: { $ne: true },
         position: {
             $nin: [
                 SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
@@ -205,7 +209,81 @@ export const isValidBallot = async (v: VoteRequest) => {
         position: v.position,
     });
 
-    return validCandidates.length === v.ranking.length;
+    if (validCandidates.length !== v.ranking.length) {
+        return false;
+    }
+
+    const writeInCount = validCandidates.filter((c) => c.writeIn).length;
+    if (writeInCount > 1) {
+        return false;
+    }
+
+    return true;
+};
+
+export const createWriteInCandidate = async (req: Request, res: Response) => {
+    try {
+        const { electionId } = req.params;
+        const { firstName, lastName, position } = req.body;
+
+        if (!firstName?.trim() || !lastName?.trim() || !position?.trim()) {
+            res.status(400).json({
+                status: 'error',
+                message: 'First name, last name, and position are required',
+            });
+            return;
+        }
+
+        const name = `${firstName.trim()} ${lastName.trim()}`;
+
+        const officialMatch = await Candidate.findOne({
+            electionId,
+            name: { $regex: new RegExp(`^${name}$`, 'i') },
+            position,
+            writeIn: { $ne: true },
+        });
+
+        if (officialMatch) {
+            res.status(400).json({
+                status: 'error',
+                message: 'This candidate is already on the ballot.',
+            });
+            return;
+        }
+
+        const existing = await Candidate.findOne({
+            electionId,
+            name: { $regex: new RegExp(`^${name}$`, 'i') },
+            position,
+            writeIn: true,
+        });
+
+        if (existing) {
+            res.status(200).json({
+                status: 'success',
+                data: existing,
+            });
+            return;
+        }
+
+        const candidate = await Candidate.create({
+            electionId,
+            name,
+            position,
+            writeIn: true,
+        });
+
+        res.status(201).json({
+            status: 'success',
+            data: candidate,
+        });
+    } catch (error) {
+        console.error('Error creating write-in candidate:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to create write-in candidate',
+        });
+    }
 };
 
 export const recordVotes = async (req: Request, res: Response) => {
