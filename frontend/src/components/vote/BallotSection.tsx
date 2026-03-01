@@ -77,7 +77,6 @@ export default function BallotSection({
 
     const removeFromRanked = (c: ICandidateFrontend) => {
         setRanked((prev) => prev.filter((cand) => cand._id !== c._id));
-        if (c.writeIn) return;
         setUnranked((prev) => [...prev, c]);
     };
 
@@ -150,7 +149,8 @@ export default function BallotSection({
     };
 
     const handleReset = () => {
-        setUnranked(initialShuffled);
+        const writeIns = [...unranked, ...ranked].filter((c) => c.writeIn);
+        setUnranked([...initialShuffled, ...writeIns]);
         setRanked([]);
         setShowWriteInForm(false);
         setWriteInFirst('');
