@@ -236,10 +236,26 @@ export const createWriteInCandidate = async (req: Request, res: Response) => {
 
         const name = `${firstName.trim()} ${lastName.trim()}`;
 
+        const officialMatch = await Candidate.findOne({
+            electionId,
+            name: { $regex: new RegExp(`^${name}$`, 'i') },
+            position,
+            writeIn: { $ne: true },
+        });
+
+        if (officialMatch) {
+            res.status(400).json({
+                status: 'error',
+                message: 'This candidate is already on the ballot.',
+            });
+            return;
+        }
+
         const existing = await Candidate.findOne({
             electionId,
             name: { $regex: new RegExp(`^${name}$`, 'i') },
             position,
+            writeIn: true,
         });
 
         if (existing) {

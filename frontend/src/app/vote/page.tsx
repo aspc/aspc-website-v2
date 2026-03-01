@@ -137,8 +137,8 @@ export default function VotePage() {
             firstName: string,
             lastName: string,
             position: string
-        ): Promise<ICandidateFrontend | null> => {
-            if (!election) return null;
+        ): Promise<ICandidateFrontend | string> => {
+            if (!election) return 'No active election.';
             try {
                 const res = await fetch(
                     `${process.env.BACKEND_LINK}/api/voting/${election._id}/write-in`,
@@ -149,8 +149,10 @@ export default function VotePage() {
                         body: JSON.stringify({ firstName, lastName, position }),
                     }
                 );
-                if (!res.ok) return null;
                 const json = await res.json();
+                if (!res.ok) {
+                    return json.message || 'Failed to add write-in candidate.';
+                }
                 const candidate: ICandidateFrontend = {
                     ...json.data,
                     writeIn: true,
@@ -158,7 +160,7 @@ export default function VotePage() {
                 allCandidatesRef.current.set(candidate._id, candidate);
                 return candidate;
             } catch {
-                return null;
+                return 'Something went wrong. Please try again.';
             }
         },
         [election]

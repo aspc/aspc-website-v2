@@ -20,7 +20,7 @@ interface BallotSectionProps {
         firstName: string,
         lastName: string,
         position: string
-    ) => Promise<ICandidateFrontend | null>;
+    ) => Promise<ICandidateFrontend | string>;
 }
 
 const shuffleArray = (array: ICandidateFrontend[]) => {
@@ -108,26 +108,37 @@ export default function BallotSection({
             return;
         }
 
+        const fullName =
+            `${writeInFirst.trim()} ${writeInLast.trim()}`.toLowerCase();
+        const alreadyOnBallot = [...unranked, ...ranked].some(
+            (c) => c.name.toLowerCase() === fullName
+        );
+        if (alreadyOnBallot) {
+            setWriteInError('This candidate is already on your ballot.');
+            return;
+        }
+
         setWriteInLoading(true);
         setWriteInError('');
 
         try {
-            const candidate = await onCreateWriteIn(
+            const result = await onCreateWriteIn(
                 writeInFirst.trim(),
                 writeInLast.trim(),
                 position
             );
-            if (!candidate) {
-                setWriteInError('Failed to add write-in candidate.');
+
+            if (typeof result === 'string') {
+                setWriteInError(result);
                 return;
             }
 
-            if (allCandidateIds.has(candidate._id)) {
+            if (allCandidateIds.has(result._id)) {
                 setWriteInError('This candidate is already on your ballot.');
                 return;
             }
 
-            setUnranked((prev) => [...prev, candidate]);
+            setUnranked((prev) => [...prev, result]);
             setWriteInFirst('');
             setWriteInLast('');
             setShowWriteInForm(false);
