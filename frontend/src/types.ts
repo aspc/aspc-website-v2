@@ -250,6 +250,7 @@ export interface ICandidateFrontend {
     name: string;
     position: string;
     description?: string;
+    writeIn?: boolean;
 }
 
 export interface IRankingState {
