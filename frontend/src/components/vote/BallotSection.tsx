@@ -16,7 +16,7 @@ interface BallotSectionProps {
     isActive: boolean;
     onToggle: (pos: string) => void;
     onRankChange: (pos: string, ranking: IRankingState) => void;
-    onCreateWriteIn: (
+    onCreateWriteIn?: (
         firstName: string,
         lastName: string,
         position: string
@@ -98,7 +98,11 @@ export default function BallotSection({
         setRanked(newList);
     };
 
+    const isPreview = !onCreateWriteIn;
+
     const handleAddWriteIn = async () => {
+        if (isPreview) return;
+
         if (!writeInFirst.trim() || !writeInLast.trim()) {
             setWriteInError('Both first and last name are required.');
             return;
@@ -238,7 +242,8 @@ export default function BallotSection({
                                             onChange={(e) =>
                                                 setWriteInFirst(e.target.value)
                                             }
-                                            className="w-full px-3 py-2.5 border border-slate-200 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#001f3f] focus:border-transparent"
+                                            disabled={isPreview}
+                                            className="w-full px-3 py-2.5 border border-slate-200 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#001f3f] focus:border-transparent disabled:bg-slate-50 disabled:text-slate-400"
                                         />
                                         <input
                                             type="text"
@@ -247,9 +252,16 @@ export default function BallotSection({
                                             onChange={(e) =>
                                                 setWriteInLast(e.target.value)
                                             }
-                                            className="w-full px-3 py-2.5 border border-slate-200 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#001f3f] focus:border-transparent"
+                                            disabled={isPreview}
+                                            className="w-full px-3 py-2.5 border border-slate-200 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#001f3f] focus:border-transparent disabled:bg-slate-50 disabled:text-slate-400"
                                         />
                                     </div>
+                                    {isPreview && (
+                                        <p className="text-amber-600 text-xs font-bold italic">
+                                            Students will be able to write in a
+                                            candidate here.
+                                        </p>
+                                    )}
                                     {writeInError && (
                                         <p className="text-red-500 text-xs font-bold">
                                             {writeInError}
@@ -258,7 +270,9 @@ export default function BallotSection({
                                     <div className="flex gap-2">
                                         <button
                                             onClick={handleAddWriteIn}
-                                            disabled={writeInLoading}
+                                            disabled={
+                                                writeInLoading || isPreview
+                                            }
                                             className="flex-1 py-2.5 bg-[#001f3f] text-white text-xs font-black uppercase tracking-wide rounded-md hover:bg-[#003366] transition-colors disabled:opacity-50"
                                         >
                                             {writeInLoading
