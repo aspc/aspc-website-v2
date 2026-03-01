@@ -65,6 +65,7 @@ export const getClassRepCandidates = async (
     if (year === 4) {
         const candidates = await Candidate.find({
             electionId: electionId,
+            writeIn: { $ne: true },
             position: {
                 $in: [
                     SENATE_POSITIONS.COMMENCEMENT_SPEAKER,
@@ -87,6 +88,7 @@ export const getClassRepCandidates = async (
 
     const candidates = await Candidate.find({
         electionId: electionId,
+        writeIn: { $ne: true },
         position: yearToPosition[year],
     });
 
@@ -108,6 +110,7 @@ export const getCampusRepCandidates = async (
 
     const candidates = await Candidate.find({
         electionId: electionId,
+        writeIn: { $ne: true },
         position: housingStatusToCampusRep[housingStatus],
     });
 
@@ -117,6 +120,7 @@ export const getCampusRepCandidates = async (
 export const getAllOtherCandidates = async (electionId: string) => {
     const candidates = await Candidate.find({
         electionId: electionId,
+        writeIn: { $ne: true },
         position: {
             $nin: [
                 SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
