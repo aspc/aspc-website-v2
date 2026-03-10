@@ -75,7 +75,8 @@ const PreviewBallot = ({
     const [rankings, setRankings] = useState<Record<string, IRankingState>>({});
 
     useEffect(() => {
-        const grouped = candidates.reduce(
+        const nonWriteIn = candidates.filter((c) => !c.writeIn);
+        const grouped = nonWriteIn.reduce(
             (acc: Record<string, ICandidateFrontend[]>, c) => {
                 if (!acc[c.position]) acc[c.position] = [];
                 acc[c.position].push(c);
