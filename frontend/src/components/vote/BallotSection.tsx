@@ -7,8 +7,22 @@ import {
     Trash2,
     X,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import { ICandidateFrontend, IRankingState } from '@/types';
+
+const DEBOUNCE_MS = 300;
+const MIN_QUERY_LENGTH = 2;
+
+export interface WriteInSearchResult {
+    firstName: string;
+    lastName: string;
+}
 
 interface BallotSectionProps {
     position: string;
@@ -16,6 +30,9 @@ interface BallotSectionProps {
     isActive: boolean;
     onToggle: (pos: string) => void;
     onRankChange: (pos: string, ranking: IRankingState) => void;
+    onSearchWriteInCandidates?: (
+        query: string
+    ) => Promise<WriteInSearchResult[]>;
     onCreateWriteIn?: (
         firstName: string,
         lastName: string,
@@ -38,6 +55,7 @@ export default function BallotSection({
     isActive,
     onToggle,
     onRankChange,
+    onSearchWriteInCandidates,
     onCreateWriteIn,
 }: BallotSectionProps) {
     const initialShuffled = useMemo(
@@ -50,10 +68,57 @@ export default function BallotSection({
     const [draggedId, setDraggedId] = useState<string | null>(null);
 
     const [showWriteInForm, setShowWriteInForm] = useState(false);
-    const [writeInFirst, setWriteInFirst] = useState('');
-    const [writeInLast, setWriteInLast] = useState('');
+    const [writeInSearchQuery, setWriteInSearchQuery] = useState('');
+    const [writeInSearchResults, setWriteInSearchResults] = useState<
+        WriteInSearchResult[]
+    >([]);
+    const [writeInSearchLoading, setWriteInSearchLoading] = useState(false);
+    const [showSearchDropdown, setShowSearchDropdown] = useState(false);
     const [writeInLoading, setWriteInLoading] = useState(false);
     const [writeInError, setWriteInError] = useState('');
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Debounced search: only run after DEBOUNCE_MS of no typing, and only if query >= MIN_QUERY_LENGTH
+    useEffect(() => {
+        if (!onSearchWriteInCandidates) return;
+        const q = writeInSearchQuery.trim();
+        if (q.length < MIN_QUERY_LENGTH) {
+            setWriteInSearchResults([]);
+            setShowSearchDropdown(q.length > 0);
+            return;
+        }
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(async () => {
+            debounceRef.current = null;
+            setWriteInSearchLoading(true);
+            try {
+                const results = await onSearchWriteInCandidates(q);
+                setWriteInSearchResults(results);
+                setShowSearchDropdown(true);
+            } finally {
+                setWriteInSearchLoading(false);
+            }
+        }, DEBOUNCE_MS);
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, [writeInSearchQuery, onSearchWriteInCandidates]);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(e.target as Node)
+            ) {
+                setShowSearchDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () =>
+            document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         onRankChange(position, {
@@ -62,10 +127,14 @@ export default function BallotSection({
         });
     }, [ranked, unranked, position, onRankChange]);
 
-    const allCandidateIds = new Set([
-        ...unranked.map((c) => c._id),
-        ...ranked.map((c) => c._id),
-    ]);
+    const allCandidateIds = useMemo(
+        () =>
+            new Set([
+                ...unranked.map((c) => c._id),
+                ...ranked.map((c) => c._id),
+            ]),
+        [unranked, ranked]
+    );
 
     const hasWriteIn =
         unranked.some((c) => c.writeIn) || ranked.some((c) => c.writeIn);
@@ -99,62 +168,70 @@ export default function BallotSection({
 
     const isPreview = !onCreateWriteIn;
 
-    const handleAddWriteIn = async () => {
-        if (isPreview) return;
-
-        if (!writeInFirst.trim() || !writeInLast.trim()) {
-            setWriteInError('Both first and last name are required.');
-            return;
-        }
-
-        const fullName =
-            `${writeInFirst.trim()} ${writeInLast.trim()}`.toLowerCase();
-        const alreadyOnBallot = [...unranked, ...ranked].some(
-            (c) => c.name.toLowerCase() === fullName
-        );
-        if (alreadyOnBallot) {
-            setWriteInError('This candidate is already on your ballot.');
-            return;
-        }
-
-        setWriteInLoading(true);
-        setWriteInError('');
-
-        try {
-            const result = await onCreateWriteIn(
-                writeInFirst.trim(),
-                writeInLast.trim(),
-                position
+    const submitWriteIn = useCallback(
+        async (firstName: string, lastName: string) => {
+            if (isPreview || !onCreateWriteIn) return;
+            const fullName = `${firstName} ${lastName}`.toLowerCase();
+            const alreadyOnBallot = [...unranked, ...ranked].some(
+                (c) => c.name.toLowerCase() === fullName
             );
-
-            if (typeof result === 'string') {
-                setWriteInError(result);
-                return;
-            }
-
-            if (allCandidateIds.has(result._id)) {
+            if (alreadyOnBallot) {
                 setWriteInError('This candidate is already on your ballot.');
                 return;
             }
+            setWriteInLoading(true);
+            setWriteInError('');
+            try {
+                const result = await onCreateWriteIn(
+                    firstName,
+                    lastName,
+                    position
+                );
+                if (typeof result === 'string') {
+                    setWriteInError(result);
+                    return;
+                }
+                if (allCandidateIds.has(result._id)) {
+                    setWriteInError(
+                        'This candidate is already on your ballot.'
+                    );
+                    return;
+                }
+                setUnranked((prev) => [...prev, result]);
+                setWriteInSearchQuery('');
+                setWriteInSearchResults([]);
+                setShowWriteInForm(false);
+            } catch {
+                setWriteInError('Something went wrong. Please try again.');
+            } finally {
+                setWriteInLoading(false);
+            }
+        },
+        [
+            isPreview,
+            onCreateWriteIn,
+            position,
+            unranked,
+            ranked,
+            allCandidateIds,
+        ]
+    );
 
-            setUnranked((prev) => [...prev, result]);
-            setWriteInFirst('');
-            setWriteInLast('');
-            setShowWriteInForm(false);
-        } catch {
-            setWriteInError('Something went wrong. Please try again.');
-        } finally {
-            setWriteInLoading(false);
-        }
-    };
+    const handleSelectSearchResult = useCallback(
+        (r: WriteInSearchResult) => {
+            setShowSearchDropdown(false);
+            submitWriteIn(r.firstName, r.lastName);
+        },
+        [submitWriteIn]
+    );
 
     const handleReset = () => {
         const writeIns = [...unranked, ...ranked].filter((c) => c.writeIn);
         setUnranked([...initialShuffled, ...writeIns]);
         setRanked([]);
         setShowWriteInForm(false);
-        setWriteInFirst('');
-        setWriteInLast('');
+        setWriteInSearchQuery('');
+        setWriteInSearchResults([]);
         setWriteInError('');
     };
 
@@ -245,32 +322,85 @@ export default function BallotSection({
                                             Write-in Candidate
                                         </span>
                                     </div>
-                                    <div className="space-y-2">
-                                        <input
-                                            type="text"
-                                            placeholder="First Name"
-                                            value={writeInFirst}
-                                            onChange={(e) =>
-                                                setWriteInFirst(e.target.value)
-                                            }
-                                            disabled={isPreview}
-                                            className="w-full px-3 py-2.5 border border-slate-200 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#001f3f] focus:border-transparent disabled:bg-slate-50 disabled:text-slate-400"
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="Last Name"
-                                            value={writeInLast}
-                                            onChange={(e) =>
-                                                setWriteInLast(e.target.value)
-                                            }
-                                            disabled={isPreview}
-                                            className="w-full px-3 py-2.5 border border-slate-200 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#001f3f] focus:border-transparent disabled:bg-slate-50 disabled:text-slate-400"
-                                        />
+                                    <div
+                                        className="space-y-2"
+                                        ref={dropdownRef}
+                                    >
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                placeholder="Search by name (min 2 characters)"
+                                                value={writeInSearchQuery}
+                                                onChange={(e) => {
+                                                    setWriteInSearchQuery(
+                                                        e.target.value
+                                                    );
+                                                    setWriteInError('');
+                                                }}
+                                                onFocus={() =>
+                                                    writeInSearchQuery.trim()
+                                                        .length >=
+                                                        MIN_QUERY_LENGTH &&
+                                                    setShowSearchDropdown(true)
+                                                }
+                                                disabled={isPreview}
+                                                autoComplete="off"
+                                                className="w-full px-3 py-2.5 border border-slate-200 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#001f3f] focus:border-transparent disabled:bg-slate-50 disabled:text-slate-400"
+                                            />
+                                            {writeInSearchLoading && (
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
+                                                    Searching...
+                                                </span>
+                                            )}
+                                            {showSearchDropdown && (
+                                                <ul className="absolute z-10 mt-1 w-full max-h-48 overflow-auto rounded-md border border-slate-200 bg-white shadow-lg py-1 text-sm">
+                                                    {writeInSearchResults.length ===
+                                                        0 &&
+                                                    !writeInSearchLoading ? (
+                                                        <li className="px-3 py-2 text-slate-500 italic">
+                                                            {writeInSearchQuery.trim()
+                                                                .length <
+                                                            MIN_QUERY_LENGTH
+                                                                ? `Type at least ${MIN_QUERY_LENGTH} characters`
+                                                                : 'No matching candidates'}
+                                                        </li>
+                                                    ) : (
+                                                        writeInSearchResults.map(
+                                                            (r, i) => (
+                                                                <li
+                                                                    key={`${r.firstName}-${r.lastName}-${i}`}
+                                                                >
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handleSelectSearchResult(
+                                                                                r
+                                                                            )
+                                                                        }
+                                                                        disabled={
+                                                                            writeInLoading
+                                                                        }
+                                                                        className="w-full px-3 py-2 text-left hover:bg-slate-100 font-medium text-slate-700 disabled:opacity-50"
+                                                                    >
+                                                                        {
+                                                                            r.firstName
+                                                                        }{' '}
+                                                                        {
+                                                                            r.lastName
+                                                                        }
+                                                                    </button>
+                                                                </li>
+                                                            )
+                                                        )
+                                                    )}
+                                                </ul>
+                                            )}
+                                        </div>
                                     </div>
                                     {isPreview && (
                                         <p className="text-amber-600 text-xs font-bold italic">
-                                            Students will be able to write in a
-                                            candidate here.
+                                            Students will be able to search and
+                                            write in a candidate here.
                                         </p>
                                     )}
                                     {writeInError && (
@@ -280,21 +410,10 @@ export default function BallotSection({
                                     )}
                                     <div className="flex gap-2">
                                         <button
-                                            onClick={handleAddWriteIn}
-                                            disabled={
-                                                writeInLoading || isPreview
-                                            }
-                                            className="flex-1 py-2.5 bg-[#001f3f] text-white text-xs font-black uppercase tracking-wide rounded-md hover:bg-[#003366] transition-colors disabled:opacity-50"
-                                        >
-                                            {writeInLoading
-                                                ? 'Adding...'
-                                                : 'Add Candidate'}
-                                        </button>
-                                        <button
                                             onClick={() => {
                                                 setShowWriteInForm(false);
-                                                setWriteInFirst('');
-                                                setWriteInLast('');
+                                                setWriteInSearchQuery('');
+                                                setWriteInSearchResults([]);
                                                 setWriteInError('');
                                             }}
                                             className="px-4 py-2.5 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors"

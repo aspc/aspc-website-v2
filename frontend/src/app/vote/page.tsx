@@ -132,6 +132,27 @@ export default function VotePage() {
         []
     );
 
+    const handleSearchWriteInCandidates = useCallback(
+        async (
+            query: string
+        ): Promise<{ firstName: string; lastName: string }[]> => {
+            if (!election || !query.trim()) return [];
+            try {
+                const params = new URLSearchParams({ q: query.trim() });
+                const res = await fetch(
+                    `${process.env.BACKEND_LINK}/api/voting/${election._id}/search-candidates?${params}`,
+                    { credentials: 'include' }
+                );
+                const json = await res.json();
+                if (!res.ok || json.status !== 'success') return [];
+                return Array.isArray(json.data) ? json.data : [];
+            } catch {
+                return [];
+            }
+        },
+        [election]
+    );
+
     const handleCreateWriteIn = useCallback(
         async (
             firstName: string,
@@ -288,6 +309,9 @@ export default function VotePage() {
                         isActive={!!activeBallots[pos]}
                         onToggle={handleToggle}
                         onRankChange={handleRankUpdate}
+                        onSearchWriteInCandidates={
+                            handleSearchWriteInCandidates
+                        }
                         onCreateWriteIn={handleCreateWriteIn}
                     />
                 ))}
