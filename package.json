@@ -5,14 +5,12 @@
     "devDependencies": {
         "husky": "^9.1.7",
         "lint-staged": "^16.2.3",
-        "prettier": "^3.5.3",
-        "tsx": "^4.21.0"
+        "prettier": "^3.5.3"
     },
     "scripts": {
         "format": "prettier --check \"frontend/**/*.{ts,tsx}\" \"backend/**/*.ts\"",
         "format:write": "prettier --write \"frontend/**/*.{ts,tsx}\" \"backend/**/*.ts\"",
-        "prepare": "husky",
-        "test": "tsx --test '**/*.test.ts'"
+        "prepare": "husky"
     },
     "lint-staged": {
         "*.{ts,tsx}": "prettier --write"
