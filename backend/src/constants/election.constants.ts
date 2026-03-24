@@ -22,3 +22,27 @@ export const SENATE_POSITIONS = {
     COMMENCEMENT_SPEAKER: 'commencement_speaker',
     CLASS_NAME: 'class_name',
 } as const;
+
+export const FALL_POSITIONS = [
+    SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
+    SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
+    SENATE_POSITIONS.SOUTH_CAMPUS_REPRESENTATIVE,
+] as const;
+
+export const SPRING_POSITIONS = Object.values(SENATE_POSITIONS).filter(
+    (pos) => !(FALL_POSITIONS as readonly string[]).includes(pos)
+);
+
+export const getPositionsForSemester = (
+    semester: 'spring' | 'fall' | 'other'
+) => {
+    if (semester === 'fall') {
+        return [...FALL_POSITIONS];
+    }
+
+    if (semester === 'spring') {
+        return [...SPRING_POSITIONS];
+    }
+
+    return null;
+};
