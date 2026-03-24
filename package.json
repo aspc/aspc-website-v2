@@ -5,7 +5,8 @@
     "devDependencies": {
         "husky": "^9.1.7",
         "lint-staged": "^16.2.3",
-        "prettier": "^3.5.3"
+        "prettier": "^3.5.3",
+        "tsx": "^4.21.0"
     },
     "scripts": {
         "format": "prettier --check \"frontend/**/*.{ts,tsx}\" \"backend/**/*.ts\"",
