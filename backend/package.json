@@ -8,10 +8,6 @@
         "build": "tsc",
         "start": "node dist/server.js"
     },
-    "jest": {
-        "preset": "ts-jest",
-        "testEnvironment": "node"
-    },
     "keywords": [],
     "author": "",
     "license": "ISC",
