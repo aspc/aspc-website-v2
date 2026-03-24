@@ -3,7 +3,10 @@ import { ClientSession } from 'mongoose';
 
 import { Request, Response } from 'express';
 import { Candidate, Election, StudentBallotInfo, Vote } from '../models/Voting';
-import { SENATE_POSITIONS } from '../constants/election.constants';
+import {
+    getPositionsForSemester,
+    SENATE_POSITIONS,
+} from '../constants/election.constants';
 
 export interface VoteRequest {
     position: string;
@@ -57,86 +60,58 @@ export const studentHasVoted = async (req: Request, res: Response) => {
     }
 };
 
-export const getClassRepCandidates = async (
+// Unified ballot fetching: eligibility is stored on each candidate.
+// For spring/fall, positions must also be valid for that semester.
+// For "other", all positions are custom so only eligibility is checked.
+
+export const getEligibleCandidates = async (
     electionId: string,
-    year: number
+    semester: 'spring' | 'fall' | 'other',
+    year: number,
+    campus: string
 ) => {
-    // Seniors (year 4) vote for both commencement speaker and class name
-    if (year === 4) {
-        const candidates = await Candidate.find({
-            electionId: electionId,
-            position: {
-                $in: [
-                    SENATE_POSITIONS.COMMENCEMENT_SPEAKER,
-                    SENATE_POSITIONS.CLASS_NAME,
-                ],
-            },
-        });
-        return candidates;
-    }
-
-    const yearToPosition: Record<number, string> = {
-        1: SENATE_POSITIONS.SOPHOMORE_CLASS_PRESIDENT,
-        2: SENATE_POSITIONS.JUNIOR_CLASS_PRESIDENT,
-        3: SENATE_POSITIONS.SENIOR_CLASS_PRESIDENT,
-    };
-
-    if (!(year in yearToPosition)) {
-        return [];
-    }
-
-    const candidates = await Candidate.find({
-        electionId: electionId,
-        position: yearToPosition[year],
+    const allCandidates = await Candidate.find({ electionId }).sort({
+        position: 1,
+        name: 1,
     });
 
-    return candidates;
-};
+    const validPositions = getPositionsForSemester(semester);
 
-export const getCampusRepCandidates = async (
-    electionId: string,
-    housingStatus: string
-) => {
-    const housingStatusToCampusRep: Record<string, string> = {
-        north: SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
-        south: SENATE_POSITIONS.SOUTH_CAMPUS_REPRESENTATIVE,
-    };
+    const presetPositions = new Set(Object.values(SENATE_POSITIONS));
 
-    if (!(housingStatus in housingStatusToCampusRep)) {
-        return [];
-    }
+    return allCandidates.filter((c) => {
+        // For spring/fall, preset positions must be valid for that semester.
+        const isPreset = presetPositions.has(c.position as any);
+        if (
+            isPreset &&
+            validPositions !== null &&
+            !validPositions.includes(c.position as any)
+        ) {
+            return false;
+        }
 
-    const candidates = await Candidate.find({
-        electionId: electionId,
-        position: housingStatusToCampusRep[housingStatus],
+        // Filter by stored eligibility
+        const ey = c.eligibleYears || [];
+        const hl = c.housingLocation || [];
+        if (ey.length > 0 && !ey.includes(year)) return false;
+        if (hl.length > 0 && !hl.includes(campus)) return false;
+
+        return true;
     });
-
-    return candidates;
-};
-
-export const getAllOtherCandidates = async (electionId: string) => {
-    const candidates = await Candidate.find({
-        electionId: electionId,
-        position: {
-            $nin: [
-                SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
-                SENATE_POSITIONS.SOPHOMORE_CLASS_PRESIDENT,
-                SENATE_POSITIONS.JUNIOR_CLASS_PRESIDENT,
-                SENATE_POSITIONS.SENIOR_CLASS_PRESIDENT,
-                SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
-                SENATE_POSITIONS.SOUTH_CAMPUS_REPRESENTATIVE,
-                SENATE_POSITIONS.COMMENCEMENT_SPEAKER,
-                SENATE_POSITIONS.CLASS_NAME,
-            ],
-        },
-    });
-
-    return candidates;
 };
 
 export const getBallot = async (req: Request, res: Response) => {
     try {
         const { electionId } = req.params;
+
+        const election = await Election.findById(electionId);
+        if (!election) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Election not found',
+            });
+            return;
+        }
 
         // TODO: type session
         const sessionUserEmail = (req.session as any).user.email;
@@ -153,21 +128,12 @@ export const getBallot = async (req: Request, res: Response) => {
             return;
         }
 
-        const campusRepCandidates = await getCampusRepCandidates(
+        const allCandidates = await getEligibleCandidates(
             electionId,
+            election.semester,
+            studentInfo.year,
             studentInfo.campusRep
         );
-        const classPresidentCandidates = await getClassRepCandidates(
-            electionId,
-            studentInfo.year
-        );
-        const otherCandidates = await getAllOtherCandidates(electionId);
-
-        const allCandidates = [
-            ...campusRepCandidates,
-            ...classPresidentCandidates,
-            ...otherCandidates,
-        ];
 
         res.status(200).json({
             status: 'success',
