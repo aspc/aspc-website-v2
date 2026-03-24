@@ -100,6 +100,7 @@ const Staff = mongoose.model<IStaff>('Staff', StaffSchema);
 interface IInstructors extends Document {
     id: number;
     name: string;
+    cxids?: number[];
     inclusivity_rating?: number;
     competency_rating?: number;
     challenge_rating?: number;
@@ -122,6 +123,11 @@ const InstructorsSchema = new Schema<IInstructors>({
         type: String,
         required: true,
     },
+    cxids: [
+        {
+            type: Number,
+        },
+    ],
     inclusivity_rating: {
         type: Number,
     },
