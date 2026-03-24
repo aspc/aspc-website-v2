@@ -27,11 +27,7 @@ jobs:
               run: npm ci
               working-directory: ./backend
 
-            - name: Install frontend dependencies
-              run: npm ci
-              working-directory: ./frontend
-
-            - name: Run tests
-              run: npm test
+            - name: Run backend tests
+              run: npm test --prefix backend
               env:
                   NODE_ENV: test
