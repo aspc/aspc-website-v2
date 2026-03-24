@@ -6,6 +6,7 @@ interface IElection extends Document {
     description: string;
     startDate: Date;
     endDate: Date;
+    semester: 'spring' | 'fall' | 'other';
 }
 
 const ElectionSchema = new Schema<IElection>(
@@ -26,6 +27,11 @@ const ElectionSchema = new Schema<IElection>(
             type: Date,
             required: true,
         },
+        semester: {
+            type: String,
+            enum: ['spring', 'fall', 'other'],
+            required: true,
+        },
     },
     {
         timestamps: true,
@@ -39,6 +45,8 @@ interface ICandidate extends Document {
     electionId: mongoose.Types.ObjectId;
     name: string;
     position: string;
+    eligibleYears: number[];
+    housingLocation: string[];
 }
 
 const CandidateSchema = new Schema<ICandidate>({
@@ -55,6 +63,14 @@ const CandidateSchema = new Schema<ICandidate>({
         type: String,
         required: true,
     },
+    eligibleYears: {
+        type: [Number],
+        default: [],
+    },
+    housingLocation: {
+        type: [String],
+        default: [],
+    },
 });
 
 // querying for candidates by election and position
@@ -66,7 +82,7 @@ const Candidate = mongoose.model<ICandidate>('Candidate', CandidateSchema);
 interface IStudentBallotInfo extends Document {
     electionId: mongoose.Types.ObjectId;
     email: string;
-    campusRep: 'north' | 'south';
+    campusRep: 'north' | 'south' | 'off-campus';
     year: number;
     hasVoted: boolean;
 }
@@ -84,7 +100,7 @@ const StudentBallotInfoSchema = new Schema<IStudentBallotInfo>({
     },
     campusRep: {
         type: String,
-        enum: ['north', 'south'],
+        enum: ['north', 'south', 'off-campus'],
         required: true,
     },
     year: {
