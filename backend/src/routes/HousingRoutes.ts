@@ -8,9 +8,7 @@ import {
 import { housingReviewPictures } from '../server';
 import { ObjectId } from 'mongodb';
 import {
-    isAdmin,
     isAuthenticated,
-    isCourseReviewOwner,
     isHousingReviewOwner,
 } from '../middleware/authMiddleware';
 
@@ -22,7 +20,7 @@ const upload = multer({ storage: storage });
 /**
  * @route   GET /api/campus/housing
  * @desc    Get all housing buildings
- * @access  Public
+ * @access  isAuthenticated
  */
 router.get('/', isAuthenticated, async (req: Request, res: Response) => {
     try {
@@ -36,7 +34,7 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
 /**
  * @route   GET /api/campus/housing/:building
  * @desc    Get housing building by id
- * @access  Public
+ * @access  isAuthenticated
  */
 router.get(
     '/:building',
@@ -72,7 +70,7 @@ router.get(
 /**
  * @route   GET /campus/housing/:building/rooms
  * @desc    Get all roms in a building (by building id)
- * @access  Public
+ * @access  isAuthenticated
  */
 router.get(
     '/:building/rooms',
@@ -108,7 +106,7 @@ router.get(
 /**
  * @route   GET /api/campus/:room/reviews
  * @desc    Get housing reviews for a room
- * @access  Public
+ * @access  isAuthenticated
  */
 router.get(
     '/:room/reviews',
@@ -195,7 +193,7 @@ router.get(
 /**
  * @route   GET /api/campus/housing/:buildingId/:roomNumber/reviews
  * @desc    Get reviews for a room by building id and room number
- * @access  Public
+ * @access  isAuthenticated
  */
 router.get(
     '/:buildingId/:roomNumber/reviews',
@@ -285,7 +283,7 @@ router.get(
 /**
  * @route   POST /api/campus/housing/:buildingId/:roomNumber/reviews
  * @desc    Add new housing room review
- * @access  Public
+ * @access  isAuthenticated
  */
 router.post(
     '/:buildingId/:roomNumber/reviews',
@@ -509,7 +507,7 @@ router.delete(
 /**
  * @route   GET /api/campus/housing/review_pictures/:id
  * @desc    Get review picture by id
- * @access  Public
+ * @access  isAuthenticated
  */
 router.get(
     '/review_pictures/:id',

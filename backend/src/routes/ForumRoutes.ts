@@ -147,7 +147,7 @@ router.post(
                 customRatings,
             } = req.body;
 
-            const azureId = (req.session as any).user.id;
+            const azureId = req.session.user?.id;
             const user = await SAMLUser.findOne({ id: azureId });
 
             if (!user) {
@@ -271,7 +271,7 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
             return;
         }
 
-        const azureId = (req.session as any).user.id;
+        const azureId = req.session.user?.id;
         const user = await SAMLUser.findOne({ id: azureId });
 
         if (!user) {

@@ -6,6 +6,7 @@ import Loading from '@/components/Loading';
 import { useAuth } from '@/hooks/useAuth';
 import { PageContent } from '@/types';
 import Image from 'next/image';
+import { Button } from './Button';
 
 const groups: string[] = ['Senate', 'Staff', 'CollegeStaff', 'Software'];
 
@@ -19,8 +20,10 @@ const Header = () => {
     });
 
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
     const [loadingPages, setLoadingPages] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [showElectionButton, setShowElectionButton] = useState(false);
 
     useEffect(() => {
         const fetchPages = async () => {
@@ -64,8 +67,46 @@ const Header = () => {
         fetchPages();
     }, [user]);
 
+    useEffect(() => {
+        const fetchElection = async () => {
+            try {
+                const backendLink = process.env.BACKEND_LINK;
+                const electionRes = await fetch(
+                    `${backendLink}/api/voting/election`,
+                    {
+                        credentials: 'include',
+                    }
+                );
+
+                if (!electionRes.ok) {
+                    setShowElectionButton(false);
+                    return;
+                }
+
+                const data = await electionRes.json();
+                const now = new Date();
+                const endDate = new Date(data.endDate);
+
+                if (endDate > now) {
+                    setShowElectionButton(true);
+                } else {
+                    setShowElectionButton(false);
+                }
+            } catch (error) {
+                console.error('Error fetching election:', error);
+                setShowElectionButton(false);
+            }
+        };
+
+        fetchElection();
+    }, []);
+
     const handleDropdownClick = (dropdownName: string) => {
         setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
+        // Close submenu when dropdown closes
+        if (openDropdown === dropdownName) {
+            setOpenSubmenu(null);
+        }
     };
 
     // Close dropdown when clicking outside
@@ -76,6 +117,7 @@ const Header = () => {
                 !(event.target as Element).closest('.dropdown-container')
             ) {
                 setOpenDropdown(null);
+                setOpenSubmenu(null);
             }
         };
 
@@ -191,43 +233,115 @@ const Header = () => {
                                 {openDropdown === 'About' && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         {renderSectionLinks('about')}
+
+                                        {/* Officers Submenu Item */}
+                                        <div
+                                            className="relative"
+                                            onMouseEnter={() =>
+                                                setOpenSubmenu('Officers')
+                                            }
+                                            onMouseLeave={() =>
+                                                setOpenSubmenu(null)
+                                            }
+                                        >
+                                            <div className="flex items-center justify-between px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-t border-gray-200 mt-1 pt-1">
+                                                <span>Officers</span>
+                                                <span className="text-gray-400">
+                                                    ›
+                                                </span>
+                                            </div>
+
+                                            {/* Officers Submenu to the right */}
+                                            {openSubmenu === 'Officers' && (
+                                                <div className="absolute left-full top-0 ml-1 w-44 bg-white rounded-md shadow-lg py-1 z-50">
+                                                    {/* Senate Groups */}
+                                                    {groups.map(
+                                                        (group, index) => (
+                                                            <Link
+                                                                key={`group-${index}`}
+                                                                href={`/staff/${group}`}
+                                                                className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
+                                                                onClick={() => {
+                                                                    setOpenDropdown(
+                                                                        null
+                                                                    );
+                                                                    setOpenSubmenu(
+                                                                        null
+                                                                    );
+                                                                }}
+                                                            >
+                                                                {group.replace(
+                                                                    /([a-z])([A-Z])/g,
+                                                                    '$1 $2'
+                                                                )}
+                                                            </Link>
+                                                        )
+                                                    )}
+
+                                                    {/* Member Pages */}
+                                                    {renderSectionLinks(
+                                                        'members'
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Members Section */}
+                            {/* Reviews Section */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="flex items-center space-x-1 hover:text-blue-500"
                                     onClick={() =>
-                                        handleDropdownClick('Members')
+                                        handleDropdownClick('Reviews')
                                     }
                                 >
-                                    <span>Officers</span>
+                                    <span>Reviews</span>
                                 </button>
 
-                                {/* Members Dropdown with ASPC Groups and Pages */}
-                                {openDropdown === 'Members' && (
-                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        {/* Senate Groups */}
-                                        {groups.map((group, index) => (
-                                            <Link
-                                                key={`group-${index}`}
-                                                href={`/staff/${group}`}
-                                                className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                                onClick={() =>
-                                                    setOpenDropdown(null)
-                                                }
-                                            >
-                                                {group.replace(
-                                                    /([a-z])([A-Z])/g,
-                                                    '$1 $2'
-                                                )}
-                                            </Link>
-                                        ))}
+                                {/* Reviews Dropdown */}
+                                {openDropdown === 'Reviews' && (
+                                    <div className="absolute top-full mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                                        <Link
+                                            href="/campus/courses"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100"
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
+                                        >
+                                            Course Reviews
+                                        </Link>
 
-                                        {/* Member Pages */}
-                                        {renderSectionLinks('members')}
+                                        <Link
+                                            href="/campus/instructors"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100"
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
+                                        >
+                                            Instructor Reviews
+                                        </Link>
+
+                                        <Link
+                                            href="/campus/housing"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100"
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
+                                        >
+                                            Housing Reviews
+                                        </Link>
+
+                                        <Link
+                                            href="/open-forum"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 last:border-b-0"
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
+                                        >
+                                            Event Reviews
+                                        </Link>
                                     </div>
                                 )}
                             </div>
@@ -247,36 +361,6 @@ const Header = () => {
                                 {openDropdown === 'Resources' && (
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         {renderSectionLinks('resources')}
-
-                                        <Link
-                                            href="/campus/courses"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                            onClick={() =>
-                                                setOpenDropdown(null)
-                                            }
-                                        >
-                                            Course Reviews
-                                        </Link>
-
-                                        <Link
-                                            href="/campus/housing"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                            onClick={() =>
-                                                setOpenDropdown(null)
-                                            }
-                                        >
-                                            Housing Reviews
-                                        </Link>
-
-                                        <Link
-                                            href="/campus/instructors"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                            onClick={() =>
-                                                setOpenDropdown(null)
-                                            }
-                                        >
-                                            Instructor Reviews
-                                        </Link>
                                     </div>
                                 )}
                             </div>
@@ -298,42 +382,20 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/* Events Dropdown */}
-                            <div className="relative dropdown-container">
-                                <button
-                                    className="flex items-center space-x-1 hover:text-blue-500"
-                                    onClick={() =>
-                                        handleDropdownClick('Events')
-                                    }
-                                >
-                                    <span>Events</span>
-                                </button>
+                            {/* Events - direct link to calendar */}
+                            <Link
+                                href="/events"
+                                className="flex items-center space-x-1 hover:text-blue-500"
+                            >
+                                <span>Events</span>
+                            </Link>
 
-                                {/* Events Dropdown */}
-                                {openDropdown === 'Events' && (
-                                    <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
-                                        <Link
-                                            href="/events"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                            onClick={() =>
-                                                setOpenDropdown(null)
-                                            }
-                                        >
-                                            Calendar
-                                        </Link>
-
-                                        <Link
-                                            href="/open-forum"
-                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0"
-                                            onClick={() =>
-                                                setOpenDropdown(null)
-                                            }
-                                        >
-                                            Open Forum
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
+                            {/* Voting Button */}
+                            {showElectionButton && (
+                                <Link href="/vote">
+                                    <Button variant="ghost">VOTE HERE</Button>
+                                </Link>
+                            )}
 
                             {user ? (
                                 <>
@@ -429,6 +491,18 @@ const Header = () => {
 
                         {/* Mobile Menu Links */}
                         <nav className="flex flex-col p-4 space-y-6 text-white overflow-y-auto">
+                            {/* Voting Button */}
+                            {showElectionButton && (
+                                <Link
+                                    href="/vote"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    <Button variant="ghost" className="w-full">
+                                        Vote Now
+                                    </Button>
+                                </Link>
+                            )}
+
                             {/* About dropdown */}
                             <div className="relative dropdown-container">
                                 <button
@@ -443,46 +517,118 @@ const Header = () => {
                                 {openDropdown === 'AboutMobile' && (
                                     <div className="ml-2 mt-2">
                                         {renderSectionLinks('about', true)}
+
+                                        {/* Officers Submenu Item */}
+                                        <div className="relative">
+                                            <button
+                                                className="text-base flex items-center justify-between w-full px-4 py-2 hover:text-yellow-400"
+                                                onClick={() =>
+                                                    setOpenSubmenu(
+                                                        openSubmenu ===
+                                                            'OfficersMobile'
+                                                            ? null
+                                                            : 'OfficersMobile'
+                                                    )
+                                                }
+                                            >
+                                                <span>Officers</span>
+                                                <span className="text-gray-400">
+                                                    {openSubmenu ===
+                                                    'OfficersMobile'
+                                                        ? '▼'
+                                                        : '▶'}
+                                                </span>
+                                            </button>
+
+                                            {/* Officers Submenu */}
+                                            {openSubmenu ===
+                                                'OfficersMobile' && (
+                                                <div className="ml-4 mt-1">
+                                                    {/* Senate Groups */}
+                                                    {groups.map(
+                                                        (
+                                                            group: string,
+                                                            index: number
+                                                        ) => (
+                                                            <Link
+                                                                key={index}
+                                                                href={`/staff/${group}`}
+                                                                className="block px-4 py-2 hover:text-yellow-400"
+                                                                onClick={() =>
+                                                                    setIsMobileMenuOpen(
+                                                                        false
+                                                                    )
+                                                                }
+                                                            >
+                                                                {group.replace(
+                                                                    /([a-z])([A-Z])/g,
+                                                                    '$1 $2'
+                                                                )}
+                                                            </Link>
+                                                        )
+                                                    )}
+
+                                                    {/* Member Pages */}
+                                                    {renderSectionLinks(
+                                                        'members',
+                                                        true
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Members dropdown */}
+                            {/* Reviews dropdown */}
                             <div className="relative dropdown-container">
                                 <button
                                     className="text-lg flex items-center space-x-1"
                                     onClick={() =>
-                                        handleDropdownClick('MembersMobile')
+                                        handleDropdownClick('ReviewsMobile')
                                     }
                                 >
-                                    <span>Officers</span>
+                                    <span>Reviews</span>
                                 </button>
 
-                                {openDropdown === 'MembersMobile' && (
+                                {openDropdown === 'ReviewsMobile' && (
                                     <div className="ml-2 mt-2">
-                                        {/* Senate Groups */}
-                                        {groups.map(
-                                            (group: string, index: number) => (
-                                                <Link
-                                                    key={index}
-                                                    href={`/staff/${group}`}
-                                                    className="block px-4 py-2 hover:text-yellow-400"
-                                                    onClick={() =>
-                                                        setIsMobileMenuOpen(
-                                                            false
-                                                        )
-                                                    }
-                                                >
-                                                    {group.replace(
-                                                        /([a-z])([A-Z])/g,
-                                                        '$1 $2'
-                                                    )}
-                                                </Link>
-                                            )
-                                        )}
-
-                                        {/* Member Pages */}
-                                        {renderSectionLinks('members', true)}
+                                        <Link
+                                            href="/campus/courses"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Course Reviews
+                                        </Link>
+                                        <Link
+                                            href="/campus/instructors"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Instructor Reviews
+                                        </Link>
+                                        <Link
+                                            href="/campus/housing"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Housing Reviews
+                                        </Link>
+                                        <Link
+                                            href="/open-forum"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            Event Reviews
+                                        </Link>
                                     </div>
                                 )}
                             </div>
@@ -501,34 +647,6 @@ const Header = () => {
                                 {openDropdown === 'ResourcesMobile' && (
                                     <div className="ml-2 mt-2">
                                         {renderSectionLinks('resources', true)}
-
-                                        <Link
-                                            href="/campus/courses"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                            onClick={() =>
-                                                setIsMobileMenuOpen(false)
-                                            }
-                                        >
-                                            Course Reviews
-                                        </Link>
-                                        <Link
-                                            href="/campus/housing"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                            onClick={() =>
-                                                setIsMobileMenuOpen(false)
-                                            }
-                                        >
-                                            Housing Reviews
-                                        </Link>
-                                        <Link
-                                            href="/campus/instructors"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                            onClick={() =>
-                                                setIsMobileMenuOpen(false)
-                                            }
-                                        >
-                                            Instructor Reviews
-                                        </Link>
                                     </div>
                                 )}
                             </div>
@@ -551,41 +669,14 @@ const Header = () => {
                                 )}
                             </div>
 
-                            {/* Events dropdown */}
-                            <div className="relative dropdown-container">
-                                <button
-                                    className="text-lg flex items-center space-x-1"
-                                    onClick={() =>
-                                        handleDropdownClick('EventsMobile')
-                                    }
-                                >
-                                    <span>Events</span>
-                                </button>
-
-                                {openDropdown === 'EventsMobile' && (
-                                    <div className="ml-2 mt-2">
-                                        <Link
-                                            href="/events"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                            onClick={() =>
-                                                setIsMobileMenuOpen(false)
-                                            }
-                                        >
-                                            Events
-                                        </Link>
-
-                                        <Link
-                                            href="/open-forum"
-                                            className="block px-4 py-2 hover:text-yellow-400"
-                                            onClick={() =>
-                                                setIsMobileMenuOpen(false)
-                                            }
-                                        >
-                                            Open Forum
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
+                            {/* Events - direct link to calendar */}
+                            <Link
+                                href="/events"
+                                className="text-lg flex items-center space-x-1 hover:text-yellow-400"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                <span>Events</span>
+                            </Link>
 
                             {user?.isAdmin && (
                                 <Link

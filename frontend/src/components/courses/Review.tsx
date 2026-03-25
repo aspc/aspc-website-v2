@@ -167,12 +167,6 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
             errors.workPerWeek =
                 'Please input the average number of hours of work per week.';
 
-        // Check relationship selection
-        if (isFromInstructor && selectedCourseId === undefined)
-            errors.course = 'Please select a course for this instructor.';
-        else if (!isFromInstructor && selectedInstructorId === undefined)
-            errors.instructor = 'Please select an instructor for this course.';
-
         // Check if comments are provided
         if (!comments.trim()) errors.comments = 'Please leave a comment.';
 
@@ -369,19 +363,21 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
             {/* Course selection - when coming from instructor page */}
             {isFromInstructor && (
                 <div>
-                    <label>Course: </label>
+                    <label>Course (Optional): </label>
                     <div>
                         <select
                             className="w-auto p-2 border rounded mb-4"
-                            value={selectedCourseId}
+                            value={selectedCourseId || ''}
                             onChange={(e) =>
                                 setSelectedCourseId(
-                                    parseInt(e.target.value, 10)
+                                    e.target.value
+                                        ? parseInt(e.target.value, 10)
+                                        : undefined
                                 )
                             }
                         >
                             <option value="">
-                                Select the course you took with this instructor
+                                Course not listed (general instructor review)
                             </option>
                             {courses &&
                                 courses.map((course) => (
@@ -394,10 +390,7 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                                 ))}
                         </select>
                     </div>
-                    {formErrors.course && (
-                        <p className="text-red-500">{formErrors.course}</p>
-                    )}
-                    <p className="pb-2">
+                    <p className="pb-2 text-sm text-gray-600">
                         If you don&apos;t see a course that should be here,
                         email product@aspc.pomona.edu so we can add it!
                     </p>
@@ -407,19 +400,21 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
             {/* Instructor selection - when coming from course page */}
             {!isFromInstructor && (
                 <div>
-                    <label>Instructor: </label>
+                    <label>Instructor (Optional): </label>
                     <div>
                         <select
                             className="w-auto p-2 border rounded mb-4"
-                            value={selectedInstructorId}
+                            value={selectedInstructorId || ''}
                             onChange={(e) =>
                                 setSelectedInstructorId(
-                                    parseInt(e.target.value, 10)
+                                    e.target.value
+                                        ? parseInt(e.target.value, 10)
+                                        : undefined
                                 )
                             }
                         >
                             <option value="">
-                                Select the instructor for this course
+                                Instructor not listed (general course review)
                             </option>
                             {courseInstructors &&
                                 courseInstructors.map((instructor) => (
@@ -432,10 +427,7 @@ export const ReviewForm: React.FC<CourseReviewFormProps> = ({
                                 ))}
                         </select>
                     </div>
-                    {formErrors.instructor && (
-                        <p className="text-red-500">{formErrors.instructor}</p>
-                    )}
-                    <p className="pb-2">
+                    <p className="pb-2 text-sm text-gray-600">
                         If you don&apos;t see a professor that should be here,
                         email product@aspc.pomona.edu so we can add them!
                     </p>
