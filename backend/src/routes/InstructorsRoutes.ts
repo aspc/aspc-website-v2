@@ -39,28 +39,43 @@ router.get('/', async (req: Request, res: Response) => {
  */
 router.get('/bulk', async (req: Request, res: Response) => {
     try {
-        const { ids } = req.query;
+        const { ids, cxids } = req.query;
 
-        if (!ids || typeof ids !== 'string') {
-            res.status(400).json({ message: 'IDs parameter is required' });
-            return;
-        }
+        const instructorIds =
+            ids && typeof ids === 'string'
+                ? ids
+                      .split(',')
+                      .map((id) => parseInt(id.trim(), 10))
+                      .filter((id) => !isNaN(id))
+                : [];
 
-        const instructorIds = ids
-            .split(',')
-            .map((id) => parseInt(id.trim(), 10))
-            .filter((id) => !isNaN(id));
+        const cxidList =
+            cxids && typeof cxids === 'string'
+                ? cxids
+                      .split(',')
+                      .map((id) => parseInt(id.trim(), 10))
+                      .filter((id) => !isNaN(id))
+                : [];
 
-        if (instructorIds.length === 0) {
+        if (instructorIds.length === 0 && cxidList.length === 0) {
             res.status(400).json({
-                message: 'No valid instructor IDs provided',
+                message:
+                    'Provide at least one valid id (ids=) or cxid (cxids=), comma-separated',
             });
             return;
         }
 
-        const instructors = await Instructors.find({
-            id: { $in: instructorIds },
-        });
+        const clauses: object[] = [];
+        if (instructorIds.length > 0) {
+            clauses.push({ id: { $in: instructorIds } });
+        }
+        if (cxidList.length > 0) {
+            clauses.push({ cxids: { $in: cxidList } });
+        }
+
+        const query = clauses.length === 1 ? clauses[0] : { $or: clauses };
+
+        const instructors = await Instructors.find(query);
 
         res.json(instructors);
     } catch (err) {
@@ -195,16 +210,28 @@ router.get('/:id/reviews', async (req: Request, res: Response) => {
         // Verify instructor exists
         const instructor = await Instructors.findOne({
             id: instructorId,
-        });
+        })
+            .lean()
+            .exec();
 
         if (!instructor) {
             res.status(404).json({ message: 'Instructor not found' });
             return;
         }
-        // Get all reviews for this instructor
-        const reviews = await CourseReviews.find({
-            instructor_id: instructorId,
-        }).sort({ updatedAt: -1 });
+        const cxidsOnInstructor = instructor.cxids ?? [];
+        const reviewMatch =
+            cxidsOnInstructor.length > 0
+                ? {
+                      $or: [
+                          { instructor_id: instructorId },
+                          { instructor_cxid: { $in: cxidsOnInstructor } },
+                      ],
+                  }
+                : { instructor_id: instructorId };
+
+        const reviews = await CourseReviews.find(reviewMatch).sort({
+            updatedAt: -1,
+        });
 
         res.json(reviews);
     } catch (err) {
