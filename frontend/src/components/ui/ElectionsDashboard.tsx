@@ -144,6 +144,7 @@ interface PreviewBallotProps {
     startDate: string;
     endDate: string;
     semester: string;
+    allowVoterComment: boolean;
     candidates: ICandidateFrontend[];
     onClose: () => void;
 }
@@ -154,6 +155,7 @@ const PreviewBallot = ({
     startDate,
     endDate,
     semester,
+    allowVoterComment,
     candidates,
     onClose,
 }: PreviewBallotProps) => {
@@ -322,6 +324,22 @@ const PreviewBallot = ({
                     </div>
                 )}
 
+                {allowVoterComment && (
+                    <div className="mt-10 border border-slate-200 rounded-md p-6 bg-white">
+                        <h2 className="text-lg font-black text-[#001f3f] uppercase tracking-tight mb-1">
+                            Comment
+                        </h2>
+                        <p className="text-sm text-slate-600 mb-3">
+                            Share your thoughts
+                        </p>
+                        <textarea
+                            readOnly
+                            className="w-full min-h-[100px] p-3 border border-slate-200 rounded-md text-sm bg-slate-50 text-slate-500"
+                            placeholder="Share your thoughts"
+                        />
+                    </div>
+                )}
+
                 <div className="mt-16 bg-slate-50 p-8 border border-slate-200 rounded-md text-center">
                     {activeKeys.length > 0 && !canSubmit && (
                         <p className="text-amber-600 text-xs font-bold mb-4 flex items-center justify-center gap-2">
@@ -355,6 +373,7 @@ const ElectionsDashboard = () => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [semester, setSemester] = useState('');
+    const [allowVoterComment, setAllowVoterComment] = useState(false);
     const [voterRequirement, setVoterRequirement] = useState('all');
 
     const [candidates, setCandidates] = useState<ICandidateFrontend[]>([]);
@@ -440,6 +459,7 @@ const ElectionsDashboard = () => {
                     setSemester(data.semester || '');
                     setStartDate(toDatetimeLocal(data.startDate));
                     setEndDate(toDatetimeLocal(data.endDate));
+                    setAllowVoterComment(!!data.allowVoterComment);
                 }
                 await fetchCandidates(selectedElectionId);
             } catch (error) {
@@ -459,6 +479,7 @@ const ElectionsDashboard = () => {
         setSemester('');
         setStartDate('');
         setEndDate('');
+        setAllowVoterComment(false);
         setVoterRequirement('all');
         setCandidates([]);
         resetCandidateForm();
@@ -503,6 +524,7 @@ const ElectionsDashboard = () => {
                     semester,
                     startDate: new Date(startDate).toISOString(),
                     endDate: new Date(endDate).toISOString(),
+                    allowVoterComment,
                 }),
             });
 
@@ -1087,6 +1109,7 @@ const ElectionsDashboard = () => {
                 startDate={startDate}
                 endDate={endDate}
                 semester={semester}
+                allowVoterComment={allowVoterComment}
                 candidates={candidates}
                 onClose={() => setShowPreview(false)}
             />
@@ -1209,6 +1232,32 @@ const ElectionsDashboard = () => {
                                               : 'Custom election — you will manually add all positions and set voter eligibility for each.'}
                                     </p>
                                 )}
+                            </div>
+
+                            <div className="mb-4 flex items-start gap-3">
+                                <input
+                                    id="allow-voter-comment"
+                                    type="checkbox"
+                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-400"
+                                    checked={allowVoterComment}
+                                    onChange={(e) =>
+                                        setAllowVoterComment(e.target.checked)
+                                    }
+                                />
+                                <label
+                                    htmlFor="allow-voter-comment"
+                                    className="text-sm text-gray-700"
+                                >
+                                    <span className="font-medium">
+                                        Allow optional voter comments
+                                    </span>
+                                    <span className="block text-gray-500 text-xs mt-0.5">
+                                        When enabled, voters see a comment box
+                                        before submitting. Text is saved with
+                                        anonymous vote records (not linked to
+                                        student ballot info).
+                                    </span>
+                                </label>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">

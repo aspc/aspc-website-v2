@@ -7,6 +7,7 @@ interface IElection extends Document {
     startDate: Date;
     endDate: Date;
     semester: 'spring' | 'fall' | 'other';
+    allowVoterComment: boolean;
 }
 
 const ElectionSchema = new Schema<IElection>(
@@ -31,6 +32,10 @@ const ElectionSchema = new Schema<IElection>(
             type: String,
             enum: ['spring', 'fall', 'other'],
             required: true,
+        },
+        allowVoterComment: {
+            type: Boolean,
+            default: false,
         },
     },
     {
@@ -130,6 +135,8 @@ interface IVote extends Document {
     electionId: mongoose.Types.ObjectId;
     position: string;
     ranking: mongoose.Types.ObjectId[]; // Ordered array of Candidate IDs
+    /** Present only on the first vote doc of a ballot when comments are enabled; not tied to identity. */
+    voterComment?: string;
 }
 
 // each student will have different vote document for each position they vote for
@@ -147,6 +154,10 @@ const VoteSchema = new Schema<IVote>({
         type: [mongoose.Schema.Types.ObjectId],
         ref: 'Candidate',
         required: true,
+    },
+    voterComment: {
+        type: String,
+        required: false,
     },
 });
 

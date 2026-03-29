@@ -243,6 +243,7 @@ export interface IElectionFrontend {
     startDate: string;
     endDate: string;
     semester: string;
+    allowVoterComment?: boolean;
 }
 
 export interface ICandidateFrontend {
