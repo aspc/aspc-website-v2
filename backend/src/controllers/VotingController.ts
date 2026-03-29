@@ -174,12 +174,14 @@ export const isValidBallot = async (v: VoteRequest) => {
     return validCandidates.length === v.ranking.length;
 };
 
+const MAX_VOTER_COMMENT_LENGTH = 5000;
+
 export const recordVotes = async (req: Request, res: Response) => {
     let session: ClientSession | undefined;
 
     try {
         const { electionId } = req.params;
-        const { votes } = req.body;
+        const { votes, comment } = req.body;
 
         // User must vote for at least one position
         if (!votes || votes.length === 0) {
@@ -212,6 +214,23 @@ export const recordVotes = async (req: Request, res: Response) => {
             }
         }
 
+        const election = await Election.findById(electionId);
+        if (!election) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Election not found',
+            });
+            return;
+        }
+
+        let voterComment = '';
+        if (election.allowVoterComment) {
+            voterComment =
+                typeof comment === 'string'
+                    ? comment.trim().slice(0, MAX_VOTER_COMMENT_LENGTH)
+                    : '';
+        }
+
         const sessionUserEmail = (req.session as any).user.email;
 
         session = await mongoose.startSession();
@@ -236,10 +255,13 @@ export const recordVotes = async (req: Request, res: Response) => {
                 throw new Error('Unable to submit vote');
             }
 
-            const voteDocs = votes.map((v: VoteRequest) => ({
+            const voteDocs = votes.map((v: VoteRequest, index: number) => ({
                 electionId,
                 position: v.position,
                 ranking: v.ranking.map((id) => new mongoose.Types.ObjectId(id)),
+                ...(election.allowVoterComment && index === 0
+                    ? { voterComment }
+                    : {}),
             }));
 
             await Vote.insertMany(voteDocs, { session });

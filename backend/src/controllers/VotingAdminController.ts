@@ -28,7 +28,14 @@ export const getElectionById = async (req: Request, res: Response) => {
 
 export const createElection = async (req: Request, res: Response) => {
     try {
-        const { name, description, startDate, endDate, semester } = req.body;
+        const {
+            name,
+            description,
+            startDate,
+            endDate,
+            semester,
+            allowVoterComment,
+        } = req.body;
 
         if (!name || !startDate || !endDate || !semester) {
             res.status(400).json({ message: 'Missing required fields.' });
@@ -53,6 +60,7 @@ export const createElection = async (req: Request, res: Response) => {
             startDate,
             endDate,
             semester,
+            allowVoterComment: !!allowVoterComment,
         });
 
         const savedElection = await election.save();
@@ -65,7 +73,14 @@ export const createElection = async (req: Request, res: Response) => {
 export const updateElection = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, description, startDate, endDate, semester } = req.body;
+        const {
+            name,
+            description,
+            startDate,
+            endDate,
+            semester,
+            allowVoterComment,
+        } = req.body;
 
         if (!name || !startDate || !endDate || !semester) {
             res.status(400).json({ message: 'Missing required fields.' });
@@ -84,15 +99,22 @@ export const updateElection = async (req: Request, res: Response) => {
             return;
         }
 
+        const updateFields: Record<string, unknown> = {
+            name,
+            description: description || '',
+            startDate,
+            endDate,
+            semester,
+        };
+        if (
+            Object.prototype.hasOwnProperty.call(req.body, 'allowVoterComment')
+        ) {
+            updateFields.allowVoterComment = !!allowVoterComment;
+        }
+
         const updatedElection = await Election.findByIdAndUpdate(
             id,
-            {
-                name,
-                description: description || '',
-                startDate,
-                endDate,
-                semester,
-            },
+            updateFields,
             { new: true, runValidators: true }
         );
 
