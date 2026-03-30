@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
 import * as fs from 'fs';
+import path from 'path';
 import { Courses } from '../models/Courses';
+
+const MIGRATION_DATA_DIR = path.join(__dirname, 'migration-data');
 
 // ============================================================================
 // PHASE 3: Update Courses Schema with Instructor CxIDs
@@ -54,7 +57,10 @@ async function migrateCourses(dryRun: boolean = false) {
         // Load Phase 1 data
         console.log('Loading Phase 1 data...');
         const apiCourses: CourseCxIDData[] = JSON.parse(
-            fs.readFileSync('./migration-data/course-cxids.json', 'utf-8')
+            fs.readFileSync(
+                path.join(MIGRATION_DATA_DIR, 'course-cxids.json'),
+                'utf-8'
+            )
         );
         console.log(`✓ Loaded ${apiCourses.length} courses from API data\n`);
 
@@ -209,7 +215,10 @@ async function migrateCourses(dryRun: boolean = false) {
             // Sort by review count (descending) to prioritize important courses
             coursesToSkip.sort((a, b) => b.review_count - a.review_count);
 
-            const noCxIDsPath = `./migration-data/courses-without-cxids-${dryRun ? 'preview-' : ''}${Date.now()}.json`;
+            const noCxIDsPath = path.join(
+                MIGRATION_DATA_DIR,
+                `courses-without-cxids-${dryRun ? 'preview-' : ''}${Date.now()}.json`
+            );
             fs.writeFileSync(
                 noCxIDsPath,
                 JSON.stringify(coursesToSkip, null, 2)
@@ -302,7 +311,10 @@ async function migrateCourses(dryRun: boolean = false) {
             timestamp: new Date().toISOString(),
         };
 
-        const reportPath = `./migration-data/phase3-report-${dryRun ? 'dryrun-' : ''}${Date.now()}.json`;
+        const reportPath = path.join(
+            MIGRATION_DATA_DIR,
+            `phase3-report-${dryRun ? 'dryrun-' : ''}${Date.now()}.json`
+        );
         fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
 
         // Print summary

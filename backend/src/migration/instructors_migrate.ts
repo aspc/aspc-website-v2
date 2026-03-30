@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
 import * as fs from 'fs';
+import path from 'path';
 import { Instructors } from '../models/People';
+
+const MIGRATION_DATA_DIR = path.join(__dirname, 'migration-data');
 
 // ============================================================================
 // PHASE 2: Update Instructors Schema with CxIDs
@@ -74,7 +77,10 @@ async function migrateInstructors(dryRun: boolean = false) {
         // Load Phase 1 data
         console.log('Loading Phase 1 data...');
         const apiInstructors: InstructorCxIDData[] = JSON.parse(
-            fs.readFileSync('./migration-data/instructor-cxids.json', 'utf-8')
+            fs.readFileSync(
+                path.join(MIGRATION_DATA_DIR, 'instructor-cxids.json'),
+                'utf-8'
+            )
         );
         console.log(
             `✓ Loaded ${apiInstructors.length} instructors from API data\n`
@@ -229,7 +235,10 @@ async function migrateInstructors(dryRun: boolean = false) {
             // Sort by review count (descending) to prioritize important instructors
             instructorsToSkip.sort((a, b) => b.numReviews - a.numReviews);
 
-            const noCxIDsPath = `./migration-data/instructors-without-cxids-${dryRun ? 'preview-' : ''}${Date.now()}.json`;
+            const noCxIDsPath = path.join(
+                MIGRATION_DATA_DIR,
+                `instructors-without-cxids-${dryRun ? 'preview-' : ''}${Date.now()}.json`
+            );
             fs.writeFileSync(
                 noCxIDsPath,
                 JSON.stringify(instructorsToSkip, null, 2)
@@ -290,8 +299,10 @@ async function migrateInstructors(dryRun: boolean = false) {
                     courses: i.courses || [],
                 }));
 
-                const noCxIDsPath =
-                    './migration-data/instructors-without-cxids.json';
+                const noCxIDsPath = path.join(
+                    MIGRATION_DATA_DIR,
+                    'instructors-without-cxids.json'
+                );
                 fs.writeFileSync(
                     noCxIDsPath,
                     JSON.stringify(noCxIDsData, null, 2)
@@ -327,7 +338,10 @@ async function migrateInstructors(dryRun: boolean = false) {
             timestamp: new Date().toISOString(),
         };
 
-        const reportPath = `./migration-data/phase2-report-${dryRun ? 'dryrun-' : ''}${Date.now()}.json`;
+        const reportPath = path.join(
+            MIGRATION_DATA_DIR,
+            `phase2-report-${dryRun ? 'dryrun-' : ''}${Date.now()}.json`
+        );
         fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
 
         // Print summary

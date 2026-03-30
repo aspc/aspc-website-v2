@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
 import * as fs from 'fs';
+import path from 'path';
 import { Courses, CourseReviews } from '../models/Courses';
+
+const MIGRATION_DATA_DIR = path.join(__dirname, 'migration-data');
 import { Instructors } from '../models/People';
 
 // ============================================================================
@@ -45,7 +48,10 @@ async function migrateReviews(dryRun: boolean = false) {
         // Load Phase 1 mappings
         console.log('Loading Phase 1 CxID mappings...');
         const cxidMappings: CxIDMapping[] = JSON.parse(
-            fs.readFileSync('./migration-data/cxid-mappings.json', 'utf-8')
+            fs.readFileSync(
+                path.join(MIGRATION_DATA_DIR, 'cxid-mappings.json'),
+                'utf-8'
+            )
         );
         console.log(`✓ Loaded ${cxidMappings.length} CxID mappings\n`);
 
@@ -242,7 +248,10 @@ async function migrateReviews(dryRun: boolean = false) {
             timestamp: new Date().toISOString(),
         };
 
-        const reportPath = `./migration-data/phase4-report-${dryRun ? 'dryrun-' : ''}${Date.now()}.json`;
+        const reportPath = path.join(
+            MIGRATION_DATA_DIR,
+            `phase4-report-${dryRun ? 'dryrun-' : ''}${Date.now()}.json`
+        );
         fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
 
         // Print summary

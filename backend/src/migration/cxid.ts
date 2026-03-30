@@ -1,5 +1,8 @@
 import axios from 'axios';
 import * as fs from 'fs';
+import path from 'path';
+
+const MIGRATION_DATA_DIR = path.join(__dirname, 'migration-data');
 
 // ============================================================================
 // PHASE 1: Build Complete CxID Mappings
@@ -387,14 +390,13 @@ async function buildCxIDMappings() {
     console.log('\n' + '='.repeat(80));
     console.log('Saving mappings to files...');
 
-    const outputDir = './migration-data';
-    if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true });
+    if (!fs.existsSync(MIGRATION_DATA_DIR)) {
+        fs.mkdirSync(MIGRATION_DATA_DIR, { recursive: true });
     }
 
     // Save complete CxID mappings (course + term + instructor -> CxID)
     fs.writeFileSync(
-        `${outputDir}/cxid-mappings.json`,
+        path.join(MIGRATION_DATA_DIR, 'cxid-mappings.json'),
         JSON.stringify(cxidMappings, null, 2)
     );
     console.log(
@@ -403,7 +405,7 @@ async function buildCxIDMappings() {
 
     // Save instructor CxIDs (instructor name -> all their CxIDs)
     fs.writeFileSync(
-        `${outputDir}/instructor-cxids.json`,
+        path.join(MIGRATION_DATA_DIR, 'instructor-cxids.json'),
         JSON.stringify(instructorCxIDsList, null, 2)
     );
     console.log(
@@ -412,7 +414,7 @@ async function buildCxIDMappings() {
 
     // Save course CxIDs (course code -> all CxIDs that taught it)
     fs.writeFileSync(
-        `${outputDir}/course-cxids.json`,
+        path.join(MIGRATION_DATA_DIR, 'course-cxids.json'),
         JSON.stringify(courseCxIDsList, null, 2)
     );
     console.log(
@@ -436,7 +438,7 @@ async function buildCxIDMappings() {
     };
 
     fs.writeFileSync(
-        `${outputDir}/summary.json`,
+        path.join(MIGRATION_DATA_DIR, 'summary.json'),
         JSON.stringify(summary, null, 2)
     );
 
@@ -459,7 +461,7 @@ async function buildCxIDMappings() {
     console.log(
         `Instructors with multiple CxIDs: ${summary.instructorsWithMultipleCxIDs}`
     );
-    console.log('\nAll data saved to ./migration-data/ directory');
+    console.log(`\nAll data saved to ${MIGRATION_DATA_DIR}`);
     console.log('='.repeat(80));
 }
 
@@ -471,7 +473,7 @@ buildCxIDMappings()
     .then(() => {
         console.log('\n✅ Phase 1 completed successfully!');
         console.log('\nNext steps:');
-        console.log('  1. Review the generated files in ./migration-data/');
+        console.log(`  1. Review the generated files in ${MIGRATION_DATA_DIR}`);
         console.log('  2. Proceed to Phase 2: Update Instructors schema');
         process.exit(0);
     })
