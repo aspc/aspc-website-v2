@@ -4,6 +4,6 @@ dist
 /certs
 idp_metadata.xml
 seed-*
-/migration/migration-data
+src/migration/migration-data
 
 
