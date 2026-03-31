@@ -6,12 +6,16 @@
  *   (mirrors getCourseInstructorAssociationKeys + API lookup behavior).
  * - Reviews: "display resolvable" — instructor_cxid match first, else instructor_id.
  *
+ * Interpreting course "mismatches": legacy and API-derived lists answer different
+ * questions ("who was in our old join table" vs "who appears in historical API
+ * sections for this code_slug"). Unequal distinct counts are normal; the app uses
+ * CxIDs when present. Use mismatchBreakdown to see patterns, not a single "error" count.
+ *
  * Usage (from backend/):
  *   MONGODB_URI="mongodb://..." npx ts-node src/migration/validate-cxid-parity.ts
  *
  * Optional:
  *   --out=./migration-data/parity-report.json   (default: timestamped file under migration-data)
- *   --max-mismatch=50                            max course rows to print to console
  */
 
 import mongoose from 'mongoose';
@@ -23,34 +27,21 @@ import { getCourseInstructorAssociationKeys } from '../utils/courseInstructors';
 
 const MIGRATION_DATA_DIR = path.join(__dirname, 'migration-data');
 
-interface CourseMismatchRow {
-    courseId: number;
-    code_slug: string;
-    legacySlotCount: number;
-    cxidSlotCount: number;
-    legacyDistinctResolved: number;
-    cxidDistinctResolved: number;
-    mode: 'cxid' | 'legacy';
-}
-
 function parseArgs() {
     const argv = process.argv.slice(2);
     let outPath: string | null = null;
-    let maxMismatch = 30;
 
     for (const a of argv) {
         if (a.startsWith('--out=')) {
             outPath = a.slice('--out='.length);
-        } else if (a.startsWith('--max-mismatch=')) {
-            maxMismatch = parseInt(a.slice('--max-mismatch='.length), 10) || 30;
         }
     }
 
-    return { outPath, maxMismatch };
+    return { outPath };
 }
 
 async function main() {
-    const { outPath, maxMismatch } = parseArgs();
+    const { outPath } = parseArgs();
 
     const uri =
         process.env.MONGODB_URI || 'mongodb://localhost:27017/coursereview';
@@ -90,9 +81,15 @@ async function main() {
         })
         .lean();
 
-    const mismatches: CourseMismatchRow[] = [];
     let withCxids = 0;
     let coursesCompared = 0;
+    let equalDistinctCount = 0;
+    /** CxID path resolves strictly more distinct instructors than legacy. */
+    let cxidDistinctGreater = 0;
+    /** Legacy resolves strictly more distinct instructors than CxID path. */
+    let legacyDistinctGreater = 0;
+    /** Subset of cxidDistinctGreater: legacy had no resolved ids but CxID did. */
+    let legacyZeroCxidNonZero = 0;
 
     for (const c of courses) {
         const legacyIds = Array.isArray(c.all_instructor_ids)
@@ -116,19 +113,22 @@ async function main() {
                 if (iid !== undefined) cxidResolved.add(iid);
             }
             coursesCompared++;
-            if (legacyResolved.size !== cxidResolved.size) {
-                mismatches.push({
-                    courseId: c.id,
-                    code_slug: c.code_slug,
-                    legacySlotCount: legacyIds.length,
-                    cxidSlotCount: assoc.keys.length,
-                    legacyDistinctResolved: legacyResolved.size,
-                    cxidDistinctResolved: cxidResolved.size,
-                    mode: 'cxid',
-                });
+            const lr = legacyResolved.size;
+            const cr = cxidResolved.size;
+            if (lr === cr) {
+                equalDistinctCount++;
+            } else {
+                if (cr > lr) {
+                    cxidDistinctGreater++;
+                    if (lr === 0 && cr > 0) legacyZeroCxidNonZero++;
+                } else {
+                    legacyDistinctGreater++;
+                }
             }
         }
     }
+
+    const unequalDistinctCount = cxidDistinctGreater + legacyDistinctGreater;
 
     console.log('\n--- Courses ---');
     console.log(`Total courses: ${courses.length}`);
@@ -136,23 +136,22 @@ async function main() {
     console.log(
         `Compared (CxID strategy vs legacy distinct resolved): ${coursesCompared}`
     );
-    console.log(`Mismatched distinct instructor count: ${mismatches.length}`);
-
-    if (mismatches.length > 0) {
-        console.log(
-            `\nFirst ${Math.min(maxMismatch, mismatches.length)} mismatches:`
-        );
-        for (const m of mismatches.slice(0, maxMismatch)) {
-            console.log(
-                `  id=${m.courseId} slug=${m.code_slug} legacy=${m.legacyDistinctResolved} cxid=${m.cxidDistinctResolved} (legacySlots=${m.legacySlotCount} cxidSlots=${m.cxidSlotCount})`
-            );
-        }
-    }
+    console.log(
+        `Same distinct instructor count (legacy vs CxID resolve): ${equalDistinctCount}`
+    );
+    console.log(
+        `CxID resolves MORE distinct instructors than legacy: ${cxidDistinctGreater} (of those, legacy had zero resolved: ${legacyZeroCxidNonZero})`
+    );
+    console.log(
+        `Legacy resolves MORE distinct instructors than CxID: ${legacyDistinctGreater}`
+    );
+    console.log(`Unequal distinct instructor count: ${unequalDistinctCount}`);
 
     console.log('\nScanning reviews…');
     const reviews = await CourseReviews.find({})
         .select({
             id: 1,
+            course_id: 1,
             instructor_id: 1,
             instructor_cxid: 1,
         })
@@ -161,6 +160,13 @@ async function main() {
     let resolvedViaCxid = 0;
     let resolvedViaLegacyOnly = 0;
     let unresolvable = 0;
+    const unresolvableReviews: Array<{
+        reviewId: number;
+        courseId: number;
+        instructor_id: number | null | undefined;
+        instructor_cxid: number | null | undefined;
+        mongo_id: string;
+    }> = [];
 
     for (const r of reviews) {
         let viaCxid = false;
@@ -177,6 +183,13 @@ async function main() {
             resolvedViaLegacyOnly++;
         } else {
             unresolvable++;
+            unresolvableReviews.push({
+                reviewId: r.id,
+                courseId: r.course_id,
+                instructor_id: r.instructor_id,
+                instructor_cxid: r.instructor_cxid,
+                mongo_id: String((r as { _id?: unknown })._id ?? ''),
+            });
         }
     }
 
@@ -188,6 +201,14 @@ async function main() {
     console.log(`Resolvable via instructor_cxid: ${resolvedViaCxid}`);
     console.log(`Resolvable via instructor_id only: ${resolvedViaLegacyOnly}`);
     console.log(`Unresolvable (no matching instructor doc): ${unresolvable}`);
+    if (unresolvableReviews.length > 0) {
+        console.log('Unresolvable review ids (numeric id, then course_id):');
+        for (const u of unresolvableReviews) {
+            console.log(
+                `  reviewId=${u.reviewId} courseId=${u.courseId} instructor_id=${u.instructor_id ?? 'null'} instructor_cxid=${u.instructor_cxid ?? 'null'} _id=${u.mongo_id}`
+            );
+        }
+    }
     if (totalRev > 0) {
         console.log(
             `Resolvable rate: ${(((totalRev - unresolvable) / totalRev) * 100).toFixed(2)}%`
@@ -209,14 +230,20 @@ async function main() {
             total: courses.length,
             withAllInstructorCxids: withCxids,
             comparedLegacyVsCxidDistinct: coursesCompared,
-            mismatchedDistinctInstructorCount: mismatches.length,
-            mismatchSample: mismatches.slice(0, 200),
+            sameDistinctInstructorCount: equalDistinctCount,
+            mismatchBreakdown: {
+                cxidDistinctGreaterThanLegacy: cxidDistinctGreater,
+                legacyDistinctGreaterThanCxid: legacyDistinctGreater,
+                legacyZeroDistinctButCxidNonZero: legacyZeroCxidNonZero,
+            },
+            mismatchedDistinctInstructorCount: unequalDistinctCount,
         },
         reviews: {
             total: totalRev,
             resolvedViaCxid,
             resolvedViaLegacyOnly,
             unresolvable,
+            unresolvableReviews,
             resolvableRate:
                 totalRev > 0 ? (totalRev - unresolvable) / totalRev : null,
         },
