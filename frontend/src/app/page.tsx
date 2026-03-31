@@ -1,12 +1,12 @@
 'use client';
+import Loading from '@/components/Loading';
+import HomepageEvents from '@/components/ui/HomepageEvents';
+import BallotCountdown from '@/components/vote/BallotCountdown';
+import { useAuth } from '@/hooks/useAuth';
+import { Event, IElectionFrontend } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Event, IElectionFrontend } from '@/types';
-import HomepageEvents from '@/components/ui/HomepageEvents';
-import Loading from '@/components/Loading';
-import { useAuth } from '@/hooks/useAuth';
-import BallotCountdown from '@/components/vote/BallotCountdown';
 
 export default function HomePage() {
     const [loading, setLoading] = useState(true);
@@ -77,7 +77,7 @@ export default function HomePage() {
         return <Loading />;
     }
     return (
-        <div className="min-h-screen bg-white font-[Lora]">
+        <div className="min-h-screen bg-white">
             {loading && <Loading />}
 
             {/* Election Section - When there is active election */}
