@@ -41,8 +41,7 @@ export default function HomePage() {
         const fetchElection = async () => {
             try {
                 const backendLink =
-                    process.env.NEXT_PUBLIC_BACKEND_LINK ||
-                    process.env.BACKEND_LINK;
+                    process.env.BACKEND_LINK || process.env.BACKEND_LINK;
                 const electionRes = await fetch(
                     `${backendLink}/api/voting/election`,
                     {
