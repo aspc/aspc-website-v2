@@ -3,7 +3,11 @@ import { ClientSession } from 'mongoose';
 
 import { Request, Response } from 'express';
 import { Candidate, Election, StudentBallotInfo, Vote } from '../models/Voting';
-import { SENATE_POSITIONS } from '../constants/election.constants';
+import { SAMLUser } from '../models/People';
+import {
+    getPositionsForSemester,
+    SENATE_POSITIONS,
+} from '../constants/election.constants';
 
 export interface VoteRequest {
     position: string;
@@ -57,86 +61,59 @@ export const studentHasVoted = async (req: Request, res: Response) => {
     }
 };
 
-export const getClassRepCandidates = async (
+// Unified ballot fetching: eligibility is stored on each candidate.
+// For spring/fall, positions must also be valid for that semester.
+// For "other", all positions are custom so only eligibility is checked.
+
+export const getEligibleCandidates = async (
     electionId: string,
-    year: number
+    semester: 'spring' | 'fall' | 'other',
+    year: number,
+    campus: string
 ) => {
-    // Seniors (year 4) vote for both commencement speaker and class name
-    if (year === 4) {
-        const candidates = await Candidate.find({
-            electionId: electionId,
-            position: {
-                $in: [
-                    SENATE_POSITIONS.COMMENCEMENT_SPEAKER,
-                    SENATE_POSITIONS.CLASS_NAME,
-                ],
-            },
-        });
-        return candidates;
-    }
-
-    const yearToPosition: Record<number, string> = {
-        1: SENATE_POSITIONS.SOPHOMORE_CLASS_PRESIDENT,
-        2: SENATE_POSITIONS.JUNIOR_CLASS_PRESIDENT,
-        3: SENATE_POSITIONS.SENIOR_CLASS_PRESIDENT,
-    };
-
-    if (!(year in yearToPosition)) {
-        return [];
-    }
-
-    const candidates = await Candidate.find({
-        electionId: electionId,
-        position: yearToPosition[year],
+    const allCandidates = await Candidate.find({
+        electionId,
+        writeIn: { $ne: true },
+    }).sort({
+        position: 1,
+        name: 1,
     });
 
-    return candidates;
-};
+    const validPositions = getPositionsForSemester(semester);
 
-export const getCampusRepCandidates = async (
-    electionId: string,
-    housingStatus: string
-) => {
-    const housingStatusToCampusRep: Record<string, string> = {
-        north: SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
-        south: SENATE_POSITIONS.SOUTH_CAMPUS_REPRESENTATIVE,
-    };
+    const presetPositions = new Set(Object.values(SENATE_POSITIONS));
 
-    if (!(housingStatus in housingStatusToCampusRep)) {
-        return [];
-    }
+    return allCandidates.filter((c) => {
+        const isPreset = presetPositions.has(c.position as any);
+        if (
+            isPreset &&
+            validPositions !== null &&
+            !validPositions.includes(c.position as any)
+        ) {
+            return false;
+        }
 
-    const candidates = await Candidate.find({
-        electionId: electionId,
-        position: housingStatusToCampusRep[housingStatus],
+        const ey = c.eligibleYears || [];
+        const hl = c.housingLocation || [];
+        if (ey.length > 0 && !ey.includes(year)) return false;
+        if (hl.length > 0 && !hl.includes(campus)) return false;
+
+        return true;
     });
-
-    return candidates;
-};
-
-export const getAllOtherCandidates = async (electionId: string) => {
-    const candidates = await Candidate.find({
-        electionId: electionId,
-        position: {
-            $nin: [
-                SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
-                SENATE_POSITIONS.SOPHOMORE_CLASS_PRESIDENT,
-                SENATE_POSITIONS.JUNIOR_CLASS_PRESIDENT,
-                SENATE_POSITIONS.SENIOR_CLASS_PRESIDENT,
-                SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
-                SENATE_POSITIONS.SOUTH_CAMPUS_REPRESENTATIVE,
-                SENATE_POSITIONS.COMMENCEMENT_SPEAKER,
-                SENATE_POSITIONS.CLASS_NAME,
-            ],
-        },
-    });
-
-    return candidates;
 };
 
 export const getBallot = async (req: Request, res: Response) => {
     try {
         const { electionId } = req.params;
+
+        const election = await Election.findById(electionId);
+        if (!election) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Election not found',
+            });
+            return;
+        }
 
         // TODO: type session
         const sessionUserEmail = (req.session as any).user.email;
@@ -153,21 +130,12 @@ export const getBallot = async (req: Request, res: Response) => {
             return;
         }
 
-        const campusRepCandidates = await getCampusRepCandidates(
+        const allCandidates = await getEligibleCandidates(
             electionId,
+            election.semester,
+            studentInfo.year,
             studentInfo.campusRep
         );
-        const classPresidentCandidates = await getClassRepCandidates(
-            electionId,
-            studentInfo.year
-        );
-        const otherCandidates = await getAllOtherCandidates(electionId);
-
-        const allCandidates = [
-            ...campusRepCandidates,
-            ...classPresidentCandidates,
-            ...otherCandidates,
-        ];
 
         res.status(200).json({
             status: 'success',
@@ -205,15 +173,172 @@ export const isValidBallot = async (v: VoteRequest) => {
         position: v.position,
     });
 
-    return validCandidates.length === v.ranking.length;
+    if (validCandidates.length !== v.ranking.length) {
+        return false;
+    }
+
+    const writeInCount = validCandidates.filter((c) => c.writeIn).length;
+    if (writeInCount > 1) {
+        return false;
+    }
+
+    return true;
 };
+
+const SEARCH_LIMIT = 10;
+
+/**
+ * Search for eligible write-in candidates by name.
+ * Only returns students who appear in StudentBallotInfo for this election (eligible voters).
+ */
+export const searchWriteInCandidates = async (req: Request, res: Response) => {
+    try {
+        const { electionId } = req.params;
+        const rawQuery =
+            typeof req.query.q === 'string' ? req.query.q.trim() : '';
+
+        if (!rawQuery || rawQuery.length < 2) {
+            res.status(200).json({ status: 'success', data: [] });
+            return;
+        }
+
+        const election = await Election.findById(electionId);
+        if (!election) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Election not found.',
+            });
+            return;
+        }
+
+        const eligibleEmails = await StudentBallotInfo.find({
+            electionId,
+        }).distinct('email');
+        if (eligibleEmails.length === 0) {
+            res.status(200).json({ status: 'success', data: [] });
+            return;
+        }
+
+        // Normalize whitespace so \"First   Last\" behaves like \"First Last\"
+        const normalized = rawQuery.replace(/\s+/g, ' ');
+        const parts = normalized.split(' ');
+
+        const escapeRegex = (value: string) =>
+            value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+        const buildRegex = (value: string) =>
+            new RegExp(escapeRegex(value), 'i');
+
+        let nameFilter: Record<string, unknown>;
+
+        if (parts.length === 1) {
+            // Single token: match either first or last name
+            const tokenRegex = buildRegex(parts[0]);
+            nameFilter = {
+                $or: [{ firstName: tokenRegex }, { lastName: tokenRegex }],
+            };
+        } else {
+            // Multi-word: use first token for firstName and last token for lastName
+            // Allows \"First L\" or \"First Last\" style queries.
+            const firstToken = parts[0];
+            const lastToken = parts[parts.length - 1];
+
+            const firstRegex = buildRegex(firstToken);
+            const lastRegex = buildRegex(lastToken);
+
+            nameFilter = {
+                $and: [{ firstName: firstRegex }, { lastName: lastRegex }],
+            };
+        }
+
+        const users = await SAMLUser.find({
+            email: { $in: eligibleEmails },
+            ...nameFilter,
+        })
+            .select('firstName lastName')
+            .limit(SEARCH_LIMIT)
+            .lean();
+
+        const data = users.map((u) => ({
+            firstName: u.firstName,
+            lastName: u.lastName,
+        }));
+        res.status(200).json({ status: 'success', data });
+    } catch (error) {
+        console.error('Error searching write-in candidates:', error);
+        res.status(500).json({ status: 'error', message: 'Search failed.' });
+    }
+};
+
+export const createWriteInCandidate = async (req: Request, res: Response) => {
+    try {
+        const { electionId } = req.params;
+        const { firstName, lastName, position } = req.body;
+
+        if (!firstName?.trim() || !lastName?.trim() || !position?.trim()) {
+            res.status(400).json({
+                status: 'error',
+                message: 'First name, last name, and position are required',
+            });
+            return;
+        }
+
+        const name = `${firstName.trim()} ${lastName.trim()}`;
+
+        const officialMatch = await Candidate.findOne({
+            electionId,
+            name: { $regex: new RegExp(`^${name}$`, 'i') },
+            position,
+            writeIn: { $ne: true },
+        });
+
+        if (officialMatch) {
+            res.status(400).json({
+                status: 'error',
+                message: 'This candidate is already on the ballot.',
+            });
+            return;
+        }
+
+        const candidate = await Candidate.findOneAndUpdate(
+            {
+                electionId,
+                name: { $regex: new RegExp(`^${name}$`, 'i') },
+                position,
+                writeIn: true,
+            },
+            {
+                $setOnInsert: {
+                    electionId,
+                    name,
+                    position,
+                    writeIn: true,
+                },
+            },
+            { upsert: true, new: true }
+        );
+
+        res.status(200).json({
+            status: 'success',
+            data: candidate,
+        });
+    } catch (error) {
+        console.error('Error creating write-in candidate:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to create write-in candidate',
+        });
+    }
+};
+
+const MAX_VOTER_COMMENT_LENGTH = 5000;
 
 export const recordVotes = async (req: Request, res: Response) => {
     let session: ClientSession | undefined;
 
     try {
         const { electionId } = req.params;
-        const { votes } = req.body;
+        const { votes, comment } = req.body;
 
         // User must vote for at least one position
         if (!votes || votes.length === 0) {
@@ -246,6 +371,23 @@ export const recordVotes = async (req: Request, res: Response) => {
             }
         }
 
+        const election = await Election.findById(electionId);
+        if (!election) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Election not found',
+            });
+            return;
+        }
+
+        let voterComment = '';
+        if (election.allowVoterComment) {
+            voterComment =
+                typeof comment === 'string'
+                    ? comment.trim().slice(0, MAX_VOTER_COMMENT_LENGTH)
+                    : '';
+        }
+
         const sessionUserEmail = (req.session as any).user.email;
 
         session = await mongoose.startSession();
@@ -270,10 +412,13 @@ export const recordVotes = async (req: Request, res: Response) => {
                 throw new Error('Unable to submit vote');
             }
 
-            const voteDocs = votes.map((v: VoteRequest) => ({
+            const voteDocs = votes.map((v: VoteRequest, index: number) => ({
                 electionId,
                 position: v.position,
                 ranking: v.ranking.map((id) => new mongoose.Types.ObjectId(id)),
+                ...(election.allowVoterComment && index === 0
+                    ? { voterComment }
+                    : {}),
             }));
 
             await Vote.insertMany(voteDocs, { session });

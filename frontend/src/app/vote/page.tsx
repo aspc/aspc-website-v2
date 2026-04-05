@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Check, Timer, AlertCircle, AlertTriangle } from 'lucide-react';
 import BallotSection from '@/components/vote/BallotSection';
 import BallotCountdown from '@/components/vote/BallotCountdown';
@@ -22,6 +22,7 @@ export default function VotePage() {
     );
     const [rankings, setRankings] = useState<Record<string, IRankingState>>({});
     const [showConfirm, setShowConfirm] = useState(false);
+    const [comment, setComment] = useState('');
 
     // States for election status
     const [hasVoted, setHasVoted] = useState(false);
@@ -113,6 +114,14 @@ export default function VotePage() {
         fetchData();
     }, [user, authLoading]);
 
+    const allCandidatesRef = useRef<Map<string, ICandidateFrontend>>(new Map());
+
+    useEffect(() => {
+        Object.values(ballots)
+            .flat()
+            .forEach((c) => allCandidatesRef.current.set(c._id, c));
+    }, [ballots]);
+
     const handleToggle = (pos: string) => {
         setActiveBallots((prev) => ({ ...prev, [pos]: !prev[pos] }));
     };
@@ -124,12 +133,70 @@ export default function VotePage() {
         []
     );
 
+    const handleSearchWriteInCandidates = useCallback(
+        async (
+            query: string
+        ): Promise<{ firstName: string; lastName: string }[]> => {
+            if (!election || !query.trim()) return [];
+            try {
+                const params = new URLSearchParams({ q: query.trim() });
+                const res = await fetch(
+                    `${process.env.BACKEND_LINK}/api/voting/${election._id}/search-candidates?${params}`,
+                    { credentials: 'include' }
+                );
+                const json = await res.json();
+                if (!res.ok || json.status !== 'success') return [];
+                return Array.isArray(json.data) ? json.data : [];
+            } catch {
+                return [];
+            }
+        },
+        [election]
+    );
+
+    const handleCreateWriteIn = useCallback(
+        async (
+            firstName: string,
+            lastName: string,
+            position: string
+        ): Promise<ICandidateFrontend | string> => {
+            if (!election) return 'No active election.';
+            try {
+                const res = await fetch(
+                    `${process.env.BACKEND_LINK}/api/voting/${election._id}/write-in`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ firstName, lastName, position }),
+                    }
+                );
+                const json = await res.json();
+                if (!res.ok) {
+                    return json.message || 'Failed to add write-in candidate.';
+                }
+                const candidate: ICandidateFrontend = {
+                    ...json.data,
+                    writeIn: true,
+                };
+                allCandidatesRef.current.set(candidate._id, candidate);
+                return candidate;
+            } catch {
+                return 'Something went wrong. Please try again.';
+            }
+        },
+        [election]
+    );
+
     const handleSubmitVote = async () => {
         if (!election) return;
 
         try {
             // Prepare payload: map rankings to arrays of IDs
-            const payload = {
+            const payload: {
+                votes: { position: string; ranking: string[] }[];
+                comment?: string;
+            } = {
                 votes: Object.entries(rankings)
                     .filter(([pos]) => activeBallots[pos])
                     .map(([pos, state]) => ({
@@ -137,6 +204,9 @@ export default function VotePage() {
                         ranking: state.candidateIds,
                     })),
             };
+            if (election.allowVoterComment) {
+                payload.comment = comment;
+            }
             console.log('Submitting payload:', payload);
 
             const res = await fetch(
@@ -216,6 +286,8 @@ export default function VotePage() {
         activeKeys.length > 0 &&
         activeKeys.every((k) => rankings[k]?.isComplete);
 
+    const showCommentField = !!election?.allowVoterComment;
+
     return (
         <main className="min-h-screen bg-white text-slate-900 font-sans pb-24">
             <div className="max-w-4xl mx-auto px-6 pt-16">
@@ -246,8 +318,33 @@ export default function VotePage() {
                         isActive={!!activeBallots[pos]}
                         onToggle={handleToggle}
                         onRankChange={handleRankUpdate}
+                        onSearchWriteInCandidates={
+                            handleSearchWriteInCandidates
+                        }
+                        onCreateWriteIn={handleCreateWriteIn}
                     />
                 ))}
+
+                {showCommentField && (
+                    <div className="mt-10 border border-slate-200 rounded-md p-6 bg-white">
+                        <h2 className="text-lg font-black text-[#001f3f] uppercase tracking-tight mb-1">
+                            Comment
+                        </h2>
+                        <p className="text-sm text-slate-600 mb-3">
+                            Share your thoughts
+                        </p>
+                        <textarea
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            maxLength={5000}
+                            className="w-full min-h-[120px] p-3 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#001f3f]/30"
+                            placeholder="Share your thoughts"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-2 text-right">
+                            {comment.length} / 5000
+                        </p>
+                    </div>
+                )}
 
                 <div className="mt-16 bg-slate-50 p-8 border border-slate-200 rounded-md text-center">
                     {activeKeys.length > 0 && !canSubmit && (
@@ -286,9 +383,11 @@ export default function VotePage() {
                                         {pos}
                                     </div>
                                     {rankings[pos].candidateIds.map((id, i) => {
-                                        const c = ballots[pos]?.find(
-                                            (cand) => cand._id === id
-                                        );
+                                        const c =
+                                            allCandidatesRef.current.get(id) ??
+                                            ballots[pos]?.find(
+                                                (cand) => cand._id === id
+                                            );
                                         return (
                                             <div
                                                 key={id}
@@ -298,11 +397,26 @@ export default function VotePage() {
                                                     #{i + 1}
                                                 </span>{' '}
                                                 {c?.name}
+                                                {c?.writeIn && (
+                                                    <span className="text-[10px] font-black text-amber-500 uppercase">
+                                                        Write-in
+                                                    </span>
+                                                )}
                                             </div>
                                         );
                                     })}
                                 </div>
                             ))}
+                            {showCommentField && (
+                                <div className="border border-slate-200 rounded-md overflow-hidden">
+                                    <div className="bg-slate-700 px-4 py-2 text-white text-[10px] font-black uppercase">
+                                        Comment
+                                    </div>
+                                    <div className="p-3 bg-white text-sm text-slate-600 whitespace-pre-wrap">
+                                        {comment.trim() ? comment : '—'}
+                                    </div>
+                                </div>
+                            )}
                             <div className="flex flex-col gap-3 pt-4 border-t">
                                 <Button
                                     variant="success"

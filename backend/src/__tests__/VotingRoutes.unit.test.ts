@@ -1,9 +1,7 @@
 import mongoose from 'mongoose';
 
 import {
-    getCampusRepCandidates,
-    getClassRepCandidates,
-    getAllOtherCandidates,
+    getEligibleCandidates,
     isValidBallot,
 } from '../controllers/VotingController';
 import { Candidate } from '../models/Voting';
@@ -20,187 +18,235 @@ describe('Ballot helper functions', () => {
         jest.clearAllMocks();
     });
 
-    describe('getClassRepCandidates', () => {
-        it.each([
-            {
-                year: 1,
-                position: SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
-                expectedCandidates: [
-                    {
-                        electionId: mockElectionId,
-                        name: 'Alice',
-                        position: SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
-                    },
-                    {
-                        electionId: mockElectionId,
-                        name: 'Bob',
-                        position: SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
-                    },
-                ],
-            },
-            {
-                year: 2,
-                position: SENATE_POSITIONS.SOPHOMORE_CLASS_PRESIDENT,
-                expectedCandidates: [
-                    {
-                        electionId: mockElectionId,
-                        name: 'Carol',
-                        position: SENATE_POSITIONS.SOPHOMORE_CLASS_PRESIDENT,
-                    },
-                ],
-            },
-            {
-                year: 3,
-                position: SENATE_POSITIONS.JUNIOR_CLASS_PRESIDENT,
-                expectedCandidates: [
-                    {
-                        electionId: mockElectionId,
-                        name: 'Dave',
-                        position: SENATE_POSITIONS.JUNIOR_CLASS_PRESIDENT,
-                    },
-                ],
-            },
-            {
-                year: 4,
-                position: SENATE_POSITIONS.SENIOR_CLASS_PRESIDENT,
-                expectedCandidates: [
-                    {
-                        electionId: mockElectionId,
-                        name: 'Eve',
-                        position: SENATE_POSITIONS.SENIOR_CLASS_PRESIDENT,
-                    },
-                ],
-            },
-        ])(
-            'calls Candidate.find with correct position for year $year',
-            async ({ year, position, expectedCandidates }) => {
-                (Candidate.find as jest.Mock).mockResolvedValue(
-                    expectedCandidates
-                );
+    describe('getEligibleCandidates', () => {
+        const mockSort = jest.fn();
 
-                const candidates = await getClassRepCandidates(
-                    mockElectionId.toString(),
-                    year
-                );
-
-                expect(Candidate.find).toHaveBeenCalledWith({
-                    electionId: mockElectionId.toString(),
-                    position,
-                });
-                expect(candidates).toEqual(expectedCandidates);
-            }
-        );
-
-        it('returns empty array for invalid year', async () => {
-            const candidates = await getClassRepCandidates(
-                mockElectionId.toString(),
-                99
-            );
-            expect(candidates).toEqual([]);
-            expect(Candidate.find).not.toHaveBeenCalled();
+        beforeEach(() => {
+            mockSort.mockReset();
+            (Candidate.find as jest.Mock).mockReturnValue({ sort: mockSort });
         });
-    });
 
-    describe('getCampusRepCandidates', () => {
-        it.each([
-            {
-                housingStatus: 'north',
-                position: SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
-                expectedCandidates: [
-                    {
-                        electionId: mockElectionId,
-                        name: 'Bob',
-                        position: SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
-                    },
-                    {
-                        electionId: mockElectionId,
-                        name: 'Dave',
-                        position: SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
-                    },
-                ],
-            },
-            {
-                housingStatus: 'south',
-                position: SENATE_POSITIONS.SOUTH_CAMPUS_REPRESENTATIVE,
-                expectedCandidates: [
-                    {
-                        electionId: mockElectionId,
-                        name: 'Frank',
-                        position: SENATE_POSITIONS.SOUTH_CAMPUS_REPRESENTATIVE,
-                    },
-                ],
-            },
-        ])(
-            'calls Candidate.find with correct position for housing status $housingStatus',
-            async ({ housingStatus, position, expectedCandidates }) => {
-                (Candidate.find as jest.Mock).mockResolvedValue(
-                    expectedCandidates
-                );
-
-                const candidates = await getCampusRepCandidates(
-                    mockElectionId.toString(),
-                    housingStatus
-                );
-
-                expect(Candidate.find).toHaveBeenCalledWith({
-                    electionId: mockElectionId.toString(),
-                    position,
-                });
-                expect(candidates).toEqual(expectedCandidates);
-            }
-        );
-
-        it.each([
-            { housingStatus: 'east', expected: [] },
-            { housingStatus: 'off-campus', expected: [] },
-        ])(
-            'returns empty array for invalid housing status "$housingStatus"',
-            async ({ housingStatus, expected }) => {
-                const candidates = await getCampusRepCandidates(
-                    mockElectionId.toString(),
-                    housingStatus
-                );
-                expect(Candidate.find).not.toHaveBeenCalled();
-                expect(candidates).toEqual(expected);
-            }
-        );
-    });
-
-    describe('getAllOtherCandidates', () => {
-        it('returns candidates excluding class and campus rep positions', async () => {
-            const mockCandidatesDB = [
+        it('fall: returns year-eligible + campus-eligible, excludes spring-only', async () => {
+            const allCandidates = [
                 {
-                    electionId: mockElectionId,
-                    name: 'Alice',
-                    position: SENATE_POSITIONS.PRESIDENT,
+                    position: SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
+                    eligibleYears: [1],
+                    housingLocation: [],
                 },
                 {
-                    electionId: mockElectionId,
-                    name: 'Bob',
-                    position: SENATE_POSITIONS.VP_ACADEMIC_AFFAIRS,
+                    position: SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
+                    eligibleYears: [],
+                    housingLocation: ['north'],
+                },
+                {
+                    position: SENATE_POSITIONS.SOUTH_CAMPUS_REPRESENTATIVE,
+                    eligibleYears: [],
+                    housingLocation: ['south'],
+                },
+                {
+                    position: SENATE_POSITIONS.PRESIDENT,
+                    eligibleYears: [],
+                    housingLocation: [],
+                }, // spring-only
+            ];
+            mockSort.mockResolvedValue(allCandidates);
+
+            const result = await getEligibleCandidates(
+                mockElectionId.toString(),
+                'fall',
+                1,
+                'north'
+            );
+
+            expect(result).toHaveLength(2);
+            expect(result[0].position).toBe(
+                SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT
+            );
+            expect(result[1].position).toBe(
+                SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE
+            );
+        });
+
+        it('spring: returns spring positions, excludes fall-only', async () => {
+            const allCandidates = [
+                {
+                    position: SENATE_POSITIONS.SOPHOMORE_CLASS_PRESIDENT,
+                    eligibleYears: [1],
+                    housingLocation: [],
+                },
+                {
+                    position: SENATE_POSITIONS.PRESIDENT,
+                    eligibleYears: [],
+                    housingLocation: [],
+                },
+                {
+                    position: SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
+                    eligibleYears: [1],
+                    housingLocation: [],
+                }, // fall-only
+            ];
+            mockSort.mockResolvedValue(allCandidates);
+
+            const result = await getEligibleCandidates(
+                mockElectionId.toString(),
+                'spring',
+                1,
+                'south'
+            );
+
+            expect(result).toHaveLength(2);
+            expect(result.map((c: any) => c.position)).toContain(
+                SENATE_POSITIONS.SOPHOMORE_CLASS_PRESIDENT
+            );
+            expect(result.map((c: any) => c.position)).toContain(
+                SENATE_POSITIONS.PRESIDENT
+            );
+        });
+
+        it('other: ignores semester, filters only by stored eligibility', async () => {
+            const allCandidates = [
+                {
+                    position: 'Custom Vote',
+                    eligibleYears: [1, 2],
+                    housingLocation: [],
+                },
+                {
+                    position: 'Best Dressed',
+                    eligibleYears: [],
+                    housingLocation: ['north'],
+                },
+                {
+                    position: 'Spirit Award',
+                    eligibleYears: [3],
+                    housingLocation: [],
                 },
             ];
+            mockSort.mockResolvedValue(allCandidates);
 
-            (Candidate.find as jest.Mock).mockResolvedValue(mockCandidatesDB);
-
-            const candidates = await getAllOtherCandidates(
-                mockElectionId.toString()
+            const result = await getEligibleCandidates(
+                mockElectionId.toString(),
+                'other',
+                1,
+                'north'
             );
 
-            expect(Candidate.find).toHaveBeenCalledWith({
-                electionId: mockElectionId.toString(),
-                position: {
-                    $nin: [
-                        SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
-                        SENATE_POSITIONS.SOPHOMORE_CLASS_PRESIDENT,
-                        SENATE_POSITIONS.JUNIOR_CLASS_PRESIDENT,
-                        SENATE_POSITIONS.SENIOR_CLASS_PRESIDENT,
-                        SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
-                        SENATE_POSITIONS.SOUTH_CAMPUS_REPRESENTATIVE,
-                    ],
+            // Custom Vote (year 1 eligible) + Best Dressed (north) — not Spirit Award (year 3 only)
+            expect(result).toHaveLength(2);
+        });
+
+        it('returns all candidates when no eligibility restrictions', async () => {
+            const allCandidates = [
+                {
+                    position: SENATE_POSITIONS.PRESIDENT,
+                    eligibleYears: [],
+                    housingLocation: [],
                 },
-            });
-            expect(candidates).toEqual(mockCandidatesDB);
+                {
+                    position: SENATE_POSITIONS.VP_FINANCE,
+                    eligibleYears: [],
+                    housingLocation: [],
+                },
+            ];
+            mockSort.mockResolvedValue(allCandidates);
+
+            const result = await getEligibleCandidates(
+                mockElectionId.toString(),
+                'spring',
+                2,
+                'south'
+            );
+
+            expect(result).toHaveLength(2);
+        });
+
+        it('custom positions pass through semester filter in spring/fall', async () => {
+            const allCandidates = [
+                {
+                    position: SENATE_POSITIONS.PRESIDENT,
+                    eligibleYears: [],
+                    housingLocation: [],
+                },
+                {
+                    position: 'Best Dressed',
+                    eligibleYears: [],
+                    housingLocation: [],
+                }, // custom
+                {
+                    position: SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
+                    eligibleYears: [1],
+                    housingLocation: [],
+                }, // fall-only
+            ];
+            mockSort.mockResolvedValue(allCandidates);
+
+            const result = await getEligibleCandidates(
+                mockElectionId.toString(),
+                'spring',
+                1,
+                'north'
+            );
+
+            // President (spring) + Best Dressed (custom) — not first-year pres (fall preset)
+            expect(result).toHaveLength(2);
+            expect(result.map((c: any) => c.position)).toContain(
+                SENATE_POSITIONS.PRESIDENT
+            );
+            expect(result.map((c: any) => c.position)).toContain(
+                'Best Dressed'
+            );
+        });
+
+        it('excludes candidate when year matches but housing does not', async () => {
+            const allCandidates = [
+                {
+                    position: SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
+                    eligibleYears: [],
+                    housingLocation: ['north'],
+                },
+            ];
+            mockSort.mockResolvedValue(allCandidates);
+
+            const result = await getEligibleCandidates(
+                mockElectionId.toString(),
+                'fall',
+                1,
+                'south'
+            );
+
+            expect(result).toHaveLength(0);
+        });
+
+        it('excludes candidate when housing matches but year does not', async () => {
+            const allCandidates = [
+                {
+                    position: 'Custom',
+                    eligibleYears: [3],
+                    housingLocation: ['north'],
+                },
+            ];
+            mockSort.mockResolvedValue(allCandidates);
+
+            const result = await getEligibleCandidates(
+                mockElectionId.toString(),
+                'other',
+                1,
+                'north'
+            );
+
+            expect(result).toHaveLength(0);
+        });
+
+        it('returns empty when no candidates exist', async () => {
+            mockSort.mockResolvedValue([]);
+
+            const result = await getEligibleCandidates(
+                mockElectionId.toString(),
+                'spring',
+                1,
+                'north'
+            );
+
+            expect(result).toHaveLength(0);
         });
     });
 
@@ -259,7 +305,7 @@ describe('Ballot helper functions', () => {
                 expected: false,
             },
             {
-                description: 'more than 5 candidates',
+                description: 'many candidates but not all match in DB',
                 voteRequest: {
                     position: position,
                     ranking: [
@@ -271,8 +317,11 @@ describe('Ballot helper functions', () => {
                         new mongoose.Types.ObjectId().toString(),
                     ],
                 },
-                mockCandidates: null,
-                shouldCallDB: false,
+                mockCandidates: [
+                    { _id: candidate1, position: position },
+                    { _id: candidate2, position: position },
+                ],
+                shouldCallDB: true,
                 expected: false,
             },
             {
@@ -342,5 +391,25 @@ describe('Ballot helper functions', () => {
                 expect(result).toBe(expected);
             }
         );
+
+        it('valid vote for custom position', async () => {
+            const customPosition = 'Best Dressed';
+            const c1 = new mongoose.Types.ObjectId();
+
+            (Candidate.find as jest.Mock).mockResolvedValue([
+                { _id: c1, position: customPosition },
+            ]);
+
+            const result = await isValidBallot({
+                position: customPosition,
+                ranking: [c1.toString()],
+            });
+
+            expect(Candidate.find).toHaveBeenCalledWith({
+                _id: { $in: [c1.toString()] },
+                position: customPosition,
+            });
+            expect(result).toBe(true);
+        });
     });
 });

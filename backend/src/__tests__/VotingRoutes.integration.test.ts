@@ -2,17 +2,23 @@ import mongoose from 'mongoose';
 import { Request, Response } from 'express';
 
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { Candidate, StudentBallotInfo, Vote } from '../models/Voting';
+import { Candidate, Election, StudentBallotInfo } from '../models/Voting';
 import {
-    getAllOtherCandidates,
-    getCampusRepCandidates,
-    getClassRepCandidates,
+    getEligibleCandidates,
     getBallot,
     studentHasVoted,
 } from '../controllers/VotingController';
 import { SENATE_POSITIONS } from '../constants/election.constants';
 
 const mockElectionId = new mongoose.Types.ObjectId();
+const mockElection = {
+    _id: mockElectionId,
+    name: 'Test Election',
+    description: 'A test election',
+    startDate: new Date('2026-01-01'),
+    endDate: new Date('2026-12-31'),
+    semester: 'fall' as const,
+};
 const mockStudent = {
     electionId: mockElectionId,
     email: 'student@test.com',
@@ -26,31 +32,43 @@ const mockCandidatesDB = [
         electionId: mockElectionId,
         name: 'Alice',
         position: SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
+        eligibleYears: [1],
+        housingLocation: [],
     },
     {
         electionId: mockElectionId,
         name: 'Bob',
         position: SENATE_POSITIONS.SOPHOMORE_CLASS_PRESIDENT,
+        eligibleYears: [1],
+        housingLocation: [],
     },
     {
         electionId: mockElectionId,
         name: 'Carol',
         position: SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
+        eligibleYears: [1],
+        housingLocation: [],
     },
     {
         electionId: mockElectionId,
         name: 'Dave',
         position: SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
+        eligibleYears: [],
+        housingLocation: ['north'],
     },
     {
         electionId: mockElectionId,
         name: 'Eve',
         position: SENATE_POSITIONS.SOUTH_CAMPUS_REPRESENTATIVE,
+        eligibleYears: [],
+        housingLocation: ['south'],
     },
     {
         electionId: mockElectionId,
         name: 'Fred',
         position: SENATE_POSITIONS.PRESIDENT,
+        eligibleYears: [],
+        housingLocation: [],
     },
 ];
 
@@ -60,13 +78,14 @@ beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
     const uri = mongoServer.getUri();
     await mongoose.connect(uri);
-    await StudentBallotInfo.create(mockStudent);
-});
+}, 90000);
 
 beforeEach(async () => {
+    await Election.deleteMany({});
     await Candidate.deleteMany({});
     await StudentBallotInfo.deleteMany({});
 
+    await Election.create(mockElection);
     await StudentBallotInfo.create(mockStudent);
     await Candidate.insertMany(mockCandidatesDB);
 });
@@ -74,101 +93,167 @@ beforeEach(async () => {
 afterAll(async () => {
     await mongoose.disconnect();
     await mongoServer.stop();
-});
+}, 30000);
 
-describe('getClassRepCandidates (integration test)', () => {
-    it.each([
-        {
-            year: 1,
-            expectedCount: 2,
-            expectedNames: ['Alice', 'Carol'],
-            description: 'first-year class president',
-        },
-        {
-            year: 3,
-            expectedCount: 0,
-            expectedNames: [],
-            description: 'junior class president (no candidates)',
-        },
-    ])(
-        'returns $expectedCount $description candidates for year $year',
-        async ({ year, expectedCount, expectedNames }) => {
-            const candidates = await getClassRepCandidates(
-                mockElectionId.toString(),
-                year
-            );
-
-            expect(candidates).toHaveLength(expectedCount);
-
-            if (expectedCount > 0) {
-                const names = candidates.map((c) => c.name);
-                expectedNames.forEach((name) => {
-                    expect(names).toContain(name);
-                });
-            }
-        }
-    );
-
-    it('returns empty array for invalid year', async () => {
-        const candidates = await getClassRepCandidates(
+describe('getEligibleCandidates (integration test)', () => {
+    it('fall election: first-year north student sees first-year pres + north rep', async () => {
+        const candidates = await getEligibleCandidates(
             mockElectionId.toString(),
-            5
+            'fall',
+            1,
+            'north'
         );
-        expect(candidates).toEqual([]);
+
+        const names = candidates.map((c: any) => c.name);
+        expect(names).toContain('Alice'); // First-year pres, eligible for year 1
+        expect(names).toContain('Carol'); // First-year pres, eligible for year 1
+        expect(names).toContain('Dave'); // North campus rep
+        expect(names).not.toContain('Eve'); // South campus rep
+        expect(names).not.toContain('Fred'); // President is spring-only
+        expect(names).not.toContain('Bob'); // Sophomore pres is spring-only
     });
-});
 
-describe('getCampusRepCandidates (integration test)', () => {
-    it.each([
-        {
-            housingStatus: 'north',
-            expectedCount: 1,
-            expectedNames: ['Dave'],
-            description: 'north campus rep',
-        },
-        {
-            housingStatus: 'south',
-            expectedCount: 1,
-            expectedNames: ['Eve'],
-            description: 'south campus rep',
-        },
-    ])(
-        'returns $expectedCount $description candidates for housing status $housingStatus',
-        async ({ housingStatus, expectedCount, expectedNames }) => {
-            const candidates = await getCampusRepCandidates(
-                mockElectionId.toString(),
-                housingStatus
-            );
-
-            expect(candidates).toHaveLength(expectedCount);
-
-            if (expectedCount > 0) {
-                const names = candidates.map((c) => c.name);
-                expectedNames.forEach((name) => {
-                    expect(names).toContain(name);
-                });
-            }
-        }
-    );
-
-    it('returns empty array for non-north/south housing status', async () => {
-        const candidates = await getCampusRepCandidates(
+    it('spring election: first-year south student sees soph pres + president', async () => {
+        const candidates = await getEligibleCandidates(
             mockElectionId.toString(),
-            'east'
+            'spring',
+            1,
+            'south'
         );
-        expect(candidates).toEqual([]);
+
+        const names = candidates.map((c: any) => c.name);
+        expect(names).toContain('Bob'); // Soph pres, eligibleYears [1] matches
+        expect(names).toContain('Fred'); // President, no restrictions
+        expect(names).not.toContain('Alice'); // First-year pres is fall-only
+        expect(names).not.toContain('Dave'); // North rep is fall-only
+        expect(names).not.toContain('Eve'); // South rep is fall-only
     });
-});
 
-describe('getAllOtherCandidates (integration test)', () => {
-    it('returns all non-campus/class rep rep candidates', async () => {
-        const candidates = await getAllOtherCandidates(
-            mockElectionId.toString()
+    it('spring election: sophomore does NOT see soph pres (eligibleYears [1])', async () => {
+        const candidates = await getEligibleCandidates(
+            mockElectionId.toString(),
+            'spring',
+            2,
+            'south'
         );
 
-        expect(candidates).toHaveLength(1);
-        const names = candidates.map((c) => c.name);
+        const names = candidates.map((c: any) => c.name);
+        expect(names).toContain('Fred'); // President, unrestricted
+        expect(names).not.toContain('Bob'); // Soph pres restricted to year 1
+    });
+
+    it('other election: filters only by stored eligibility', async () => {
+        const candidates = await getEligibleCandidates(
+            mockElectionId.toString(),
+            'other',
+            1,
+            'north'
+        );
+
+        const names = candidates.map((c: any) => c.name);
+        // All year-1 eligible + north campus + unrestricted
+        expect(names).toContain('Alice');
+        expect(names).toContain('Bob');
+        expect(names).toContain('Carol');
+        expect(names).toContain('Dave');
         expect(names).toContain('Fred');
+        expect(names).not.toContain('Eve'); // south only
+    });
+
+    it('fall election: off-campus year 5 sees nothing', async () => {
+        const candidates = await getEligibleCandidates(
+            mockElectionId.toString(),
+            'fall',
+            5,
+            'off-campus'
+        );
+
+        expect(candidates).toHaveLength(0);
+    });
+
+    it('custom positions pass through semester filter', async () => {
+        await Candidate.create({
+            electionId: mockElectionId,
+            name: 'Grace',
+            position: 'Best Dressed',
+            eligibleYears: [],
+            housingLocation: [],
+        });
+
+        // Custom position should appear in spring even though it's not in SPRING_POSITIONS
+        const springCandidates = await getEligibleCandidates(
+            mockElectionId.toString(),
+            'spring',
+            1,
+            'north'
+        );
+        expect(springCandidates.map((c: any) => c.name)).toContain('Grace');
+
+        // Should also appear in fall
+        const fallCandidates = await getEligibleCandidates(
+            mockElectionId.toString(),
+            'fall',
+            1,
+            'north'
+        );
+        expect(fallCandidates.map((c: any) => c.name)).toContain('Grace');
+    });
+
+    it('custom position with eligibility restrictions filters correctly', async () => {
+        await Candidate.create({
+            electionId: mockElectionId,
+            name: 'Hank',
+            position: 'Spirit Award',
+            eligibleYears: [3, 4],
+            housingLocation: ['south'],
+        });
+
+        // Year 1 north — should not see Hank
+        const result1 = await getEligibleCandidates(
+            mockElectionId.toString(),
+            'spring',
+            1,
+            'north'
+        );
+        expect(result1.map((c: any) => c.name)).not.toContain('Hank');
+
+        // Year 3 south — should see Hank
+        const result2 = await getEligibleCandidates(
+            mockElectionId.toString(),
+            'spring',
+            3,
+            'south'
+        );
+        expect(result2.map((c: any) => c.name)).toContain('Hank');
+
+        // Year 3 north — year matches but housing does not
+        const result3 = await getEligibleCandidates(
+            mockElectionId.toString(),
+            'spring',
+            3,
+            'north'
+        );
+        expect(result3.map((c: any) => c.name)).not.toContain('Hank');
+    });
+
+    it('only returns candidates from the specified election', async () => {
+        const otherElectionId = new mongoose.Types.ObjectId();
+        await Candidate.create({
+            electionId: otherElectionId,
+            name: 'Intruder',
+            position: SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
+            eligibleYears: [1],
+            housingLocation: [],
+        });
+
+        const candidates = await getEligibleCandidates(
+            mockElectionId.toString(),
+            'fall',
+            1,
+            'north'
+        );
+
+        expect(candidates.map((c: any) => c.name)).not.toContain('Intruder');
     });
 });
 
@@ -193,26 +278,26 @@ describe('getBallot (integration test)', () => {
         };
     });
 
-    it('returns all candidates for north campus first-year student', async () => {
+    it('fall election: returns fall-only positions for north campus first-year student', async () => {
         await getBallot(req as Request, res as Response);
 
         expect(statusMock).toHaveBeenCalledWith(200);
 
         const responseData = jsonMock.mock.calls[0][0];
         expect(responseData.status).toBe('success');
-        expect(responseData.data).toHaveLength(4); // Dave + Alice + Carol + Fred
+        // Fall positions only: Dave (north rep) + Alice + Carol (first year president)
+        expect(responseData.data).toHaveLength(3);
 
         const names = responseData.data.map((c: any) => c.name);
         expect(names).toContain('Dave'); // North campus rep
         expect(names).toContain('Alice'); // First-year president
         expect(names).toContain('Carol'); // First-year president
-        expect(names).toContain('Fred'); // President
-        expect(names).not.toContain('Eve'); // South campus (shouldn't be included)
-        expect(names).not.toContain('Bob'); // Sophomore (shouldn't be included)
+        expect(names).not.toContain('Fred'); // President (spring-only)
+        expect(names).not.toContain('Eve'); // South campus (wrong campus)
+        expect(names).not.toContain('Bob'); // Sophomore (spring-only)
     });
 
-    it('returns correct candidates for south campus sophomore student', async () => {
-        // Update student to be south campus sophomore
+    it('fall election: south campus sophomore only sees south campus rep', async () => {
         await StudentBallotInfo.updateOne(
             { email: 'student@test.com' },
             { $set: { campusRep: 'south', year: 2 } }
@@ -223,15 +308,14 @@ describe('getBallot (integration test)', () => {
         expect(statusMock).toHaveBeenCalledWith(200);
 
         const responseData = jsonMock.mock.calls[0][0];
-        expect(responseData.data).toHaveLength(3); // Eve + Bob + Fred
+        // Fall: Eve (south rep) only. Bob (soph pres) and Fred (president) are spring-only.
+        // First-year pres restricted to year 1, Dave restricted to north
+        expect(responseData.data).toHaveLength(1);
 
         const names = responseData.data.map((c: any) => c.name);
-        expect(names).toContain('Eve'); // South campus rep
-        expect(names).toContain('Bob'); // Sophomore president
-        expect(names).toContain('Fred'); // President
-        expect(names).not.toContain('Dave'); // North campus
-        expect(names).not.toContain('Alice'); // First-year
-        expect(names).not.toContain('Carol'); // First-year
+        expect(names).toContain('Eve'); // South campus rep (fall)
+        expect(names).not.toContain('Bob'); // Sophomore president (spring-only)
+        expect(names).not.toContain('Fred'); // President (spring-only)
     });
 
     it('returns 404 when student not registered', async () => {
@@ -246,8 +330,8 @@ describe('getBallot (integration test)', () => {
         });
     });
 
-    it('returns only other candidates when no class/campus match', async () => {
-        // Update student to invalid year and housing
+    it('fall election: returns empty when no class/campus match', async () => {
+        // Off-campus year 5: no campus rep match, no class president match
         await StudentBallotInfo.updateOne(
             { email: 'student@test.com' },
             { $set: { campusRep: 'off-campus', year: 5 } }
@@ -258,10 +342,7 @@ describe('getBallot (integration test)', () => {
         expect(statusMock).toHaveBeenCalledWith(200);
 
         const responseData = jsonMock.mock.calls[0][0];
-        expect(responseData.data).toHaveLength(1); // Only Fred
-
-        const names = responseData.data.map((c: any) => c.name);
-        expect(names).toContain('Fred');
+        expect(responseData.data).toHaveLength(0);
     });
 
     it('returns empty array when no candidates exist', async () => {
@@ -285,11 +366,8 @@ describe('getBallot (integration test)', () => {
                 electionId: otherElectionId,
                 name: 'OtherElection1',
                 position: SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
-            },
-            {
-                electionId: otherElectionId,
-                name: 'OtherElection2',
-                position: SENATE_POSITIONS.PRESIDENT,
+                eligibleYears: [1],
+                housingLocation: [],
             },
         ]);
 
@@ -302,13 +380,33 @@ describe('getBallot (integration test)', () => {
 
         // Should not include candidates from other election
         expect(names).not.toContain('OtherElection1');
-        expect(names).not.toContain('OtherElection2');
 
         // All candidates should be from mockElectionId
         const allFromCorrectElection = responseData.data.every(
             (c: any) => c.electionId.toString() === mockElectionId.toString()
         );
         expect(allFromCorrectElection).toBe(true);
+    });
+
+    it('includes custom positions in spring election', async () => {
+        await Election.updateOne(
+            { _id: mockElectionId },
+            { $set: { semester: 'spring' } }
+        );
+        await Candidate.create({
+            electionId: mockElectionId,
+            name: 'Grace',
+            position: 'Best Dressed',
+            eligibleYears: [],
+            housingLocation: [],
+        });
+
+        await getBallot(req as Request, res as Response);
+
+        expect(statusMock).toHaveBeenCalledWith(200);
+        const responseData = jsonMock.mock.calls[0][0];
+        const names = responseData.data.map((c: any) => c.name);
+        expect(names).toContain('Grace');
     });
 });
 

@@ -1,12 +1,11 @@
-import express, { Request, Response } from 'express';
-import { initializeSAML, fetchAndSaveMetadata } from '../config/samlConfig';
+import express, { Request, Response, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { SAMLUser } from '../models/People';
-import { Router } from 'express';
 import { IdentityProvider } from 'samlify/types/src/entity-idp';
 import { ServiceProvider } from 'samlify/types/src/entity-sp';
 import { isAuthenticated } from '../middleware/authMiddleware';
+import { fetchAndSaveMetadata, initializeSAML } from '../config/samlConfig';
+import { SAMLUser } from '../models/People';
 
 const router = Router();
 
