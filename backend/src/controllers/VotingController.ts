@@ -300,29 +300,25 @@ export const createWriteInCandidate = async (req: Request, res: Response) => {
             return;
         }
 
-        const existing = await Candidate.findOne({
-            electionId,
-            name: { $regex: new RegExp(`^${name}$`, 'i') },
-            position,
-            writeIn: true,
-        });
+        const candidate = await Candidate.findOneAndUpdate(
+            {
+                electionId,
+                name: { $regex: new RegExp(`^${name}$`, 'i') },
+                position,
+                writeIn: true,
+            },
+            {
+                $setOnInsert: {
+                    electionId,
+                    name,
+                    position,
+                    writeIn: true,
+                },
+            },
+            { upsert: true, new: true }
+        );
 
-        if (existing) {
-            res.status(200).json({
-                status: 'success',
-                data: existing,
-            });
-            return;
-        }
-
-        const candidate = await Candidate.create({
-            electionId,
-            name,
-            position,
-            writeIn: true,
-        });
-
-        res.status(201).json({
+        res.status(200).json({
             status: 'success',
             data: candidate,
         });
