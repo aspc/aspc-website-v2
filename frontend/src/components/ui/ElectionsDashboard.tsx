@@ -176,7 +176,8 @@ const PreviewBallot = ({
             previewYear,
             previewCampus
         );
-        const grouped = filtered.reduce(
+        const nonWriteIn = filtered.filter((c) => !c.writeIn);
+        const grouped = nonWriteIn.reduce(
             (acc: Record<string, ICandidateFrontend[]>, c) => {
                 if (!acc[c.position]) acc[c.position] = [];
                 acc[c.position].push(c);

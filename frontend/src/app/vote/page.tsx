@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Check, Timer, AlertCircle, AlertTriangle } from 'lucide-react';
 import BallotSection from '@/components/vote/BallotSection';
 import BallotCountdown from '@/components/vote/BallotCountdown';
@@ -114,6 +114,14 @@ export default function VotePage() {
         fetchData();
     }, [user, authLoading]);
 
+    const allCandidatesRef = useRef<Map<string, ICandidateFrontend>>(new Map());
+
+    useEffect(() => {
+        Object.values(ballots)
+            .flat()
+            .forEach((c) => allCandidatesRef.current.set(c._id, c));
+    }, [ballots]);
+
     const handleToggle = (pos: string) => {
         setActiveBallots((prev) => ({ ...prev, [pos]: !prev[pos] }));
     };
@@ -123,6 +131,61 @@ export default function VotePage() {
             setRankings((prev) => ({ ...prev, [pos]: state }));
         },
         []
+    );
+
+    const handleSearchWriteInCandidates = useCallback(
+        async (
+            query: string
+        ): Promise<{ firstName: string; lastName: string }[]> => {
+            if (!election || !query.trim()) return [];
+            try {
+                const params = new URLSearchParams({ q: query.trim() });
+                const res = await fetch(
+                    `${process.env.BACKEND_LINK}/api/voting/${election._id}/search-candidates?${params}`,
+                    { credentials: 'include' }
+                );
+                const json = await res.json();
+                if (!res.ok || json.status !== 'success') return [];
+                return Array.isArray(json.data) ? json.data : [];
+            } catch {
+                return [];
+            }
+        },
+        [election]
+    );
+
+    const handleCreateWriteIn = useCallback(
+        async (
+            firstName: string,
+            lastName: string,
+            position: string
+        ): Promise<ICandidateFrontend | string> => {
+            if (!election) return 'No active election.';
+            try {
+                const res = await fetch(
+                    `${process.env.BACKEND_LINK}/api/voting/${election._id}/write-in`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ firstName, lastName, position }),
+                    }
+                );
+                const json = await res.json();
+                if (!res.ok) {
+                    return json.message || 'Failed to add write-in candidate.';
+                }
+                const candidate: ICandidateFrontend = {
+                    ...json.data,
+                    writeIn: true,
+                };
+                allCandidatesRef.current.set(candidate._id, candidate);
+                return candidate;
+            } catch {
+                return 'Something went wrong. Please try again.';
+            }
+        },
+        [election]
     );
 
     const handleSubmitVote = async () => {
@@ -255,6 +318,10 @@ export default function VotePage() {
                         isActive={!!activeBallots[pos]}
                         onToggle={handleToggle}
                         onRankChange={handleRankUpdate}
+                        onSearchWriteInCandidates={
+                            handleSearchWriteInCandidates
+                        }
+                        onCreateWriteIn={handleCreateWriteIn}
                     />
                 ))}
 
@@ -316,9 +383,11 @@ export default function VotePage() {
                                         {pos}
                                     </div>
                                     {rankings[pos].candidateIds.map((id, i) => {
-                                        const c = ballots[pos]?.find(
-                                            (cand) => cand._id === id
-                                        );
+                                        const c =
+                                            allCandidatesRef.current.get(id) ??
+                                            ballots[pos]?.find(
+                                                (cand) => cand._id === id
+                                            );
                                         return (
                                             <div
                                                 key={id}
@@ -328,6 +397,11 @@ export default function VotePage() {
                                                     #{i + 1}
                                                 </span>{' '}
                                                 {c?.name}
+                                                {c?.writeIn && (
+                                                    <span className="text-[10px] font-black text-amber-500 uppercase">
+                                                        Write-in
+                                                    </span>
+                                                )}
                                             </div>
                                         );
                                     })}
