@@ -22,6 +22,7 @@ export default function VotePage() {
     );
     const [rankings, setRankings] = useState<Record<string, IRankingState>>({});
     const [showConfirm, setShowConfirm] = useState(false);
+    const [comment, setComment] = useState('');
 
     // States for election status
     const [hasVoted, setHasVoted] = useState(false);
@@ -192,7 +193,10 @@ export default function VotePage() {
 
         try {
             // Prepare payload: map rankings to arrays of IDs
-            const payload = {
+            const payload: {
+                votes: { position: string; ranking: string[] }[];
+                comment?: string;
+            } = {
                 votes: Object.entries(rankings)
                     .filter(([pos]) => activeBallots[pos])
                     .map(([pos, state]) => ({
@@ -200,6 +204,9 @@ export default function VotePage() {
                         ranking: state.candidateIds,
                     })),
             };
+            if (election.allowVoterComment) {
+                payload.comment = comment;
+            }
             console.log('Submitting payload:', payload);
 
             const res = await fetch(
@@ -279,6 +286,8 @@ export default function VotePage() {
         activeKeys.length > 0 &&
         activeKeys.every((k) => rankings[k]?.isComplete);
 
+    const showCommentField = !!election?.allowVoterComment;
+
     return (
         <main className="min-h-screen bg-white text-slate-900 font-sans pb-24">
             <div className="max-w-4xl mx-auto px-6 pt-16">
@@ -315,6 +324,27 @@ export default function VotePage() {
                         onCreateWriteIn={handleCreateWriteIn}
                     />
                 ))}
+
+                {showCommentField && (
+                    <div className="mt-10 border border-slate-200 rounded-md p-6 bg-white">
+                        <h2 className="text-lg font-black text-[#001f3f] uppercase tracking-tight mb-1">
+                            Comment
+                        </h2>
+                        <p className="text-sm text-slate-600 mb-3">
+                            Share your thoughts
+                        </p>
+                        <textarea
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            maxLength={5000}
+                            className="w-full min-h-[120px] p-3 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#001f3f]/30"
+                            placeholder="Share your thoughts"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-2 text-right">
+                            {comment.length} / 5000
+                        </p>
+                    </div>
+                )}
 
                 <div className="mt-16 bg-slate-50 p-8 border border-slate-200 rounded-md text-center">
                     {activeKeys.length > 0 && !canSubmit && (
@@ -377,6 +407,16 @@ export default function VotePage() {
                                     })}
                                 </div>
                             ))}
+                            {showCommentField && (
+                                <div className="border border-slate-200 rounded-md overflow-hidden">
+                                    <div className="bg-slate-700 px-4 py-2 text-white text-[10px] font-black uppercase">
+                                        Comment
+                                    </div>
+                                    <div className="p-3 bg-white text-sm text-slate-600 whitespace-pre-wrap">
+                                        {comment.trim() ? comment : '—'}
+                                    </div>
+                                </div>
+                            )}
                             <div className="flex flex-col gap-3 pt-4 border-t">
                                 <Button
                                     variant="success"

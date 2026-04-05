@@ -6,6 +6,8 @@ interface IElection extends Document {
     description: string;
     startDate: Date;
     endDate: Date;
+    semester: 'spring' | 'fall' | 'other';
+    allowVoterComment: boolean;
 }
 
 const ElectionSchema = new Schema<IElection>(
@@ -26,6 +28,15 @@ const ElectionSchema = new Schema<IElection>(
             type: Date,
             required: true,
         },
+        semester: {
+            type: String,
+            enum: ['spring', 'fall', 'other'],
+            required: true,
+        },
+        allowVoterComment: {
+            type: Boolean,
+            default: false,
+        },
     },
     {
         timestamps: true,
@@ -40,6 +51,8 @@ interface ICandidate extends Document {
     name: string;
     position: string;
     writeIn: boolean;
+    eligibleYears: number[];
+    housingLocation: string[];
 }
 
 const CandidateSchema = new Schema<ICandidate>({
@@ -59,6 +72,13 @@ const CandidateSchema = new Schema<ICandidate>({
     writeIn: {
         type: Boolean,
         default: false,
+    eligibleYears: {
+        type: [Number],
+        default: [],
+    },
+    housingLocation: {
+        type: [String],
+        default: [],
     },
 });
 
@@ -71,7 +91,7 @@ const Candidate = mongoose.model<ICandidate>('Candidate', CandidateSchema);
 interface IStudentBallotInfo extends Document {
     electionId: mongoose.Types.ObjectId;
     email: string;
-    campusRep: 'north' | 'south';
+    campusRep: 'north' | 'south' | 'off-campus';
     year: number;
     hasVoted: boolean;
 }
@@ -89,7 +109,7 @@ const StudentBallotInfoSchema = new Schema<IStudentBallotInfo>({
     },
     campusRep: {
         type: String,
-        enum: ['north', 'south'],
+        enum: ['north', 'south', 'off-campus'],
         required: true,
     },
     year: {
@@ -119,6 +139,8 @@ interface IVote extends Document {
     electionId: mongoose.Types.ObjectId;
     position: string;
     ranking: mongoose.Types.ObjectId[]; // Ordered array of Candidate IDs
+    /** Present only on the first vote doc of a ballot when comments are enabled; not tied to identity. */
+    voterComment?: string;
 }
 
 // each student will have different vote document for each position they vote for
@@ -136,6 +158,10 @@ const VoteSchema = new Schema<IVote>({
         type: [mongoose.Schema.Types.ObjectId],
         ref: 'Candidate',
         required: true,
+    },
+    voterComment: {
+        type: String,
+        required: false,
     },
 });
 

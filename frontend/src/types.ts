@@ -242,6 +242,8 @@ export interface IElectionFrontend {
     description: string;
     startDate: string;
     endDate: string;
+    semester: string;
+    allowVoterComment?: boolean;
 }
 
 export interface ICandidateFrontend {
@@ -251,6 +253,8 @@ export interface ICandidateFrontend {
     position: string;
     description?: string;
     writeIn?: boolean;
+    eligibleYears?: number[];
+    housingLocation?: string[];
 }
 
 export interface IRankingState {

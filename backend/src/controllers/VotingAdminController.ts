@@ -28,10 +28,22 @@ export const getElectionById = async (req: Request, res: Response) => {
 
 export const createElection = async (req: Request, res: Response) => {
     try {
-        const { name, description, startDate, endDate } = req.body;
+        const {
+            name,
+            description,
+            startDate,
+            endDate,
+            semester,
+            allowVoterComment,
+        } = req.body;
 
-        if (!name || !startDate || !endDate) {
+        if (!name || !startDate || !endDate || !semester) {
             res.status(400).json({ message: 'Missing required fields.' });
+            return;
+        }
+
+        if (!['spring', 'fall', 'other'].includes(semester)) {
+            res.status(400).json({ message: 'Invalid semester value.' });
             return;
         }
 
@@ -47,6 +59,8 @@ export const createElection = async (req: Request, res: Response) => {
             description: description || '',
             startDate,
             endDate,
+            semester,
+            allowVoterComment: !!allowVoterComment,
         });
 
         const savedElection = await election.save();
@@ -59,10 +73,22 @@ export const createElection = async (req: Request, res: Response) => {
 export const updateElection = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { name, description, startDate, endDate } = req.body;
+        const {
+            name,
+            description,
+            startDate,
+            endDate,
+            semester,
+            allowVoterComment,
+        } = req.body;
 
-        if (!name || !startDate || !endDate) {
+        if (!name || !startDate || !endDate || !semester) {
             res.status(400).json({ message: 'Missing required fields.' });
+            return;
+        }
+
+        if (!['spring', 'fall', 'other'].includes(semester)) {
+            res.status(400).json({ message: 'Invalid semester value.' });
             return;
         }
 
@@ -73,9 +99,22 @@ export const updateElection = async (req: Request, res: Response) => {
             return;
         }
 
+        const updateFields: Record<string, unknown> = {
+            name,
+            description: description || '',
+            startDate,
+            endDate,
+            semester,
+        };
+        if (
+            Object.prototype.hasOwnProperty.call(req.body, 'allowVoterComment')
+        ) {
+            updateFields.allowVoterComment = !!allowVoterComment;
+        }
+
         const updatedElection = await Election.findByIdAndUpdate(
             id,
-            { name, description: description || '', startDate, endDate },
+            updateFields,
             { new: true, runValidators: true }
         );
 
@@ -136,7 +175,7 @@ export const getCandidatesByElection = async (req: Request, res: Response) => {
 export const createCandidate = async (req: Request, res: Response) => {
     try {
         const { electionId } = req.params;
-        const { name, position } = req.body;
+        const { name, position, eligibleYears, housingLocation } = req.body;
 
         if (!name || !position) {
             res.status(400).json({ message: 'Missing required fields.' });
@@ -147,9 +186,21 @@ export const createCandidate = async (req: Request, res: Response) => {
             electionId,
             name,
             position,
+            eligibleYears: eligibleYears || [],
+            housingLocation: housingLocation || [],
         });
 
         const savedCandidate = await candidate.save();
+
+        // Sync eligibility to all candidates with the same position in this election
+        await Candidate.updateMany(
+            { electionId, position, _id: { $ne: savedCandidate._id } },
+            {
+                eligibleYears: eligibleYears || [],
+                housingLocation: housingLocation || [],
+            }
+        );
+
         res.status(201).json(savedCandidate);
     } catch (error) {
         res.status(400).json({ message: 'Error creating candidate' });
@@ -166,9 +217,16 @@ export const updateCandidate = async (req: Request, res: Response) => {
             return;
         }
 
+        const { eligibleYears, housingLocation } = req.body;
+
         const updatedCandidate = await Candidate.findOneAndUpdate(
             { _id: candidateId, electionId },
-            { name, position },
+            {
+                name,
+                position,
+                eligibleYears: eligibleYears || [],
+                housingLocation: housingLocation || [],
+            },
             { new: true, runValidators: true }
         );
 
@@ -176,6 +234,15 @@ export const updateCandidate = async (req: Request, res: Response) => {
             res.status(404).json({ message: 'Candidate not found.' });
             return;
         }
+
+        // Sync eligibility to all candidates with the same position in this election
+        await Candidate.updateMany(
+            { electionId, position, _id: { $ne: candidateId } },
+            {
+                eligibleYears: eligibleYears || [],
+                housingLocation: housingLocation || [],
+            }
+        );
 
         res.status(200).json(updatedCandidate);
     } catch (error) {

@@ -35,6 +35,63 @@ const SENATE_POSITIONS = {
 
 type SenatePosition = (typeof SENATE_POSITIONS)[keyof typeof SENATE_POSITIONS];
 
+const FALL_POSITIONS: string[] = [
+    SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT,
+    SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE,
+    SENATE_POSITIONS.SOUTH_CAMPUS_REPRESENTATIVE,
+];
+
+const SPRING_POSITIONS: string[] = Object.values(SENATE_POSITIONS).filter(
+    (pos) => !FALL_POSITIONS.includes(pos)
+);
+
+const getPositionsForSemester = (semester: string): string[] => {
+    if (semester === 'other' || !semester) {
+        return [];
+    }
+    if (semester === 'fall') {
+        return [...FALL_POSITIONS];
+    }
+    return [...SPRING_POSITIONS];
+};
+
+// Default voter eligibility for predefined positions.
+// Empty arrays = all students. Non-empty = restricted.
+const DEFAULT_ELIGIBILITY: Record<
+    string,
+    { eligibleYears: number[]; housingLocation: string[] }
+> = {
+    [SENATE_POSITIONS.SENIOR_CLASS_PRESIDENT]: {
+        eligibleYears: [3],
+        housingLocation: [],
+    },
+    [SENATE_POSITIONS.JUNIOR_CLASS_PRESIDENT]: {
+        eligibleYears: [2],
+        housingLocation: [],
+    },
+    [SENATE_POSITIONS.SOPHOMORE_CLASS_PRESIDENT]: {
+        eligibleYears: [1],
+        housingLocation: [],
+    },
+    [SENATE_POSITIONS.FIRST_YEAR_CLASS_PRESIDENT]: {
+        eligibleYears: [1],
+        housingLocation: [],
+    },
+    [SENATE_POSITIONS.COMMENCEMENT_SPEAKER]: {
+        eligibleYears: [4],
+        housingLocation: [],
+    },
+    [SENATE_POSITIONS.CLASS_NAME]: { eligibleYears: [4], housingLocation: [] },
+    [SENATE_POSITIONS.NORTH_CAMPUS_REPRESENTATIVE]: {
+        eligibleYears: [],
+        housingLocation: ['north'],
+    },
+    [SENATE_POSITIONS.SOUTH_CAMPUS_REPRESENTATIVE]: {
+        eligibleYears: [],
+        housingLocation: ['south'],
+    },
+};
+
 const formatPositionLabel = (value: string) =>
     value
         .split('_')
@@ -49,11 +106,45 @@ const toTitleCase = (str: string) =>
         )
         .join(' ');
 
+// Unified filtering: use stored eligibility on every candidate
+const getFilteredCandidates = (
+    candidates: ICandidateFrontend[],
+    semester: string,
+    year: number,
+    campus: string
+) => {
+    const validPositions = getPositionsForSemester(semester);
+
+    const presetPositions = new Set<string>(Object.values(SENATE_POSITIONS));
+
+    return candidates.filter((c) => {
+        // For spring/fall, preset positions must be valid for that semester.
+        // Custom positions always pass the semester check.
+        const isPreset = presetPositions.has(c.position);
+        if (
+            isPreset &&
+            semester !== 'other' &&
+            !validPositions.includes(c.position)
+        )
+            return false;
+
+        // Use stored eligibility for ALL positions
+        const ey = c.eligibleYears || [];
+        const hl = c.housingLocation || [];
+        if (ey.length > 0 && !ey.includes(year)) return false;
+        if (hl.length > 0 && !hl.includes(campus)) return false;
+
+        return true;
+    });
+};
+
 interface PreviewBallotProps {
     name: string;
     description: string;
     startDate: string;
     endDate: string;
+    semester: string;
+    allowVoterComment: boolean;
     candidates: ICandidateFrontend[];
     onClose: () => void;
 }
@@ -63,9 +154,13 @@ const PreviewBallot = ({
     description,
     startDate,
     endDate,
+    semester,
+    allowVoterComment,
     candidates,
     onClose,
 }: PreviewBallotProps) => {
+    const [previewYear, setPreviewYear] = useState(1);
+    const [previewCampus, setPreviewCampus] = useState('north');
     const [ballots, setBallots] = useState<
         Record<string, ICandidateFrontend[]>
     >({});
@@ -75,7 +170,13 @@ const PreviewBallot = ({
     const [rankings, setRankings] = useState<Record<string, IRankingState>>({});
 
     useEffect(() => {
-        const nonWriteIn = candidates.filter((c) => !c.writeIn);
+        const filtered = getFilteredCandidates(
+            candidates,
+            semester,
+            previewYear,
+            previewCampus
+        );
+        const nonWriteIn = filtered.filter((c) => !c.writeIn);
         const grouped = nonWriteIn.reduce(
             (acc: Record<string, ICandidateFrontend[]>, c) => {
                 if (!acc[c.position]) acc[c.position] = [];
@@ -85,7 +186,9 @@ const PreviewBallot = ({
             {}
         );
         setBallots(grouped);
-    }, [candidates]);
+        setActiveBallots({});
+        setRankings({});
+    }, [candidates, semester, previewYear, previewCampus]);
 
     const handleToggle = (pos: string) => {
         setActiveBallots((prev) => ({ ...prev, [pos]: !prev[pos] }));
@@ -108,17 +211,68 @@ const PreviewBallot = ({
     return (
         <main className="min-h-screen bg-white text-slate-900 font-sans pb-24">
             {/* Preview banner */}
-            <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 flex items-center justify-between">
-                <span className="text-sm text-amber-700 font-medium">
-                    Ballot Preview — This is how students will see the ballot
-                </span>
-                <button
-                    type="button"
-                    onClick={onClose}
-                    className="bg-slate-600 text-white px-4 py-1.5 rounded-md text-sm hover:bg-slate-700 transition-colors"
-                >
-                    Close Preview
-                </button>
+            <div className="bg-amber-50 border-b border-amber-200 px-6 py-3">
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-amber-700 font-medium">
+                        Ballot Preview
+                    </span>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="bg-slate-600 text-white px-4 py-1.5 rounded-md text-sm hover:bg-slate-700 transition-colors"
+                    >
+                        Close Preview
+                    </button>
+                </div>
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-amber-700 font-medium mr-1">
+                            Grade:
+                        </span>
+                        {[
+                            { value: 1, label: 'First-Year' },
+                            { value: 2, label: 'Sophomore' },
+                            { value: 3, label: 'Junior' },
+                            { value: 4, label: 'Senior' },
+                        ].map((yr) => (
+                            <button
+                                key={yr.value}
+                                type="button"
+                                onClick={() => setPreviewYear(yr.value)}
+                                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                                    previewYear === yr.value
+                                        ? 'bg-[#001f3f] text-white'
+                                        : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'
+                                }`}
+                            >
+                                {yr.label}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-amber-700 font-medium mr-1">
+                            Housing:
+                        </span>
+                        {[
+                            { value: 'north', label: 'North' },
+                            { value: 'south', label: 'South' },
+                            { value: 'off-campus', label: 'Off-Campus' },
+                        ].map((c) => (
+                            <button
+                                key={c.value}
+                                type="button"
+                                onClick={() => setPreviewCampus(c.value)}
+                                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                                    previewCampus === c.value
+                                        ? 'bg-[#001f3f] text-white'
+                                        : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'
+                                }`}
+                            >
+                                {c.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </div>
 
             <div className="max-w-4xl mx-auto px-6 pt-16">
@@ -171,6 +325,22 @@ const PreviewBallot = ({
                     </div>
                 )}
 
+                {allowVoterComment && (
+                    <div className="mt-10 border border-slate-200 rounded-md p-6 bg-white">
+                        <h2 className="text-lg font-black text-[#001f3f] uppercase tracking-tight mb-1">
+                            Comment
+                        </h2>
+                        <p className="text-sm text-slate-600 mb-3">
+                            Share your thoughts
+                        </p>
+                        <textarea
+                            readOnly
+                            className="w-full min-h-[100px] p-3 border border-slate-200 rounded-md text-sm bg-slate-50 text-slate-500"
+                            placeholder="Share your thoughts"
+                        />
+                    </div>
+                )}
+
                 <div className="mt-16 bg-slate-50 p-8 border border-slate-200 rounded-md text-center">
                     {activeKeys.length > 0 && !canSubmit && (
                         <p className="text-amber-600 text-xs font-bold mb-4 flex items-center justify-center gap-2">
@@ -203,6 +373,8 @@ const ElectionsDashboard = () => {
     const [description, setDescription] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [semester, setSemester] = useState('');
+    const [allowVoterComment, setAllowVoterComment] = useState(false);
     const [voterRequirement, setVoterRequirement] = useState('all');
 
     const [candidates, setCandidates] = useState<ICandidateFrontend[]>([]);
@@ -214,6 +386,9 @@ const ElectionsDashboard = () => {
         null
     );
     const [showCandidateForm, setShowCandidateForm] = useState(false);
+    const [eligibleYears, setEligibleYears] = useState<number[]>([]);
+    const [housingLocation, setHousingLocation] = useState<string[]>([]);
+    const [eligibilityUnlocked, setEligibilityUnlocked] = useState(false);
 
     const toDatetimeLocal = (dateString: string) => {
         const date = new Date(dateString);
@@ -246,6 +421,18 @@ const ElectionsDashboard = () => {
             if (response.ok) {
                 const data = await response.json();
                 setCandidates(data);
+                // Populate custom positions from loaded candidates
+                const presetPositions = new Set<string>(
+                    Object.values(SENATE_POSITIONS)
+                );
+                const custom = [
+                    ...new Set(
+                        data
+                            .map((c: ICandidateFrontend) => c.position)
+                            .filter((pos: string) => !presetPositions.has(pos))
+                    ),
+                ];
+                setCustomPositions(custom as string[]);
             }
         } catch (error) {
             console.error('Error fetching candidates:', error);
@@ -270,8 +457,10 @@ const ElectionsDashboard = () => {
                     const data = await response.json();
                     setName(data.name);
                     setDescription(data.description || '');
+                    setSemester(data.semester || '');
                     setStartDate(toDatetimeLocal(data.startDate));
                     setEndDate(toDatetimeLocal(data.endDate));
+                    setAllowVoterComment(!!data.allowVoterComment);
                 }
                 await fetchCandidates(selectedElectionId);
             } catch (error) {
@@ -288,8 +477,10 @@ const ElectionsDashboard = () => {
     const resetForm = () => {
         setName('');
         setDescription('');
+        setSemester('');
         setStartDate('');
         setEndDate('');
+        setAllowVoterComment(false);
         setVoterRequirement('all');
         setCandidates([]);
         resetCandidateForm();
@@ -299,12 +490,15 @@ const ElectionsDashboard = () => {
         setCandidateName('');
         setCandidatePosition('');
         setCustomPosition('');
+        setEligibleYears([]);
+        setHousingLocation([]);
+        setEligibilityUnlocked(false);
         setEditingCandidateId(null);
         setShowCandidateForm(false);
     };
 
     const handleSaveElection = async () => {
-        if (!name || !startDate || !endDate) {
+        if (!name || !startDate || !semester || !endDate) {
             alert('Please fill in all required fields.');
             return;
         }
@@ -328,8 +522,10 @@ const ElectionsDashboard = () => {
                 body: JSON.stringify({
                     name,
                     description,
+                    semester,
                     startDate: new Date(startDate).toISOString(),
                     endDate: new Date(endDate).toISOString(),
+                    allowVoterComment,
                 }),
             });
 
@@ -341,28 +537,9 @@ const ElectionsDashboard = () => {
             const savedElection = await response.json();
 
             if (isCreatingNew) {
-                const localCandidates = candidates.filter((c) =>
-                    c._id.startsWith('local-')
-                );
-                for (const candidate of localCandidates) {
-                    await fetch(
-                        `${process.env.BACKEND_LINK}/api/admin/elections/${savedElection._id}/candidates`,
-                        {
-                            method: 'POST',
-                            credentials: 'include',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                name: candidate.name,
-                                position: candidate.position,
-                            }),
-                        }
-                    );
-                }
-
                 setSelectedElectionId(savedElection._id);
                 setIsCreatingNew(false);
                 setIsEditing(true);
-                await fetchCandidates(savedElection._id);
             }
 
             alert('Election saved successfully!');
@@ -450,34 +627,9 @@ const ElectionsDashboard = () => {
             );
         }
 
-        // No election saved yet so store candidate locally
-        if (!selectedElectionId) {
-            if (editingCandidateId) {
-                setCandidates((prev) =>
-                    prev.map((c) =>
-                        c._id === editingCandidateId
-                            ? {
-                                  ...c,
-                                  name: candidateName,
-                                  position: resolvedPosition,
-                              }
-                            : c
-                    )
-                );
-            } else {
-                setCandidates((prev) => [
-                    ...prev,
-                    {
-                        _id: `local-${Date.now()}`,
-                        electionId: '',
-                        name: candidateName,
-                        position: resolvedPosition,
-                    },
-                ]);
-            }
-            resetCandidateForm();
-            return;
-        }
+        // All positions now store eligibility
+        const candidateEligibleYears = eligibleYears;
+        const candidateHousingLocation = housingLocation;
 
         try {
             setIsLoading(true);
@@ -493,6 +645,8 @@ const ElectionsDashboard = () => {
                 body: JSON.stringify({
                     name: candidateName,
                     position: resolvedPosition,
+                    eligibleYears: candidateEligibleYears,
+                    housingLocation: candidateHousingLocation,
                 }),
             });
 
@@ -511,11 +665,6 @@ const ElectionsDashboard = () => {
     const handleDeleteCandidate = async (candidateId: string) => {
         if (!window.confirm('Are you sure you want to delete this candidate?'))
             return;
-
-        if (candidateId.startsWith('local-')) {
-            setCandidates((prev) => prev.filter((c) => c._id !== candidateId));
-            return;
-        }
 
         try {
             setIsLoading(true);
@@ -552,9 +701,285 @@ const ElectionsDashboard = () => {
             setCandidatePosition('__other__');
             setCustomPosition(candidate.position);
         }
+        setEligibleYears(candidate.eligibleYears || []);
+        setHousingLocation(candidate.housingLocation || []);
+        setEligibilityUnlocked(false);
         setEditingCandidateId(candidate._id);
-        setShowCandidateForm(true);
+        setShowCandidateForm(false); // Don't open top form — edit inline
     };
+
+    const renderCandidateForm = (label: string) => (
+        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">
+                {label}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                <input
+                    type="text"
+                    className="p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    value={candidateName}
+                    onChange={(e) => setCandidateName(e.target.value)}
+                    placeholder="Candidate name"
+                />
+                <div className="space-y-2">
+                    <select
+                        className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        value={candidatePosition}
+                        onChange={(e) => {
+                            const pos = e.target.value;
+                            setCandidatePosition(pos);
+                            if (pos !== '__other__') {
+                                setCustomPosition('');
+                            }
+                            if (pos === '__other__') {
+                                setEligibleYears([]);
+                                setHousingLocation([]);
+                                setEligibilityUnlocked(true);
+                            } else {
+                                // Inherit eligibility from existing candidates with same position
+                                const existing = candidates.find(
+                                    (c) => c.position === pos
+                                );
+                                if (existing) {
+                                    setEligibleYears(
+                                        existing.eligibleYears || []
+                                    );
+                                    setHousingLocation(
+                                        existing.housingLocation || []
+                                    );
+                                } else {
+                                    const defaults = DEFAULT_ELIGIBILITY[pos];
+                                    if (defaults) {
+                                        setEligibleYears([
+                                            ...defaults.eligibleYears,
+                                        ]);
+                                        setHousingLocation([
+                                            ...defaults.housingLocation,
+                                        ]);
+                                    } else {
+                                        setEligibleYears([]);
+                                        setHousingLocation([]);
+                                    }
+                                }
+                                setEligibilityUnlocked(false);
+                            }
+                        }}
+                    >
+                        <option value="">Select a position</option>
+                        {semester !== 'other' &&
+                            getPositionsForSemester(semester)?.map((pos) => (
+                                <option key={pos} value={pos}>
+                                    {formatPositionLabel(pos)}
+                                </option>
+                            ))}
+                        {customPositions.length > 0 && (
+                            <optgroup label="Custom Positions">
+                                {customPositions.map((pos) => (
+                                    <option key={pos} value={pos}>
+                                        {pos}
+                                    </option>
+                                ))}
+                            </optgroup>
+                        )}
+                        <option value="__other__">Other (custom)</option>
+                    </select>
+                    {candidatePosition === '__other__' && (
+                        <input
+                            type="text"
+                            className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            value={customPosition}
+                            onChange={(e) => setCustomPosition(e.target.value)}
+                            placeholder="Enter custom position name"
+                        />
+                    )}
+                </div>
+            </div>
+            {/* Eligible voter groups */}
+            {candidatePosition && (
+                <div className="mb-3 p-3 bg-white border border-gray-200 rounded-lg">
+                    <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Who can vote for this position?
+                    </label>
+                    <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                        {eligibleYears.length === 0 &&
+                        housingLocation.length === 0 ? (
+                            <span className="text-xs bg-gray-100 text-gray-500 px-2.5 py-0.5 rounded-full font-medium">
+                                All Students
+                            </span>
+                        ) : (
+                            <>
+                                {eligibleYears.map((y) => (
+                                    <span
+                                        key={y}
+                                        className="text-xs bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full font-medium"
+                                    >
+                                        {
+                                            [
+                                                '',
+                                                'First-Year',
+                                                'Sophomore',
+                                                'Junior',
+                                                'Senior',
+                                            ][y]
+                                        }
+                                    </span>
+                                ))}
+                                {housingLocation.map((c) => (
+                                    <span
+                                        key={c}
+                                        className="text-xs bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full font-medium"
+                                    >
+                                        {c === 'north'
+                                            ? 'North Campus'
+                                            : c === 'south'
+                                              ? 'South Campus'
+                                              : 'Off-Campus'}
+                                    </span>
+                                ))}
+                            </>
+                        )}
+                    </div>
+                    {!eligibilityUnlocked ? (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (
+                                    window.confirm(
+                                        'Changing voter eligibility affects who sees this position on the ballot. Are you sure you want to edit eligibility?'
+                                    )
+                                ) {
+                                    setEligibilityUnlocked(true);
+                                }
+                            }}
+                            className="text-xs text-blue-600 hover:text-blue-800 font-medium underline underline-offset-2 transition-colors"
+                        >
+                            Change Eligibility
+                        </button>
+                    ) : (
+                        <>
+                            <p className="text-[11px] text-gray-400 mb-2">
+                                Uncheck all to allow all students to vote.
+                            </p>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                                <div>
+                                    <p className="text-xs text-gray-500 font-medium mb-1">
+                                        By Year
+                                    </p>
+                                    {[
+                                        { value: 1, label: 'First-Years' },
+                                        { value: 2, label: 'Sophomores' },
+                                        { value: 3, label: 'Juniors' },
+                                        { value: 4, label: 'Seniors' },
+                                    ].map((yr) => (
+                                        <label
+                                            key={yr.value}
+                                            className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={eligibleYears.includes(
+                                                    yr.value
+                                                )}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setEligibleYears(
+                                                            (prev) => [
+                                                                ...prev,
+                                                                yr.value,
+                                                            ]
+                                                        );
+                                                    } else {
+                                                        setEligibleYears(
+                                                            (prev) =>
+                                                                prev.filter(
+                                                                    (y) =>
+                                                                        y !==
+                                                                        yr.value
+                                                                )
+                                                        );
+                                                    }
+                                                }}
+                                                className="rounded border-gray-300"
+                                            />
+                                            {yr.label}
+                                        </label>
+                                    ))}
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 font-medium mb-1">
+                                        By Housing Location
+                                    </p>
+                                    {[
+                                        {
+                                            value: 'north',
+                                            label: 'North Campus',
+                                        },
+                                        {
+                                            value: 'south',
+                                            label: 'South Campus',
+                                        },
+                                        {
+                                            value: 'off-campus',
+                                            label: 'Off-Campus',
+                                        },
+                                    ].map((c) => (
+                                        <label
+                                            key={c.value}
+                                            className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={housingLocation.includes(
+                                                    c.value
+                                                )}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setHousingLocation(
+                                                            (prev) => [
+                                                                ...prev,
+                                                                c.value,
+                                                            ]
+                                                        );
+                                                    } else {
+                                                        setHousingLocation(
+                                                            (prev) =>
+                                                                prev.filter(
+                                                                    (v) =>
+                                                                        v !==
+                                                                        c.value
+                                                                )
+                                                        );
+                                                    }
+                                                }}
+                                                className="rounded border-gray-300"
+                                            />
+                                            {c.label}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+            <div className="flex gap-2">
+                <button
+                    type="button"
+                    onClick={handleSaveCandidate}
+                    className="bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm hover:bg-blue-700"
+                >
+                    {editingCandidateId ? 'Update' : 'Add'}
+                </button>
+                <button
+                    type="button"
+                    onClick={resetCandidateForm}
+                    className="bg-gray-200 text-gray-700 px-4 py-1.5 rounded-md text-sm hover:bg-gray-300"
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
+    );
 
     const getElectionStatus = () => {
         if (!startDate || !endDate) return 'Draft';
@@ -684,6 +1109,8 @@ const ElectionsDashboard = () => {
                 description={description}
                 startDate={startDate}
                 endDate={endDate}
+                semester={semester}
+                allowVoterComment={allowVoterComment}
                 candidates={candidates}
                 onClose={() => setShowPreview(false)}
             />
@@ -762,6 +1189,78 @@ const ElectionsDashboard = () => {
                                 />
                             </div>
 
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Semester
+                                </label>
+                                <select
+                                    className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    value={semester}
+                                    onChange={(e) => {
+                                        const newSemester = e.target.value;
+                                        const oldSemester = semester;
+                                        setSemester(newSemester);
+
+                                        if (
+                                            candidates.length > 0 &&
+                                            oldSemester &&
+                                            oldSemester !== newSemester
+                                        ) {
+                                            if (
+                                                window.confirm(
+                                                    'Switching semester type will clear all candidates since position sets are different. Continue?'
+                                                )
+                                            ) {
+                                                setCandidates([]);
+                                            } else {
+                                                setSemester(oldSemester);
+                                                return;
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <option value="">Select a semester</option>
+                                    <option value="spring">Spring</option>
+                                    <option value="fall">Fall</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                {semester && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {semester === 'spring'
+                                            ? 'Includes Senior, Junior, and Sophomore Class President positions.'
+                                            : semester === 'fall'
+                                              ? 'Includes First Year Class President and North and South Campus Representative positions.'
+                                              : 'Custom election — you will manually add all positions and set voter eligibility for each.'}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="mb-4 flex items-start gap-3">
+                                <input
+                                    id="allow-voter-comment"
+                                    type="checkbox"
+                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-400"
+                                    checked={allowVoterComment}
+                                    onChange={(e) =>
+                                        setAllowVoterComment(e.target.checked)
+                                    }
+                                />
+                                <label
+                                    htmlFor="allow-voter-comment"
+                                    className="text-sm text-gray-700"
+                                >
+                                    <span className="font-medium">
+                                        Allow optional voter comments
+                                    </span>
+                                    <span className="block text-gray-500 text-xs mt-0.5">
+                                        When enabled, voters see a comment box
+                                        before submitting. Text is saved with
+                                        anonymous vote records (not linked to
+                                        student ballot info).
+                                    </span>
+                                </label>
+                            </div>
+
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -771,9 +1270,14 @@ const ElectionsDashboard = () => {
                                         type="datetime-local"
                                         className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                                         value={startDate}
-                                        onChange={(e) =>
-                                            setStartDate(e.target.value)
-                                        }
+                                        min="2020-01-01T00:00"
+                                        max="2099-12-31T23:59"
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            const year = val.split('-')[0];
+                                            if (year && year.length > 4) return;
+                                            setStartDate(val);
+                                        }}
                                     />
                                 </div>
                                 <div>
@@ -784,9 +1288,14 @@ const ElectionsDashboard = () => {
                                         type="datetime-local"
                                         className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                                         value={endDate}
-                                        onChange={(e) =>
-                                            setEndDate(e.target.value)
-                                        }
+                                        min="2020-01-01T00:00"
+                                        max="2099-12-31T23:59"
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            const year = val.split('-')[0];
+                                            if (year && year.length > 4) return;
+                                            setEndDate(val);
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -806,123 +1315,32 @@ const ElectionsDashboard = () => {
                                         resetCandidateForm();
                                         setShowCandidateForm(true);
                                     }}
-                                    className="bg-[#001f3f] text-white px-4 py-2 rounded-md text-sm hover:bg-[#003366] transition-colors flex items-center gap-1"
+                                    disabled={!selectedElectionId}
+                                    className="bg-[#001f3f] text-white px-4 py-2 rounded-md text-sm hover:bg-[#003366] transition-colors flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     + Add Candidate
                                 </button>
                             </div>
-                            <p className="text-sm text-gray-500 mb-4">
-                                Add and manage candidates for this election
-                            </p>
+                            {!selectedElectionId ? (
+                                <p className="text-sm text-amber-600 mb-4">
+                                    Save the election information first before
+                                    adding candidates.
+                                </p>
+                            ) : (
+                                <p className="text-sm text-gray-500 mb-4">
+                                    Add and manage candidates for this election
+                                </p>
+                            )}
 
-                            {/* Add/Edit Candidate Form */}
+                            {/* Add New Candidate Form (top) */}
                             <div
                                 className={`overflow-hidden transition-all duration-200 ease-in-out ${
-                                    showCandidateForm
-                                        ? 'max-h-96 opacity-100 mb-4'
+                                    showCandidateForm && !editingCandidateId
+                                        ? 'max-h-[600px] opacity-100 mb-4'
                                         : 'max-h-0 opacity-0 mb-0'
                                 }`}
                             >
-                                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                                    <h3 className="text-sm font-semibold text-gray-800 mb-3">
-                                        {editingCandidateId
-                                            ? 'Edit Candidate'
-                                            : 'New Candidate'}
-                                    </h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                                        <input
-                                            type="text"
-                                            className="p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                            value={candidateName}
-                                            onChange={(e) =>
-                                                setCandidateName(e.target.value)
-                                            }
-                                            placeholder="Candidate name"
-                                        />
-                                        <div className="space-y-2">
-                                            <select
-                                                className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                                value={candidatePosition}
-                                                onChange={(e) => {
-                                                    setCandidatePosition(
-                                                        e.target.value
-                                                    );
-                                                    if (
-                                                        e.target.value !==
-                                                        '__other__'
-                                                    ) {
-                                                        setCustomPosition('');
-                                                    }
-                                                }}
-                                            >
-                                                <option value="">
-                                                    Select a position
-                                                </option>
-                                                {Object.values(
-                                                    SENATE_POSITIONS
-                                                ).map((pos) => (
-                                                    <option
-                                                        key={pos}
-                                                        value={pos}
-                                                    >
-                                                        {formatPositionLabel(
-                                                            pos
-                                                        )}
-                                                    </option>
-                                                ))}
-                                                {customPositions.length > 0 && (
-                                                    <optgroup label="Custom Positions">
-                                                        {customPositions.map(
-                                                            (pos) => (
-                                                                <option
-                                                                    key={pos}
-                                                                    value={pos}
-                                                                >
-                                                                    {pos}
-                                                                </option>
-                                                            )
-                                                        )}
-                                                    </optgroup>
-                                                )}
-                                                <option value="__other__">
-                                                    Other (custom)
-                                                </option>
-                                            </select>
-                                            {candidatePosition ===
-                                                '__other__' && (
-                                                <input
-                                                    type="text"
-                                                    className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                                    value={customPosition}
-                                                    onChange={(e) =>
-                                                        setCustomPosition(
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    placeholder="Enter custom position name"
-                                                />
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={handleSaveCandidate}
-                                            className="bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm hover:bg-blue-700"
-                                        >
-                                            {editingCandidateId
-                                                ? 'Update'
-                                                : 'Add'}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={resetCandidateForm}
-                                            className="bg-gray-200 text-gray-700 px-4 py-1.5 rounded-md text-sm hover:bg-gray-300"
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </div>
+                                {renderCandidateForm('New Candidate')}
                             </div>
 
                             {/* Candidates List — grouped by position */}
@@ -951,80 +1369,165 @@ const ElectionsDashboard = () => {
                                             </h3>
                                             <div className="space-y-2">
                                                 {positionCandidates.map(
-                                                    (candidate) => (
-                                                        <div
-                                                            key={candidate._id}
-                                                            className="flex items-center justify-between p-3 border border-gray-200 rounded-lg transition-all duration-150"
-                                                        >
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium text-sm">
-                                                                    {candidate.name
-                                                                        .charAt(
-                                                                            0
-                                                                        )
-                                                                        .toUpperCase()}
+                                                    (candidate) =>
+                                                        editingCandidateId ===
+                                                        candidate._id ? (
+                                                            /* Inline edit form */
+                                                            <div
+                                                                key={
+                                                                    candidate._id
+                                                                }
+                                                            >
+                                                                {renderCandidateForm(
+                                                                    'Edit Candidate'
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            /* Read-only candidate card */
+                                                            <div
+                                                                key={
+                                                                    candidate._id
+                                                                }
+                                                                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg transition-all duration-150"
+                                                            >
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium text-sm">
+                                                                        {candidate.name
+                                                                            .charAt(
+                                                                                0
+                                                                            )
+                                                                            .toUpperCase()}
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className="text-sm font-medium text-gray-900">
+                                                                            {
+                                                                                candidate.name
+                                                                            }
+                                                                        </div>
+                                                                        <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                                                                            <span className="text-[10px] text-gray-400 font-medium mr-0.5">
+                                                                                Voters:
+                                                                            </span>
+                                                                            {(!candidate.eligibleYears ||
+                                                                                candidate
+                                                                                    .eligibleYears
+                                                                                    .length ===
+                                                                                    0) &&
+                                                                            (!candidate.housingLocation ||
+                                                                                candidate
+                                                                                    .housingLocation
+                                                                                    .length ===
+                                                                                    0) ? (
+                                                                                <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full font-medium">
+                                                                                    All
+                                                                                    Students
+                                                                                </span>
+                                                                            ) : (
+                                                                                <>
+                                                                                    {candidate.eligibleYears?.map(
+                                                                                        (
+                                                                                            y
+                                                                                        ) => (
+                                                                                            <span
+                                                                                                key={
+                                                                                                    y
+                                                                                                }
+                                                                                                className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-medium"
+                                                                                            >
+                                                                                                {
+                                                                                                    [
+                                                                                                        '',
+                                                                                                        'First-Year',
+                                                                                                        'Sophomore',
+                                                                                                        'Junior',
+                                                                                                        'Senior',
+                                                                                                    ][
+                                                                                                        y
+                                                                                                    ]
+                                                                                                }
+                                                                                            </span>
+                                                                                        )
+                                                                                    )}
+                                                                                    {candidate.housingLocation?.map(
+                                                                                        (
+                                                                                            c
+                                                                                        ) => (
+                                                                                            <span
+                                                                                                key={
+                                                                                                    c
+                                                                                                }
+                                                                                                className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-medium"
+                                                                                            >
+                                                                                                {c ===
+                                                                                                'north'
+                                                                                                    ? 'North'
+                                                                                                    : c ===
+                                                                                                        'south'
+                                                                                                      ? 'South'
+                                                                                                      : 'Off-Campus'}
+                                                                                            </span>
+                                                                                        )
+                                                                                    )}
+                                                                                </>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
-                                                                <div className="text-sm font-medium text-gray-900">
-                                                                    {
-                                                                        candidate.name
-                                                                    }
+                                                                <div className="flex items-center gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handleEditCandidate(
+                                                                                candidate
+                                                                            )
+                                                                        }
+                                                                        className="p-1.5 text-gray-400 hover:text-blue-600 transition"
+                                                                        title="Edit candidate"
+                                                                    >
+                                                                        <svg
+                                                                            xmlns="http://www.w3.org/2000/svg"
+                                                                            width="16"
+                                                                            height="16"
+                                                                            viewBox="0 0 24 24"
+                                                                            fill="none"
+                                                                            stroke="currentColor"
+                                                                            strokeWidth="2"
+                                                                            strokeLinecap="round"
+                                                                            strokeLinejoin="round"
+                                                                        >
+                                                                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                                                                            <path d="m15 5 4 4" />
+                                                                        </svg>
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handleDeleteCandidate(
+                                                                                candidate._id
+                                                                            )
+                                                                        }
+                                                                        className="p-1.5 text-gray-400 hover:text-red-600 transition"
+                                                                        title="Delete candidate"
+                                                                    >
+                                                                        <svg
+                                                                            xmlns="http://www.w3.org/2000/svg"
+                                                                            width="16"
+                                                                            height="16"
+                                                                            viewBox="0 0 24 24"
+                                                                            fill="none"
+                                                                            stroke="currentColor"
+                                                                            strokeWidth="2"
+                                                                            strokeLinecap="round"
+                                                                            strokeLinejoin="round"
+                                                                        >
+                                                                            <path d="M3 6h18" />
+                                                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                                                        </svg>
+                                                                    </button>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        handleEditCandidate(
-                                                                            candidate
-                                                                        )
-                                                                    }
-                                                                    className="p-1.5 text-gray-400 hover:text-blue-600 transition"
-                                                                    title="Edit candidate"
-                                                                >
-                                                                    <svg
-                                                                        xmlns="http://www.w3.org/2000/svg"
-                                                                        width="16"
-                                                                        height="16"
-                                                                        viewBox="0 0 24 24"
-                                                                        fill="none"
-                                                                        stroke="currentColor"
-                                                                        strokeWidth="2"
-                                                                        strokeLinecap="round"
-                                                                        strokeLinejoin="round"
-                                                                    >
-                                                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                                                                        <path d="m15 5 4 4" />
-                                                                    </svg>
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        handleDeleteCandidate(
-                                                                            candidate._id
-                                                                        )
-                                                                    }
-                                                                    className="p-1.5 text-gray-400 hover:text-red-600 transition"
-                                                                    title="Delete candidate"
-                                                                >
-                                                                    <svg
-                                                                        xmlns="http://www.w3.org/2000/svg"
-                                                                        width="16"
-                                                                        height="16"
-                                                                        viewBox="0 0 24 24"
-                                                                        fill="none"
-                                                                        stroke="currentColor"
-                                                                        strokeWidth="2"
-                                                                        strokeLinecap="round"
-                                                                        strokeLinejoin="round"
-                                                                    >
-                                                                        <path d="M3 6h18" />
-                                                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                                    </svg>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    )
+                                                        )
                                                 )}
                                             </div>
                                         </div>
@@ -1040,7 +1543,7 @@ const ElectionsDashboard = () => {
                 </div>
 
                 {/* Sidebar — Right 1/3 */}
-                <div className="lg:col-start-3 lg:row-start-1 space-y-6">
+                <div className="lg:col-start-3 lg:row-start-1 flex flex-col gap-6 h-full">
                     {/* Election Summary */}
                     <div className="bg-white rounded-lg shadow p-6">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -1117,13 +1620,15 @@ const ElectionsDashboard = () => {
                                     <polyline points="17 21 17 13 7 13 7 21" />
                                     <polyline points="7 3 7 8 15 8" />
                                 </svg>
-                                {isLoading ? 'Saving...' : 'Save Election'}
+                                {isLoading
+                                    ? 'Saving...'
+                                    : 'Save Election Information'}
                             </button>
                         </div>
                     </div>
 
                     {/* Quick Tips */}
-                    <div className="bg-white rounded-lg shadow p-6">
+                    <div className="bg-white rounded-lg shadow p-6 flex-1">
                         <h2 className="text-lg font-semibold text-gray-900 mb-3">
                             Quick Tips
                         </h2>
