@@ -78,7 +78,7 @@ beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
     const uri = mongoServer.getUri();
     await mongoose.connect(uri);
-});
+}, 90000);
 
 beforeEach(async () => {
     await Election.deleteMany({});
@@ -93,7 +93,7 @@ beforeEach(async () => {
 afterAll(async () => {
     await mongoose.disconnect();
     await mongoServer.stop();
-});
+}, 30000);
 
 describe('getEligibleCandidates (integration test)', () => {
     it('fall election: first-year north student sees first-year pres + north rep', async () => {
