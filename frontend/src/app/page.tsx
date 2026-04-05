@@ -56,9 +56,10 @@ export default function HomePage() {
 
                 const data = await electionRes.json();
                 const now = new Date();
+                const startDate = new Date(data.startDate);
                 const endDate = new Date(data.endDate);
 
-                if (endDate > now) {
+                if (startDate <= now && endDate > now) {
                     setElection(data);
                     setShowElection(true);
                 } else {
