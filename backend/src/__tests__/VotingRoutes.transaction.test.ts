@@ -2,7 +2,7 @@
 import mongoose from 'mongoose';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import { Request, Response } from 'express';
-import { Candidate, StudentBallotInfo, Vote } from '../models/Voting';
+import { Candidate, Election, StudentBallotInfo, Vote } from '../models/Voting';
 import { recordVotes } from '../controllers/VotingController';
 
 let mongoServer: MongoMemoryReplSet;
@@ -38,9 +38,20 @@ describe('recordVote - Transaction & Race Condition Tests', () => {
         candidateId2 = new mongoose.Types.ObjectId();
         candidateId3 = new mongoose.Types.ObjectId();
 
+        await Election.deleteMany({});
         await Candidate.deleteMany({});
         await StudentBallotInfo.deleteMany({});
         await Vote.deleteMany({});
+
+        await Election.create({
+            _id: electionId,
+            name: 'Test Election',
+            description: 'Transaction test election',
+            startDate: new Date(Date.now() - 86_400_000),
+            endDate: new Date(Date.now() + 86_400_000),
+            semester: 'spring',
+            allowVoterComment: false,
+        });
 
         await Candidate.insertMany([
             {
