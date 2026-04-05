@@ -72,6 +72,7 @@ const CandidateSchema = new Schema<ICandidate>({
     writeIn: {
         type: Boolean,
         default: false,
+    },
     eligibleYears: {
         type: [Number],
         default: [],
