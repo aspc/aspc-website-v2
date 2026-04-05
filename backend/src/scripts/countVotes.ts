@@ -103,38 +103,68 @@ function runInstantRunoff(
             }
         }
 
-        const total = voteStack.length;
+        // #3 fix: use continuing ballots (non-exhausted) for majority threshold
+        const continuingCount = voteStack.filter((ballot) =>
+            ballot.some((id) => active.has(id))
+        ).length;
         const sorted = [...active].sort(
             (a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0)
         );
-        const majority = Math.floor(total / 2) + 1;
+        const majority = Math.floor(continuingCount / 2) + 1;
         const leaderCount = counts.get(sorted[0]) ?? 0;
+
+        if (verbose) {
+            console.log(
+                `\n    Round ${round} standings (${continuingCount} continuing ballots, majority = ${majority}):`
+            );
+            for (const id of sorted) {
+                const name = candidateIdToName.get(id) ?? id;
+                const voteCount = counts.get(id) ?? 0;
+                const pct =
+                    continuingCount > 0
+                        ? ((voteCount / continuingCount) * 100).toFixed(1)
+                        : '0.0';
+                console.log(`      ${name}: ${voteCount} votes (${pct}%)`);
+            }
+        }
+
         if (leaderCount >= majority) {
             if (verbose) {
                 console.log(
-                    `    Round ${round}: ${candidateIdToName.get(sorted[0])} has ${leaderCount} (majority ${majority}). Winner.`
+                    `    → ${candidateIdToName.get(sorted[0])} reaches majority. Winner.`
                 );
             }
             return candidateIdToName.get(sorted[0]) ?? sorted[0];
         }
 
-        // Tie for last: if only two remain and they're tied, report a tie
         const lastCount = counts.get(sorted[sorted.length - 1]) ?? 0;
-        const secondLastCount =
-            sorted.length >= 2
-                ? (counts.get(sorted[sorted.length - 2]) ?? 0)
-                : -1;
-        if (
-            active.size === 2 &&
-            lastCount === secondLastCount &&
-            lastCount === leaderCount
-        ) {
+
+        // #2 fix: detect multi-way tie for last place
+        const tiedForLast = sorted.filter(
+            (id) => (counts.get(id) ?? 0) === lastCount
+        );
+
+        // If all remaining candidates are tied, report a tie
+        if (tiedForLast.length === active.size) {
             if (verbose) {
                 console.log(
-                    `    Round ${round}: Tie between ${candidateIdToName.get(sorted[0])} and ${candidateIdToName.get(sorted[1])} (${leaderCount} votes each).`
+                    `    → All remaining candidates tied with ${lastCount} votes each. Tie.`
                 );
             }
-            const tieNames = sorted.map(
+            const tieNames = tiedForLast.map(
+                (id) => candidateIdToName.get(id) ?? id
+            );
+            return { tie: tieNames };
+        }
+
+        // If multiple candidates tied for last, report tie among them and stop
+        if (tiedForLast.length > 1) {
+            if (verbose) {
+                console.log(
+                    `    → Tie for last place among: ${tiedForLast.map((id) => candidateIdToName.get(id) ?? id).join(', ')} (${lastCount} votes each). Cannot eliminate.`
+                );
+            }
+            const tieNames = tiedForLast.map(
                 (id) => candidateIdToName.get(id) ?? id
             );
             return { tie: tieNames };
@@ -143,11 +173,42 @@ function runInstantRunoff(
         const eliminated = sorted[sorted.length - 1];
         const eliminatedName = candidateIdToName.get(eliminated) ?? eliminated;
         const eliminatedCount = counts.get(eliminated) ?? 0;
+
+        // Track where eliminated candidate's votes are redistributed
         if (verbose) {
+            const redistribution = new Map<string, number>();
+            let exhausted = 0;
+            for (const ballot of voteStack) {
+                const current = ballot.find((id) => active.has(id));
+                if (current !== eliminated) continue;
+                // This ballot was counting for the eliminated candidate — find next active choice
+                const next = ballot.find(
+                    (id) => active.has(id) && id !== eliminated
+                );
+                if (next) {
+                    redistribution.set(
+                        next,
+                        (redistribution.get(next) ?? 0) + 1
+                    );
+                } else {
+                    exhausted++;
+                }
+            }
             console.log(
-                `    Round ${round}: Eliminate ${eliminatedName} (${eliminatedCount} votes). Those votes go to each voter's next choice.`
+                `    → Eliminate ${eliminatedName} (${eliminatedCount} votes). Redistributing:`
             );
+            for (const [id, n] of [...redistribution.entries()].sort(
+                (a, b) => b[1] - a[1]
+            )) {
+                console.log(`      +${n} → ${candidateIdToName.get(id) ?? id}`);
+            }
+            if (exhausted > 0) {
+                console.log(
+                    `      ${exhausted} ballot(s) exhausted (no further ranked candidates).`
+                );
+            }
         }
+
         active.delete(eliminated);
     }
 
