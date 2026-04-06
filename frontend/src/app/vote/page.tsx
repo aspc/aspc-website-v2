@@ -380,7 +380,7 @@ export default function VotePage() {
                                     className="border border-slate-200 rounded-md overflow-hidden"
                                 >
                                     <div className="bg-[#001f3f] px-4 py-2 text-white text-[10px] font-black uppercase">
-                                        {pos}
+                                        {pos.replace(/_/g, ' ')}
                                     </div>
                                     {rankings[pos].candidateIds.map((id, i) => {
                                         const c =

@@ -250,7 +250,7 @@ export default function BallotSection({
                     <h2
                         className={`text-xl font-black uppercase tracking-tight ${isActive ? 'text-[#001f3f]' : 'text-slate-400'}`}
                     >
-                        {position}
+                        {position.replace(/_/g, ' ')}
                     </h2>
                 </div>
                 {isActive && (
