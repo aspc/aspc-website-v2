@@ -115,6 +115,14 @@ export const getBallot = async (req: Request, res: Response) => {
             return;
         }
 
+        if (!isElectionActive(election)) {
+            res.status(403).json({
+                status: 'error',
+                message: 'Voting is not currently open',
+            });
+            return;
+        }
+
         // TODO: type session
         const sessionUserEmail = (req.session as any).user.email;
         const studentInfo = await StudentBallotInfo.findOne({
@@ -211,6 +219,14 @@ export const searchWriteInCandidates = async (req: Request, res: Response) => {
             return;
         }
 
+        if (!isElectionActive(election)) {
+            res.status(403).json({
+                status: 'error',
+                message: 'Voting is not currently open',
+            });
+            return;
+        }
+
         const eligibleEmails = await StudentBallotInfo.find({
             electionId,
         }).distinct('email');
@@ -283,6 +299,23 @@ export const createWriteInCandidate = async (req: Request, res: Response) => {
             return;
         }
 
+        const election = await Election.findById(electionId);
+        if (!election) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Election not found',
+            });
+            return;
+        }
+
+        if (!isElectionActive(election)) {
+            res.status(403).json({
+                status: 'error',
+                message: 'Voting is not currently open',
+            });
+            return;
+        }
+
         const name = `${firstName.trim()} ${lastName.trim()}`;
 
         const officialMatch = await Candidate.findOne({
@@ -331,6 +364,14 @@ export const createWriteInCandidate = async (req: Request, res: Response) => {
     }
 };
 
+const isElectionActive = (election: {
+    startDate: Date;
+    endDate: Date;
+}): boolean => {
+    const now = new Date();
+    return now >= election.startDate && now <= election.endDate;
+};
+
 const MAX_VOTER_COMMENT_LENGTH = 5000;
 
 export const recordVotes = async (req: Request, res: Response) => {
@@ -345,6 +386,23 @@ export const recordVotes = async (req: Request, res: Response) => {
             res.status(400).json({
                 status: 'error',
                 message: 'At least one vote must be submitted',
+            });
+            return;
+        }
+
+        const election = await Election.findById(electionId);
+        if (!election) {
+            res.status(404).json({
+                status: 'error',
+                message: 'Election not found',
+            });
+            return;
+        }
+
+        if (!isElectionActive(election)) {
+            res.status(403).json({
+                status: 'error',
+                message: 'Voting is not currently open',
             });
             return;
         }
@@ -369,15 +427,6 @@ export const recordVotes = async (req: Request, res: Response) => {
                 });
                 return;
             }
-        }
-
-        const election = await Election.findById(electionId);
-        if (!election) {
-            res.status(404).json({
-                status: 'error',
-                message: 'Election not found',
-            });
-            return;
         }
 
         let voterComment = '';
