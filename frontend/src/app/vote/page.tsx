@@ -310,6 +310,11 @@ export default function VotePage() {
                     )}
                 </header>
 
+                <p className="text-sm text-slate-500 font-bold mb-8">
+                    Check the box to start voting on a position, then rank
+                    candidates in order of preference.
+                </p>
+
                 {Object.entries(ballots).map(([pos, cands]) => (
                     <BallotSection
                         key={pos}
