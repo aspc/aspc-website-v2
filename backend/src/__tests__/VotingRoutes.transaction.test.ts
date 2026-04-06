@@ -1,9 +1,9 @@
 // voting.controller.transaction.test.ts
-import mongoose from 'mongoose';
-import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import { Request, Response } from 'express';
-import { Candidate, Election, StudentBallotInfo, Vote } from '../models/Voting';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
+import mongoose from 'mongoose';
 import { recordVotes } from '../controllers/VotingController';
+import { Candidate, Election, StudentBallotInfo, Vote } from '../models/Voting';
 
 let mongoServer: MongoMemoryReplSet;
 
@@ -13,7 +13,6 @@ beforeAll(async () => {
     });
 
     const uri = mongoServer.getUri();
-    console.log(uri);
     await mongoose.connect(uri);
 }, 90000);
 

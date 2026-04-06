@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Check, Timer, AlertCircle, AlertTriangle } from 'lucide-react';
-import BallotSection from '@/components/vote/BallotSection';
-import BallotCountdown from '@/components/vote/BallotCountdown';
-import { Button } from '@/components/ui/Button';
 import Loading from '@/components/Loading';
 import LoginRequired from '@/components/LoginRequired';
+import { Button } from '@/components/ui/Button';
+import BallotCountdown from '@/components/vote/BallotCountdown';
+import BallotSection from '@/components/vote/BallotSection';
 import { useAuth } from '@/hooks/useAuth';
-import { ICandidateFrontend, IRankingState, IElectionFrontend } from '@/types';
+import { ICandidateFrontend, IElectionFrontend, IRankingState } from '@/types';
+import { AlertCircle, AlertTriangle, Check, Timer } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function VotePage() {
     const { user, loading: authLoading } = useAuth();
@@ -88,7 +88,6 @@ export default function VotePage() {
 
                 if (!ballotRes.ok) throw new Error('Failed to fetch ballot');
                 const ballotData = await ballotRes.json();
-                console.log('Ballot Data:', ballotData);
 
                 // Group candidates by position
                 const grouped = ballotData.data.reduce(
@@ -207,7 +206,6 @@ export default function VotePage() {
             if (election.allowVoterComment) {
                 payload.comment = comment;
             }
-            console.log('Submitting payload:', payload);
 
             const res = await fetch(
                 `${process.env.BACKEND_LINK}/api/voting/${election._id}`,
