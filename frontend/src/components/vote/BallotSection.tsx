@@ -240,17 +240,17 @@ export default function BallotSection({
             className={`mb-10 border rounded-md transition-all ${isActive ? 'border-[#001f3f] bg-white shadow-sm' : 'border-slate-200 bg-slate-50/50'}`}
         >
             <div className="p-5 flex items-center justify-between border-b border-slate-100">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 min-w-0 flex-1">
                     <div
                         onClick={() => onToggle(position)}
-                        className={`w-6 h-6 rounded border-2 flex items-center justify-center cursor-pointer transition-colors ${isActive ? 'bg-[#001f3f] border-[#001f3f]' : 'bg-white border-slate-300'}`}
+                        className={`w-6 h-6 rounded border-2 flex items-center justify-center cursor-pointer transition-colors shrink-0 ${isActive ? 'bg-[#001f3f] border-[#001f3f]' : 'bg-white border-slate-300'}`}
                     >
                         {isActive && <Check className="w-4 h-4 text-white" />}
                     </div>
                     <h2
-                        className={`text-xl font-black uppercase tracking-tight ${isActive ? 'text-[#001f3f]' : 'text-slate-400'}`}
+                        className={`text-xl font-black uppercase tracking-tight break-words ${isActive ? 'text-[#001f3f]' : 'text-slate-400'}`}
                     >
-                        {position}
+                        {position.replace(/_/g, ' ')}
                     </h2>
                 </div>
                 {isActive && (
