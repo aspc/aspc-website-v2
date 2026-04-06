@@ -1,13 +1,12 @@
-import mongoose from 'mongoose';
-import { ClientSession } from 'mongoose';
+import mongoose, { ClientSession } from 'mongoose';
 
 import { Request, Response } from 'express';
-import { Candidate, Election, StudentBallotInfo, Vote } from '../models/Voting';
-import { SAMLUser } from '../models/People';
 import {
     getPositionsForSemester,
     SENATE_POSITIONS,
 } from '../constants/election.constants';
+import { SAMLUser } from '../models/People';
+import { Candidate, Election, StudentBallotInfo, Vote } from '../models/Voting';
 
 export interface VoteRequest {
     position: string;
@@ -18,7 +17,6 @@ export const getElection = async (req: Request, res: Response) => {
     try {
         // Find the most recently started election
         const election = await Election.findOne({}).sort({ startDate: -1 });
-        console.log(election);
 
         if (!election) {
             res.status(404).json({ message: 'No election found.' });
@@ -421,14 +419,21 @@ export const recordVotes = async (req: Request, res: Response) => {
                     : {}),
             }));
 
-            await Vote.insertMany(voteDocs, { session });
+            const result = await Vote.insertMany(voteDocs, { session });
+
+            if (!(result.length == votes.length)) {
+                throw new Error('Failed to record all votes');
+            }
         });
 
         res.status(200).json({
             status: 'success',
         });
     } catch (error: any) {
-        if (error.message === 'Unable to submit vote') {
+        if (
+            error.message === 'Unable to submit vote' ||
+            error.message === 'Failed to record all votes'
+        ) {
             res.status(400).json({
                 status: 'error',
                 message: error.message,
@@ -438,7 +443,7 @@ export const recordVotes = async (req: Request, res: Response) => {
 
         res.status(500).json({
             status: 'error',
-            message: 'Failed to record vote rip',
+            message: 'Failed to record vote.',
         });
     } finally {
         if (session) {
