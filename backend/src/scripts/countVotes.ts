@@ -8,16 +8,19 @@
  *
  * Outputs:
  *   - First-preference (plurality) counts per position
- *   - Optional: instant-runoff (RCV) winner per position
+ *   - Round-by-round RCV elimination log
+ *   - Winner per position
+ *   - A markdown results file: election-results-{electionId}.md
  */
 
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 
 // Load .env from backend root when script is run via ts-node
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-import { Election, Candidate, Vote } from '../models/Voting';
+import { Election, Candidate, StudentBallotInfo, Vote } from '../models/Voting';
 
 const MONGODB_URI =
     process.env.NODE_ENV === 'development'
@@ -39,9 +42,10 @@ interface PositionTally {
     position: string;
     totalVotes: number;
     firstPreference: FirstPreferenceResult[];
-    rcvWinner?: string; // winner (from first-preference or after runoff)
-    rcvTie?: string[]; // when runoff ends in a tie (e.g. 50–50)
-    runoffUsed?: boolean; // true only when instant-runoff was run (no first-choice majority)
+    rcvLog: string[];
+    rcvWinner?: string;
+    rcvTie?: string[];
+    runoffUsed?: boolean;
 }
 
 function countFirstPreference(
@@ -66,11 +70,10 @@ function countFirstPreference(
 }
 
 /**
- * Instant-runoff (RCV): each round, eliminate the candidate with the fewest
- * votes. When a candidate is eliminated, their votes are redistributed by
- * looking at who each of those voters wanted as their next choice (second
- * choice if still in the race, otherwise third, etc.) and giving the vote
- * to that candidate. Repeat until one candidate has a majority.
+ * Instant-runoff (RCV): each round, eliminate the candidate(s) with the
+ * fewest votes. When candidates are eliminated, their votes are redistributed
+ * to each voter's next remaining choice. Repeat until one candidate has a
+ * majority of continuing ballots.
  */
 type RunoffResult = string | { tie: string[] } | undefined;
 
@@ -78,10 +81,10 @@ function runInstantRunoff(
     votes: { ranking: mongoose.Types.ObjectId[] }[],
     candidateIds: string[],
     candidateIdToName: Map<string, string>,
-    options?: { verbose?: boolean }
+    log: (line: string) => void
 ): RunoffResult {
     if (votes.length === 0 || candidateIds.length === 0) return undefined;
-    const verbose = options?.verbose ?? false;
+
     let active = new Set(candidateIds);
     const voteStack = votes.map((v) =>
         [...v.ranking].map((id) => id.toString())
@@ -93,9 +96,6 @@ function runInstantRunoff(
         const counts = new Map<string, number>();
         for (const id of active) counts.set(id, 0);
 
-        // Each ballot counts for the first candidate on that ballot who is still in the race.
-        // So when we eliminated someone, their voters' ballots now count for that voter's
-        // next choice (second choice, or third if second is already eliminated, etc.).
         for (const ballot of voteStack) {
             const firstActive = ballot.find((id) => active.has(id));
             if (firstActive) {
@@ -103,7 +103,6 @@ function runInstantRunoff(
             }
         }
 
-        // #3 fix: use continuing ballots (non-exhausted) for majority threshold
         const continuingCount = voteStack.filter((ballot) =>
             ballot.some((id) => active.has(id))
         ).length;
@@ -112,101 +111,88 @@ function runInstantRunoff(
         );
         const majority = Math.floor(continuingCount / 2) + 1;
         const leaderCount = counts.get(sorted[0]) ?? 0;
+        const lastCount = counts.get(sorted[sorted.length - 1]) ?? 0;
 
-        if (verbose) {
-            console.log(
-                `\n    Round ${round} standings (${continuingCount} continuing ballots, majority = ${majority}):`
-            );
-            for (const id of sorted) {
-                const name = candidateIdToName.get(id) ?? id;
-                const voteCount = counts.get(id) ?? 0;
-                const pct =
-                    continuingCount > 0
-                        ? ((voteCount / continuingCount) * 100).toFixed(1)
-                        : '0.0';
-                console.log(`      ${name}: ${voteCount} votes (${pct}%)`);
-            }
+        log(
+            `\n  Round ${round} (${continuingCount} continuing ballots, majority needed: ${majority}):`
+        );
+        for (const id of sorted) {
+            const name = candidateIdToName.get(id) ?? id;
+            const voteCount = counts.get(id) ?? 0;
+            const pct =
+                continuingCount > 0
+                    ? ((voteCount / continuingCount) * 100).toFixed(1)
+                    : '0.0';
+            log(`    ${name}: ${voteCount} votes (${pct}%)`);
         }
 
         if (leaderCount >= majority) {
-            if (verbose) {
-                console.log(
-                    `    → ${candidateIdToName.get(sorted[0])} reaches majority. Winner.`
-                );
-            }
-            return candidateIdToName.get(sorted[0]) ?? sorted[0];
+            const winnerName = candidateIdToName.get(sorted[0]) ?? sorted[0];
+            log(`  → ${winnerName} reaches majority. **WINNER.**`);
+            return winnerName;
         }
 
-        const lastCount = counts.get(sorted[sorted.length - 1]) ?? 0;
-
-        // #2 fix: detect multi-way tie for last place
         const tiedForLast = sorted.filter(
             (id) => (counts.get(id) ?? 0) === lastCount
         );
 
-        // If all remaining candidates are tied, report a tie
+        // All remaining candidates are tied — true unresolvable tie
         if (tiedForLast.length === active.size) {
-            if (verbose) {
-                console.log(
-                    `    → All remaining candidates tied with ${lastCount} votes each. Tie.`
-                );
-            }
             const tieNames = tiedForLast.map(
                 (id) => candidateIdToName.get(id) ?? id
+            );
+            log(
+                `  → All remaining candidates tied with ${lastCount} votes each. Tie between: ${tieNames.join(', ')}`
             );
             return { tie: tieNames };
         }
 
-        // If multiple candidates tied for last, report tie among them and stop
+        // Multiple candidates tied for last — eliminate all simultaneously and continue
         if (tiedForLast.length > 1) {
-            if (verbose) {
-                console.log(
-                    `    → Tie for last place among: ${tiedForLast.map((id) => candidateIdToName.get(id) ?? id).join(', ')} (${lastCount} votes each). Cannot eliminate.`
-                );
-            }
             const tieNames = tiedForLast.map(
                 (id) => candidateIdToName.get(id) ?? id
             );
-            return { tie: tieNames };
+            log(
+                `  → Tie for last place: ${tieNames.join(', ')} (${lastCount} votes each). Eliminating all simultaneously.`
+            );
+            for (const id of tiedForLast) {
+                active.delete(id);
+            }
+            continue;
         }
 
+        // Single last-place candidate — eliminate and redistribute
         const eliminated = sorted[sorted.length - 1];
         const eliminatedName = candidateIdToName.get(eliminated) ?? eliminated;
         const eliminatedCount = counts.get(eliminated) ?? 0;
 
-        // Track where eliminated candidate's votes are redistributed
-        if (verbose) {
-            const redistribution = new Map<string, number>();
-            let exhausted = 0;
-            for (const ballot of voteStack) {
-                const current = ballot.find((id) => active.has(id));
-                if (current !== eliminated) continue;
-                // This ballot was counting for the eliminated candidate — find next active choice
-                const next = ballot.find(
-                    (id) => active.has(id) && id !== eliminated
-                );
-                if (next) {
-                    redistribution.set(
-                        next,
-                        (redistribution.get(next) ?? 0) + 1
-                    );
-                } else {
-                    exhausted++;
-                }
-            }
-            console.log(
-                `    → Eliminate ${eliminatedName} (${eliminatedCount} votes). Redistributing:`
+        const redistribution = new Map<string, number>();
+        let exhausted = 0;
+        for (const ballot of voteStack) {
+            const current = ballot.find((id) => active.has(id));
+            if (current !== eliminated) continue;
+            const next = ballot.find(
+                (id) => active.has(id) && id !== eliminated
             );
-            for (const [id, n] of [...redistribution.entries()].sort(
-                (a, b) => b[1] - a[1]
-            )) {
-                console.log(`      +${n} → ${candidateIdToName.get(id) ?? id}`);
+            if (next) {
+                redistribution.set(next, (redistribution.get(next) ?? 0) + 1);
+            } else {
+                exhausted++;
             }
-            if (exhausted > 0) {
-                console.log(
-                    `      ${exhausted} ballot(s) exhausted (no further ranked candidates).`
-                );
-            }
+        }
+
+        log(
+            `  → Eliminate ${eliminatedName} (${eliminatedCount} votes). Redistributing:`
+        );
+        for (const [id, n] of [...redistribution.entries()].sort(
+            (a, b) => b[1] - a[1]
+        )) {
+            log(`      +${n} → ${candidateIdToName.get(id) ?? id}`);
+        }
+        if (exhausted > 0) {
+            log(
+                `      ${exhausted} ballot(s) exhausted (no further ranked candidates).`
+            );
         }
 
         active.delete(eliminated);
@@ -243,10 +229,7 @@ async function tallyElection(
     const results: PositionTally[] = [];
 
     for (const position of positions) {
-        const votes = await Vote.find({
-            electionId,
-            position,
-        })
+        const votes = await Vote.find({ electionId, position })
             .select('ranking')
             .lean();
 
@@ -261,16 +244,19 @@ async function tallyElection(
         const majority = totalVotes > 0 ? Math.floor(totalVotes / 2) + 1 : 0;
         const leaderCount = firstPreference[0]?.firstPreferenceCount ?? 0;
         const hasFirstChoiceWinner = totalVotes > 0 && leaderCount >= majority;
-        const needsRunoff = !hasFirstChoiceWinner;
 
-        const runoffResult = needsRunoff
-            ? runInstantRunoff(
-                  votes as { ranking: mongoose.Types.ObjectId[] }[],
-                  candidateIds,
-                  candidateIdToName,
-                  { verbose: true }
-              )
-            : firstPreference[0]?.candidateName;
+        const rcvLog: string[] = [];
+        let runoffResult: RunoffResult;
+        if (hasFirstChoiceWinner) {
+            runoffResult = firstPreference[0]?.candidateName;
+        } else {
+            runoffResult = runInstantRunoff(
+                votes as { ranking: mongoose.Types.ObjectId[] }[],
+                candidateIds,
+                candidateIdToName,
+                (line) => rcvLog.push(line)
+            );
+        }
 
         const rcvWinner =
             typeof runoffResult === 'string' ? runoffResult : undefined;
@@ -285,48 +271,104 @@ async function tallyElection(
             position,
             totalVotes,
             firstPreference,
+            rcvLog,
             rcvWinner,
             rcvTie,
-            runoffUsed: needsRunoff,
+            runoffUsed: !hasFirstChoiceWinner,
         });
     }
 
-    // Print report
-    console.log('\n========== ELECTION RESULTS ==========\n');
-    console.log('Election:', election.name);
-    console.log('Election ID:', electionId);
-    console.log('End date:', election.endDate);
-    console.log('');
+    // Voter participation stats from StudentBallotInfo
+    const ballots = await StudentBallotInfo.find({ electionId }).lean();
+    const totalEligible = ballots.length;
+    const totalVoted = ballots.filter((b) => b.hasVoted).length;
+    const overallRate =
+        totalEligible > 0
+            ? ((totalVoted / totalEligible) * 100).toFixed(1)
+            : '0.0';
 
-    for (const r of results) {
-        console.log('--- Position:', r.position, '---');
-        console.log('Total votes:', r.totalVotes);
-        console.log('\nFirst-preference (plurality) counts:');
-        for (const row of r.firstPreference) {
-            console.log(`  ${row.candidateName}: ${row.firstPreferenceCount}`);
+    // Group by graduation year
+    const byYear = new Map<number, { eligible: number; voted: number }>();
+    for (const b of ballots) {
+        const entry = byYear.get(b.year) ?? { eligible: 0, voted: 0 };
+        entry.eligible += 1;
+        if (b.hasVoted) entry.voted += 1;
+        byYear.set(b.year, entry);
+    }
+    const sortedYears = [...byYear.keys()].sort();
+
+    // Build formatted report
+    const reportLines: string[] = [];
+    const r = (line: string) => reportLines.push(line);
+
+    r('');
+    r('# ELECTION RESULTS');
+    r('');
+    r(`Election: ${election.name}`);
+    r(`Election ID: ${electionId}`);
+    r(`End date: ${election.endDate}`);
+    r('');
+    r('---');
+    r('');
+    r('## VOTER PARTICIPATION');
+    r('');
+    r(`Total eligible voters: ${totalEligible}`);
+    r(`Total voters who voted: ${totalVoted}`);
+    r(`Overall turnout: ${overallRate}%`);
+    r('');
+    r('Turnout by class year:');
+    for (const year of sortedYears) {
+        const { eligible, voted } = byYear.get(year)!;
+        const rate =
+            eligible > 0 ? ((voted / eligible) * 100).toFixed(1) : '0.0';
+        r(`  Class of ${year}: ${voted}/${eligible} voted (${rate}%)`);
+    }
+    r('');
+
+    for (const tally of results) {
+        r('---');
+        r('');
+        r(`## **POSITION: ${tally.position.toUpperCase()}**`);
+        r('');
+        r(`Total votes: ${tally.totalVotes}`);
+        r('');
+        r('First-preference (plurality) counts:');
+        for (const row of tally.firstPreference) {
+            r(`  ${row.candidateName}: ${row.firstPreferenceCount}`);
         }
-        if (r.rcvTie !== undefined && r.rcvTie.length > 0) {
-            console.log(
-                '\nRCV (instant-runoff): Tie between',
-                r.rcvTie.join(' and ')
-            );
-        } else if (r.rcvWinner !== undefined) {
-            if (r.runoffUsed) {
-                console.log(
-                    '\nRCV (instant-runoff) winner (elimination: last place out, their votes go to each voter’s next choice):',
-                    r.rcvWinner
-                );
-            } else {
-                console.log(
-                    '\nWinner (first-preference majority):',
-                    r.rcvWinner
-                );
+        if (tally.runoffUsed && tally.rcvLog.length > 0) {
+            r('');
+            r('RCV round-by-round:');
+            for (const line of tally.rcvLog) {
+                r(line);
             }
         }
-        console.log('');
+        r('');
+        if (tally.rcvTie !== undefined && tally.rcvTie.length > 0) {
+            r(`**TIE:** ${tally.rcvTie.join(' and ')}`);
+        } else if (tally.rcvWinner !== undefined) {
+            if (tally.runoffUsed) {
+                r(`**WINNER (RCV instant-runoff):** ${tally.rcvWinner}`);
+            } else {
+                r(`**WINNER (first-preference majority):** ${tally.rcvWinner}`);
+            }
+        }
+        r('');
     }
 
-    console.log('======================================\n');
+    r('---');
+
+    // Print report to console and write to file
+    for (const line of reportLines) {
+        console.log(line);
+    }
+
+    const outputPath = path.resolve(
+        __dirname,
+        `../../election-results-${electionId}.md`
+    );
+    fs.writeFileSync(outputPath, reportLines.join('\n'), 'utf8');
+    console.log(`\nResults written to: ${outputPath}`);
 }
 
 async function main(): Promise<void> {
