@@ -50,6 +50,7 @@ interface ICandidate extends Document {
     electionId: mongoose.Types.ObjectId;
     name: string;
     position: string;
+    writeIn: boolean;
     eligibleYears: number[];
     housingLocation: string[];
 }
@@ -67,6 +68,10 @@ const CandidateSchema = new Schema<ICandidate>({
     position: {
         type: String,
         required: true,
+    },
+    writeIn: {
+        type: Boolean,
+        default: false,
     },
     eligibleYears: {
         type: [Number],

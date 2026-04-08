@@ -258,6 +258,7 @@ export interface ICandidateFrontend {
     name: string;
     position: string;
     description?: string;
+    writeIn?: boolean;
     eligibleYears?: number[];
     housingLocation?: string[];
 }

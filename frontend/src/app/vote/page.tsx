@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Check, Timer, AlertCircle, AlertTriangle } from 'lucide-react';
-import BallotSection from '@/components/vote/BallotSection';
-import BallotCountdown from '@/components/vote/BallotCountdown';
-import { Button } from '@/components/ui/Button';
 import Loading from '@/components/Loading';
 import LoginRequired from '@/components/LoginRequired';
+import { Button } from '@/components/ui/Button';
+import BallotCountdown from '@/components/vote/BallotCountdown';
+import BallotSection from '@/components/vote/BallotSection';
 import { useAuth } from '@/hooks/useAuth';
-import { ICandidateFrontend, IRankingState, IElectionFrontend } from '@/types';
+import { ICandidateFrontend, IElectionFrontend, IRankingState } from '@/types';
+import { AlertCircle, AlertTriangle, Check, Timer } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function VotePage() {
     const { user, loading: authLoading } = useAuth();
@@ -88,7 +88,6 @@ export default function VotePage() {
 
                 if (!ballotRes.ok) throw new Error('Failed to fetch ballot');
                 const ballotData = await ballotRes.json();
-                console.log('Ballot Data:', ballotData);
 
                 // Group candidates by position
                 const grouped = ballotData.data.reduce(
@@ -114,6 +113,14 @@ export default function VotePage() {
         fetchData();
     }, [user, authLoading]);
 
+    const allCandidatesRef = useRef<Map<string, ICandidateFrontend>>(new Map());
+
+    useEffect(() => {
+        Object.values(ballots)
+            .flat()
+            .forEach((c) => allCandidatesRef.current.set(c._id, c));
+    }, [ballots]);
+
     const handleToggle = (pos: string) => {
         setActiveBallots((prev) => ({ ...prev, [pos]: !prev[pos] }));
     };
@@ -123,6 +130,61 @@ export default function VotePage() {
             setRankings((prev) => ({ ...prev, [pos]: state }));
         },
         []
+    );
+
+    const handleSearchWriteInCandidates = useCallback(
+        async (
+            query: string
+        ): Promise<{ firstName: string; lastName: string }[]> => {
+            if (!election || !query.trim()) return [];
+            try {
+                const params = new URLSearchParams({ q: query.trim() });
+                const res = await fetch(
+                    `${process.env.BACKEND_LINK}/api/voting/${election._id}/search-candidates?${params}`,
+                    { credentials: 'include' }
+                );
+                const json = await res.json();
+                if (!res.ok || json.status !== 'success') return [];
+                return Array.isArray(json.data) ? json.data : [];
+            } catch {
+                return [];
+            }
+        },
+        [election]
+    );
+
+    const handleCreateWriteIn = useCallback(
+        async (
+            firstName: string,
+            lastName: string,
+            position: string
+        ): Promise<ICandidateFrontend | string> => {
+            if (!election) return 'No active election.';
+            try {
+                const res = await fetch(
+                    `${process.env.BACKEND_LINK}/api/voting/${election._id}/write-in`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ firstName, lastName, position }),
+                    }
+                );
+                const json = await res.json();
+                if (!res.ok) {
+                    return json.message || 'Failed to add write-in candidate.';
+                }
+                const candidate: ICandidateFrontend = {
+                    ...json.data,
+                    writeIn: true,
+                };
+                allCandidatesRef.current.set(candidate._id, candidate);
+                return candidate;
+            } catch {
+                return 'Something went wrong. Please try again.';
+            }
+        },
+        [election]
     );
 
     const handleSubmitVote = async () => {
@@ -144,7 +206,6 @@ export default function VotePage() {
             if (election.allowVoterComment) {
                 payload.comment = comment;
             }
-            console.log('Submitting payload:', payload);
 
             const res = await fetch(
                 `${process.env.BACKEND_LINK}/api/voting/${election._id}`,
@@ -247,6 +308,11 @@ export default function VotePage() {
                     )}
                 </header>
 
+                <p className="text-sm text-slate-500 font-bold mb-8">
+                    Check the box to start voting on a position, then rank
+                    candidates in order of preference.
+                </p>
+
                 {Object.entries(ballots).map(([pos, cands]) => (
                     <BallotSection
                         key={pos}
@@ -255,6 +321,10 @@ export default function VotePage() {
                         isActive={!!activeBallots[pos]}
                         onToggle={handleToggle}
                         onRankChange={handleRankUpdate}
+                        onSearchWriteInCandidates={
+                            handleSearchWriteInCandidates
+                        }
+                        onCreateWriteIn={handleCreateWriteIn}
                     />
                 ))}
 
@@ -313,12 +383,14 @@ export default function VotePage() {
                                     className="border border-slate-200 rounded-md overflow-hidden"
                                 >
                                     <div className="bg-[#001f3f] px-4 py-2 text-white text-[10px] font-black uppercase">
-                                        {pos}
+                                        {pos.replace(/_/g, ' ')}
                                     </div>
                                     {rankings[pos].candidateIds.map((id, i) => {
-                                        const c = ballots[pos]?.find(
-                                            (cand) => cand._id === id
-                                        );
+                                        const c =
+                                            allCandidatesRef.current.get(id) ??
+                                            ballots[pos]?.find(
+                                                (cand) => cand._id === id
+                                            );
                                         return (
                                             <div
                                                 key={id}
@@ -328,6 +400,11 @@ export default function VotePage() {
                                                     #{i + 1}
                                                 </span>{' '}
                                                 {c?.name}
+                                                {c?.writeIn && (
+                                                    <span className="text-[10px] font-black text-amber-500 uppercase">
+                                                        Write-in
+                                                    </span>
+                                                )}
                                             </div>
                                         );
                                     })}

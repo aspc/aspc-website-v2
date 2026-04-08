@@ -1,11 +1,10 @@
-import express, { Request, Response } from 'express';
-import { initializeSAML, fetchAndSaveMetadata } from '../config/samlConfig';
+import express, { Request, Response, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { SAMLUser } from '../models/People';
-import { Router } from 'express';
 import { IdentityProvider } from 'samlify/types/src/entity-idp';
 import { ServiceProvider } from 'samlify/types/src/entity-sp';
+import { fetchAndSaveMetadata, initializeSAML } from '../config/samlConfig';
+import { SAMLUser } from '../models/People';
 
 const router = Router();
 
@@ -226,16 +225,6 @@ router.get('/current_user', async (req: Request, res: Response) => {
         });
     } catch (error) {
         console.error('User creation error:', error);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
-
-// All Users
-router.get('/users', async (req: Request, res: Response) => {
-    try {
-        const users = await SAMLUser.find();
-        res.json(users);
-    } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }
 });
