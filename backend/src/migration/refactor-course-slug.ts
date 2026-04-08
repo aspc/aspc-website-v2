@@ -20,9 +20,7 @@ async function fixCodeSlugFormat(dryRun: boolean = true) {
     console.log('Handling duplicates: Keep course with more reviews\n');
 
     try {
-        await mongoose.connect(
-            'mongodb+srv://software:jxqDmaRabKr7BXuS@aspc.qm4l8.mongodb.net/school-platform?retryWrites=true&w=majority&appName=ASPC  '
-        );
+        await mongoose.connect('');
         console.log('✓ Connected to MongoDB\n');
 
         // Get all courses

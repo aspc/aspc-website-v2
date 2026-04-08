@@ -49,9 +49,7 @@ async function migrateCourses(dryRun: boolean = false) {
 
     try {
         // Connect to MongoDB
-        await mongoose.connect(
-            'mongodb+srv://software:jxqDmaRabKr7BXuS@aspc.qm4l8.mongodb.net/school-platform-test?retryWrites=true&w=majority&appName=ASPC'
-        );
+        await mongoose.connect('');
         console.log('✓ Connected to MongoDB\n');
 
         // Load Phase 1 data
