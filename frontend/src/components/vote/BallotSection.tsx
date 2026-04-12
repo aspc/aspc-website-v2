@@ -1,5 +1,7 @@
 import {
     Check,
+    ChevronDown,
+    ChevronUp,
     GripVertical,
     PenLine,
     Plus,
@@ -66,6 +68,8 @@ export default function BallotSection({
         useState<ICandidateFrontend[]>(initialShuffled);
     const [ranked, setRanked] = useState<ICandidateFrontend[]>([]);
     const [draggedId, setDraggedId] = useState<string | null>(null);
+    /** HTML5 DnD does not run on touch; use tap reorder controls instead. */
+    const [isCoarsePointer, setIsCoarsePointer] = useState(false);
 
     const [showWriteInForm, setShowWriteInForm] = useState(false);
     const [writeInSearchQuery, setWriteInSearchQuery] = useState('');
@@ -121,6 +125,14 @@ export default function BallotSection({
     }, []);
 
     useEffect(() => {
+        const mq = window.matchMedia('(pointer: coarse)');
+        const update = () => setIsCoarsePointer(mq.matches);
+        update();
+        mq.addEventListener('change', update);
+        return () => mq.removeEventListener('change', update);
+    }, []);
+
+    useEffect(() => {
         onRankChange(position, {
             candidateIds: ranked.map((c) => c._id),
             isComplete: unranked.length === 0 && ranked.length > 0,
@@ -164,6 +176,25 @@ export default function BallotSection({
         const [draggedItem] = newList.splice(draggedIdx, 1);
         newList.splice(targetIdx, 0, draggedItem);
         setRanked(newList);
+    };
+
+    /** Move ranked item from `fromIndex` to `toIndex` (works for touch reorder). */
+    const moveRankedToIndex = (fromIndex: number, toIndex: number) => {
+        if (
+            fromIndex === toIndex ||
+            fromIndex < 0 ||
+            toIndex < 0 ||
+            fromIndex >= ranked.length ||
+            toIndex >= ranked.length
+        ) {
+            return;
+        }
+        setRanked((prev) => {
+            const next = [...prev];
+            const [item] = next.splice(fromIndex, 1);
+            next.splice(toIndex, 0, item);
+            return next;
+        });
     };
 
     const isPreview = !onCreateWriteIn;
@@ -441,6 +472,12 @@ export default function BallotSection({
                         <p className="text-[10px] font-black text-[#001f3f] uppercase tracking-widest mb-4">
                             Final Ranking Order
                         </p>
+                        {isCoarsePointer && ranked.length > 0 && (
+                            <p className="text-[11px] text-slate-500 mb-3 leading-snug">
+                                Use the arrows to change ranking order on this
+                                device.
+                            </p>
+                        )}
                         <div className="space-y-2">
                             {ranked.length === 0 ? (
                                 <div className="h-20 border-2 border-dashed border-slate-200 rounded-md flex items-center justify-center text-slate-400 text-xs font-bold text-center px-4">
@@ -450,29 +487,68 @@ export default function BallotSection({
                                 ranked.map((c, i) => (
                                     <div
                                         key={c._id}
-                                        draggable
-                                        onDragStart={() => setDraggedId(c._id)}
+                                        draggable={!isCoarsePointer}
+                                        onDragStart={() => {
+                                            if (!isCoarsePointer)
+                                                setDraggedId(c._id);
+                                        }}
                                         onDragOver={(e) =>
                                             handleDragOver(e, c._id)
                                         }
                                         onDragEnd={() => setDraggedId(null)}
-                                        className={`p-3 border-2 border-[#001f3f] rounded-md flex items-center gap-3 bg-white cursor-move ${draggedId === c._id ? 'opacity-20' : ''}`}
+                                        className={`p-3 border-2 border-[#001f3f] rounded-md flex items-center gap-2 sm:gap-3 bg-white ${!isCoarsePointer ? 'cursor-move' : ''} ${draggedId === c._id ? 'opacity-20' : ''}`}
                                     >
-                                        <GripVertical className="w-4 h-4 text-slate-300" />
-                                        <span className="font-black text-[#001f3f] text-sm w-4">
+                                        {isCoarsePointer ? (
+                                            <div className="flex flex-col shrink-0 border border-slate-200 rounded-md overflow-hidden bg-slate-50">
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Move ${c.name} up in ranking`}
+                                                    disabled={i === 0}
+                                                    onClick={() =>
+                                                        moveRankedToIndex(
+                                                            i,
+                                                            i - 1
+                                                        )
+                                                    }
+                                                    className="p-1.5 text-slate-600 hover:bg-slate-100 active:bg-slate-200 disabled:opacity-30 disabled:pointer-events-none"
+                                                >
+                                                    <ChevronUp className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    aria-label={`Move ${c.name} down in ranking`}
+                                                    disabled={
+                                                        i === ranked.length - 1
+                                                    }
+                                                    onClick={() =>
+                                                        moveRankedToIndex(
+                                                            i,
+                                                            i + 1
+                                                        )
+                                                    }
+                                                    className="p-1.5 text-slate-600 hover:bg-slate-100 active:bg-slate-200 disabled:opacity-30 disabled:pointer-events-none border-t border-slate-200"
+                                                >
+                                                    <ChevronDown className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <GripVertical className="w-4 h-4 text-slate-300 shrink-0" />
+                                        )}
+                                        <span className="font-black text-[#001f3f] text-sm w-6 sm:w-4 shrink-0 text-center sm:text-left">
                                             #{i + 1}
                                         </span>
-                                        <div className="flex items-center gap-1.5 flex-1">
+                                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
                                             {c.writeIn && (
                                                 <PenLine className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                                             )}
-                                            <span className="font-bold text-slate-800 text-sm">
+                                            <span className="font-bold text-slate-800 text-sm truncate">
                                                 {c.name}
                                             </span>
                                         </div>
                                         <button
+                                            type="button"
                                             onClick={() => removeFromRanked(c)}
-                                            className="text-slate-300 hover:text-red-500"
+                                            className="text-slate-300 hover:text-red-500 shrink-0 p-1"
                                         >
                                             <X className="w-4 h-4" />
                                         </button>
