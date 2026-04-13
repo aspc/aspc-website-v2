@@ -82,6 +82,7 @@ app.use(
 
 let bucket: GridFSBucket;
 let housingReviewPictures: GridFSBucket;
+let pagePdfs: GridFSBucket;
 
 mongoose
     .connect(MONGODB_URI)
@@ -104,10 +105,16 @@ mongoose
         });
 
         console.log('Housing review uploads bucket created');
+
+        pagePdfs = new GridFSBucket(db, {
+            bucketName: 'pagepdfs',
+        });
+
+        console.log('Page PDFs bucket created');
     })
     .catch((err) => console.error('MongoDB connection error:', err));
 
-export { bucket, housingReviewPictures };
+export { bucket, housingReviewPictures, pagePdfs };
 
 // Routes
 app.use('/api/auth', authRoutes);
