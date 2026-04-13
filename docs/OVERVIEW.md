@@ -33,43 +33,45 @@ The platform aims to:
 
 ### Single Sign-On Authentication
 - Seamless login using Pomona College credentials
-- SAML integration with ITS (Information Technology Services)
-- Secure session management
+- SAML integration with Microsoft Entra ID (Pomona ITS)
+- Secure session management and user profile auto-creation
 
-### Student Resources
-- Academic resources
-- Campus life information
-- Student government documents
-- Support services information
+### Academic & Housing Resources
+- Comprehensive course database with department filtering
+- Instructor profiles and course-specific reviews
+- Housing database with building details, floor plans, and room reviews
+
+### Voting Platform
+- Secure, anonymous ranked-choice voting for student elections
+- Eligibility verification based on class year and campus location
+- Admin dashboard for election and candidate management
+
+### Open Forum
+- Peer review system for campus events
+- Custom rating dimensions and anonymous feedback
+- Statistical aggregation of event quality and engagement
 
 ### Events Management
-- Calendar of campus events
-- Event registration functionality
-- Event reminders and notifications
+- Integration with campus Engage API
+- Interactive calendar of campus events
+- Featured and upcoming events displays
 
 ### Staff Directory
-- Information about ASPC staff members
-- Contact details and office hours
-- Role descriptions and responsibilities
+- Information about ASPC staff, Senate, and Software Team
+- Role descriptions and contact details
+- Profile management with image uploads
 
 ### Static Content Pages
-- About ASPC
-- Mission and vision
-- Constitutional documents
-- Policies and procedures
-
-### User Profiles
-- Personal information management
-- Preferences and settings
-- Activity history
+- Dynamic CMS for about pages, documents, and resources
+- Rich text editing for staff administrators
 
 ## Technology Stack
 
 The platform is built using modern web technologies:
 
-- **Frontend**: Next.js React application with TypeScript
+- **Frontend**: Next.js (App Router) with TypeScript and Tailwind CSS
 - **Backend**: Node.js with Express and TypeScript
-- **Database**: MongoDB with Mongoose ODM
-- **Authentication**: SAML integration with Pomona College ITS
-- **Deployment**: Docker containerization
+- **Database**: MongoDB with Mongoose ODM and GridFS for file storage
+- **Authentication**: SAML 2.0 integration with Pomona College ITS
+- **Deployment**: Docker containerization, Vercel (Frontend), AWS Lightsail (Backend)
 

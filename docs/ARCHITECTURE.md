@@ -50,19 +50,30 @@ The frontend is a Next.js React application using the App Router pattern:
 
 The backend is an Express.js application with a RESTful API architecture:
 
-- **Route-based API organization** for different resources
-- **Controller pattern** for handling business logic
-- **Middleware-based processing** for authentication and validation
-- **Service layer** for external integrations
+- **Resource-based Routing**: Modular API design with dedicated routes for Academic Resources, Housing, Voting, and Open Forum.
+- **Controller Pattern**: Clean separation of concerns between route definitions and business logic.
+- **Middleware-based Processing**: Authentication (`authMiddleware.ts`), session management, and validation.
+- **Service Layer**: External integrations such as the Engage API for campus events.
+- **Database Layer**: Mongoose models for structured data and GridFS for binary storage (staff photos, housing review images).
 
 ## Data Flow
 
 ### Client-Server Communication
 
-1. Frontend makes HTTP requests to backend API endpoints
-2. Backend processes requests, interacts with the database
-3. Backend returns responses to frontend
-4. Frontend renders the data for the user
+1. Frontend makes HTTP requests to backend API endpoints (e.g., `/api/voting`, `/api/openforum`).
+2. Backend processes requests, interacts with MongoDB via Mongoose.
+3. Backend returns JSON responses to the frontend.
+4. Frontend renders the data using React components.
+
+### Secure Voting Flow (Privacy-Preserving)
+
+The platform implements a unique privacy-preserving flow for student elections:
+1. **Eligibility Check**: Backend verifies if the authenticated user is in the `StudentBallotInfo` collection.
+2. **Ballot Access**: User retrieves candidates they are eligible to vote for based on their year and campus location.
+3. **Anonymous Submission**: When a vote is cast:
+   - The user's `StudentBallotInfo` record is updated to `hasVoted: true`.
+   - A separate `Vote` document is created **without any reference** to the user's ID or email.
+   - Both operations are executed within a MongoDB transaction to ensure atomicity.
 
 ### External System Integration
 

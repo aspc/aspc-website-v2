@@ -63,6 +63,38 @@
 - **Image Upload**: Manage staff profile pictures
 - **Form Validation**: Ensure all required fields are completed
 
+## Voting Platform
+
+### Election Management
+- **Secure Ballots**: Create and manage multiple concurrent elections
+- **Position Configuration**: Define positions with specific candidate lists
+- **Candidate Profiles**: Official candidates and integrated write-in system
+- **Eligibility Logic**: Fine-grained voter eligibility based on graduation year and campus location (North/South/Off-campus)
+
+### Voter Experience
+- **Personalized Ballots**: Users only see positions they are eligible to vote for
+- **Ranked-Choice Voting (RCV)**: Intuitive interface for ranking candidates in order of preference
+- **Write-in System**: Searchable directory for adding write-in candidates from the eligible student body
+- **Voter Comments**: Optional anonymous feedback for election administrators
+
+### Privacy & Security
+- **Atomic Transactions**: MongoDB transactions ensure "hasVoted" status and vote recording are synchronized
+- **Anonymous Storage**: No link exists between individual `Vote` documents and the `SAMLUser` who cast them
+- **Double-Voting Prevention**: Strict database-level constraints on voter status
+
+## Open Forum (Peer Event Reviews)
+
+### Event Review System
+- **Event Integration**: Direct link to campus events via Engage API
+- **Dynamic Rating Dimensions**: Overall rating plus custom questions defined by event hosts
+- **Anonymous Feedback**: Option to post reviews anonymously to encourage honest feedback
+- **Review Moderation**: Administrative capability to hide inappropriate content
+
+### Statistical Aggregation
+- **Average Ratings**: Real-time calculation of overall and dimension-specific scores
+- **Engagement Metrics**: Track total number of responses and "Would Repeat" percentage
+- **Host Insights**: Aggregated data to help student organizations improve future events
+
 ## Academic Resources
 
 ### Course Information

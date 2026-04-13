@@ -64,57 +64,39 @@ When a user logs in with email `student1@mymail.pomona.edu`, the backend:
 
 ### Overview
 
-The voting platform is designed to store minimal information about individual votes to protect voter privacy. Instead of storing who voted for what, the system stores aggregated ranking data.
+The voting platform is designed to store minimal information about individual votes to protect voter privacy. The system ensures that while we track who *has* voted (to prevent double voting), there is no link between a voter's identity and their specific ranking of candidates.
 
 ### Vote Storage Mechanism
 
-For a given position with candidates, voters can rank all candidates in any order. The system stores these rankings as keys and increments their values as new votes come in.
+When a voter submits their ballot, the system executes a secure atomic transaction:
 
-#### Example
+1. **Voter Registration**: The student's record in the `StudentBallotInfo` collection is updated to `hasVoted: true`. This is tied to their email and ensures they cannot vote again.
+2. **Anonymous Vote Record**: A new `Vote` document is created in the `Vote` collection. 
+   - **No Identifiers**: This document contains the election ID, position, and candidate rankings, but **does not** contain the student's ID, email, or any other identifying information.
+   - **Decoupled Documents**: Each position on the ballot is stored as a separate, anonymous `Vote` document.
 
-For a position with candidates **A**, **B**, and **C**, there are 6 possible ranking permutations:
+#### Data Structure
 
-1. A, B, C
-2. A, C, B
-3. B, A, C
-4. B, C, A
-5. C, A, B
-6. C, B, A
+A single vote for a position is stored as:
 
-When a voter submits their ranking, the system:
-- Uses the ranking permutation as a key (e.g., "A,B,C" or "B,C,A")
-- Increments the counter value for that key
-- **Does not store any information linking the vote to the voter**
-
-### Data Structure
-
-The vote data for a position would be stored as:
-
-```
+```json
 {
-  positionId: "position-123",
-  rankings: {
-    "A,B,C": 15,    // 15 voters ranked A first, B second, C third
-    "A,C,B": 8,     // 8 voters ranked A first, C second, B third
-    "B,A,C": 13,    // 13 voters ranked B first, A second, C third
-    "B,C,A": 5,     // 5 voters ranked B first, C second, A third
-    "C,A,B": 10,    // 10 voters ranked C first, A second, B third
-    "C,B,A": 7      // 7 voters ranked C first, B second, A third
-  },
-  totalVotes: 58
+  "electionId": "65f1a...",
+  "position": "ASPC President",
+  "ranking": [
+    "65f1b...", // Candidate A (1st Choice)
+    "65f1c...", // Candidate B (2nd Choice)
+    "65f1d..."  // Candidate C (3rd Choice)
+  ],
+  "voterComment": "Optional anonymous feedback"
 }
 ```
 
 ### Privacy Benefits
 
-1. **No voter traceability**: Once a vote is cast, there is no way to determine which specific voter submitted which ranking
-2. **Aggregated data only**: The system only stores counts of ranking permutations, not individual vote records
-3. **Minimal data retention**: All voting data is stored until the voting period ends, then can be processed and cleared
-
-### Data Retention
-
-- All voting data is stored until the voting period is over
-- After the voting period ends, results can be calculated and the raw vote data can be archived or deleted as per policy
+1. **No voter traceability**: Once the transaction completes, there is no technical way to link a specific student to their specific `Vote` documents.
+2. **Decoupled data sets**: Voter registration data (who voted) and voting data (what was voted) are stored in separate collections with no foreign key relationship.
+3. **Atomic integrity**: The use of database transactions ensures that a vote is either fully recorded and the voter marked as having voted, or the entire operation fails.
 
 ### Vote Counting Method
 
