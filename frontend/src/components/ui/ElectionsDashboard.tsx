@@ -98,6 +98,17 @@ const formatPositionLabel = (value: string) =>
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 
+const groupCandidatesByPosition = (
+    list: ICandidateFrontend[]
+): [string, ICandidateFrontend[]][] =>
+    Object.entries(
+        list.reduce((acc: Record<string, ICandidateFrontend[]>, c) => {
+            if (!acc[c.position]) acc[c.position] = [];
+            acc[c.position].push(c);
+            return acc;
+        }, {})
+    );
+
 const toTitleCase = (str: string) =>
     str
         .split(' ')
@@ -386,6 +397,7 @@ const ElectionsDashboard = () => {
         null
     );
     const [showCandidateForm, setShowCandidateForm] = useState(false);
+    const [showWriteInCandidates, setShowWriteInCandidates] = useState(false);
     const [eligibleYears, setEligibleYears] = useState<number[]>([]);
     const [housingLocation, setHousingLocation] = useState<string[]>([]);
     const [eligibilityUnlocked, setEligibilityUnlocked] = useState(false);
@@ -447,6 +459,7 @@ const ElectionsDashboard = () => {
         if (!selectedElectionId) return;
 
         const fetchElectionData = async () => {
+            setShowWriteInCandidates(false);
             try {
                 setIsLoading(true);
                 const response = await fetch(
@@ -483,6 +496,7 @@ const ElectionsDashboard = () => {
         setAllowVoterComment(false);
         setVoterRequirement('all');
         setCandidates([]);
+        setShowWriteInCandidates(false);
         resetCandidateForm();
     };
 
@@ -981,6 +995,157 @@ const ElectionsDashboard = () => {
         </div>
     );
 
+    const nonWriteInCandidates = candidates.filter((c) => !c.writeIn);
+    const writeInCandidates = candidates.filter((c) => c.writeIn);
+
+    const renderCandidateGroups = (list: ICandidateFrontend[]) =>
+        groupCandidatesByPosition(list).map(
+            ([position, positionCandidates]) => (
+                <div key={position}>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-2 border-b border-gray-100 pb-1">
+                        {formatPositionLabel(position)}
+                    </h3>
+                    <div className="space-y-2">
+                        {positionCandidates.map((candidate) =>
+                            editingCandidateId === candidate._id ? (
+                                <div key={candidate._id}>
+                                    {renderCandidateForm('Edit Candidate')}
+                                </div>
+                            ) : (
+                                <div
+                                    key={candidate._id}
+                                    className="flex items-center justify-between p-3 border border-gray-200 rounded-lg transition-all duration-150"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium text-sm">
+                                            {candidate.name
+                                                .charAt(0)
+                                                .toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="text-sm font-medium text-gray-900">
+                                                    {candidate.name}
+                                                </span>
+                                                {candidate.writeIn && (
+                                                    <span className="inline-flex items-center text-[10px] font-black text-amber-600 uppercase tracking-wide bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                                                        Write-in
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                                                <span className="text-[10px] text-gray-400 font-medium mr-0.5">
+                                                    Voters:
+                                                </span>
+                                                {(!candidate.eligibleYears ||
+                                                    candidate.eligibleYears
+                                                        .length === 0) &&
+                                                (!candidate.housingLocation ||
+                                                    candidate.housingLocation
+                                                        .length === 0) ? (
+                                                    <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full font-medium">
+                                                        All Students
+                                                    </span>
+                                                ) : (
+                                                    <>
+                                                        {candidate.eligibleYears?.map(
+                                                            (y) => (
+                                                                <span
+                                                                    key={y}
+                                                                    className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-medium"
+                                                                >
+                                                                    {
+                                                                        [
+                                                                            '',
+                                                                            'First-Year',
+                                                                            'Sophomore',
+                                                                            'Junior',
+                                                                            'Senior',
+                                                                        ][y]
+                                                                    }
+                                                                </span>
+                                                            )
+                                                        )}
+                                                        {candidate.housingLocation?.map(
+                                                            (c) => (
+                                                                <span
+                                                                    key={c}
+                                                                    className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-medium"
+                                                                >
+                                                                    {c ===
+                                                                    'north'
+                                                                        ? 'North'
+                                                                        : c ===
+                                                                            'south'
+                                                                          ? 'South'
+                                                                          : 'Off-Campus'}
+                                                                </span>
+                                                            )
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleEditCandidate(candidate)
+                                            }
+                                            className="p-1.5 text-gray-400 hover:text-blue-600 transition"
+                                            title="Edit candidate"
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width="16"
+                                                height="16"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            >
+                                                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                                                <path d="m15 5 4 4" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                handleDeleteCandidate(
+                                                    candidate._id
+                                                )
+                                            }
+                                            className="p-1.5 text-gray-400 hover:text-red-600 transition"
+                                            title="Delete candidate"
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width="16"
+                                                height="16"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            >
+                                                <path d="M3 6h18" />
+                                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            )
+                        )}
+                    </div>
+                </div>
+            )
+        );
+
     const getElectionStatus = () => {
         if (!startDate || !endDate) return 'Draft';
         const now = new Date();
@@ -1343,195 +1508,43 @@ const ElectionsDashboard = () => {
                                 {renderCandidateForm('New Candidate')}
                             </div>
 
-                            {/* Candidates List — grouped by position */}
+                            {/* Candidates List — non-write-in first; write-ins behind a toggle */}
                             {candidates.length > 0 ? (
                                 <div className="space-y-5">
-                                    {Object.entries(
-                                        candidates.reduce(
-                                            (
-                                                acc: Record<
-                                                    string,
-                                                    ICandidateFrontend[]
-                                                >,
-                                                c
-                                            ) => {
-                                                if (!acc[c.position])
-                                                    acc[c.position] = [];
-                                                acc[c.position].push(c);
-                                                return acc;
-                                            },
-                                            {}
+                                    {nonWriteInCandidates.length > 0 ? (
+                                        renderCandidateGroups(
+                                            nonWriteInCandidates
                                         )
-                                    ).map(([position, positionCandidates]) => (
-                                        <div key={position}>
-                                            <h3 className="text-sm font-semibold text-gray-700 mb-2 border-b border-gray-100 pb-1">
-                                                {formatPositionLabel(position)}
-                                            </h3>
-                                            <div className="space-y-2">
-                                                {positionCandidates.map(
-                                                    (candidate) =>
-                                                        editingCandidateId ===
-                                                        candidate._id ? (
-                                                            /* Inline edit form */
-                                                            <div
-                                                                key={
-                                                                    candidate._id
-                                                                }
-                                                            >
-                                                                {renderCandidateForm(
-                                                                    'Edit Candidate'
-                                                                )}
-                                                            </div>
-                                                        ) : (
-                                                            /* Read-only candidate card */
-                                                            <div
-                                                                key={
-                                                                    candidate._id
-                                                                }
-                                                                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg transition-all duration-150"
-                                                            >
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium text-sm">
-                                                                        {candidate.name
-                                                                            .charAt(
-                                                                                0
-                                                                            )
-                                                                            .toUpperCase()}
-                                                                    </div>
-                                                                    <div>
-                                                                        <div className="text-sm font-medium text-gray-900">
-                                                                            {
-                                                                                candidate.name
-                                                                            }
-                                                                        </div>
-                                                                        <div className="flex flex-wrap items-center gap-1 mt-0.5">
-                                                                            <span className="text-[10px] text-gray-400 font-medium mr-0.5">
-                                                                                Voters:
-                                                                            </span>
-                                                                            {(!candidate.eligibleYears ||
-                                                                                candidate
-                                                                                    .eligibleYears
-                                                                                    .length ===
-                                                                                    0) &&
-                                                                            (!candidate.housingLocation ||
-                                                                                candidate
-                                                                                    .housingLocation
-                                                                                    .length ===
-                                                                                    0) ? (
-                                                                                <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full font-medium">
-                                                                                    All
-                                                                                    Students
-                                                                                </span>
-                                                                            ) : (
-                                                                                <>
-                                                                                    {candidate.eligibleYears?.map(
-                                                                                        (
-                                                                                            y
-                                                                                        ) => (
-                                                                                            <span
-                                                                                                key={
-                                                                                                    y
-                                                                                                }
-                                                                                                className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-medium"
-                                                                                            >
-                                                                                                {
-                                                                                                    [
-                                                                                                        '',
-                                                                                                        'First-Year',
-                                                                                                        'Sophomore',
-                                                                                                        'Junior',
-                                                                                                        'Senior',
-                                                                                                    ][
-                                                                                                        y
-                                                                                                    ]
-                                                                                                }
-                                                                                            </span>
-                                                                                        )
-                                                                                    )}
-                                                                                    {candidate.housingLocation?.map(
-                                                                                        (
-                                                                                            c
-                                                                                        ) => (
-                                                                                            <span
-                                                                                                key={
-                                                                                                    c
-                                                                                                }
-                                                                                                className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-medium"
-                                                                                            >
-                                                                                                {c ===
-                                                                                                'north'
-                                                                                                    ? 'North'
-                                                                                                    : c ===
-                                                                                                        'south'
-                                                                                                      ? 'South'
-                                                                                                      : 'Off-Campus'}
-                                                                                            </span>
-                                                                                        )
-                                                                                    )}
-                                                                                </>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            handleEditCandidate(
-                                                                                candidate
-                                                                            )
-                                                                        }
-                                                                        className="p-1.5 text-gray-400 hover:text-blue-600 transition"
-                                                                        title="Edit candidate"
-                                                                    >
-                                                                        <svg
-                                                                            xmlns="http://www.w3.org/2000/svg"
-                                                                            width="16"
-                                                                            height="16"
-                                                                            viewBox="0 0 24 24"
-                                                                            fill="none"
-                                                                            stroke="currentColor"
-                                                                            strokeWidth="2"
-                                                                            strokeLinecap="round"
-                                                                            strokeLinejoin="round"
-                                                                        >
-                                                                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                                                                            <path d="m15 5 4 4" />
-                                                                        </svg>
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            handleDeleteCandidate(
-                                                                                candidate._id
-                                                                            )
-                                                                        }
-                                                                        className="p-1.5 text-gray-400 hover:text-red-600 transition"
-                                                                        title="Delete candidate"
-                                                                    >
-                                                                        <svg
-                                                                            xmlns="http://www.w3.org/2000/svg"
-                                                                            width="16"
-                                                                            height="16"
-                                                                            viewBox="0 0 24 24"
-                                                                            fill="none"
-                                                                            stroke="currentColor"
-                                                                            strokeWidth="2"
-                                                                            strokeLinecap="round"
-                                                                            strokeLinejoin="round"
-                                                                        >
-                                                                            <path d="M3 6h18" />
-                                                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                                        </svg>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        )
-                                                )}
-                                            </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-500">
+                                            No official (non-write-in)
+                                            candidates yet.
+                                        </p>
+                                    )}
+                                    {writeInCandidates.length > 0 && (
+                                        <div className="pt-2 border-t border-gray-100">
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setShowWriteInCandidates(
+                                                        (v) => !v
+                                                    )
+                                                }
+                                                className="text-sm font-medium text-[#001f3f] hover:text-[#003366] underline underline-offset-2"
+                                            >
+                                                {showWriteInCandidates
+                                                    ? 'Hide write-in candidates'
+                                                    : `Show write-in candidates (${writeInCandidates.length})`}
+                                            </button>
+                                            {showWriteInCandidates && (
+                                                <div className="space-y-5 mt-4">
+                                                    {renderCandidateGroups(
+                                                        writeInCandidates
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                             ) : (
                                 <p className="text-gray-400 text-sm text-center py-4">
