@@ -209,6 +209,7 @@ export interface EventReview {
     eventId: string;
     author: string | User;
     isAnonymous: boolean;
+    isOwner: boolean;
     content: string;
     isHidden: boolean;
     overall: number;

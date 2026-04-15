@@ -47,6 +47,7 @@ interface EventReview {
               firstName: string;
               lastName: string;
           };
+    isOwner: boolean;
     isAnonymous: boolean;
     content?: string;
     overall: number;
@@ -135,16 +136,7 @@ const EventDetailPage = () => {
                     setReviews(reviewsData);
 
                     // Check if user has already reviewed
-                    if (user) {
-                        const userReview = reviewsData.find((r) => {
-                            const authorEmail =
-                                typeof r.author === 'string'
-                                    ? r.author
-                                    : r.author?.email;
-                            return authorEmail === user.email;
-                        });
-                        setHasUserReviewed(!!userReview);
-                    }
+                    setHasUserReviewed(reviewsData.some((r) => r.isOwner));
                 }
             } catch (error) {
                 console.error('Server error', error);
