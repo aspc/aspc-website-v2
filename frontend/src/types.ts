@@ -140,7 +140,7 @@ export type CourseReview = {
     comments?: string;
     course_id: number;
     instructor_id: number;
-    isOwner?: boolean;
+    isOwner: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 };
