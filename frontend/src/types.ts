@@ -72,7 +72,7 @@ export interface Review {
     temperature_rating?: number;
     comments?: string;
     housing_room_id: number;
-    user_email: string;
+    isOwner: boolean;
     pictures?: string[];
     createdAt: Date;
     updatedAt: Date;
@@ -140,7 +140,7 @@ export type CourseReview = {
     comments?: string;
     course_id: number;
     instructor_id: number;
-    user_email?: string;
+    isOwner?: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 };

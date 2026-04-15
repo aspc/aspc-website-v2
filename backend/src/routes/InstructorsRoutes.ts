@@ -204,9 +204,18 @@ router.get('/:id/reviews', async (req: Request, res: Response) => {
         // Get all reviews for this instructor
         const reviews = await CourseReviews.find({
             instructor_id: instructorId,
-        }).sort({ updatedAt: -1 });
+        })
+            .sort({ updatedAt: -1 })
+            .lean()
+            .exec();
 
-        res.json(reviews);
+        const sessionEmail = req.session.user!.email;
+        const safeReviews = reviews.map(({ user_email, ...fields }) => ({
+            ...fields,
+            isOwner: user_email === sessionEmail,
+        }));
+
+        res.json(safeReviews);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
