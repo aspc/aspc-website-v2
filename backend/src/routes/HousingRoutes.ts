@@ -133,7 +133,13 @@ router.get(
             // Get all reviews for the room
             const reviews = await HousingReviews.find({
                 housing_room_id: roomId,
-            });
+            }).lean();
+
+            const sessionEmail = req.session.user!.email;
+            const safeReviews = reviews.map(({ user_email, ...fields }) => ({
+                ...fields,
+                isOwner: user_email === sessionEmail,
+            }));
 
             // Calculate average ratings
             if (reviews.length > 0) {
@@ -166,7 +172,7 @@ router.get(
                 // Return reviews and averages as well as the room data itself
                 res.json({
                     room: roomData,
-                    reviews: reviews,
+                    reviews: safeReviews,
                     averages: averages,
                 });
                 return;
@@ -175,7 +181,7 @@ router.get(
             // Return reviews (even if empty)
             res.json({
                 room: roomData,
-                reviews: reviews,
+                reviews: safeReviews,
                 averages: {
                     overallAverage: 0,
                     quietAverage: 0,
@@ -223,7 +229,13 @@ router.get(
             // Get all reviews for the room using room id
             const reviews = await HousingReviews.find({
                 housing_room_id: roomData.id,
-            });
+            }).lean();
+
+            const sessionEmail = req.session.user!.email;
+            const safeReviews = reviews.map(({ user_email, ...fields }) => ({
+                ...fields,
+                isOwner: user_email === sessionEmail,
+            }));
 
             // Calculate average ratings
             if (reviews.length > 0) {
@@ -256,7 +268,7 @@ router.get(
                 // Return reviews and averages as well as the room data itself
                 res.json({
                     room: roomData,
-                    reviews: reviews,
+                    reviews: safeReviews,
                     averages: averages,
                 });
                 return;
@@ -265,7 +277,7 @@ router.get(
             // Return reviews (even if empty)
             res.json({
                 room: roomData,
-                reviews: reviews,
+                reviews: safeReviews,
                 averages: {
                     overallAverage: 0,
                     quietAverage: 0,
