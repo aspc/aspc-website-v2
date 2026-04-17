@@ -1,6 +1,7 @@
 import express, { Request, Response, Router } from 'express';
 import { Instructors } from '../models/People';
 import { CourseReviews } from '../models/Courses';
+import { isAuthenticated } from '../middleware/authMiddleware';
 
 const router: Router = express.Router();
 
@@ -182,36 +183,51 @@ router.put('/:id', async (req: Request, res: Response) => {
  * @desc    Get all reviews for a specific instructor
  * @access  Public
  */
-router.get('/:id/reviews', async (req: Request, res: Response) => {
-    try {
-        const instructorId = parseInt(req.params.id);
+router.get(
+    '/:id/reviews',
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+        try {
+            const instructorId = parseInt(req.params.id);
 
-        // Check if conversion is valid
-        if (isNaN(instructorId)) {
-            res.status(400).json({ message: 'Invalid instructor ID format' });
-            return;
+            // Check if conversion is valid
+            if (isNaN(instructorId)) {
+                res.status(400).json({
+                    message: 'Invalid instructor ID format',
+                });
+                return;
+            }
+
+            // Verify instructor exists
+            const instructor = await Instructors.findOne({
+                id: instructorId,
+            });
+
+            if (!instructor) {
+                res.status(404).json({ message: 'Instructor not found' });
+                return;
+            }
+            // Get all reviews for this instructor
+            const reviews = await CourseReviews.find({
+                instructor_id: instructorId,
+            })
+                .sort({ updatedAt: -1 })
+                .lean()
+                .exec();
+
+            const sessionEmail = req.session.user!.email;
+            const safeReviews = reviews.map(({ user_email, ...fields }) => ({
+                ...fields,
+                isOwner: user_email === sessionEmail,
+            }));
+
+            res.json(safeReviews);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Server error' });
         }
-
-        // Verify instructor exists
-        const instructor = await Instructors.findOne({
-            id: instructorId,
-        });
-
-        if (!instructor) {
-            res.status(404).json({ message: 'Instructor not found' });
-            return;
-        }
-        // Get all reviews for this instructor
-        const reviews = await CourseReviews.find({
-            instructor_id: instructorId,
-        }).sort({ updatedAt: -1 });
-
-        res.json(reviews);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
     }
-});
+);
 
 /**
  * @route   GET /api/instructors/:id/courses
