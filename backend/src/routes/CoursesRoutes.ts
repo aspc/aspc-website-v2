@@ -618,9 +618,16 @@ router.get(
 
             const reviews = await CourseReviews.find({ course_id: courseId })
                 .sort({ updatedAt: -1 }) // -1 for descending order (newest first)
+                .lean()
                 .exec();
 
-            res.json(reviews);
+            const sessionEmail = req.session.user!.email;
+            const safeReviews = reviews.map(({ user_email, ...fields }) => ({
+                ...fields,
+                isOwner: user_email === sessionEmail,
+            }));
+
+            res.json(safeReviews);
         } catch (err) {
             console.error(err);
             res.status(500).json({ message: 'Server error' });

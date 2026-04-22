@@ -121,7 +121,29 @@ router.get(
                 return;
             }
 
-            res.json(reviews);
+            const azureId = req.session.user!.id;
+            const currentUser = await SAMLUser.findOne({ id: azureId });
+
+            const safeReviews = reviews.map((review) => {
+                const doc = review.toObject();
+                const authorId =
+                    doc.author && typeof doc.author === 'object'
+                        ? (doc.author as any)._id?.toString()
+                        : null;
+                const isOwner =
+                    !!currentUser &&
+                    !!authorId &&
+                    authorId === String(currentUser._id);
+                return {
+                    ...doc,
+                    // Strip author identity from anonymous reviews so the name
+                    // cannot be recovered from the network response
+                    author: doc.isAnonymous ? null : doc.author,
+                    isOwner,
+                };
+            });
+
+            res.json(safeReviews);
         } catch (error) {
             res.status(500).json({ message: 'Server error' });
         }

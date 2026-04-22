@@ -73,14 +73,6 @@ const EventDetailsPage = () => {
         window.location.reload();
     };
 
-    // Helper function to get author ID
-    const getAuthorId = (author: string | User): string => {
-        if (typeof author === 'string') {
-            return author;
-        }
-        return author._id || author.id;
-    };
-
     // Helper function to get author display name
     const getAuthorDisplay = (author: string | User): string => {
         if (typeof author === 'string') {
@@ -449,16 +441,13 @@ const EventDetailsPage = () => {
                                 </h2>
                                 {eventDetails.reviews.length > 0 ? (
                                     eventDetails.reviews.map((rating) => {
-                                        const authorId = getAuthorId(
-                                            rating.author
-                                        );
-                                        const authorName = getAuthorDisplay(
-                                            rating.author
-                                        );
-                                        const isAuthor =
-                                            user._id === authorId ||
-                                            user.id === authorId;
-
+                                        let authorName = 'Cecil';
+                                        if (!rating?.isAnonymous) {
+                                            authorName = getAuthorDisplay(
+                                                rating.author
+                                            );
+                                        }
+                                        const isAuthor = rating.isOwner;
                                         return (
                                             <div
                                                 key={rating._id}
