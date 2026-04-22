@@ -49,7 +49,9 @@ async function migrateCourses(dryRun: boolean = false) {
 
     try {
         // Connect to MongoDB
-        await mongoose.connect('');
+        await mongoose.connect(
+            process.env.MONGODB_URI ?? 'mongodb://localhost:27017/coursereview'
+        );
         console.log('✓ Connected to MongoDB\n');
 
         // Load Phase 1 data

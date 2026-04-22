@@ -69,15 +69,16 @@ interface CourseCxIDs {
  */
 function generateTermKeys(): string[] {
     const terms: string[] = [];
-    const currentYear = 2025;
-    const currentMonth = 11; // November
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
 
     // Determine current term (FA if after July, SP otherwise)
     const currentTerm = currentMonth >= 7 ? 'FA' : 'SP';
 
     for (let year = 2002; year <= currentYear; year++) {
-        // Spring term
-        if (year > 2002 || currentTerm === 'SP') {
+        // Spring term — first available term is 2002;FA, so always skip 2002;SP
+        if (year > 2002 && (year < currentYear || currentTerm === 'SP')) {
             terms.push(`${year};SP`);
         }
 

@@ -4,6 +4,22 @@ import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Courses } from '../models/Courses';
+import { Instructors } from '../models/People';
+import {
+    stripMiddleName,
+    normalizeInstructorName,
+} from '../utils/instructorNames';
+
+interface InstructorLean {
+    id: number;
+    name: string;
+    cxids?: number[];
+    courses?: Array<{
+        courseId: number;
+        courseCode: string;
+        courseName: string;
+    }>;
+}
 
 dotenv.config();
 
@@ -245,6 +261,15 @@ function getDepartmentNames(deptCode: string): string[] {
     return [deptCode];
 }
 
+// Helper function to get the next available instructor ID
+async function getNextInstructorId(): Promise<number> {
+    const max = await Instructors.findOne()
+        .sort({ id: -1 })
+        .select('id')
+        .lean();
+    return max ? max.id + 1 : 1;
+}
+
 // Main function to process courses with source tracking
 async function updateCoursesFromAPI(
     coursesWithSource: { course: APICourse; sourceArea: string }[],
@@ -263,6 +288,22 @@ async function updateCoursesFromAPI(
 
     try {
         const processedCourses: Set<string> = new Set();
+        const [nextCourseIdInit, nextInstructorIdInit, allDbInstructors] =
+            await Promise.all([
+                getNextCourseId(),
+                getNextInstructorId(),
+                Instructors.find({}).lean(),
+            ]);
+        let nextCourseId = nextCourseIdInit;
+        let nextInstructorId = nextInstructorIdInit;
+        const instructorByCxid = new Map<number, InstructorLean>();
+        const instructorByName = new Map<string, InstructorLean>();
+        for (const inst of allDbInstructors) {
+            for (const cxid of inst.cxids ?? []) {
+                instructorByCxid.set(cxid, inst);
+            }
+            instructorByName.set(normalizeInstructorName(inst.name), inst);
+        }
 
         for (const { course: apiCourse, sourceArea } of coursesWithSource) {
             try {
@@ -283,6 +324,9 @@ async function updateCoursesFromAPI(
                 let existingCourse = await Courses.findOne({
                     $or: [{ code_slug: courseCodeSlug }, { code: courseCode }],
                 });
+
+                let resolvedCourseId: number;
+                let resolvedCourseName: string;
 
                 if (existingCourse) {
                     let updated = false;
@@ -350,6 +394,9 @@ async function updateCoursesFromAPI(
                         });
                     }
 
+                    resolvedCourseId = existingCourse.id;
+                    resolvedCourseName = existingCourse.name;
+
                     if (updated) {
                         await existingCourse.save();
                         console.log(`  ✓ Updated course ${courseCode}`);
@@ -358,7 +405,7 @@ async function updateCoursesFromAPI(
                         summary.coursesSkipped++;
                     }
                 } else {
-                    const nextId = await getNextCourseId();
+                    const nextId = nextCourseId++;
                     const deptCode = extractDepartmentCode(courseCode);
 
                     let departmentNames: string[] = [];
@@ -393,9 +440,92 @@ async function updateCoursesFromAPI(
                         all_instructor_cxids: instructorCxids,
                     });
 
+                    resolvedCourseId = nextId;
+                    resolvedCourseName = apiCourse.Name
+                        ? apiCourse.Name.trim()
+                        : 'Untitled Course';
+
                     await newCourse.save();
                     console.log(`  ✓ Created course ${courseCode}`);
                     summary.coursesCreated++;
+                }
+
+                // Sync instructor documents for this course.
+                // Tier 1: CxID lookup (handles same school, name variant this term).
+                // Tier 2: stripped-name lookup (same person, different school → different CxID).
+                for (const apiInstructor of apiCourse.Instructors ?? []) {
+                    if (!apiInstructor.CxID || isNaN(apiInstructor.CxID))
+                        continue;
+
+                    const courseRef = {
+                        courseId: resolvedCourseId,
+                        courseCode: courseCode,
+                        courseName: resolvedCourseName,
+                    };
+                    const normalizedName = normalizeInstructorName(
+                        apiInstructor.Name
+                    );
+
+                    let match =
+                        instructorByCxid.get(apiInstructor.CxID) ??
+                        instructorByName.get(normalizedName);
+
+                    if (match) {
+                        const needsCxid = !(match.cxids ?? []).includes(
+                            apiInstructor.CxID
+                        );
+                        const needsCourse = !(match.courses ?? []).some(
+                            (c) => c.courseId === resolvedCourseId
+                        );
+
+                        if (needsCxid || needsCourse) {
+                            await Instructors.updateOne(
+                                { id: match.id },
+                                {
+                                    ...(needsCxid && {
+                                        $addToSet: {
+                                            cxids: apiInstructor.CxID,
+                                        },
+                                    }),
+                                    ...(needsCourse && {
+                                        $push: { courses: courseRef },
+                                    }),
+                                }
+                            );
+                            // Keep in-memory state current so repeat appearances
+                            // of the same course (from a different source area)
+                            // don't trigger a second $push.
+                            if (needsCxid) {
+                                if (!match.cxids) match.cxids = [];
+                                match.cxids.push(apiInstructor.CxID);
+                                instructorByCxid.set(apiInstructor.CxID, match);
+                            }
+                            if (needsCourse) {
+                                if (!match.courses) match.courses = [];
+                                match.courses.push(courseRef);
+                            }
+                        }
+                    } else {
+                        const newDoc = {
+                            id: nextInstructorId++,
+                            name: stripMiddleName(apiInstructor.Name),
+                            cxids: [apiInstructor.CxID],
+                            numReviews: 0,
+                            courses: [courseRef],
+                        };
+                        await Instructors.create(newDoc);
+                        instructorByCxid.set(
+                            apiInstructor.CxID,
+                            newDoc as InstructorLean
+                        );
+                        instructorByName.set(
+                            normalizedName,
+                            newDoc as InstructorLean
+                        );
+                        console.log(
+                            `  + New instructor: ${newDoc.name} (CxID ${apiInstructor.CxID})`
+                        );
+                    }
                 }
 
                 processedCourses.add(courseCode);
@@ -434,7 +564,13 @@ async function main() {
         process.exit(1);
     }
 
-    const TERM_KEY = '2026;SP';
+    const TERM_KEY = process.env.TERM_KEY;
+    if (!TERM_KEY) {
+        console.error(
+            'Error: TERM_KEY environment variable is not set (e.g. "2026;SP")'
+        );
+        process.exit(1);
+    }
 
     try {
         const MONGODB_URI =

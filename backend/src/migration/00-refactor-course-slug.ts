@@ -20,7 +20,9 @@ async function fixCodeSlugFormat(dryRun: boolean = true) {
     console.log('Handling duplicates: Keep course with more reviews\n');
 
     try {
-        await mongoose.connect('');
+        await mongoose.connect(
+            process.env.MONGODB_URI ?? 'mongodb://localhost:27017/coursereview'
+        );
         console.log('✓ Connected to MongoDB\n');
 
         // Get all courses

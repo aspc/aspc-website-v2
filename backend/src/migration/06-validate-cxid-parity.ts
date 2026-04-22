@@ -12,7 +12,7 @@
  * CxIDs when present. Use mismatchBreakdown to see patterns, not a single "error" count.
  *
  * Usage (from backend/):
- *   MONGODB_URI="mongodb://..." npx ts-node src/migration/validate-cxid-parity.ts
+ *   MONGODB_URI="mongodb://..." npx ts-node src/migration/06-validate-cxid-parity.ts
  *
  * Optional:
  *   --out=./migration-data/parity-report.json   (default: timestamped file under migration-data)
@@ -44,7 +44,8 @@ async function main() {
     const { outPath } = parseArgs();
 
     const uri =
-        process.env.MONGODB_URI || 'mongodb://localhost:27017/coursereview';
+        process.env.MONGODB_TEST_URI ||
+        'mongodb://localhost:27017/coursereview';
     await mongoose.connect(uri);
     console.log('Connected. Loading instructors…');
 

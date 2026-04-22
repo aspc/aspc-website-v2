@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import * as fs from 'fs';
 import path from 'path';
 import { Courses, CourseReviews } from '../models/Courses';
+import { pickInstructorCxidForCourse } from '../utils/courseInstructors';
 
 const MIGRATION_DATA_DIR = path.join(__dirname, 'migration-data');
 import { Instructors } from '../models/People';
@@ -25,6 +26,50 @@ interface MigrationStats {
 }
 
 // ============================================================================
+// Helpers
+// ============================================================================
+
+function levenshtein(a: string, b: string): number {
+    const m = a.length;
+    const n = b.length;
+    const dp: number[] = Array.from({ length: n + 1 }, (_, j) => j);
+    for (let i = 1; i <= m; i++) {
+        let prev = dp[0];
+        dp[0] = i;
+        for (let j = 1; j <= n; j++) {
+            const temp = dp[j];
+            dp[j] =
+                a[i - 1] === b[j - 1]
+                    ? prev
+                    : 1 + Math.min(prev, dp[j], dp[j - 1]);
+            prev = temp;
+        }
+    }
+    return dp[n];
+}
+
+// Handles "Last, First" vs "First Last" and similar token-order differences
+function tokenSortNormalize(name: string): string {
+    return name
+        .toLowerCase()
+        .replace(/[,.]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .split(' ')
+        .sort()
+        .join(' ');
+}
+
+const LEVENSHTEIN_THRESHOLD = 3;
+const TX_BATCH_SIZE = 500;
+
+interface ReviewUpdate {
+    reviewId: number;
+    cxid: number;
+    matchMethod: 'exact' | 'token-sort' | 'fuzzy' | 'cxid-intersection';
+}
+
+// ============================================================================
 // Main Migration Logic
 // ============================================================================
 
@@ -41,7 +86,8 @@ async function migrateReviews(dryRun: boolean = false) {
     try {
         // Connect to MongoDB
         await mongoose.connect(
-            process.env.MONGODB_URI || 'mongodb://localhost:27017/coursereview'
+            process.env.MONGODB_TEST_URI ||
+                'mongodb://localhost:27017/coursereview'
         );
         console.log('✓ Connected to MongoDB\n');
 
@@ -58,22 +104,32 @@ async function migrateReviews(dryRun: boolean = false) {
         // Build lookup maps for fast access
         console.log('Building lookup indexes...');
 
-        // Map: courseCode-slug -> instructorName -> Set of CxIDs
+        // courseCode -> exact-normalized name -> Set<CxID>
         const courseLookup = new Map<string, Map<string, Set<number>>>();
+        // courseCode -> token-sorted normalized name -> Set<CxID>
+        const courseTokenLookup = new Map<string, Map<string, Set<number>>>();
 
         cxidMappings.forEach((mapping) => {
+            const exactName = mapping.instructorName.toLowerCase().trim();
+            const tokenName = tokenSortNormalize(mapping.instructorName);
+
             if (!courseLookup.has(mapping.courseCode)) {
                 courseLookup.set(mapping.courseCode, new Map());
             }
-
             const instructorMap = courseLookup.get(mapping.courseCode)!;
-            const normalizedName = mapping.instructorName.toLowerCase().trim();
-
-            if (!instructorMap.has(normalizedName)) {
-                instructorMap.set(normalizedName, new Set());
+            if (!instructorMap.has(exactName)) {
+                instructorMap.set(exactName, new Set());
             }
+            instructorMap.get(exactName)!.add(mapping.cxid);
 
-            instructorMap.get(normalizedName)!.add(mapping.cxid);
+            if (!courseTokenLookup.has(mapping.courseCode)) {
+                courseTokenLookup.set(mapping.courseCode, new Map());
+            }
+            const tokenMap = courseTokenLookup.get(mapping.courseCode)!;
+            if (!tokenMap.has(tokenName)) {
+                tokenMap.set(tokenName, new Set());
+            }
+            tokenMap.get(tokenName)!.add(mapping.cxid);
         });
 
         console.log(`✓ Built lookup index for ${courseLookup.size} courses\n`);
@@ -102,14 +158,21 @@ async function migrateReviews(dryRun: boolean = false) {
             errors: 0,
         };
 
-        console.log('Processing reviews...');
+        // ── Computation phase: resolve CxID for every review (no writes) ──────
+        console.log('Computing CxID mappings...');
         console.log('-'.repeat(80));
+
+        const updates: ReviewUpdate[] = [];
+        const unmappedReviews: {
+            reviewId: number;
+            course: string;
+            instructor: string;
+        }[] = [];
 
         let processed = 0;
 
         for (const review of reviews) {
             try {
-                // Get course and instructor info
                 const course = courseById.get(review.course_id);
                 const instructor = instructorById.get(review.instructor_id);
 
@@ -123,57 +186,88 @@ async function migrateReviews(dryRun: boolean = false) {
                     continue;
                 }
 
-                // Look up CxID using course code_slug and instructor name
-                let foundCxID: number | null = null;
+                let foundCxID: number | undefined;
+                let matchMethod: ReviewUpdate['matchMethod'] | undefined;
 
                 if (course.code_slug && instructor.name) {
+                    const exactName = instructor.name.toLowerCase().trim();
+                    const tokenName = tokenSortNormalize(instructor.name);
+
                     const instructorMap = courseLookup.get(course.code_slug);
+                    const tokenMap = courseTokenLookup.get(course.code_slug);
 
-                    if (instructorMap) {
-                        const normalizedName = instructor.name
-                            .toLowerCase()
-                            .trim();
-                        const cxids = instructorMap.get(normalizedName);
+                    // 1. Exact normalized name match
+                    const exactCxids = instructorMap?.get(exactName);
+                    if (exactCxids && exactCxids.size > 0) {
+                        foundCxID = exactCxids.values().next().value!;
+                        matchMethod = 'exact';
+                    }
 
-                        if (cxids && cxids.size > 0) {
-                            // Found in course-specific mapping
-                            foundCxID = Array.from(cxids)[0];
+                    // 2. Token-sort match (handles "Last, First" vs "First Last")
+                    if (foundCxID === undefined) {
+                        const tokenCxids = tokenMap?.get(tokenName);
+                        if (tokenCxids && tokenCxids.size > 0) {
+                            foundCxID = tokenCxids.values().next().value!;
+                            matchMethod = 'token-sort';
+                        }
+                    }
+
+                    // 3. Levenshtein fuzzy match within threshold
+                    if (foundCxID === undefined && instructorMap) {
+                        let bestDist = LEVENSHTEIN_THRESHOLD + 1;
+                        let bestCxids: Set<number> | undefined;
+                        for (const [candidateName, cxids] of instructorMap) {
+                            const dist = levenshtein(exactName, candidateName);
+                            if (
+                                dist <= LEVENSHTEIN_THRESHOLD &&
+                                dist < bestDist
+                            ) {
+                                bestDist = dist;
+                                bestCxids = cxids;
+                            }
+                        }
+                        if (bestCxids && bestCxids.size > 0) {
+                            foundCxID = bestCxids.values().next().value!;
+                            matchMethod = 'fuzzy';
                         }
                     }
                 }
 
-                // FALLBACK: If not found in mapping, check if instructor has cxids
-                if (
-                    !foundCxID &&
-                    instructor.cxids &&
-                    instructor.cxids.length > 0
-                ) {
-                    // Use the first CxID from the instructor's array
-                    foundCxID = instructor.cxids[0];
+                // 4. CxID-intersection fallback: prefer a CxID the course already
+                //    knows about; avoids picking an arbitrary school when an
+                //    instructor has taught at multiple campuses
+                if (foundCxID === undefined) {
+                    const picked = pickInstructorCxidForCourse(
+                        instructor,
+                        course.all_instructor_cxids
+                    );
+                    if (picked !== undefined) {
+                        foundCxID = picked;
+                        matchMethod = 'cxid-intersection';
+                    }
                 }
 
-                if (foundCxID) {
-                    // Successfully mapped to CxID
-                    if (!dryRun) {
-                        await CourseReviews.updateOne(
-                            { id: review.id },
-                            { $set: { instructor_cxid: foundCxID } }
-                        );
-                    }
-
+                if (foundCxID !== undefined && matchMethod) {
+                    updates.push({
+                        reviewId: review.id,
+                        cxid: foundCxID,
+                        matchMethod,
+                    });
                     stats.mappedToCxID++;
 
-                    // Show first few mappings
                     if (stats.mappedToCxID <= 5) {
                         console.log(
-                            `✓ Review ${review.id}: ${course.code} + ${instructor.name} → CxID ${foundCxID}`
+                            `✓ Review ${review.id}: ${course.code} + ${instructor.name} → CxID ${foundCxID} (${matchMethod})`
                         );
                     }
                 } else {
-                    // No CxID found - keep legacy instructor_id
+                    unmappedReviews.push({
+                        reviewId: review.id,
+                        course: course.code,
+                        instructor: instructor.name,
+                    });
                     stats.unmappedLegacy++;
 
-                    // Show first few unmapped
                     if (stats.unmappedLegacy <= 5) {
                         console.log(
                             `⚠️  Review ${review.id}: ${course.code} + ${instructor.name} → No CxID (legacy only)`
@@ -183,7 +277,6 @@ async function migrateReviews(dryRun: boolean = false) {
 
                 processed++;
 
-                // Progress indicator
                 if (processed % 1000 === 0) {
                     const pct = Math.round((processed / reviews.length) * 100);
                     console.log(
@@ -206,6 +299,51 @@ async function migrateReviews(dryRun: boolean = false) {
             console.log(
                 `... (${stats.unmappedLegacy - 5} more reviews unmapped)`
             );
+        }
+
+        // Log match method breakdown
+        const methodCounts = updates.reduce(
+            (acc, u) => {
+                acc[u.matchMethod] = (acc[u.matchMethod] ?? 0) + 1;
+                return acc;
+            },
+            {} as Partial<Record<ReviewUpdate['matchMethod'], number>>
+        );
+        console.log('\nMatch method breakdown:');
+        for (const [method, count] of Object.entries(methodCounts)) {
+            console.log(`  ${method}: ${count}`);
+        }
+
+        // ── Write phase: apply in batched transactions ────────────────────────
+        // Requires a MongoDB replica set (Atlas or local rs). Each batch is
+        // atomic: a mid-batch failure rolls back only that batch, not prior ones.
+        if (!dryRun && updates.length > 0) {
+            const totalBatches = Math.ceil(updates.length / TX_BATCH_SIZE);
+            console.log(
+                `\nApplying ${updates.length} updates in ${totalBatches} batch(es) of up to ${TX_BATCH_SIZE}...`
+            );
+
+            for (let i = 0; i < updates.length; i += TX_BATCH_SIZE) {
+                const batch = updates.slice(i, i + TX_BATCH_SIZE);
+                const batchNum = Math.floor(i / TX_BATCH_SIZE) + 1;
+                const session = await mongoose.startSession();
+                try {
+                    await session.withTransaction(async () => {
+                        for (const { reviewId, cxid } of batch) {
+                            await CourseReviews.updateOne(
+                                { id: reviewId },
+                                { $set: { instructor_cxid: cxid } },
+                                { session }
+                            );
+                        }
+                    });
+                    console.log(
+                        `  ✓ Batch ${batchNum}/${totalBatches} committed`
+                    );
+                } finally {
+                    await session.endSession();
+                }
+            }
         }
 
         // Verification
@@ -244,7 +382,9 @@ async function migrateReviews(dryRun: boolean = false) {
                 ...stats,
                 mappedPercentage: mappedPct,
                 unmappedPercentage: unmappedPct,
+                matchMethods: methodCounts,
             },
+            unmappedReviews,
             timestamp: new Date().toISOString(),
         };
 
