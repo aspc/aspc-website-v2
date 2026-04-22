@@ -215,29 +215,11 @@ router.get('/:id/reviews', async (req: Request, res: Response) => {
             .lean()
             .exec();
 
-            if (!instructor) {
-                res.status(404).json({ message: 'Instructor not found' });
-                return;
-            }
-            // Get all reviews for this instructor
-            const reviews = await CourseReviews.find({
-                instructor_id: instructorId,
-            })
-                .sort({ updatedAt: -1 })
-                .lean()
-                .exec();
-
-            const sessionEmail = req.session.user!.email;
-            const safeReviews = reviews.map(({ user_email, ...fields }) => ({
-                ...fields,
-                isOwner: user_email === sessionEmail,
-            }));
-
-            res.json(safeReviews);
-        } catch (err) {
-            console.error(err);
-            res.status(500).json({ message: 'Server error' });
+        if (!instructor) {
+            res.status(404).json({ message: 'Instructor not found' });
+            return;
         }
+
         const cxidsOnInstructor = instructor.cxids ?? [];
         const reviewMatch =
             cxidsOnInstructor.length > 0
@@ -249,16 +231,23 @@ router.get('/:id/reviews', async (req: Request, res: Response) => {
                   }
                 : { instructor_id: instructorId };
 
-        const reviews = await CourseReviews.find(reviewMatch).sort({
-            updatedAt: -1,
-        });
+        const reviews = await CourseReviews.find(reviewMatch)
+            .sort({ updatedAt: -1 })
+            .lean()
+            .exec();
 
-        res.json(reviews);
+        const sessionEmail = req.session.user?.email;
+        const safeReviews = reviews.map(({ user_email, ...fields }) => ({
+            ...fields,
+            isOwner: user_email === sessionEmail,
+        }));
+
+        res.json(safeReviews);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error' });
     }
-);
+});
 
 /**
  * @route   GET /api/instructors/:id/courses
