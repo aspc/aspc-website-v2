@@ -4,6 +4,7 @@ export interface PageContent {
     content?: string;
     header: string;
     link?: string;
+    pdfId?: string;
 }
 
 export interface StaffMember {

@@ -1,9 +1,9 @@
 import express, { Request, Response } from 'express';
-import multer from 'multer';
 import { ObjectId } from 'mongodb';
+import multer from 'multer';
+import { isAdmin, isAuthenticated } from '../../middleware/authMiddleware';
 import PageContent from '../../models/PageContent';
 import { pagePdfs } from '../../server';
-import { isAdmin, isAuthenticated } from '../../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -165,6 +165,16 @@ router.delete('/:id', isAdmin, async (req: Request, res: Response) => {
             return;
         }
 
+        if (page.pdfId) {
+            console.log('Deleting PDF with id:', page.pdfId);
+            try {
+                await pagePdfs.delete(new ObjectId(page.pdfId));
+                console.log('PDF deleted successfully');
+            } catch (pdfError) {
+                console.error('Error deleting PDF from GridFS:', pdfError);
+            }
+        }
+
         res.status(200).json({ message: 'Page deleted', page });
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
@@ -229,7 +239,7 @@ router.post(
  * @desc    Stream the PDF for a page
  * @access  public
  */
-router.get('/:id/pdf', async (req: Request, res: Response) => {
+router.get('/pdf/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const page = await PageContent.findOne({ id });

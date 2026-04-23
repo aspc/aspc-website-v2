@@ -1,22 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Editor } from '@tinymce/tinymce-react';
-import { PageContent } from '@/types';
 import Loading from '@/components/Loading';
+import { PageContent } from '@/types';
+import { Editor } from '@tinymce/tinymce-react';
+import { useEffect, useState } from 'react';
 
 const PageDashboard = () => {
     const [linkPages, setLinkPages] = useState<PageContent[]>([]);
     const [staticPages, setStaticPages] = useState<PageContent[]>([]);
+    const [pdfPages, setPdfPages] = useState<PageContent[]>([]);
     const [selectedPage, setSelectedPage] = useState<string>('');
     const [isCreatingNew, setIsCreatingNew] = useState(false);
     const [pageId, setPageId] = useState('');
     const [pageName, setPageName] = useState('');
     const [pageLink, setPageLink] = useState('');
     const [content, setContent] = useState<string>('');
-    const [pageType, setPageType] = useState<'content' | 'link' | ''>('');
+    const [pageType, setPageType] = useState<'content' | 'link' | 'pdf' | ''>(
+        ''
+    );
     const [pageSection, setPageSection] = useState<string>('about');
     const [loading, setLoading] = useState(false);
+    const [pdfFile, setPdfFile] = useState<File | null>(null);
+    const [hasPdf, setHasPdf] = useState(false);
+    const [pdfLoading, setPdfLoading] = useState(false);
 
     const pageSections = ['about', 'members', 'resources', 'press'];
 
@@ -28,12 +34,14 @@ const PageDashboard = () => {
             );
             if (response.ok) {
                 const data: PageContent[] = await response.json();
+
                 setLinkPages(
                     data.filter((page) => page.link && page.link !== null)
                 );
                 setStaticPages(
                     data.filter((page) => page.content && page.content !== null)
                 );
+                setPdfPages(data.filter((page) => page.pdfId != null));
             }
         } catch (error) {
             console.error('Error fetching pages:', error);
@@ -70,6 +78,16 @@ const PageDashboard = () => {
         }
     }, [pageLink, pageType]);
 
+    useEffect(() => {
+        if (pageType === 'pdf' && pageName) {
+            const sanitizedName = pageName
+                .replace(/[^a-zA-Z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .toLowerCase();
+            setPageId(sanitizedName);
+        }
+    }, [pageName, pageType]);
+
     const handlePageSelect = async (pageId: string) => {
         if (!pageId) {
             setSelectedPage('');
@@ -97,6 +115,18 @@ const PageDashboard = () => {
                 setContent(pageData.content || '');
                 setPageLink(pageData.link || '');
                 setPageSection(pageData.header);
+
+                // Detect page type
+                if (pageData.link) {
+                    setPageType('link');
+                } else if (pageData.pdfId) {
+                    // Check if it has a PDF
+                    const pdfRes = await fetch(
+                        `${process.env.BACKEND_LINK}/api/admin/pages/pdf/${pageData.id}`
+                    );
+                    setHasPdf(pdfRes.ok);
+                    setPageType(pdfRes.ok ? 'pdf' : '');
+                }
             } else {
                 throw new Error('Failed to fetch page content');
             }
@@ -157,6 +187,25 @@ const PageDashboard = () => {
                     throw new Error(`Server error: ${createResponse.status}`);
                 }
 
+                // If PDF type and a file was selected, upload it now
+                if (pageType === 'pdf' && pdfFile) {
+                    const formData = new FormData();
+                    formData.append('file', pdfFile);
+                    const pdfRes = await fetch(
+                        `${process.env.BACKEND_LINK}/api/admin/pages/${pageId}/pdf`,
+                        {
+                            method: 'POST',
+                            credentials: 'include',
+                            body: formData,
+                        }
+                    );
+                    if (!pdfRes.ok) {
+                        alert(
+                            'Page created but PDF upload failed. You can upload it from the edit page.'
+                        );
+                    }
+                }
+
                 alert('Page created successfully!');
             } else {
                 // Update existing page
@@ -191,6 +240,23 @@ const PageDashboard = () => {
                         throw new Error(errorData.message);
                     }
                     throw new Error(`Server error: ${updateResponse.status}`);
+                }
+
+                // If a new PDF file was selected, upload it
+                if (pageType === 'pdf' && pdfFile) {
+                    const formData = new FormData();
+                    formData.append('file', pdfFile);
+                    const pdfRes = await fetch(
+                        `${process.env.BACKEND_LINK}/api/admin/pages/${selectedPage}/pdf`,
+                        {
+                            method: 'POST',
+                            credentials: 'include',
+                            body: formData,
+                        }
+                    );
+                    if (!pdfRes.ok) {
+                        alert('Page updated but PDF upload failed.');
+                    }
                 }
 
                 alert('Page updated successfully!');
@@ -248,6 +314,27 @@ const PageDashboard = () => {
             alert('Error deleting page');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePdfUpload = async () => {
+        if (!pdfFile || !selectedPage) return;
+        const formData = new FormData();
+        formData.append('file', pdfFile);
+        setPdfLoading(true);
+        try {
+            const res = await fetch(
+                `${process.env.BACKEND_LINK}/api/admin/pages/${selectedPage}/pdf`,
+                { method: 'POST', credentials: 'include', body: formData }
+            );
+            if (!res.ok) throw new Error('Upload failed');
+            setHasPdf(true);
+            setPdfFile(null);
+            alert('PDF uploaded successfully!');
+        } catch (e) {
+            alert('Error uploading PDF');
+        } finally {
+            setPdfLoading(false);
         }
     };
 
@@ -339,6 +426,19 @@ const PageDashboard = () => {
                             >
                                 Link Page
                             </button>
+
+                            {/* PDF Page Button */}
+                            <button
+                                type="button"
+                                onClick={() => setPageType('pdf')}
+                                className={`px-4 py-2 rounded-md font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                                    pageType === 'pdf'
+                                        ? 'bg-blue-600 text-white shadow-sm'
+                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                }`}
+                            >
+                                PDF Page
+                            </button>
                         </div>
                     </div>
 
@@ -373,6 +473,21 @@ const PageDashboard = () => {
                             ))}
                         </select>
                     )}
+
+                    {pageType === 'pdf' && (
+                        <select
+                            className="w-full p-2 border rounded mb-4"
+                            value={selectedPage}
+                            onChange={(e) => handlePageSelect(e.target.value)}
+                        >
+                            <option value="">Select a pdf page to edit</option>
+                            {pdfPages.map((page) => (
+                                <option key={page.id} value={page.id}>
+                                    {page.name}
+                                </option>
+                            ))}
+                        </select>
+                    )}
                 </section>
             </div>
         );
@@ -385,7 +500,9 @@ const PageDashboard = () => {
                     {selectedPage
                         ? pageType === 'content'
                             ? 'Edit Content Page'
-                            : 'Edit Link Page'
+                            : pageType === 'link'
+                              ? 'Edit Link Page'
+                              : 'Edit PDF Page'
                         : 'Add New Page'}
                 </h1>
                 <div className="flex space-x-4 mb-6">
@@ -476,6 +593,23 @@ const PageDashboard = () => {
                         >
                             Links Page
                         </button>
+
+                        {/* PDF Page Button */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (isCreatingNew) {
+                                    setPageType('pdf');
+                                }
+                            }}
+                            className={`px-4 py-2 rounded-md font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 ${
+                                pageType === 'pdf'
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                        >
+                            PDF Page
+                        </button>
                     </div>
                 </div>
             )}
@@ -540,6 +674,71 @@ const PageDashboard = () => {
                                 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
                         }}
                     />
+                </div>
+            )}
+
+            {pageType === 'pdf' && (
+                <div className="bg-white rounded-lg shadow p-6 mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                        PDF
+                    </h2>
+                    <p className="text-sm text-gray-500 mb-4">
+                        Upload a PDF to display on this page. Click Replace Pdf
+                        to confirm.
+                    </p>
+
+                    <div className="flex items-center gap-4">
+                        <input
+                            type="file"
+                            accept="application/pdf"
+                            onChange={(e) =>
+                                setPdfFile(e.target.files?.[0] ?? null)
+                            }
+                            className="text-sm text-gray-700"
+                        />
+                        {!isCreatingNew && (
+                            <button
+                                type="button"
+                                onClick={handlePdfUpload}
+                                disabled={!pdfFile || pdfLoading}
+                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300 text-sm"
+                            >
+                                {pdfLoading
+                                    ? 'Uploading...'
+                                    : hasPdf
+                                      ? 'Replace PDF'
+                                      : 'Upload PDF'}
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Preview selected file before upload */}
+                    {pdfFile && (
+                        <div className="mt-4">
+                            <p className="text-sm text-gray-500 mb-2">
+                                Preview (selected file):
+                            </p>
+                            <iframe
+                                src={URL.createObjectURL(pdfFile)}
+                                className="w-full border rounded"
+                                style={{ height: '60vh' }}
+                            />
+                        </div>
+                    )}
+
+                    {/* Preview current uploaded PDF */}
+                    {!pdfFile && hasPdf && selectedPage && (
+                        <div className="mt-4">
+                            <p className="text-sm text-gray-500 mb-2">
+                                Current PDF:
+                            </p>
+                            <iframe
+                                src={`${process.env.BACKEND_LINK}/api/admin/pages/pdf/${selectedPage}`}
+                                className="w-full border rounded"
+                                style={{ height: '60vh' }}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 

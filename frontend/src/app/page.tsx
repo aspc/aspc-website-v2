@@ -22,19 +22,21 @@ export default function HomePage() {
                     `${process.env.BACKEND_LINK}/api/events/day`
                 );
                 const data = await response.json();
-                setEvents(data);
+                const eventsArray = Array.isArray(data)
+                    ? data
+                    : (data.events ?? []);
+                const sorted = [...eventsArray].sort(
+                    (a, b) =>
+                        new Date(a.start).getTime() -
+                        new Date(b.start).getTime()
+                );
+                setEvents(sorted);
             } catch (error) {
                 console.error('Error fetching events:', error);
             }
         };
 
         fetchEvents();
-        setEvents((prevEvents) =>
-            [...prevEvents].sort(
-                (a, b) =>
-                    new Date(a.start).getTime() - new Date(b.start).getTime()
-            )
-        );
     }, []);
 
     useEffect(() => {
