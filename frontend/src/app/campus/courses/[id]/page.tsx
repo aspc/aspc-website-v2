@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Loading from '@/components/Loading';
 import { CourseWithReviews, Course, CourseReview, Instructor } from '@/types';
@@ -22,11 +22,33 @@ const CoursePage = () => {
     const instructorById = useMemo(() => {
         const map: Record<number, Instructor> = {};
         for (const inst of instructors || []) {
-            // Make sure keys are numeric; coerce if your ids sometimes come as strings
             map[Number(inst.id)] = inst;
         }
         return map;
     }, [instructors]);
+
+    const instructorByCxid = useMemo(() => {
+        const map: Record<number, Instructor> = {};
+        for (const inst of instructors || []) {
+            for (const cx of inst.cxids ?? []) {
+                if (map[cx] === undefined) map[cx] = inst;
+            }
+        }
+        return map;
+    }, [instructors]);
+
+    const instructorForReview = useCallback(
+        (review: CourseReview) => {
+            if (
+                review.instructor_cxid != null &&
+                instructorByCxid[review.instructor_cxid]
+            ) {
+                return instructorByCxid[review.instructor_cxid];
+            }
+            return instructorById[Number(review.instructor_id)];
+        },
+        [instructorById, instructorByCxid]
+    );
 
     const [isCreatingNew, setIsCreatingNew] = useState(false);
     const [selectedReview, setSelectedReview] = useState<CourseReview | null>(
@@ -555,9 +577,7 @@ const CoursePage = () => {
                                 {courseReviews.reviews.length > 0 ? (
                                     courseReviews.reviews.map((review) => {
                                         const inst =
-                                            instructorById[
-                                                Number(review.instructor_id)
-                                            ];
+                                            instructorForReview(review);
 
                                         return (
                                             <div
@@ -626,11 +646,10 @@ const CoursePage = () => {
                                                         </p>
                                                     ) : (
                                                         <p className="text-gray-500 text-sm flex items-center">
-                                                            <span className="font-medium mr-1">
-                                                                Instructor ID:
-                                                            </span>
-                                                            {review.instructor_id ??
-                                                                'N/A'}
+                                                            Instructor
+                                                            information
+                                                            unavailable for this
+                                                            review.
                                                         </p>
                                                     )}
 
