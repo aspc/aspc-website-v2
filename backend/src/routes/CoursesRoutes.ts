@@ -7,6 +7,10 @@ import {
     isAuthenticated,
     isCourseReviewOwner,
 } from '../middleware/authMiddleware';
+import {
+    getCourseInstructorAssociationKeys,
+    pickInstructorCxidForCourse,
+} from '../utils/courseInstructors';
 
 const router = express.Router();
 
@@ -494,6 +498,7 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
             term_keys,
             description,
             all_instructor_ids,
+            all_instructor_cxids,
         } = req.body;
 
         // Check if course already exists
@@ -514,6 +519,10 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
             term_keys,
             description,
             all_instructor_ids,
+            ...(Array.isArray(all_instructor_cxids) &&
+            all_instructor_cxids.length > 0
+                ? { all_instructor_cxids }
+                : {}),
         });
 
         const savedCourse = await newCourse.save();
@@ -646,7 +655,7 @@ router.post(
                 },
             ]);
 
-            const maxId = result[0].maxValue + 1;
+            const maxId = (result[0]?.maxValue ?? 0) + 1;
 
             const { courseId } = req.params;
 
@@ -661,6 +670,21 @@ router.post(
                 email,
             } = req.body;
 
+            const course = await Courses.findOne({
+                id: Number(courseId),
+            }).lean();
+            const instructor = await Instructors.findOne({
+                id: Number(instructorId),
+            }).lean();
+
+            const instructor_cxid =
+                instructor && course
+                    ? pickInstructorCxidForCourse(
+                          instructor,
+                          course.all_instructor_cxids
+                      )
+                    : undefined;
+
             // construct review data
             const reviewData = {
                 id: maxId,
@@ -671,6 +695,7 @@ router.post(
                 comments: comments,
                 course_id: Number(courseId),
                 instructor_id: instructorId,
+                ...(instructor_cxid !== undefined ? { instructor_cxid } : {}),
                 user_email: email,
             };
 
@@ -716,7 +741,30 @@ router.patch(
                 instructorId,
             } = req.body;
 
-            const updateData = {
+            const existing = await CourseReviews.findOne({
+                id: reviewId,
+            }).lean();
+            if (!existing) {
+                res.status(404).json({ message: 'Review not found' });
+                return;
+            }
+
+            const course = await Courses.findOne({
+                id: existing.course_id,
+            }).lean();
+            const instructor = await Instructors.findOne({
+                id: Number(instructorId),
+            }).lean();
+
+            const instructor_cxid =
+                instructor && course
+                    ? pickInstructorCxidForCourse(
+                          instructor,
+                          course.all_instructor_cxids
+                      )
+                    : undefined;
+
+            const updateData: Record<string, unknown> = {
                 overall_rating: overall,
                 challenge_rating: challenge,
                 inclusivity_rating: inclusivity,
@@ -724,16 +772,15 @@ router.patch(
                 comments: comments,
                 instructor_id: instructorId,
             };
+            if (instructor_cxid !== undefined) {
+                updateData.instructor_cxid = instructor_cxid;
+            }
 
             const updatedReview = await CourseReviews.findOneAndUpdate(
                 { id: reviewId },
                 updateData,
                 { new: true }
             );
-
-            if (!updatedReview) {
-                res.status(404).json({ message: 'Review not found' });
-            }
 
             res.status(200).json({
                 message: 'Review updated',
@@ -767,7 +814,7 @@ router.delete(
 
             await Courses.findOneAndUpdate(
                 { id: review.course_id },
-                { $inc: { reviews_count: -1 } }
+                { $inc: { review_count: -1 } }
             );
 
             if (review.instructor_id) {
@@ -805,29 +852,65 @@ router.get(
                 return;
             }
 
-            const course = await Courses.findOne({ id: courseId });
+            const course = await Courses.findOne({ id: courseId }).lean();
 
             if (!course) {
                 res.status(400).json({ message: 'No course found' });
                 return;
             }
 
-            const instructorIds = course.all_instructor_ids;
-            const numericLimit = parseInt(limit as string);
-            const numericPage = parseInt(page as string);
+            const { mode, keys } = getCourseInstructorAssociationKeys(course);
+            const numericLimit = parseInt(limit as string, 10);
+            const numericPage = parseInt(page as string, 10);
             const skip = (numericPage - 1) * numericLimit;
 
-            // Get total count
-            const totalCount = instructorIds.length;
-            const totalPages = Math.ceil(totalCount / numericLimit);
+            const totalCount = keys.length;
+            const totalPages =
+                totalCount === 0 ? 0 : Math.ceil(totalCount / numericLimit);
 
-            // Paginate the instructor IDs
-            const paginatedIds = instructorIds.slice(skip, skip + numericLimit);
+            const pageKeys = keys.slice(skip, skip + numericLimit);
 
-            // Fetch the instructors for the current page
-            const instructors = await Instructors.find({
-                id: { $in: paginatedIds },
-            });
+            let instructors: unknown[] = [];
+
+            if (mode === 'cxid' && pageKeys.length > 0) {
+                const found = await Instructors.find({
+                    cxids: { $in: pageKeys },
+                }).lean();
+                const ordered: typeof found = [];
+                const seen = new Set<number>();
+                for (const cx of pageKeys) {
+                    const doc = found.find((d) => d.cxids?.includes(cx));
+                    if (doc && !seen.has(doc.id)) {
+                        ordered.push(doc);
+                        seen.add(doc.id);
+                    }
+                }
+                // Supplement with legacy instructor_id docs not already covered by
+                // the cxid lookup. This ensures the frontend's instructorById fallback
+                // works for reviews that pre-date the CxID migration or reference a
+                // duplicate instructor doc (e.g. "Carlson, Kevin David" vs "Carlson, Kevin").
+                const legacyIds = course.all_instructor_ids ?? [];
+                if (legacyIds.length > 0) {
+                    const legacyFound = await Instructors.find({
+                        id: { $in: legacyIds },
+                    }).lean();
+                    for (const leg of legacyFound) {
+                        if (!seen.has(leg.id)) {
+                            ordered.push(leg);
+                            seen.add(leg.id);
+                        }
+                    }
+                }
+                instructors = ordered;
+            } else if (pageKeys.length > 0) {
+                const found = await Instructors.find({
+                    id: { $in: pageKeys },
+                }).lean();
+                const byId = new Map(found.map((d) => [d.id, d]));
+                instructors = pageKeys
+                    .map((legacyId) => byId.get(legacyId))
+                    .filter(Boolean);
+            }
 
             res.json({
                 instructors,

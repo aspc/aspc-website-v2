@@ -91,6 +91,33 @@ interface CoursesResponse {
 
 type SearchType = 'all' | 'name' | 'code' | 'department';
 
+/** Prefer API CxIDs when present on the course; otherwise legacy instructor ids. */
+function courseInstructorDisplayKeys(course: Course): number[] {
+    if (
+        Array.isArray(course.all_instructor_cxids) &&
+        course.all_instructor_cxids.length > 0
+    ) {
+        return course.all_instructor_cxids;
+    }
+    return Array.isArray(course.all_instructor_ids)
+        ? course.all_instructor_ids
+        : [];
+}
+
+function instructorForDisplayKey(
+    course: Course,
+    key: number,
+    cache: Record<number, Instructor>
+): Instructor | undefined {
+    if (
+        Array.isArray(course.all_instructor_cxids) &&
+        course.all_instructor_cxids.length > 0
+    ) {
+        return Object.values(cache).find((i) => i.cxids?.includes(key));
+    }
+    return cache[key];
+}
+
 interface SearchParams {
     schools: string;
     page: number;
@@ -229,37 +256,54 @@ const CourseSearchComponent = () => {
         router,
     ]);
 
-    const fetchInstructors = useCallback(async (ids: number[]) => {
-        try {
-            const uncachedIds = ids.filter(
-                (id) => !instructorCacheRef.current[id]
-            );
-            if (uncachedIds.length === 0) return;
+    const fetchInstructors = useCallback(
+        async (legacyIds: number[], cxids: number[]) => {
+            try {
+                const uncachedLegacy = legacyIds.filter(
+                    (id) => !instructorCacheRef.current[id]
+                );
+                const uncachedCxids = cxids.filter(
+                    (cx) =>
+                        !Object.values(instructorCacheRef.current).some(
+                            (inst) => inst.cxids?.includes(cx)
+                        )
+                );
 
-            const response = await axios.get<Instructor[]>(
-                `${process.env.BACKEND_LINK}/api/instructors/bulk`,
-                {
-                    params: { ids: uncachedIds.join(',') },
-                    timeout: 5000,
-                    withCredentials: true,
-                }
-            );
+                if (uncachedLegacy.length === 0 && uncachedCxids.length === 0)
+                    return;
 
-            setInstructorCache((prev) => ({
-                ...prev,
-                ...response.data.reduce(
-                    (acc, instructor) => {
-                        acc[instructor.id] = instructor;
-                        return acc;
-                    },
-                    {} as Record<number, Instructor>
-                ),
-            }));
-        } catch (err) {
-            if (!axios.isCancel(err))
-                console.error('Error fetching instructors:', err);
-        }
-    }, []);
+                const params: Record<string, string> = {};
+                if (uncachedLegacy.length > 0)
+                    params.ids = uncachedLegacy.join(',');
+                if (uncachedCxids.length > 0)
+                    params.cxids = uncachedCxids.join(',');
+
+                const response = await axios.get<Instructor[]>(
+                    `${process.env.BACKEND_LINK}/api/instructors/bulk`,
+                    {
+                        params,
+                        timeout: 5000,
+                        withCredentials: true,
+                    }
+                );
+
+                setInstructorCache((prev) => ({
+                    ...prev,
+                    ...response.data.reduce(
+                        (acc, instructor) => {
+                            acc[instructor.id] = instructor;
+                            return acc;
+                        },
+                        {} as Record<number, Instructor>
+                    ),
+                }));
+            } catch (err) {
+                if (!axios.isCancel(err))
+                    console.error('Error fetching instructors:', err);
+            }
+        },
+        []
+    );
 
     const performSearch = useCallback(
         async (
@@ -343,11 +387,22 @@ const CourseSearchComponent = () => {
                 setPagination(paginationData);
 
                 if (coursesData.length > 0) {
-                    const instructorIds = coursesData.flatMap(
-                        (course) => course.all_instructor_ids || []
-                    );
-                    if (instructorIds.length > 0)
-                        fetchInstructors(instructorIds);
+                    const legacyIds: number[] = [];
+                    const cxids: number[] = [];
+                    for (const course of coursesData) {
+                        if (
+                            course.all_instructor_cxids &&
+                            course.all_instructor_cxids.length > 0
+                        ) {
+                            cxids.push(...course.all_instructor_cxids);
+                        } else {
+                            legacyIds.push(
+                                ...(course.all_instructor_ids || [])
+                            );
+                        }
+                    }
+                    if (legacyIds.length > 0 || cxids.length > 0)
+                        fetchInstructors(legacyIds, cxids);
                 }
             } catch (err) {
                 if (axios.isCancel(err)) return;
@@ -856,12 +911,28 @@ const CourseCardComponent = ({
                         <p className="text-sm font-medium text-gray-600">
                             Instructors:
                         </p>
-                        {course.all_instructor_ids?.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-1">
-                                {course.all_instructor_ids
-                                    .map((id) => instructorCache[id])
-                                    .filter((ins) => ins?.name)
-                                    .map((ins) => (
+                        {(() => {
+                            const keys = courseInstructorDisplayKeys(course);
+                            if (keys.length === 0) return null;
+                            const seen = new Set<number>();
+                            const rows = keys
+                                .map((key) =>
+                                    instructorForDisplayKey(
+                                        course,
+                                        key,
+                                        instructorCache
+                                    )
+                                )
+                                .filter((ins) => {
+                                    if (!ins?.name || seen.has(ins.id))
+                                        return false;
+                                    seen.add(ins.id);
+                                    return true;
+                                });
+                            if (rows.length === 0) return null;
+                            return (
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                    {rows.map((ins) => (
                                         <div
                                             key={ins!.id}
                                             className={`${schoolData[schoolCode].bgColor} bg-opacity-20 px-2 py-1 rounded-md border ${schoolData[schoolCode].bgColor} border-opacity-30`}
@@ -874,8 +945,9 @@ const CourseCardComponent = ({
                                             </a>
                                         </div>
                                     ))}
-                            </div>
-                        )}
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     <div className="mt-4">

@@ -1,0 +1,15 @@
+{
+  "phase": 2,
+  "description": "Update Instructors with CxIDs",
+  "dryRun": false,
+  "stats": {
+    "totalInMongoDB": 3799,
+    "totalInAPI": 4094,
+    "updated": 3655,
+    "created": 439,
+    "skipped": 144,
+    "errors": 0,
+    "instructorsWithMultipleCxIDs": 481
+  },
+  "timestamp": "2026-04-22T23:36:27.421Z"
+}
