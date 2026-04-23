@@ -4,6 +4,7 @@ import path from 'path';
 import { Instructors } from '../models/People';
 
 const MIGRATION_DATA_DIR = path.join(__dirname, 'migration-data');
+const MAPPING_DATA_DIR = path.join(__dirname, 'mapping-data');
 
 // ============================================================================
 // PHASE 2: Update Instructors Schema with CxIDs
@@ -78,7 +79,7 @@ async function migrateInstructors(dryRun: boolean = false) {
         console.log('Loading Phase 1 data...');
         const apiInstructors: InstructorCxIDData[] = JSON.parse(
             fs.readFileSync(
-                path.join(MIGRATION_DATA_DIR, 'instructor-cxids.json'),
+                path.join(MAPPING_DATA_DIR, 'instructor-cxids.json'),
                 'utf-8'
             )
         );

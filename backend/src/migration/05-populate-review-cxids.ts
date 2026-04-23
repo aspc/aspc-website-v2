@@ -5,6 +5,7 @@ import { Courses, CourseReviews } from '../models/Courses';
 import { pickInstructorCxidForCourse } from '../utils/courseInstructors';
 
 const MIGRATION_DATA_DIR = path.join(__dirname, 'migration-data');
+const MAPPING_DATA_DIR = path.join(__dirname, 'mapping-data');
 import { Instructors } from '../models/People';
 
 // ============================================================================
@@ -95,7 +96,7 @@ async function migrateReviews(dryRun: boolean = false) {
         console.log('Loading Phase 1 CxID mappings...');
         const cxidMappings: CxIDMapping[] = JSON.parse(
             fs.readFileSync(
-                path.join(MIGRATION_DATA_DIR, 'cxid-mappings.json'),
+                path.join(MAPPING_DATA_DIR, 'cxid-mappings.json'),
                 'utf-8'
             )
         );

@@ -4,6 +4,7 @@ import path from 'path';
 import { Courses } from '../models/Courses';
 
 const MIGRATION_DATA_DIR = path.join(__dirname, 'migration-data');
+const MAPPING_DATA_DIR = path.join(__dirname, 'mapping-data');
 
 // ============================================================================
 // PHASE 3: Update Courses Schema with Instructor CxIDs
@@ -58,7 +59,7 @@ async function migrateCourses(dryRun: boolean = false) {
         console.log('Loading Phase 1 data...');
         const apiCourses: CourseCxIDData[] = JSON.parse(
             fs.readFileSync(
-                path.join(MIGRATION_DATA_DIR, 'course-cxids.json'),
+                path.join(MAPPING_DATA_DIR, 'course-cxids.json'),
                 'utf-8'
             )
         );

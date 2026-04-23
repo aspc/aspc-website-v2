@@ -1,0 +1,172 @@
+{
+  "generatedAt": "2026-04-23T01:08:08.983Z",
+  "uriHost": "aspc.qm4l8.mongodb.net",
+  "instructorsLoaded": 4238,
+  "duplicateCxidAssignments": 0,
+  "courses": {
+    "total": 8905,
+    "withAllInstructorCxids": 8664,
+    "comparedLegacyVsCxidDistinct": 8664,
+    "sameDistinctInstructorCount": 5007,
+    "mismatchBreakdown": {
+      "cxidDistinctGreaterThanLegacy": 3047,
+      "legacyDistinctGreaterThanCxid": 610,
+      "legacyZeroDistinctButCxidNonZero": 2160
+    },
+    "mismatchedDistinctInstructorCount": 3657
+  },
+  "reviews": {
+    "total": 10405,
+    "resolvedViaCxid": 10331,
+    "resolvedViaLegacyOnly": 45,
+    "unresolvable": 29,
+    "unresolvableReviews": [
+      {
+        "reviewId": 10257,
+        "courseId": 1,
+        "mongo_id": "68b1f13eb00e3a29977a74a5"
+      },
+      {
+        "reviewId": 10258,
+        "courseId": 1,
+        "mongo_id": "68b1f18ab00e3a29977ad526"
+      },
+      {
+        "reviewId": 10455,
+        "courseId": 336,
+        "mongo_id": "69d91a19c348f84a6e2c7e5b"
+      },
+      {
+        "reviewId": 10456,
+        "courseId": 336,
+        "mongo_id": "69d91a2ac348f84a6e2c7e60"
+      },
+      {
+        "reviewId": 10457,
+        "courseId": 336,
+        "mongo_id": "69d91a37c348f84a6e2c7e65"
+      },
+      {
+        "reviewId": 10489,
+        "courseId": 8753,
+        "mongo_id": "69d98802c348f84a6e2f2e65"
+      },
+      {
+        "reviewId": 10519,
+        "courseId": 496,
+        "mongo_id": "69de755c53f0741b946035dc"
+      },
+      {
+        "reviewId": 10520,
+        "courseId": 496,
+        "mongo_id": "69de756853f0741b946035e1"
+      },
+      {
+        "reviewId": 10534,
+        "courseId": 5962,
+        "mongo_id": "69e25b0fe7d73ff6035990fd"
+      },
+      {
+        "reviewId": 10535,
+        "courseId": 5962,
+        "mongo_id": "69e25b15e7d73ff603599102"
+      },
+      {
+        "reviewId": 10536,
+        "courseId": 5962,
+        "mongo_id": "69e25b22e7d73ff603599107"
+      },
+      {
+        "reviewId": 10537,
+        "courseId": 5962,
+        "mongo_id": "69e25b39e7d73ff603599211"
+      },
+      {
+        "reviewId": 10543,
+        "courseId": 601,
+        "mongo_id": "69e26b85e7d73ff60359f7d6"
+      },
+      {
+        "reviewId": 10544,
+        "courseId": 601,
+        "mongo_id": "69e26b90e7d73ff60359f7db"
+      },
+      {
+        "reviewId": 10545,
+        "courseId": 3966,
+        "mongo_id": "69e26bfbe7d73ff6035a0172"
+      },
+      {
+        "reviewId": 10549,
+        "courseId": 8095,
+        "mongo_id": "69e273ace7d73ff6035a3730"
+      },
+      {
+        "reviewId": 10561,
+        "courseId": 8551,
+        "mongo_id": "69e3e862e7d73ff6035bec19"
+      },
+      {
+        "reviewId": 10562,
+        "courseId": 8551,
+        "mongo_id": "69e3e865e7d73ff6035bec1e"
+      },
+      {
+        "reviewId": 10564,
+        "courseId": 336,
+        "mongo_id": "69e3fef4e7d73ff6035c026e"
+      },
+      {
+        "reviewId": 10580,
+        "courseId": 4675,
+        "mongo_id": "69e65676e7d73ff6035f49a0"
+      },
+      {
+        "reviewId": 10581,
+        "courseId": 4675,
+        "mongo_id": "69e65678e7d73ff6035f49a5"
+      },
+      {
+        "reviewId": 10602,
+        "courseId": 926,
+        "mongo_id": "69e682f9e7d73ff603612bc9"
+      },
+      {
+        "reviewId": 10603,
+        "courseId": 926,
+        "mongo_id": "69e68301e7d73ff603612bce"
+      },
+      {
+        "reviewId": 10606,
+        "courseId": 8623,
+        "mongo_id": "69e68931e7d73ff603619507"
+      },
+      {
+        "reviewId": 10612,
+        "courseId": 336,
+        "mongo_id": "69e6ab1ce7d73ff6036262b9"
+      },
+      {
+        "reviewId": 10613,
+        "courseId": 336,
+        "mongo_id": "69e6ab23e7d73ff6036262be"
+      },
+      {
+        "reviewId": 10614,
+        "courseId": 621,
+        "mongo_id": "69e6acb4e7d73ff603626822"
+      },
+      {
+        "reviewId": 10622,
+        "courseId": 8739,
+        "mongo_id": "69e6d559e7d73ff60363ce3a"
+      },
+      {
+        "reviewId": 10625,
+        "courseId": 586,
+        "mongo_id": "69e6dd50e7d73ff603643ab7"
+      }
+    ],
+    "resolvableRate": 0.9972128784238347
+  }
+}

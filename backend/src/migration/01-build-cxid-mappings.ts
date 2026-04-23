@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import path from 'path';
 
 const MIGRATION_DATA_DIR = path.join(__dirname, 'migration-data');
+const MAPPING_DATA_DIR = path.join(__dirname, 'mapping-data');
 
 // ============================================================================
 // PHASE 1: Build Complete CxID Mappings
@@ -394,10 +395,13 @@ async function buildCxIDMappings() {
     if (!fs.existsSync(MIGRATION_DATA_DIR)) {
         fs.mkdirSync(MIGRATION_DATA_DIR, { recursive: true });
     }
+    if (!fs.existsSync(MAPPING_DATA_DIR)) {
+        fs.mkdirSync(MAPPING_DATA_DIR, { recursive: true });
+    }
 
     // Save complete CxID mappings (course + term + instructor -> CxID)
     fs.writeFileSync(
-        path.join(MIGRATION_DATA_DIR, 'cxid-mappings.json'),
+        path.join(MAPPING_DATA_DIR, 'cxid-mappings.json'),
         JSON.stringify(cxidMappings, null, 2)
     );
     console.log(
@@ -406,7 +410,7 @@ async function buildCxIDMappings() {
 
     // Save instructor CxIDs (instructor name -> all their CxIDs)
     fs.writeFileSync(
-        path.join(MIGRATION_DATA_DIR, 'instructor-cxids.json'),
+        path.join(MAPPING_DATA_DIR, 'instructor-cxids.json'),
         JSON.stringify(instructorCxIDsList, null, 2)
     );
     console.log(
@@ -415,7 +419,7 @@ async function buildCxIDMappings() {
 
     // Save course CxIDs (course code -> all CxIDs that taught it)
     fs.writeFileSync(
-        path.join(MIGRATION_DATA_DIR, 'course-cxids.json'),
+        path.join(MAPPING_DATA_DIR, 'course-cxids.json'),
         JSON.stringify(courseCxIDsList, null, 2)
     );
     console.log(
@@ -439,7 +443,7 @@ async function buildCxIDMappings() {
     };
 
     fs.writeFileSync(
-        path.join(MIGRATION_DATA_DIR, 'summary.json'),
+        path.join(MAPPING_DATA_DIR, 'summary.json'),
         JSON.stringify(summary, null, 2)
     );
 
