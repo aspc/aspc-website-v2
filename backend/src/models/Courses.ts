@@ -13,6 +13,7 @@ interface ICourses extends Document {
     term_keys: string[];
     description: string;
     all_instructor_ids: number[];
+    all_instructor_cxids?: number[];
     review_count: number;
 }
 
@@ -67,6 +68,12 @@ const CoursesSchema = new Schema<ICourses>(
                 ref: 'Instructors',
             },
         ],
+        all_instructor_cxids: [
+            {
+                type: Number,
+                ref: 'Instructors',
+            },
+        ],
         review_count: {
             type: Number,
             default: 0,
@@ -90,7 +97,8 @@ interface ICourseReviews extends Document {
     total_cost: number;
     comments: string;
     course_id: number;
-    instructor_id: number;
+    instructor_id: number; // LEGACY - keep for now
+    instructor_cxid?: number; // NEW FIELD
     user_email: string;
 }
 
@@ -127,9 +135,14 @@ const CourseReviewsSchema = new Schema<ICourseReviews>(
             index: true,
         },
         instructor_id: {
+            // LEGACY FIELD - keep for now
             type: Number,
             ref: 'Instructors',
-            // required: true,
+            index: true,
+        },
+        instructor_cxid: {
+            // NEW FIELD
+            type: Number,
             index: true,
         },
         user_email: {
