@@ -459,7 +459,7 @@ async function updateCoursesFromAPI(
 
                     const courseRef = {
                         courseId: resolvedCourseId,
-                        courseCode: courseCode,
+                        courseCode: generateCodeSlug(courseCode),
                         courseName: resolvedCourseName,
                     };
                     const normalizedName = normalizeInstructorName(
