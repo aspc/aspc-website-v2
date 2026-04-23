@@ -163,12 +163,13 @@ const CoursePage = () => {
                 const courseData: Course = await coursesResponse.json();
                 setCourseName(courseData.name);
 
-                // Fetch instructors
+                // Fetch instructors — use high limit so all historical instructors
+                // are available for review lookups (instructorByCxid / instructorById)
                 const instructorResponse = await fetch(
-                    `${process.env.BACKEND_LINK}/api/courses/${courseData.id}/instructors`,
+                    `${process.env.BACKEND_LINK}/api/courses/${courseData.id}/instructors?limit=500`,
                     {
                         method: 'GET',
-                        credentials: 'include', // This allows sending cookies for session identification
+                        credentials: 'include',
                     }
                 );
 

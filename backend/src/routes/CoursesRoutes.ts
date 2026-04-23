@@ -885,6 +885,22 @@ router.get(
                         seen.add(doc.id);
                     }
                 }
+                // Supplement with legacy instructor_id docs not already covered by
+                // the cxid lookup. This ensures the frontend's instructorById fallback
+                // works for reviews that pre-date the CxID migration or reference a
+                // duplicate instructor doc (e.g. "Carlson, Kevin David" vs "Carlson, Kevin").
+                const legacyIds = course.all_instructor_ids ?? [];
+                if (legacyIds.length > 0) {
+                    const legacyFound = await Instructors.find({
+                        id: { $in: legacyIds },
+                    }).lean();
+                    for (const leg of legacyFound) {
+                        if (!seen.has(leg.id)) {
+                            ordered.push(leg);
+                            seen.add(leg.id);
+                        }
+                    }
+                }
                 instructors = ordered;
             } else if (pageKeys.length > 0) {
                 const found = await Instructors.find({

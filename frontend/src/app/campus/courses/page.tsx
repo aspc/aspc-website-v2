@@ -93,10 +93,15 @@ type SearchType = 'all' | 'name' | 'code' | 'department';
 
 /** Prefer API CxIDs when present on the course; otherwise legacy instructor ids. */
 function courseInstructorDisplayKeys(course: Course): number[] {
-    if (course.all_instructor_cxids && course.all_instructor_cxids.length > 0) {
+    if (
+        Array.isArray(course.all_instructor_cxids) &&
+        course.all_instructor_cxids.length > 0
+    ) {
         return course.all_instructor_cxids;
     }
-    return course.all_instructor_ids ?? [];
+    return Array.isArray(course.all_instructor_ids)
+        ? course.all_instructor_ids
+        : [];
 }
 
 function instructorForDisplayKey(
@@ -104,7 +109,10 @@ function instructorForDisplayKey(
     key: number,
     cache: Record<number, Instructor>
 ): Instructor | undefined {
-    if (course.all_instructor_cxids && course.all_instructor_cxids.length > 0) {
+    if (
+        Array.isArray(course.all_instructor_cxids) &&
+        course.all_instructor_cxids.length > 0
+    ) {
         return Object.values(cache).find((i) => i.cxids?.includes(key));
     }
     return cache[key];
