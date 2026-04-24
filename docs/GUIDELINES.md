@@ -53,29 +53,32 @@ Every PR must include:
 
 ### 3. Testing Requirements
 
-#### Backend Testing
-- **API Routes**: Include curl statements showing success for all new/modified endpoints
-- **Unit Tests**: Provide unit tests for helper functions and scripts if needed
-- **Screenshots**: Include screenshots showing successful execution of tests
+#### Automated Testing
+- **Backend**: Run the test suite using `npm test` within the `backend/` directory.
+- **Coverage**: Ensure any new logic in services or controllers is covered by Jest unit or integration tests.
+- **Environment**: Tests use an in-memory MongoDB server and do not require a local DB instance.
 
-
-**Example curl commands for HTTPS development setup:**
+#### Manual Backend Verification
+- **API Routes**: Include curl statements showing success for all new/modified endpoints.
+- **Example curl commands for HTTPS development setup:**
 ```bash
 #!/bin/bash
 # Note: Using -k flag for local HTTPS with self-signed certificates
 BASE_URL="https://localhost:5000"
 
-# Test authentication endpoints
+# Test authentication
 curl -k -X GET "$BASE_URL/api/auth/current_user"
 
-# Test course endpoints
-curl -k -X GET "$BASE_URL/api/courses"
-curl -k -X GET "$BASE_URL/api/courses/1"
+# Test voting
+curl -k -X GET "$BASE_URL/api/voting/election/latest"
 
-# Test POST requests
-curl -k -X POST "$BASE_URL/api/courses/1/reviews" \
+# Test open forum
+curl -k -X GET "$BASE_URL/api/openforum/events"
+
+# Test course reviews
+curl -k -X POST "$BASE_URL/api/reviews/course/1" \
   -H "Content-Type: application/json" \
-  -d '{"overall": 4, "challenge": 3, "comments": "Great course!"}'
+  -d '{"overall": 4, "challenge": 3, "comments": "Excellent prof!"}'
 ```
 
 #### Frontend Testing

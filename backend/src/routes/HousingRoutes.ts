@@ -1,16 +1,16 @@
 import express, { Request, Response } from 'express';
-import multer from 'multer';
-import {
-    HousingBuildings,
-    HousingRooms,
-    HousingReviews,
-} from '../models/Housing';
-import { housingReviewPictures } from '../server';
 import { ObjectId } from 'mongodb';
+import multer from 'multer';
 import {
     isAuthenticated,
     isHousingReviewOwner,
 } from '../middleware/authMiddleware';
+import {
+    HousingBuildings,
+    HousingReviews,
+    HousingRooms,
+} from '../models/Housing';
+import { housingReviewPictures } from '../server';
 
 const router = express.Router();
 
@@ -133,7 +133,13 @@ router.get(
             // Get all reviews for the room
             const reviews = await HousingReviews.find({
                 housing_room_id: roomId,
-            });
+            }).lean();
+
+            const sessionEmail = req.session.user!.email;
+            const safeReviews = reviews.map(({ user_email, ...fields }) => ({
+                ...fields,
+                isOwner: user_email === sessionEmail,
+            }));
 
             // Calculate average ratings
             if (reviews.length > 0) {
@@ -166,7 +172,7 @@ router.get(
                 // Return reviews and averages as well as the room data itself
                 res.json({
                     room: roomData,
-                    reviews: reviews,
+                    reviews: safeReviews,
                     averages: averages,
                 });
                 return;
@@ -175,7 +181,7 @@ router.get(
             // Return reviews (even if empty)
             res.json({
                 room: roomData,
-                reviews: reviews,
+                reviews: safeReviews,
                 averages: {
                     overallAverage: 0,
                     quietAverage: 0,
@@ -223,7 +229,13 @@ router.get(
             // Get all reviews for the room using room id
             const reviews = await HousingReviews.find({
                 housing_room_id: roomData.id,
-            });
+            }).lean();
+
+            const sessionEmail = req.session.user!.email;
+            const safeReviews = reviews.map(({ user_email, ...fields }) => ({
+                ...fields,
+                isOwner: user_email === sessionEmail,
+            }));
 
             // Calculate average ratings
             if (reviews.length > 0) {
@@ -256,7 +268,7 @@ router.get(
                 // Return reviews and averages as well as the room data itself
                 res.json({
                     room: roomData,
-                    reviews: reviews,
+                    reviews: safeReviews,
                     averages: averages,
                 });
                 return;
@@ -265,7 +277,7 @@ router.get(
             // Return reviews (even if empty)
             res.json({
                 room: roomData,
-                reviews: reviews,
+                reviews: safeReviews,
                 averages: {
                     overallAverage: 0,
                     quietAverage: 0,
@@ -542,6 +554,69 @@ router.get(
             });
         } catch (error) {
             res.status(400).json({ message: 'Invalid profile picture ID' });
+        }
+    }
+);
+
+/**
+ * @route   GET /api/campus/housing/:building/ratings
+ * @desc    Get ratings for all rooms in a building
+ * @access  isAuthenticated
+ */
+router.get(
+    '/:building/ratings',
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+        try {
+            const buildingId = parseInt(req.params.building, 10);
+            if (isNaN(buildingId)) {
+                res.status(400).json({ message: 'Invalid building ID format' });
+                return;
+            }
+
+            // Get all rooms for the building
+            const rooms = await HousingRooms.find({
+                housing_building_id: buildingId,
+            });
+            if (!rooms || rooms.length === 0) {
+                res.json({});
+                return;
+            }
+
+            const roomIds = rooms.map((r) => r.id);
+
+            // Fetch all reviews for all rooms in one query
+            const allReviews = await HousingReviews.find({
+                housing_room_id: { $in: roomIds },
+            });
+
+            // Group reviews by room id and calculate averages
+            const calcAverage = (arr: number[]) =>
+                arr.length > 0
+                    ? arr.reduce((sum, val) => sum + val, 0) / arr.length
+                    : 0;
+
+            const ratingsMap: Record<
+                number,
+                { overallAverage: number; reviewCount: number }
+            > = {};
+
+            for (const room of rooms) {
+                const roomReviews = allReviews.filter(
+                    (r) => r.housing_room_id === room.id
+                );
+                const overallRatings = roomReviews
+                    .map((r) => r.overall_rating)
+                    .filter(Boolean) as number[];
+                ratingsMap[room.id] = {
+                    overallAverage: calcAverage(overallRatings),
+                    reviewCount: roomReviews.length,
+                };
+            }
+
+            res.json(ratingsMap);
+        } catch (error) {
+            res.status(500).json({ message: 'Server error' });
         }
     }
 );

@@ -1,0 +1,16 @@
+{
+  "phase": 3,
+  "description": "Update Courses with Instructor CxIDs",
+  "dryRun": true,
+  "stats": {
+    "totalInMongoDB": 8905,
+    "totalInAPI": 9126,
+    "updated": 8664,
+    "skipped": 241,
+    "skippedDueToInvalidCode": 1,
+    "errors": 0,
+    "coursesWithMultipleCxIDs": 4029,
+    "averageCxIDsPerCourse": 2.83
+  },
+  "timestamp": "2026-04-23T00:11:12.896Z"
+}

@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import Loading from '@/components/Loading';
-import { Review, RoomWithReviews } from '@/types';
-import Image from 'next/image';
-import { useAuth } from '@/hooks/useAuth';
 import LoginRequired from '@/components/LoginRequired';
+import { PictureModal, ReviewForm } from '@/components/housing/Reviews';
 import { StarRating, getRoomOccupancyType } from '@/components/housing/Rooms';
-import { ReviewForm, PictureModal } from '@/components/housing/Reviews';
+import { useAuth } from '@/hooks/useAuth';
+import { Review, RoomWithReviews } from '@/types';
 import { FormattedReviewText } from '@/utils/textFormatting';
+import Image from 'next/image';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 
 const RoomPage = () => {
     const params = useParams();
@@ -46,40 +46,37 @@ const RoomPage = () => {
             try {
                 setLoading(true);
 
-                // Fetch building data
-                const buildingResponse = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/${id}`,
-                    {
-                        credentials: 'include',
-                    }
-                );
+                const [buildingResponse, reviewsResponse] = await Promise.all([
+                    fetch(
+                        `${process.env.BACKEND_LINK}/api/campus/housing/${id}`,
+                        {
+                            credentials: 'include',
+                        }
+                    ),
+                    fetch(
+                        `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`,
+                        {
+                            credentials: 'include',
+                        }
+                    ),
+                ]);
 
-                if (!buildingResponse.ok) {
+                if (!buildingResponse.ok)
                     throw new Error(
-                        `Failed to fetch building name: ${buildingResponse.status}`
+                        `Failed to fetch building: ${buildingResponse.status}`
                     );
-                }
+                if (!reviewsResponse.ok)
+                    throw new Error(
+                        `Failed to fetch reviews: ${reviewsResponse.status}`
+                    );
 
-                const buildingData = await buildingResponse.json();
+                const [buildingData, reviewsData] = await Promise.all([
+                    buildingResponse.json(),
+                    reviewsResponse.json(),
+                ]);
+
                 setBuildingName(buildingData.name);
-
-                // Fetch reviews
-                const reviews = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`,
-                    {
-                        credentials: 'include',
-                    }
-                );
-
-                if (!reviews.ok) {
-                    throw new Error(
-                        `Failed to fetch reviews: ${reviews.status}`
-                    );
-                }
-
-                const data = await reviews.json();
-
-                setRoomReviews(data);
+                setRoomReviews(reviewsData);
             } catch (error) {
                 console.error('Error fetching room reviews:', error);
             } finally {
@@ -297,8 +294,7 @@ const RoomPage = () => {
                                                     </span>
                                                 </div>
 
-                                                {user.email ==
-                                                    review.user_email && (
+                                                {review.isOwner && (
                                                     <div className="flex p-2 gap-4">
                                                         <button
                                                             className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"

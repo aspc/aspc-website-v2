@@ -449,8 +449,7 @@ const InstructorPage = (): JSX.Element => {
                                                     </span>
                                                 </div>
 
-                                                {user.email ===
-                                                    review.user_email && (
+                                                {review.isOwner && (
                                                     <div className="flex p-2 gap-4">
                                                         <button
                                                             className="bg-blue-500 text-white text-m px-4 rounded-md hover:bg-blue-600"
