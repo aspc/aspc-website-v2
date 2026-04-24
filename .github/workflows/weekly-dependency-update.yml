@@ -43,30 +43,25 @@ jobs:
             - name: Generate Summary
               id: generate_summary
               run: |
-                  echo "SUMMARY<<EOF" >> $GITHUB_ENV
-                  
-                  echo "### Audit Results" >> $GITHUB_ENV
-                  echo "#### Frontend" >> $GITHUB_ENV
-                  tail -n 5 frontend-audit.log >> $GITHUB_ENV || echo "No audit data" >> $GITHUB_ENV
-                  
-                  echo "#### Backend" >> $GITHUB_ENV
-                  tail -n 5 backend-audit.log >> $GITHUB_ENV || echo "No audit data" >> $GITHUB_ENV
-
-                  echo "" >> $GITHUB_ENV
-                  echo "### Package.json Changes" >> $GITHUB_ENV
-                  
-                  # Extract only the lines that changed in package.json files, ignoring noise
-                  CHANGES=$(git diff -U0 **/package.json | grep '^[+-][^+-]' | grep -v '"version":' || true)
-                  
-                  if [ -z "$CHANGES" ]; then
-                    echo "No direct dependency changes in package.json (only lockfile updated)." >> $GITHUB_ENV
-                  else
-                    echo "\`\`\`diff" >> $GITHUB_ENV
-                    echo "$CHANGES" >> $GITHUB_ENV
-                    echo "\`\`\`" >> $GITHUB_ENV
-                  fi
-                  
-                  echo "EOF" >> $GITHUB_ENV
+                  {
+                    echo "pr_summary<<EOF"
+                    echo "### Audit Results"
+                    echo "#### Frontend"
+                    tail -n 5 frontend-audit.log || echo "No audit data"
+                    echo "#### Backend"
+                    tail -n 5 backend-audit.log || echo "No audit data"
+                    echo ""
+                    echo "### Package.json Changes"
+                    CHANGES=$(git diff -U0 **/package.json | grep '^[+-][^+-]' | grep -v '"version":' || true)
+                    if [ -z "$CHANGES" ]; then
+                      echo "No direct dependency changes in package.json (only lockfile updated)."
+                    else
+                      echo "\`\`\`diff"
+                      echo "$CHANGES"
+                      echo "\`\`\`"
+                    fi
+                    echo "EOF"
+                  } >> "$GITHUB_OUTPUT"
 
             - name: Check for changes
               id: check_changes
@@ -89,7 +84,7 @@ jobs:
               if: steps.check_changes.outputs.changed == 'true'
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  PR_BODY: ${{ env.SUMMARY }}
+                  PR_BODY: ${{ steps.generate_summary.outputs.pr_summary }}
               run: |
                   gh pr create \
                     --title "chore: weekly dependency security update $(date +%Y-%m-%d)" \
