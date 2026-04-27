@@ -507,6 +507,7 @@ router.delete(
 
             if (!review) {
                 res.status(404).json({ message: 'Review not found' });
+                return;
             }
 
             res.status(200).json({ message: 'Review deleted' });
