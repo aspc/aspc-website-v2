@@ -139,13 +139,16 @@ const PageDashboard = () => {
         }
     };
 
-    const handleSave = async () => {
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+
         // Validate form
         if (
             (pageType === 'content' && !pageId) ||
             !pageName ||
             (pageType === 'link' && !pageLink) ||
-            (pageType === 'content' && !content)
+            (pageType === 'content' && !content) ||
+            (pageType === 'pdf' && isCreatingNew && !pdfFile)
         ) {
             alert('Please fill in all required fields');
             return;
