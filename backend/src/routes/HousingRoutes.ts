@@ -241,49 +241,6 @@ router.post(
     upload.array('pictures'),
     async (req: Request, res: Response) => {
         try {
-            const pictureIds: ObjectId[] = [];
-
-            // Upload each file to GridFS
-            if (Array.isArray(req.files)) {
-                for (let i = 0; i < req.files.length; i++) {
-                    const file = req.files[i] as Express.Multer.File;
-
-                    // Create a writable stream to upload to GridFS
-                    const uploadStream = housingReviewPictures.openUploadStream(
-                        file.originalname,
-                        {
-                            contentType: file.mimetype,
-                        }
-                    );
-
-                    // Upload the file buffer to GridFS
-                    uploadStream.end(file.buffer);
-
-                    // Wait for the file upload to finish and get the file ID
-                    uploadStream.on('finish', () => {
-                        pictureIds.push(uploadStream.id);
-                    });
-
-                    // Wait for the stream to finish before continuing
-                    await new Promise((resolve) => {
-                        uploadStream.on('finish', resolve);
-                    });
-                }
-            }
-
-            // need to find new max id for the new review
-            const result = await HousingReviews.aggregate([
-                {
-                    $group: {
-                        _id: null, // No need to group, so _id is null
-                        maxValue: { $max: '$id' }, // Find the max value of fieldName
-                    },
-                },
-            ]);
-
-            const maxId = result.length > 0 ? result[0].maxValue + 1 : 1;
-
-            // Find room id by building and room number
             const { buildingId, roomNumber } = req.params;
             const buildingIdNumber = parseInt(buildingId, 10);
 
@@ -301,6 +258,35 @@ router.post(
                 res.status(404).json({ message: 'Room not found' });
                 return;
             }
+
+            const pictureIds: ObjectId[] = [];
+
+            if (Array.isArray(req.files)) {
+                for (let i = 0; i < req.files.length; i++) {
+                    const file = req.files[i] as Express.Multer.File;
+
+                    const uploadStream = housingReviewPictures.openUploadStream(
+                        file.originalname,
+                        { contentType: file.mimetype }
+                    );
+
+                    uploadStream.end(file.buffer);
+
+                    uploadStream.on('finish', () => {
+                        pictureIds.push(uploadStream.id);
+                    });
+
+                    await new Promise((resolve) => {
+                        uploadStream.on('finish', resolve);
+                    });
+                }
+            }
+
+            const result = await HousingReviews.aggregate([
+                { $group: { _id: null, maxValue: { $max: '$id' } } },
+            ]);
+
+            const maxId = result.length > 0 ? result[0].maxValue + 1 : 1;
 
             // parse review fields from request
             const { overall, quiet, layout, temperature, comments } = req.body;
