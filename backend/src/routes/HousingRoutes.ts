@@ -259,6 +259,18 @@ router.post(
                 return;
             }
 
+            const existingReview = await HousingReviews.findOne({
+                housing_room_id: roomData.id,
+                user_email: req.session.user!.email,
+            });
+
+            if (existingReview) {
+                res.status(409).json({
+                    message: 'You have already reviewed this room',
+                });
+                return;
+            }
+
             const pictureIds: ObjectId[] = [];
 
             if (Array.isArray(req.files)) {
