@@ -28,17 +28,29 @@ jobs:
                   git checkout -b "$BRANCH"
                   echo "BRANCH=$BRANCH" >> $GITHUB_ENV
 
-            - name: Run npm audit fix on frontend
+            - name: Run npm audit on frontend
               working-directory: ./frontend
               run: |
                   npm install
-                  npm audit fix > ../frontend-audit.log || true
+                  npm audit --json > ../frontend-audit.json || true
+                  npm audit >> ../frontend-audit.log || true
+
+            - name: Run npm audit fix on frontend
+              working-directory: ./frontend
+              run: |
+                  npm audit fix --force > ../frontend-fix.log || true
+
+            - name: Run npm audit on backend
+              working-directory: ./backend
+              run: |
+                  npm install
+                  npm audit --json > ../backend-audit.json || true
+                  npm audit >> ../backend-audit.log || true
 
             - name: Run npm audit fix on backend
               working-directory: ./backend
               run: |
-                  npm install
-                  npm audit fix > ../backend-audit.log || true
+                  npm audit fix --force > ../backend-fix.log || true
 
             - name: Generate Summary
               id: generate_summary
@@ -47,9 +59,18 @@ jobs:
                     echo "pr_summary<<EOF"
                     echo "### Audit Results"
                     echo "#### Frontend"
-                    tail -n 5 frontend-audit.log || echo "No audit data"
+                    if [ -f frontend-audit.log ]; then
+                      cat frontend-audit.log
+                    else
+                      echo "No audit data"
+                    fi
+                    echo ""
                     echo "#### Backend"
-                    tail -n 5 backend-audit.log || echo "No audit data"
+                    if [ -f backend-audit.log ]; then
+                      cat backend-audit.log
+                    else
+                      echo "No audit data"
+                    fi
                     echo ""
                     echo "### Package.json Changes"
                     CHANGES=$(git diff -U0 **/package.json | grep '^[+-][^+-]' | grep -v '"version":' || true)
