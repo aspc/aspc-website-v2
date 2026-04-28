@@ -1,13 +1,13 @@
 'use client';
-import React from 'react';
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { ReviewFormProps } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
+import { ReviewFormProps } from '@/types';
+import { useParams } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
 
 export const ReviewForm: React.FC<ReviewFormProps> = ({
     review,
     onSuccess,
+    onClose,
 }) => {
     const { user } = useAuth();
     const params = useParams();
@@ -151,6 +151,7 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
 
             if (response.status === 409) {
                 alert('You have already reviewed this room.');
+                onClose();
                 return;
             }
 
