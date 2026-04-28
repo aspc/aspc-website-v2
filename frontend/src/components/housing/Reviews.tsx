@@ -88,14 +88,13 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
 
     const handlePicturesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setPictures(e.target.files);
-
-        const urlList: string[] = [];
-        if (e.target.files) {
-            for (const file of e.target.files) {
-                urlList.push(URL.createObjectURL(file));
-            }
-        }
-        setPictureURLs(urlList);
+        setPictureURLs((prev) => {
+            prev?.forEach((url) => URL.revokeObjectURL(url));
+            if (!e.target.files) return null;
+            return Array.from(e.target.files).map((file) =>
+                URL.createObjectURL(file)
+            );
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
