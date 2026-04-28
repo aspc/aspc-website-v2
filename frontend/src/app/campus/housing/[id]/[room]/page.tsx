@@ -457,7 +457,11 @@ const RoomPage = () => {
                         <div>
                             <ReviewForm
                                 review={selectedReview}
-                                onSuccess={fetchReviews}
+                                onSuccess={() => {
+                                    setIsCreatingNew(false);
+                                    setSelectedReview(null);
+                                    fetchReviews();
+                                }}
                                 onClose={() => {
                                     setIsCreatingNew(false);
                                     setSelectedReview(null);
