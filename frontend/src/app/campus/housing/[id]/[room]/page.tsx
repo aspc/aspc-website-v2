@@ -80,8 +80,10 @@ const RoomPage = () => {
     };
 
     useEffect(() => {
-        fetchReviews();
-    }, [id, room]);
+        if (!authLoading && user) {
+            fetchReviews();
+        }
+    }, [id, room, user, authLoading]);
 
     const targetRef = useRef<HTMLButtonElement | null>(null);
 
