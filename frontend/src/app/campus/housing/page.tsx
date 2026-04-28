@@ -154,11 +154,15 @@ const HousingPage = () => {
                                             {building.name}
                                         </h3>
                                         <p className="text-sm text-gray-600">
-                                            {building.description?.slice(
-                                                0,
-                                                100
-                                            )}
-                                            ...
+                                            {building.description
+                                                ? building.description.length >
+                                                  100
+                                                    ? building.description.slice(
+                                                          0,
+                                                          100
+                                                      ) + '...'
+                                                    : building.description
+                                                : ''}
                                         </p>
                                         <span className="mt-4 inline-block text-blue-600 hover:underline">
                                             View Details
