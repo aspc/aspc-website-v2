@@ -4,7 +4,6 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ReviewFormProps } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
-import Image from 'next/image';
 
 export const ReviewForm: React.FC<ReviewFormProps> = ({
     review,
@@ -309,13 +308,12 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
                         pictureURLs.length > 0 &&
                         pictureURLs.map((pictureURL, index) => (
                             <div key={index} className="picture-item">
-                                <Image
+                                <img
                                     src={pictureURL}
                                     alt={`Review image ${index + 1}`}
-                                    width={200}
-                                    height={200}
                                     className="object-cover"
                                     style={{
+                                        width: '200px',
                                         height: '200px',
                                         objectFit: 'cover',
                                     }}
@@ -359,12 +357,10 @@ export const PictureModal = ({
                 >
                     &times;
                 </button>
-                <Image
+                <img
                     src={`${process.env.BACKEND_LINK}/api/campus/housing/review_pictures/${picture}`}
-                    width={800}
-                    height={800}
                     alt="Review picture"
-                    className="object-contain"
+                    className="object-contain max-w-full max-h-screen"
                 />
             </div>
         </div>
