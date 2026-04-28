@@ -129,7 +129,6 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
             formData.append('layout', ratings.layout.toString());
             formData.append('temperature', ratings.temperature.toString());
             formData.append('comments', comments);
-            formData.append('email', user.email);
 
             if (pictures) {
                 Array.from(pictures).forEach((file) => {

@@ -365,8 +365,7 @@ router.post(
             }
 
             // parse review fields from request
-            const { overall, quiet, layout, temperature, comments, email } =
-                req.body;
+            const { overall, quiet, layout, temperature, comments } = req.body;
 
             // construct review data
             const reviewData = {
@@ -377,7 +376,7 @@ router.post(
                 temperature_rating: temperature,
                 comments: comments,
                 housing_room_id: roomData.id,
-                user_email: email,
+                user_email: req.session.user!.email,
                 pictures: pictureIds,
             };
 
@@ -507,6 +506,13 @@ router.delete(
 
             if (!review) {
                 res.status(404).json({ message: 'Review not found' });
+                return;
+            }
+
+            if (review.pictures && review.pictures.length > 0) {
+                for (const pictureId of review.pictures) {
+                    await housingReviewPictures.delete(new ObjectId(pictureId));
+                }
             }
 
             res.status(200).json({ message: 'Review deleted' });

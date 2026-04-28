@@ -41,49 +41,46 @@ const RoomPage = () => {
         }
     };
 
+    const fetchReviews = async () => {
+        try {
+            setLoading(true);
+
+            const [buildingResponse, reviewsResponse] = await Promise.all([
+                fetch(`${process.env.BACKEND_LINK}/api/campus/housing/${id}`, {
+                    credentials: 'include',
+                }),
+                fetch(
+                    `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`,
+                    {
+                        credentials: 'include',
+                    }
+                ),
+            ]);
+
+            if (!buildingResponse.ok)
+                throw new Error(
+                    `Failed to fetch building: ${buildingResponse.status}`
+                );
+            if (!reviewsResponse.ok)
+                throw new Error(
+                    `Failed to fetch reviews: ${reviewsResponse.status}`
+                );
+
+            const [buildingData, reviewsData] = await Promise.all([
+                buildingResponse.json(),
+                reviewsResponse.json(),
+            ]);
+
+            setBuildingName(buildingData.name);
+            setRoomReviews(reviewsData);
+        } catch (error) {
+            console.error('Error fetching room reviews:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchReviews = async () => {
-            try {
-                setLoading(true);
-
-                const [buildingResponse, reviewsResponse] = await Promise.all([
-                    fetch(
-                        `${process.env.BACKEND_LINK}/api/campus/housing/${id}`,
-                        {
-                            credentials: 'include',
-                        }
-                    ),
-                    fetch(
-                        `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`,
-                        {
-                            credentials: 'include',
-                        }
-                    ),
-                ]);
-
-                if (!buildingResponse.ok)
-                    throw new Error(
-                        `Failed to fetch building: ${buildingResponse.status}`
-                    );
-                if (!reviewsResponse.ok)
-                    throw new Error(
-                        `Failed to fetch reviews: ${reviewsResponse.status}`
-                    );
-
-                const [buildingData, reviewsData] = await Promise.all([
-                    buildingResponse.json(),
-                    reviewsResponse.json(),
-                ]);
-
-                setBuildingName(buildingData.name);
-                setRoomReviews(reviewsData);
-            } catch (error) {
-                console.error('Error fetching room reviews:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchReviews();
     }, [id, room]);
 
@@ -115,12 +112,11 @@ const RoomPage = () => {
         return `${month} ${year}`;
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (reviewId: number) => {
         if (window.confirm('Are you sure you want to delete this review?')) {
             try {
-                setLoading(true);
                 const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/reviews/${id}`,
+                    `${process.env.BACKEND_LINK}/api/campus/housing/reviews/${reviewId}`,
                     {
                         method: 'DELETE',
                         credentials: 'include',
@@ -131,13 +127,10 @@ const RoomPage = () => {
                     throw new Error('Failed to delete review');
                 }
 
-                alert('Review deleted successfully!');
-                setTimeout(() => window.location.reload(), 1000);
+                await fetchReviews();
             } catch (error) {
                 console.error('Error deleting review', error);
                 alert('Failed to delete review');
-            } finally {
-                setLoading(false);
             }
         }
     };
