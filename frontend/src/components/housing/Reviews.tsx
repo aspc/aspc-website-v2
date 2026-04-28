@@ -156,12 +156,17 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
             }
 
             if (!response.ok) {
-                throw new Error('Error submitting review');
+                const data = await response.json();
+                throw new Error(data.message || 'Error submitting review');
             }
 
             onSuccess();
         } catch (error) {
-            alert('Error submitting review');
+            alert(
+                error instanceof Error
+                    ? error.message
+                    : 'Error submitting review'
+            );
             console.error(error);
         }
     };

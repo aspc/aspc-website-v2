@@ -15,7 +15,17 @@ import { housingReviewPictures } from '../server';
 const router = express.Router();
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({
+    storage,
+    limits: { fileSize: 15 * 1024 * 1024, files: 5 }, // limit to a max of 5 files, max 15 mb
+    fileFilter: (_req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed'));
+        }
+    },
+});
 
 const calcAverages = (
     reviews: {
@@ -59,42 +69,6 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-
-/**
- * @route   GET /api/campus/housing/:building
- * @desc    Get housing building by id
- * @access  isAuthenticated
- */
-router.get(
-    '/:building',
-    isAuthenticated,
-    async (req: Request, res: Response) => {
-        try {
-            // Get building id
-            const buildingId = parseInt(req.params.building, 10);
-
-            // Check if conversion is valid
-            if (isNaN(buildingId)) {
-                res.status(400).json({ message: 'Invalid building ID format' });
-                return;
-            }
-
-            // Find building by id
-            const buildingData = await HousingBuildings.findOne({
-                id: buildingId,
-            });
-            if (!buildingData) {
-                res.status(404).json({ message: 'Building not found' });
-                return;
-            }
-
-            // Return building
-            res.json(buildingData);
-        } catch (error) {
-            res.status(500).json({ message: 'Server error' });
-        }
-    }
-);
 
 /**
  * @route   GET /campus/housing/:building/rooms
@@ -238,7 +212,22 @@ router.get(
 router.post(
     '/:buildingId/:roomNumber/reviews',
     isAuthenticated,
-    upload.array('pictures'),
+    (req, res, next) =>
+        upload.array('pictures')(req, res, (err) => {
+            if (err instanceof multer.MulterError) {
+                if (err.code === 'LIMIT_FILE_SIZE')
+                    return res
+                        .status(400)
+                        .json({ message: 'Each image must be under 15 MB' });
+                if (err.code === 'LIMIT_FILE_COUNT')
+                    return res
+                        .status(400)
+                        .json({ message: 'You can upload at most 5 images' });
+                return res.status(400).json({ message: err.message });
+            }
+            if (err) return res.status(400).json({ message: err.message });
+            next();
+        }),
     async (req: Request, res: Response) => {
         try {
             const { buildingId, roomNumber } = req.params;
@@ -284,12 +273,12 @@ router.post(
 
                     uploadStream.end(file.buffer);
 
-                    uploadStream.on('finish', () => {
-                        pictureIds.push(uploadStream.id);
-                    });
-
-                    await new Promise((resolve) => {
-                        uploadStream.on('finish', resolve);
+                    await new Promise<void>((resolve, reject) => {
+                        uploadStream.on('finish', () => {
+                            pictureIds.push(uploadStream.id);
+                            resolve();
+                        });
+                        uploadStream.on('error', reject);
                     });
                 }
             }
@@ -306,10 +295,10 @@ router.post(
             // construct review data
             const reviewData = {
                 id: maxId,
-                overall_rating: overall,
-                quiet_rating: quiet,
-                layout_rating: layout,
-                temperature_rating: temperature,
+                overall_rating: parseInt(overall, 10),
+                quiet_rating: parseInt(quiet, 10),
+                layout_rating: parseInt(layout, 10),
+                temperature_rating: parseInt(temperature, 10),
                 comments: comments,
                 housing_room_id: roomData.id,
                 user_email: req.session.user!.email,
@@ -335,7 +324,22 @@ router.post(
 router.patch(
     '/reviews/:reviewId',
     isHousingReviewOwner,
-    upload.array('pictures'),
+    (req, res, next) =>
+        upload.array('pictures')(req, res, (err) => {
+            if (err instanceof multer.MulterError) {
+                if (err.code === 'LIMIT_FILE_SIZE')
+                    return res
+                        .status(400)
+                        .json({ message: 'Each image must be under 15 MB' });
+                if (err.code === 'LIMIT_FILE_COUNT')
+                    return res
+                        .status(400)
+                        .json({ message: 'You can upload at most 5 images' });
+                return res.status(400).json({ message: err.message });
+            }
+            if (err) return res.status(400).json({ message: err.message });
+            next();
+        }),
     async (req: Request, res: Response) => {
         try {
             const reviewId = req.params.reviewId;
@@ -484,6 +488,42 @@ router.get(
             });
         } catch (error) {
             res.status(400).json({ message: 'Invalid profile picture ID' });
+        }
+    }
+);
+
+/**
+ * @route   GET /api/campus/housing/:building
+ * @desc    Get housing building by id
+ * @access  isAuthenticated
+ */
+router.get(
+    '/:building',
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+        try {
+            // Get building id
+            const buildingId = parseInt(req.params.building, 10);
+
+            // Check if conversion is valid
+            if (isNaN(buildingId)) {
+                res.status(400).json({ message: 'Invalid building ID format' });
+                return;
+            }
+
+            // Find building by id
+            const buildingData = await HousingBuildings.findOne({
+                id: buildingId,
+            });
+            if (!buildingData) {
+                res.status(404).json({ message: 'Building not found' });
+                return;
+            }
+
+            // Return building
+            res.json(buildingData);
+        } catch (error) {
+            res.status(500).json({ message: 'Server error' });
         }
     }
 );
