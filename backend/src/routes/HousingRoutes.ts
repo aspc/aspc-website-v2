@@ -324,7 +324,7 @@ router.post(
             req.files = undefined; // free up memory
             res.status(201).json({ message: 'Review saved successfully' });
         } catch (error) {
-            res.status(400).json({ message: 'Error creating member' });
+            res.status(400).json({ message: 'Error creating review' });
         }
     }
 );
