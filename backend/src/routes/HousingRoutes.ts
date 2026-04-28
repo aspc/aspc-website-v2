@@ -342,7 +342,7 @@ router.patch(
         }),
     async (req: Request, res: Response) => {
         try {
-            const reviewId = req.params.reviewId;
+            const reviewId = parseInt(req.params.reviewId, 10);
             const oldReview = await HousingReviews.findOne({ id: reviewId });
 
             if (!oldReview) {
@@ -355,10 +355,10 @@ router.patch(
 
             // construct review data
             let updateData = {
-                overall_rating: overall,
-                quiet_rating: quiet,
-                layout_rating: layout,
-                temperature_rating: temperature,
+                overall_rating: parseInt(overall, 10),
+                quiet_rating: parseInt(quiet, 10),
+                layout_rating: parseInt(layout, 10),
+                temperature_rating: parseInt(temperature, 10),
                 comments: comments,
                 pictures: oldReview.pictures,
             };
@@ -388,14 +388,12 @@ router.patch(
                     // Upload the file buffer to GridFS
                     uploadStream.end(file.buffer);
 
-                    // Wait for the file upload to finish and get the file ID
-                    uploadStream.on('finish', () => {
-                        pictureIds.push(uploadStream.id);
-                    });
-
-                    // Wait for the stream to finish before continuing
-                    await new Promise((resolve) => {
-                        uploadStream.on('finish', resolve);
+                    await new Promise<void>((resolve, reject) => {
+                        uploadStream.on('finish', () => {
+                            pictureIds.push(uploadStream.id);
+                            resolve();
+                        });
+                        uploadStream.on('error', reject);
                     });
                 }
 
@@ -429,7 +427,7 @@ router.delete(
     async (req: Request, res: Response) => {
         try {
             const review = await HousingReviews.findOneAndDelete({
-                id: req.params.reviewId,
+                id: parseInt(req.params.reviewId, 10),
             });
 
             if (!review) {

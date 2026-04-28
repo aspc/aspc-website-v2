@@ -106,7 +106,7 @@ export const isHousingReviewOwner = async (
 
     const { reviewId } = req.params;
 
-    const review = await HousingReviews.findOne({ id: reviewId });
+    const review = await HousingReviews.findOne({ id: parseInt(reviewId, 10) });
 
     if (!review) {
         res.status(404).json({ message: 'Review not found' });

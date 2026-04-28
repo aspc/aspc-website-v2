@@ -104,6 +104,8 @@ const RoomPage = () => {
         return <LoginRequired />;
     }
 
+    const hasReviewed = roomReviews?.reviews.some((r) => r.isOwner) ?? false;
+
     const formatDate = (date: Date) => {
         const d = new Date(date);
         const month = d.toLocaleString('default', { month: 'long' });
@@ -439,17 +441,19 @@ const RoomPage = () => {
                         />
                     )}
 
-                    <button
-                        className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
-                        onClick={handleAddNewReviewClick}
-                        ref={targetRef}
-                    >
-                        {isCreatingNew
-                            ? 'Cancel'
-                            : selectedReview
-                              ? 'Cancel review edit'
-                              : 'Add new review'}
-                    </button>
+                    {(!hasReviewed || isCreatingNew || selectedReview) && (
+                        <button
+                            className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
+                            onClick={handleAddNewReviewClick}
+                            ref={targetRef}
+                        >
+                            {isCreatingNew
+                                ? 'Cancel'
+                                : selectedReview
+                                  ? 'Cancel review edit'
+                                  : 'Add new review'}
+                        </button>
+                    )}
 
                     {(isCreatingNew || selectedReview) && (
                         <div>
