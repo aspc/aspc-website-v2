@@ -353,7 +353,7 @@ export const PictureModal = ({
 
     return (
         <div
-            className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-10 flex justify-center items-center z-50"
+            className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
             onClick={onClose}
         >
             <div className="bg-white p-4 rounded max-w-4xl max-h-screen overflow-auto relative">

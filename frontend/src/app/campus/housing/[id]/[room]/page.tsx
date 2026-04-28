@@ -401,17 +401,6 @@ const RoomPage = () => {
                                                 </div>
                                             )}
 
-                                            {/* If user clicks a picture, open a popup with enlarged image */}
-                                            {selectedPicture && (
-                                                <PictureModal
-                                                    isOpen={!!selectedPicture}
-                                                    onClose={() =>
-                                                        setSelectedPicture(null)
-                                                    }
-                                                    picture={selectedPicture}
-                                                />
-                                            )}
-
                                             {/* Date written, last updated */}
                                             <div className="flex space-x-16">
                                                 <p className="text-gray-500 mt-3">
@@ -443,14 +432,24 @@ const RoomPage = () => {
                         )}
                     </div>
 
+                    {selectedPicture && (
+                        <PictureModal
+                            isOpen={!!selectedPicture}
+                            onClose={() => setSelectedPicture(null)}
+                            picture={selectedPicture}
+                        />
+                    )}
+
                     <button
                         className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
                         onClick={handleAddNewReviewClick}
                         ref={targetRef}
                     >
-                        {selectedReview
-                            ? 'Cancel review edit'
-                            : 'Add new review'}
+                        {isCreatingNew
+                            ? 'Cancel'
+                            : selectedReview
+                              ? 'Cancel review edit'
+                              : 'Add new review'}
                     </button>
 
                     {(isCreatingNew || selectedReview) && (
