@@ -149,6 +149,11 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
                 credentials: 'include',
             });
 
+            if (response.status === 409) {
+                alert('You have already reviewed this room.');
+                return;
+            }
+
             if (!response.ok) {
                 throw new Error('Error submitting review');
             }
