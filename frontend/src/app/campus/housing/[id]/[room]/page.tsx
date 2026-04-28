@@ -126,6 +126,7 @@ const RoomPage = () => {
                     throw new Error('Failed to delete review');
                 }
 
+                setSelectedReview(null);
                 await fetchReviews();
             } catch (error) {
                 console.error('Error deleting review', error);
@@ -365,12 +366,10 @@ const RoomPage = () => {
                                             )}
 
                                             {/* Review Pictures */}
-                                            {review.pictures && (
-                                                <div className="pictures-container flex space-x-4">
-                                                    {review.pictures &&
-                                                        review.pictures.length >
-                                                            0 &&
-                                                        review.pictures.map(
+                                            {review.pictures &&
+                                                review.pictures.length > 0 && (
+                                                    <div className="pictures-container flex space-x-4">
+                                                        {review.pictures.map(
                                                             (
                                                                 picture,
                                                                 index
@@ -398,8 +397,8 @@ const RoomPage = () => {
                                                                 </div>
                                                             )
                                                         )}
-                                                </div>
-                                            )}
+                                                    </div>
+                                                )}
 
                                             {/* Date written, last updated */}
                                             <div className="flex space-x-16">
