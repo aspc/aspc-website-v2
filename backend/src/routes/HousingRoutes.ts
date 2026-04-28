@@ -138,7 +138,12 @@ router.get(
                 housing_room_id: roomId,
             }).lean();
 
-            const sessionEmail = req.session.user!.email;
+            if (!req.session.user) {
+                res.status(401).json({ message: 'Authentication required' });
+                return;
+            }
+
+            const sessionEmail = req.session.user.email;
             const safeReviews = reviews.map(({ user_email, ...fields }) => ({
                 ...fields,
                 isOwner: user_email === sessionEmail,
@@ -187,7 +192,11 @@ router.get(
                 housing_room_id: roomData.id,
             }).lean();
 
-            const sessionEmail = req.session.user!.email;
+            if (!req.session.user) {
+                res.status(401).json({ message: 'Authentication required' });
+                return;
+            }
+            const sessionEmail = req.session.user.email;
             const safeReviews = reviews.map(({ user_email, ...fields }) => ({
                 ...fields,
                 isOwner: user_email === sessionEmail,
@@ -248,9 +257,14 @@ router.post(
                 return;
             }
 
+            if (!req.session.user) {
+                res.status(401).json({ message: 'Authentication required' });
+                return;
+            }
+
             const existingReview = await HousingReviews.findOne({
                 housing_room_id: roomData.id,
-                user_email: req.session.user!.email,
+                user_email: req.session.user.email,
             });
 
             if (existingReview) {
@@ -292,6 +306,11 @@ router.post(
             // parse review fields from request
             const { overall, quiet, layout, temperature, comments } = req.body;
 
+            if (!req.session.user) {
+                res.status(401).json({ message: 'Authentication required' });
+                return;
+            }
+
             // construct review data
             const reviewData = {
                 id: maxId,
@@ -301,7 +320,7 @@ router.post(
                 temperature_rating: parseInt(temperature, 10),
                 comments: comments,
                 housing_room_id: roomData.id,
-                user_email: req.session.user!.email,
+                user_email: req.session.user.email,
                 pictures: pictureIds,
             };
 
