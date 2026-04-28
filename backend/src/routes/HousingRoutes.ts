@@ -17,6 +17,35 @@ const router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+const calcAverages = (
+    reviews: {
+        overall_rating?: number;
+        quiet_rating?: number;
+        layout_rating?: number;
+        temperature_rating?: number;
+    }[]
+) => {
+    const avg = (arr: number[]) =>
+        arr.length > 0
+            ? arr.reduce((sum, val) => sum + val, 0) / arr.length
+            : 0;
+    return {
+        overallAverage: avg(
+            reviews.map((r) => r.overall_rating).filter(Boolean) as number[]
+        ),
+        quietAverage: avg(
+            reviews.map((r) => r.quiet_rating).filter(Boolean) as number[]
+        ),
+        layoutAverage: avg(
+            reviews.map((r) => r.layout_rating).filter(Boolean) as number[]
+        ),
+        temperatureAverage: avg(
+            reviews.map((r) => r.temperature_rating).filter(Boolean) as number[]
+        ),
+        reviewCount: reviews.length,
+    };
+};
+
 /**
  * @route   GET /api/campus/housing
  * @desc    Get all housing buildings
@@ -141,54 +170,10 @@ router.get(
                 isOwner: user_email === sessionEmail,
             }));
 
-            // Calculate average ratings
-            if (reviews.length > 0) {
-                const overallRatings = reviews
-                    .map((r) => r.overall_rating)
-                    .filter(Boolean) as number[];
-                const quietRatings = reviews
-                    .map((r) => r.quiet_rating)
-                    .filter(Boolean) as number[];
-                const layoutRatings = reviews
-                    .map((r) => r.layout_rating)
-                    .filter(Boolean) as number[];
-                const temperatureRatings = reviews
-                    .map((r) => r.temperature_rating)
-                    .filter(Boolean) as number[];
-
-                const calcAverage = (arr: number[]) =>
-                    arr.length > 0
-                        ? arr.reduce((sum, val) => sum + val, 0) / arr.length
-                        : 0;
-
-                const averages = {
-                    overallAverage: calcAverage(overallRatings),
-                    quietAverage: calcAverage(quietRatings),
-                    layoutAverage: calcAverage(layoutRatings),
-                    temperatureAverage: calcAverage(temperatureRatings),
-                    reviewCount: reviews.length,
-                };
-
-                // Return reviews and averages as well as the room data itself
-                res.json({
-                    room: roomData,
-                    reviews: safeReviews,
-                    averages: averages,
-                });
-                return;
-            }
-
-            // Return reviews (even if empty)
             res.json({
                 room: roomData,
                 reviews: safeReviews,
-                averages: {
-                    overallAverage: 0,
-                    quietAverage: 0,
-                    layoutAverage: 0,
-                    temperatureAverage: 0,
-                    reviewCount: 0,
-                },
+                averages: calcAverages(reviews),
             });
         } catch (error) {
             res.status(500).json({ message: 'Server error' });
@@ -206,11 +191,9 @@ router.get(
     isAuthenticated,
     async (req: Request, res: Response) => {
         try {
-            // Get room id and convert it to a number
             const { buildingId, roomNumber } = req.params;
             const buildingIdNumber = parseInt(buildingId, 10);
 
-            // Find the room by building and room number
             if (isNaN(buildingIdNumber)) {
                 res.status(400).json({ message: 'Invalid building ID format' });
                 return;
@@ -226,7 +209,6 @@ router.get(
                 return;
             }
 
-            // Get all reviews for the room using room id
             const reviews = await HousingReviews.find({
                 housing_room_id: roomData.id,
             }).lean();
@@ -237,54 +219,10 @@ router.get(
                 isOwner: user_email === sessionEmail,
             }));
 
-            // Calculate average ratings
-            if (reviews.length > 0) {
-                const overallRatings = reviews
-                    .map((r) => r.overall_rating)
-                    .filter(Boolean) as number[];
-                const quietRatings = reviews
-                    .map((r) => r.quiet_rating)
-                    .filter(Boolean) as number[];
-                const layoutRatings = reviews
-                    .map((r) => r.layout_rating)
-                    .filter(Boolean) as number[];
-                const temperatureRatings = reviews
-                    .map((r) => r.temperature_rating)
-                    .filter(Boolean) as number[];
-
-                const calcAverage = (arr: number[]) =>
-                    arr.length > 0
-                        ? arr.reduce((sum, val) => sum + val, 0) / arr.length
-                        : 0;
-
-                const averages = {
-                    overallAverage: calcAverage(overallRatings),
-                    quietAverage: calcAverage(quietRatings),
-                    layoutAverage: calcAverage(layoutRatings),
-                    temperatureAverage: calcAverage(temperatureRatings),
-                    reviewCount: reviews.length,
-                };
-
-                // Return reviews and averages as well as the room data itself
-                res.json({
-                    room: roomData,
-                    reviews: safeReviews,
-                    averages: averages,
-                });
-                return;
-            }
-
-            // Return reviews (even if empty)
             res.json({
                 room: roomData,
                 reviews: safeReviews,
-                averages: {
-                    overallAverage: 0,
-                    quietAverage: 0,
-                    layoutAverage: 0,
-                    temperatureAverage: 0,
-                    reviewCount: 0,
-                },
+                averages: calcAverages(reviews),
             });
         } catch (error) {
             res.status(500).json({ message: 'Server error' });
@@ -343,7 +281,7 @@ router.post(
                 },
             ]);
 
-            const maxId = result[0].maxValue + 1;
+            const maxId = result.length > 0 ? result[0].maxValue + 1 : 1;
 
             // Find room id by building and room number
             const { buildingId, roomNumber } = req.params;
@@ -402,15 +340,10 @@ router.patch(
     upload.array('pictures'),
     async (req: Request, res: Response) => {
         try {
-            if (!req.files && !req.body) {
-                return;
-            }
-
             const reviewId = req.params.reviewId;
             const oldReview = await HousingReviews.findOne({ id: reviewId });
 
             if (!oldReview) {
-                console.log('cant find old review');
                 res.status(404).json({ message: 'Review not found' });
                 return;
             }
@@ -435,14 +368,7 @@ router.patch(
                 if (oldReview.pictures && oldReview.pictures.length > 0) {
                     for (const pictureId of oldReview.pictures) {
                         const oldPictureId = new ObjectId(pictureId);
-                        console.log(
-                            `Deleting image with ObjectId: ${oldPictureId}`
-                        );
-
                         await housingReviewPictures.delete(oldPictureId);
-                        console.log(
-                            `Image with ObjectId ${oldPictureId} deleted from GridFS`
-                        );
                     }
                 }
 
