@@ -98,7 +98,7 @@ const RoomPage = () => {
         }, 0);
     };
 
-    if (loading || authLoading) {
+    if (authLoading || (user !== null && loading)) {
         return <Loading />;
     }
 
