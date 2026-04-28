@@ -109,6 +109,7 @@ export interface RoomCardProps {
 
 export interface ReviewFormProps {
     review: Review | null;
+    onSuccess: () => void;
 }
 
 // Course and course review types

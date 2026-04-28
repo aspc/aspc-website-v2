@@ -6,7 +6,10 @@ import { ReviewFormProps } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import Image from 'next/image';
 
-export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
+export const ReviewForm: React.FC<ReviewFormProps> = ({
+    review,
+    onSuccess,
+}) => {
     const { user } = useAuth();
     const params = useParams();
     const { id, room } = params;
@@ -152,8 +155,7 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
                 throw new Error('Error submitting review');
             }
 
-            alert('Review submitted successfully!');
-            window.location.reload();
+            onSuccess();
         } catch (error) {
             alert('Error submitting review');
             console.error(error);

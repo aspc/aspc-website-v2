@@ -461,7 +461,10 @@ const RoomPage = () => {
 
                     {(isCreatingNew || selectedReview) && (
                         <div>
-                            <ReviewForm review={selectedReview} />
+                            <ReviewForm
+                                review={selectedReview}
+                                onSuccess={fetchReviews}
+                            />
                         </div>
                     )}
                 </div>
