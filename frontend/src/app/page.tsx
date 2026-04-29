@@ -1,19 +1,13 @@
 'use client';
-import HomepageSkeleton from '@/components/HomepageSkeleton';
 import HomepageEvents from '@/components/ui/HomepageEvents';
 import BallotCountdown from '@/components/vote/BallotCountdown';
-import { useAuth } from '@/hooks/useAuth';
 import { useElection } from '@/hooks/useElection';
 import { Event } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-const SUNSET_BLUR_DATA_URL =
-    'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiA5Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmZjk1NDIiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM4ZjQ2MjAiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iMTYiIGhlaWdodD0iOSIgZmlsbD0idXJsKCNnKSIvPjwvc3ZnPg==';
-
 export default function HomePage() {
-    const { loading: authLoading } = useAuth();
     const [events, setEvents] = useState<Event[]>([]);
     const { election, showElection } = useElection();
 
@@ -39,9 +33,6 @@ export default function HomePage() {
         );
     }, []);
 
-    if (authLoading) {
-        return <HomepageSkeleton />;
-    }
     return (
         <div className="min-h-screen bg-white">
             {/* Election Section - When there is active election */}
@@ -107,8 +98,6 @@ export default function HomePage() {
                     className="object-cover"
                     priority
                     quality={100}
-                    placeholder="blur"
-                    blurDataURL={SUNSET_BLUR_DATA_URL}
                 />
                 <div className="absolute inset-0 bg-orange-500/30 mix-blend-multiply" />
 
