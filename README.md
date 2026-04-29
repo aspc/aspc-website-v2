@@ -131,6 +131,14 @@ Helper scripts in [scripts/](./scripts/) wrap the steps above so you don't have 
 
     Spawns three labeled `cmd` windows: `ASPC Backend`, `ASPC Frontend`, `ASPC SSL Proxy`.
 
+- **macOS (three separate Terminal.app windows)** — from the repo root:
+
+    ```bash
+    bash scripts/start-mac.sh
+    ```
+
+    Uses `osascript` to spawn three labeled Terminal windows, mirroring the Windows behavior.
+
 - **macOS / Linux / Git Bash (single terminal, multiplexed output)** — from the repo root:
 
     ```bash
@@ -139,7 +147,7 @@ Helper scripts in [scripts/](./scripts/) wrap the steps above so you don't have 
 
     Runs all three processes in the background of the current shell. `Ctrl+C` shuts them all down together.
 
-Both scripts assume backend and frontend `.env` files and SSL certificates have already been set up as described above.
+All scripts assume backend and frontend `.env` files and SSL certificates have already been set up as described above.
 
 ### Environment Variables
 
