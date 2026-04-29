@@ -235,6 +235,16 @@ const Header = () => {
                                     <div className="absolute top-full mt-2 w-44 bg-white rounded-md shadow-lg py-1 z-50">
                                         {renderSectionLinks('about')}
 
+                                        <Link
+                                            href="/pages/about/scsabout"
+                                            className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100"
+                                            onClick={() =>
+                                                setOpenDropdown(null)
+                                            }
+                                        >
+                                            SCS Internship
+                                        </Link>
+
                                         {/* Officers Submenu Item */}
                                         <div
                                             className="relative"
@@ -518,6 +528,16 @@ const Header = () => {
                                 {openDropdown === 'AboutMobile' && (
                                     <div className="ml-2 mt-2">
                                         {renderSectionLinks('about', true)}
+
+                                        <Link
+                                            href="/pages/about/scsabout"
+                                            className="block px-4 py-2 hover:text-yellow-400"
+                                            onClick={() =>
+                                                setIsMobileMenuOpen(false)
+                                            }
+                                        >
+                                            SCS Internship
+                                        </Link>
 
                                         {/* Officers Submenu Item */}
                                         <div className="relative">
