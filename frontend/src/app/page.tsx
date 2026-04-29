@@ -3,7 +3,8 @@ import HomepageSkeleton from '@/components/HomepageSkeleton';
 import HomepageEvents from '@/components/ui/HomepageEvents';
 import BallotCountdown from '@/components/vote/BallotCountdown';
 import { useAuth } from '@/hooks/useAuth';
-import { Event, IElectionFrontend } from '@/types';
+import { useElection } from '@/hooks/useElection';
+import { Event } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -14,8 +15,7 @@ const SUNSET_BLUR_DATA_URL =
 export default function HomePage() {
     const { loading: authLoading } = useAuth();
     const [events, setEvents] = useState<Event[]>([]);
-    const [election, setElection] = useState<IElectionFrontend | null>(null);
-    const [showElection, setShowElection] = useState(false);
+    const { election, showElection } = useElection();
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -37,43 +37,6 @@ export default function HomePage() {
                     new Date(a.start).getTime() - new Date(b.start).getTime()
             )
         );
-    }, []);
-
-    useEffect(() => {
-        const fetchElection = async () => {
-            try {
-                const backendLink =
-                    process.env.BACKEND_LINK || process.env.BACKEND_LINK;
-                const electionRes = await fetch(
-                    `${backendLink}/api/voting/election`,
-                    {
-                        credentials: 'include',
-                    }
-                );
-
-                if (!electionRes.ok) {
-                    setShowElection(false);
-                    return;
-                }
-
-                const data = await electionRes.json();
-                const now = new Date();
-                const startDate = new Date(data.startDate);
-                const endDate = new Date(data.endDate);
-
-                if (startDate <= now && endDate > now) {
-                    setElection(data);
-                    setShowElection(true);
-                } else {
-                    setShowElection(false);
-                }
-            } catch (error) {
-                console.error('Error fetching election:', error);
-                setShowElection(false);
-            }
-        };
-
-        fetchElection();
     }, []);
 
     if (authLoading) {
