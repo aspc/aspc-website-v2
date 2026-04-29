@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Loading from '@/components/Loading';
 import { useAuth } from '@/hooks/useAuth';
+import { useElection } from '@/hooks/useElection';
 import { PageContent } from '@/types';
 import Image from 'next/image';
 import { Button } from './Button';
@@ -296,7 +297,7 @@ const Header = () => {
     const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
     const [loadingPages, setLoadingPages] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [showElectionButton, setShowElectionButton] = useState(false);
+    const { showElection: showElectionButton } = useElection();
 
     useEffect(() => {
         const fetchPages = async () => {
@@ -335,41 +336,6 @@ const Header = () => {
 
         fetchPages();
     }, [user]);
-
-    useEffect(() => {
-        const fetchElection = async () => {
-            try {
-                const backendLink = process.env.BACKEND_LINK;
-                const electionRes = await fetch(
-                    `${backendLink}/api/voting/election`,
-                    {
-                        credentials: 'include',
-                    }
-                );
-
-                if (!electionRes.ok) {
-                    setShowElectionButton(false);
-                    return;
-                }
-
-                const data = await electionRes.json();
-                const now = new Date();
-                const startDate = new Date(data.startDate);
-                const endDate = new Date(data.endDate);
-
-                if (startDate <= now && endDate > now) {
-                    setShowElectionButton(true);
-                } else {
-                    setShowElectionButton(false);
-                }
-            } catch (error) {
-                console.error('Error fetching election:', error);
-                setShowElectionButton(false);
-            }
-        };
-
-        fetchElection();
-    }, []);
 
     const handleToggleDropdown = (dropdownId: string) => {
         setOpenDropdown((prev) => (prev === dropdownId ? null : dropdownId));
