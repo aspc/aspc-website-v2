@@ -1,8 +1,23 @@
 import express, { Request, Response } from 'express';
-import PageContent from '../../models/PageContent';
+import { ObjectId } from 'mongodb';
+import multer from 'multer';
 import { isAdmin, isAuthenticated } from '../../middleware/authMiddleware';
+import PageContent from '../../models/PageContent';
+import { pagePdfs } from '../../server';
 
 const router = express.Router();
+
+const storage = multer.memoryStorage();
+const upload = multer({
+    storage,
+    fileFilter: (_req, file, cb) => {
+        if (file.mimetype !== 'application/pdf') {
+            cb(new Error('Only PDF files are allowed'));
+        } else {
+            cb(null, true);
+        }
+    },
+});
 
 /**
  * @route   GET /api/admin/pages
@@ -63,15 +78,13 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
     try {
         const { id, name, content, header, link } = req.body;
 
-        if (!id || !name || !header || (!link && !content)) {
+        if (!id || !name || !header) {
             res.status(400).json({
-                message:
-                    'id, name, and header are required, and either link or content must be provided',
+                message: 'id, name, and header are required',
             });
             return;
         }
 
-        // Make sure only link or content is provided (Either link to a google doc or content for a static page)
         if (link && content) {
             res.status(400).json({
                 message:
@@ -86,6 +99,7 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
             header,
             content: content ?? null,
             link: link ?? null,
+            pdfId: null,
         });
         await newPage.save();
 
@@ -151,7 +165,143 @@ router.delete('/:id', isAdmin, async (req: Request, res: Response) => {
             return;
         }
 
+        if (page.pdfId) {
+            console.log('Deleting PDF with id:', page.pdfId);
+            try {
+                await pagePdfs.delete(new ObjectId(page.pdfId));
+                console.log('PDF deleted successfully');
+            } catch (pdfError) {
+                console.error('Error deleting PDF from GridFS:', pdfError);
+            }
+        }
+
         res.status(200).json({ message: 'Page deleted', page });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+/**
+ * @route   POST /api/admin/pages/:id/pdf
+ * @desc    Upload a PDF for a page
+ * @access  isAdmin
+ */
+router.post(
+    '/:id/pdf',
+    isAdmin,
+    upload.single('file'),
+    async (req: Request, res: Response) => {
+        if (!req.file) {
+            res.status(400).json({ message: 'No PDF file uploaded' });
+            return;
+        }
+
+        try {
+            const { id } = req.params;
+            const page = await PageContent.findOne({ id });
+
+            if (!page) {
+                res.status(404).json({ message: 'Page not found' });
+                return;
+            }
+
+            // Delete existing PDF from GridFS if one already exists
+            if (page.pdfId) {
+                await pagePdfs.delete(new ObjectId(page.pdfId));
+            }
+
+            // Upload new PDF to GridFS
+            const newPdfId = await new Promise<ObjectId>((resolve, reject) => {
+                const uploadStream = pagePdfs.openUploadStream(
+                    req.file!.originalname,
+                    { contentType: 'application/pdf' }
+                );
+                uploadStream.end(req.file!.buffer);
+                uploadStream.on('finish', () => resolve(uploadStream.id));
+                uploadStream.on('error', reject);
+            });
+
+            await PageContent.findOneAndUpdate({ id }, { pdfId: newPdfId });
+
+            req.file = undefined;
+            res.status(201).json({
+                message: 'PDF uploaded successfully',
+                pdfId: newPdfId,
+            });
+        } catch (error) {
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
+);
+
+/**
+ * @route   GET /api/admin/pages/:id/pdf
+ * @desc    Stream the PDF for a page
+ * @access  public
+ */
+router.get('/pdf/:id', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const page = await PageContent.findOne({ id });
+
+        if (!page) {
+            res.status(404).json({ message: 'Page not found' });
+            return;
+        }
+
+        if (!page.pdfId) {
+            res.status(404).json({ message: 'No PDF attached to this page' });
+            return;
+        }
+
+        const fileId = new ObjectId(page.pdfId);
+        const files = await pagePdfs.find({ _id: fileId }).toArray();
+
+        if (!files.length) {
+            res.status(404).json({ message: 'PDF not found in storage' });
+            return;
+        }
+
+        res.set('Content-Type', 'application/pdf');
+        res.set(
+            'Content-Disposition',
+            `inline; filename="${files[0].filename}"`
+        );
+
+        const downloadStream = pagePdfs.openDownloadStream(fileId);
+        downloadStream.pipe(res);
+        downloadStream.on('error', () => {
+            res.status(500).json({ message: 'Error retrieving PDF' });
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+/**
+ * @route   DELETE /api/admin/pages/:id/pdf
+ * @desc    Remove the PDF from a page
+ * @access  isAdmin
+ */
+router.delete('/:id/pdf', isAdmin, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const page = await PageContent.findOne({ id });
+
+        if (!page) {
+            res.status(404).json({ message: 'Page not found' });
+            return;
+        }
+
+        if (!page.pdfId) {
+            res.status(404).json({ message: 'No PDF attached to this page' });
+            return;
+        }
+
+        await pagePdfs.delete(new ObjectId(page.pdfId));
+        await PageContent.findOneAndUpdate({ id }, { pdfId: null });
+
+        res.status(200).json({ message: 'PDF deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }
