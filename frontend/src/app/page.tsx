@@ -1,5 +1,5 @@
 'use client';
-import Loading from '@/components/Loading';
+import HomepageSkeleton from '@/components/HomepageSkeleton';
 import HomepageEvents from '@/components/ui/HomepageEvents';
 import BallotCountdown from '@/components/vote/BallotCountdown';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,8 +9,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
+const SUNSET_BLUR_DATA_URL =
+    'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiA5Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmZjk1NDIiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM4ZjQ2MjAiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iMTYiIGhlaWdodD0iOSIgZmlsbD0idXJsKCNnKSIvPjwvc3ZnPg==';
+
 export default function HomePage() {
-    const [loading, setLoading] = useState(true);
     const { loading: authLoading } = useAuth();
     const [events, setEvents] = useState<Event[]>([]);
     const { election, showElection } = useElection();
@@ -38,12 +40,10 @@ export default function HomePage() {
     }, []);
 
     if (authLoading) {
-        return <Loading />;
+        return <HomepageSkeleton />;
     }
     return (
         <div className="min-h-screen bg-white">
-            {loading && <Loading />}
-
             {/* Election Section - When there is active election */}
             {showElection && election && (
                 <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0f1d]">
@@ -107,9 +107,8 @@ export default function HomePage() {
                     className="object-cover"
                     priority
                     quality={100}
-                    onLoadingComplete={() => {
-                        setTimeout(() => setLoading(false), 400);
-                    }}
+                    placeholder="blur"
+                    blurDataURL={SUNSET_BLUR_DATA_URL}
                 />
                 <div className="absolute inset-0 bg-orange-500/30 mix-blend-multiply" />
 
@@ -153,7 +152,7 @@ export default function HomePage() {
                         <div className="space-y-6">
                             <div className="bg-white rounded-lg shadow p-6">
                                 <h3 className="font-medium mb-2">
-                                    Fall 2025 Funding Request Forms
+                                    Spring 2026 Funding Request Forms
                                 </h3>
                                 <p className="text-gray-600 text-sm">
                                     Request funds allocated for conferences,
