@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# Opens backend, frontend, and the local SSL proxy in three separate Terminal.app windows.
+# Starts backend, frontend, and local SSL proxy in the background (no Terminal.app windows).
+# Logs: .logs/*.log
+# Stop all services: press Ctrl+C in this shell, or close this terminal session.
 # Backend:  https://localhost:5000
 # Frontend: https://localhost:3001 (proxied to http://localhost:3000)
 
 set -e
 cd "$(dirname "$0")/.."
 REPO_ROOT="$(pwd)"
+LOG_DIR="$REPO_ROOT/.logs"
 
 if ! command -v local-ssl-proxy >/dev/null 2>&1; then
   echo "Installing local-ssl-proxy globally..."
@@ -22,23 +25,33 @@ if [ ! -d frontend/node_modules ]; then
   (cd frontend && npm install)
 fi
 
-open_terminal() {
-  local title="$1"
-  local cmd="$2"
-  osascript <<EOF
-tell application "Terminal"
-    activate
-    do script "cd '$REPO_ROOT' && echo '=== $title ===' && $cmd"
-    set custom title of front window to "$title"
-end tell
-EOF
+cleanup_children() {
+  local p
+  for p in $(jobs -p 2>/dev/null); do
+    kill "$p" 2>/dev/null || true
+  done
 }
 
-echo "Launching backend, frontend, and SSL proxy in separate Terminal windows..."
-open_terminal "ASPC Backend"   "cd backend && npm run dev"
-open_terminal "ASPC Frontend"  "cd frontend && npm run dev"
-open_terminal "ASPC SSL Proxy" "local-ssl-proxy --source 3001 --target 3000"
+on_interrupt() {
+  cleanup_children
+  exit 130
+}
 
+mkdir -p "$LOG_DIR"
+trap cleanup_children EXIT
+trap on_interrupt INT TERM
+
+echo "Starting backend, frontend, and SSL proxy in the background (no new windows)."
+echo "Logs: $LOG_DIR/backend.log, frontend.log, ssl-proxy.log — tail -f to follow."
+echo "Press Ctrl+C here to stop all three."
 echo ""
+
+(cd "$REPO_ROOT/backend" && npm run dev) >>"$LOG_DIR/backend.log" 2>&1 &
+(cd "$REPO_ROOT/frontend" && npm run dev) >>"$LOG_DIR/frontend.log" 2>&1 &
+(cd "$REPO_ROOT" && local-ssl-proxy --source 3001 --target 3000) >>"$LOG_DIR/ssl-proxy.log" 2>&1 &
+
 echo "Backend:  https://localhost:5000"
 echo "Frontend: https://localhost:3001"
+echo ""
+
+wait
