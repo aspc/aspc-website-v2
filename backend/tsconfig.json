@@ -6,7 +6,7 @@
     "target": "es2017",
     "module": "commonjs",
     "typeRoots": ["./node_modules/@types", "./src/types"],
-    "types": ["jest", "node"],
+    "types": ["jest", "node", "supertest"],
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,

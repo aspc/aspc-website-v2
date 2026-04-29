@@ -1,0 +1,247 @@
+{
+  "phase": 4,
+  "description": "Update CourseReviews with Instructor CxIDs",
+  "dryRun": false,
+  "stats": {
+    "totalReviews": 10405,
+    "mappedToCxID": 10331,
+    "unmappedLegacy": 45,
+    "errors": 29,
+    "mappedPercentage": 99,
+    "unmappedPercentage": 0,
+    "matchMethods": {
+      "exact": 10005,
+      "fuzzy": 155,
+      "token-sort": 15,
+      "cxid-intersection": 156
+    }
+  },
+  "unmappedReviews": [
+    {
+      "reviewId": 5048,
+      "course": "ANTH053  PO",
+      "instructor": "Traore, Cecile"
+    },
+    {
+      "reviewId": 588,
+      "course": "CSCI151  HM",
+      "instructor": "Boerkoel, James,, Jr."
+    },
+    {
+      "reviewId": 470,
+      "course": "MATH055  HM",
+      "instructor": "Benjamin, Arthur T."
+    },
+    {
+      "reviewId": 795,
+      "course": "ENGR079  HM",
+      "instructor": "Tsai, Timothy"
+    },
+    {
+      "reviewId": 5099,
+      "course": "HIST032  CH",
+      "instructor": "Hernandez, Esther"
+    },
+    {
+      "reviewId": 5164,
+      "course": "POLI130  SC",
+      "instructor": "Auerbach, Nancy Neiman"
+    },
+    {
+      "reviewId": 5122,
+      "course": "CHIN001A PO",
+      "instructor": "Jessie, Ssu-Fang Liu"
+    },
+    {
+      "reviewId": 5205,
+      "course": "CLAS113  PO",
+      "instructor": "Valentine, Joanna"
+    },
+    {
+      "reviewId": 5212,
+      "course": "CSCI081  HM",
+      "instructor": "Keller, Robert M."
+    },
+    {
+      "reviewId": 3212,
+      "course": "CSCI131  HM",
+      "instructor": "Stone, Christopher"
+    },
+    {
+      "reviewId": 5349,
+      "course": "MATH189T HM",
+      "instructor": "Benjamin, Arthur T."
+    },
+    {
+      "reviewId": 3435,
+      "course": "CSCI131  HM",
+      "instructor": "Stone, Christopher"
+    },
+    {
+      "reviewId": 3977,
+      "course": "PHYS154  HM",
+      "instructor": "Lyzenga, Gregory A."
+    },
+    {
+      "reviewId": 3990,
+      "course": "CSCI151  HM",
+      "instructor": "Boerkoel, James,, Jr."
+    },
+    {
+      "reviewId": 3961,
+      "course": "ASTR062  HM",
+      "instructor": "Lyzenga, Gregory A."
+    },
+    {
+      "reviewId": 3966,
+      "course": "MATH055  HM",
+      "instructor": "Benjamin, Arthur T."
+    },
+    {
+      "reviewId": 3996,
+      "course": "CSCI151  HM",
+      "instructor": "Boerkoel, James,, Jr."
+    },
+    {
+      "reviewId": 6250,
+      "course": "CLAS114  PO",
+      "instructor": "Valentine, Joanna"
+    },
+    {
+      "reviewId": 5631,
+      "course": "CSCI005  HM",
+      "instructor": "Kuenning, Geoffrey H."
+    },
+    {
+      "reviewId": 1961,
+      "course": "PHYS154  HM",
+      "instructor": "Lyzenga, Gregory A."
+    },
+    {
+      "reviewId": 6222,
+      "course": "CLAS113  SC",
+      "instructor": "Valentine, Joanna"
+    },
+    {
+      "reviewId": 7956,
+      "course": "BIOL189B PO",
+      "instructor": "Meyer, Wallace M."
+    },
+    {
+      "reviewId": 7957,
+      "course": "BIOL189B PO",
+      "instructor": "Meyer, Wallace M."
+    },
+    {
+      "reviewId": 8046,
+      "course": "CLAS114  PO",
+      "instructor": "Valentine, Joanna"
+    },
+    {
+      "reviewId": 8203,
+      "course": "CSCI081  HM",
+      "instructor": "Keller, Robert M."
+    },
+    {
+      "reviewId": 8134,
+      "course": "CSCI152  HM",
+      "instructor": "Keller, Robert M."
+    },
+    {
+      "reviewId": 8148,
+      "course": "CSCI005  HM",
+      "instructor": "Kuenning, Geoffrey H."
+    },
+    {
+      "reviewId": 8025,
+      "course": "CSCI105  HM",
+      "instructor": "Kuenning, Geoffrey H."
+    },
+    {
+      "reviewId": 8692,
+      "course": "CSCI081  HM",
+      "instructor": "Keller, Robert M."
+    },
+    {
+      "reviewId": 8743,
+      "course": "ANTH189L PO",
+      "instructor": "Evers, Cecile"
+    },
+    {
+      "reviewId": 8695,
+      "course": "CLAS113  SC",
+      "instructor": "Valentine, Joanna"
+    },
+    {
+      "reviewId": 8922,
+      "course": "ANTH002  PO",
+      "instructor": "Evers, Cecile"
+    },
+    {
+      "reviewId": 9112,
+      "course": "SOC 189G PO",
+      "instructor": "Hernandez, Esther"
+    },
+    {
+      "reviewId": 9120,
+      "course": "ANTH002  PO",
+      "instructor": "Evers, Cecile"
+    },
+    {
+      "reviewId": 9479,
+      "course": "BIOL103  PO",
+      "instructor": "Meyer, Wallace M."
+    },
+    {
+      "reviewId": 9193,
+      "course": "SOC 051  PO",
+      "instructor": "Hernandez, Esther"
+    },
+    {
+      "reviewId": 9700,
+      "course": "BIOL007  PO",
+      "instructor": "Meyer, Wallace M."
+    },
+    {
+      "reviewId": 9756,
+      "course": "ENGR079  HM",
+      "instructor": "Tsai, Timothy"
+    },
+    {
+      "reviewId": 9738,
+      "course": "ARHI150  SC",
+      "instructor": ", taff"
+    },
+    {
+      "reviewId": 10042,
+      "course": "BIOL105  PO",
+      "instructor": "Meyer, Wallace M."
+    },
+    {
+      "reviewId": 10019,
+      "course": "ANTH002  SC",
+      "instructor": ", taff"
+    },
+    {
+      "reviewId": 10311,
+      "course": "ANTH189L PO",
+      "instructor": "Evers, Cecile"
+    },
+    {
+      "reviewId": 10348,
+      "course": "ANTH002  PO",
+      "instructor": "Evers, Cecile"
+    },
+    {
+      "reviewId": 10370,
+      "course": "BIOL140  PO",
+      "instructor": "Wilson, KeriAnne M."
+    },
+    {
+      "reviewId": 10505,
+      "course": "MATH189AAHM",
+      "instructor": "Lindo, Haydee"
+    }
+  ],
+  "timestamp": "2026-04-23T01:06:20.254Z"
+}

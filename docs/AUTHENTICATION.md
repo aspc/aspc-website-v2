@@ -70,13 +70,12 @@ The ASPC Student Platform implements SAML (Security Assertion Markup Language) a
 
 SAML responses from ITS include the following attributes:
 
-| SAML Attribute    | Application Field |
-|-------------------|-------------------|
-| Given name        | firstName         |
-| Surname           | lastName          |
-| Email address     | email             |
-| Full name         | displayName       |
-| Unique identifier | azureId           |
+| SAML Attribute (Microsoft Claims URI) | Application Field (SAMLUser) |
+|--------------------------------------|-------------------------------|
+| `.../claims/objectidentifier`        | id                            |
+| `.../claims/emailaddress`            | email                         |
+| `.../claims/givenname`               | firstName                     |
+| `.../claims/surname`                 | lastName                      |
 
 ## Implementation Details
 
@@ -88,18 +87,18 @@ This file initializes:
 
 ### Authentication Routes (AuthRoutes.ts)
 
-- **/login/saml**: Initiates SAML authentication flow
-- **/saml/consume**: Processes SAML response from ITS
-- **/get_current_user**: Retrieves user details after authentication
-- **/logout/saml**: Terminates user session and redirects through Azure logout flow
+- **/api/auth/login/saml**: Initiates SAML authentication flow
+- **/api/auth/saml/consume**: Processes SAML response from ITS
+- **/api/auth/current_user**: Retrieves user details after authentication
+- **/api/auth/logout/saml**: Terminates user session and redirects through Azure logout flow
 
-### User Model (User.ts)
+### User Model (SAMLUser in People.ts)
 
-The User model includes fields for:
-- Authentication information (azureId, email)
-- Personal information (firstName, lastName, displayName)
-- Role information (isAdmin, permissions)
-- Session management (lastLogin, accountStatus)
+The `SAMLUser` model includes fields for:
+- **Authentication**: `id` (SAML Object Identifier), `email`
+- **Identity**: `firstName`, `lastName`
+- **Role**: `isAdmin` (Boolean)
+- **Timestamps**: Automatically managed `createdAt` and `updatedAt`
 
 ## Security Considerations
 

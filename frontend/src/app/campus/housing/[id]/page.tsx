@@ -1,13 +1,13 @@
 'use client';
 
-import Image from 'next/image';
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import Loading from '@/components/Loading';
-import { Room, Building } from '@/types';
-import { useAuth } from '@/hooks/useAuth';
 import LoginRequired from '@/components/LoginRequired';
 import { RoomCard } from '@/components/housing/Rooms';
+import { useAuth } from '@/hooks/useAuth';
+import { Building, Room } from '@/types';
+import Image from 'next/image';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function DynamicRooms() {
     const params = useParams();
@@ -22,63 +22,35 @@ export default function DynamicRooms() {
     const { user, loading: authLoading } = useAuth();
     const [showFloorPlans, setShowFloorPlans] = useState(false);
 
-    // Fetch room ratings for all rooms
-    const fetchRoomRatings = async (roomsList: Room[]) => {
-        const roomsWithRatings = await Promise.all(
-            roomsList.map(async (room) => {
-                try {
-                    const response = await fetch(
-                        `${process.env.BACKEND_LINK}/api/campus/housing/${room.id}/reviews`,
-                        {
-                            credentials: 'include',
-                        }
-                    );
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        return {
-                            ...room,
-                            averageRating: data.averages?.overallAverage || 0,
-                            reviewCount: data.averages?.reviewCount || 0,
-                        };
-                    }
-
-                    return room;
-                } catch (error) {
-                    console.error(
-                        `Error fetching ratings for room ${room.id}:`,
-                        error
-                    );
-                    return room;
-                }
-            })
-        );
-
-        return roomsWithRatings;
-    };
-
     useEffect(() => {
         const fetchRooms = async () => {
             try {
                 setLoading(true);
                 setBuildingNotFound(false);
 
-                // Validate building parameter is a number
                 const buildingId = Number(id);
-
                 if (isNaN(buildingId)) {
                     setBuildingNotFound(true);
                     setError('Invalid building ID format');
                     return;
                 }
 
-                // First fetch building info to check if it exists
-                const buildingResponse = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}`,
-                    {
-                        credentials: 'include',
-                    }
-                );
+                // 1. Fetch building + rooms in parallel
+                const [buildingResponse, roomsResponse, ratingsResponse] =
+                    await Promise.all([
+                        fetch(
+                            `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}`,
+                            { credentials: 'include' }
+                        ),
+                        fetch(
+                            `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}/rooms`,
+                            { credentials: 'include' }
+                        ),
+                        fetch(
+                            `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}/ratings`,
+                            { credentials: 'include' }
+                        ),
+                    ]);
 
                 if (!buildingResponse.ok) {
                     if (buildingResponse.status === 404) {
@@ -92,7 +64,28 @@ export default function DynamicRooms() {
                     return;
                 }
 
-                const buildingData = await buildingResponse.json();
+                if (!roomsResponse.ok) {
+                    setError('Failed to load rooms. Please try again later.');
+                }
+
+                const [buildingData, roomsData, ratingsMap] = await Promise.all(
+                    [
+                        buildingResponse.json(),
+                        roomsResponse.ok
+                            ? roomsResponse.json()
+                            : ([] as Room[]),
+                        ratingsResponse.ok
+                            ? ratingsResponse.json()
+                            : ({} as Record<
+                                  number,
+                                  {
+                                      overallAverage: number;
+                                      reviewCount: number;
+                                  }
+                              >),
+                    ]
+                );
+
                 setBuilding(buildingData);
                 setSafeName(
                     buildingData.name
@@ -101,33 +94,13 @@ export default function DynamicRooms() {
                         .replace(/-+/g, '-')
                 );
 
-                // Now fetch rooms for this building
-                const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/${buildingId}/rooms`,
-                    {
-                        credentials: 'include',
-                    }
+                setRooms(
+                    roomsData.map((room: Room) => ({
+                        ...room,
+                        averageRating: ratingsMap[room.id]?.overallAverage || 0,
+                        reviewCount: ratingsMap[room.id]?.reviewCount || 0,
+                    }))
                 );
-
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        // No rooms but building exists
-                        setRooms([]);
-                    } else {
-                        throw new Error(
-                            `Failed to fetch rooms: ${response.status}`
-                        );
-                    }
-                    return;
-                }
-
-                const data = await response.json();
-
-                const roomsData: Room[] = data || [];
-
-                // Get ratings for all rooms
-                const roomsWithRatings = await fetchRoomRatings(roomsData);
-                setRooms(roomsWithRatings);
             } catch (error) {
                 console.error('Error fetching rooms:', error);
                 setError('Failed to load rooms. Please try again later.');
@@ -161,6 +134,15 @@ export default function DynamicRooms() {
                         </p>
                         <p className="text-gray-600 mt-2">Error: {error}</p>
                     </div>
+                </div>
+            </div>
+        );
+    }
+    if (error && !buildingNotFound) {
+        return (
+            <div className="min-h-screen bg-gray-100 text-gray-900">
+                <div className="flex items-center justify-center h-screen text-red-500">
+                    <p>{error}</p>
                 </div>
             </div>
         );

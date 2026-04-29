@@ -200,8 +200,8 @@ export const isEventReviewOwner = async (
         return;
     }
 
-    // Compare MongoDB ObjectIds (convert to string for comparison)
-    if (review.author.toString() !== user._id) {
+    // Compare MongoDB ObjectIds (convert both to string for comparison)
+    if (review.author.toString() !== String(user._id)) {
         res.status(403).json({
             message: 'You are not authorized to modify this review',
         });

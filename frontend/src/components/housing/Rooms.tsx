@@ -1,7 +1,6 @@
 'use client';
-import React from 'react';
-import Link from 'next/link';
 import { RoomCardProps } from '@/types';
+import Link from 'next/link';
 
 export const StarRating = ({ rating }: { rating: number }) => {
     const totalStars = 5;
@@ -76,6 +75,7 @@ export const RoomCard = ({ buildingName, room }: RoomCardProps) => {
 
             <Link
                 href={`/campus/housing/${room.housing_building_id}/${room.room_number}`}
+                prefetch={false}
             >
                 <button className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors">
                     View Reviews

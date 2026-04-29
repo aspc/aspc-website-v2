@@ -73,7 +73,7 @@ export interface Review {
     temperature_rating?: number;
     comments?: string;
     housing_room_id: number;
-    user_email: string;
+    isOwner: boolean;
     pictures?: string[];
     createdAt: Date;
     updatedAt: Date;
@@ -124,7 +124,10 @@ export type Course = {
     requirement_names: string[];
     term_keys: string[]; // empty array means offered most terms
     description: string;
+    /** Legacy ASPC ids; used only when {@link all_instructor_cxids} is absent. */
     all_instructor_ids: number[];
+    /** Pomona API instructor ids when populated by migration/sync. */
+    all_instructor_cxids?: number[];
     createdAt?: Date;
     updatedAt?: Date;
     review_count: number;
@@ -141,7 +144,9 @@ export type CourseReview = {
     comments?: string;
     course_id: number;
     instructor_id: number;
+    instructor_cxid?: number;
     user_email?: string;
+    isOwner: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 };
@@ -160,6 +165,8 @@ export interface CourseReviewFormProps {
 export type Instructor = {
     id: number;
     name: string;
+    /** Pomona API CxIDs for this person (may be multiple across colleges). */
+    cxids?: number[];
     inclusivity_rating?: number;
     competency_rating?: number;
     challenge_rating?: number;
@@ -210,6 +217,7 @@ export interface EventReview {
     eventId: string;
     author: string | User;
     isAnonymous: boolean;
+    isOwner: boolean;
     content: string;
     isHidden: boolean;
     overall: number;
