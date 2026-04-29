@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React, { useEffect, useRef, useState } from 'react';
 
 function useFadeIn(threshold = 0.15) {
@@ -270,34 +271,42 @@ export default function SCSAboutPage() {
                             <div className="relative h-[440px] md:h-[520px] mt-8 lg:mt-0">
                                 {/* Top-left — tall */}
                                 <div className="absolute top-0 left-0 w-[55%] h-[60%] rounded-2xl overflow-hidden shadow-xl z-10">
-                                    <img
+                                    <Image
                                         src="/scs/sagehen-civic-scholars-cohort-group-photo.jpg"
                                         alt="SCS Cohort"
-                                        className="w-full h-full object-cover hover:scale-105 hover:brightness-110 transition-all duration-300"
+                                        fill
+                                        className="object-cover hover:scale-105 hover:brightness-110 transition-all duration-300"
+                                        sizes="(max-width: 1024px) 55vw, 30vw"
                                     />
                                 </div>
                                 {/* Top-right — offset down */}
                                 <div className="absolute top-6 right-0 w-[42%] h-[44%] rounded-2xl overflow-hidden shadow-xl z-20">
-                                    <img
+                                    <Image
                                         src="/scs/kickoff-2026-intern-panel.jpg"
                                         alt="Intern Panel"
-                                        className="w-full h-full object-cover hover:scale-105 hover:brightness-110 transition-all duration-300"
+                                        fill
+                                        className="object-cover hover:scale-105 hover:brightness-110 transition-all duration-300"
+                                        sizes="(max-width: 1024px) 42vw, 22vw"
                                     />
                                 </div>
                                 {/* Bottom-left */}
                                 <div className="absolute bottom-0 left-[5%] w-[41%] h-[44%] rounded-2xl overflow-hidden shadow-xl z-20">
-                                    <img
+                                    <Image
                                         src="/scs/alumni-panel-discussion.jpg"
                                         alt="Alumni Panel"
-                                        className="w-full h-full object-cover hover:scale-105 hover:brightness-110 transition-all duration-300"
+                                        fill
+                                        className="object-cover hover:scale-105 hover:brightness-110 transition-all duration-300"
+                                        sizes="(max-width: 1024px) 41vw, 22vw"
                                     />
                                 </div>
                                 {/* Bottom-right — tall */}
                                 <div className="absolute bottom-0 right-0 w-[54%] h-[58%] rounded-2xl overflow-hidden shadow-xl z-10">
-                                    <img
+                                    <Image
                                         src="/scs/kickoff-dinner-keynote-speaker.jpg"
                                         alt="Kickoff Dinner"
-                                        className="w-full h-full object-cover hover:scale-105 hover:brightness-110 transition-all duration-300"
+                                        fill
+                                        className="object-cover hover:scale-105 hover:brightness-110 transition-all duration-300"
+                                        sizes="(max-width: 1024px) 54vw, 30vw"
                                     />
                                 </div>
                                 {/* Decorative circles */}
@@ -380,9 +389,11 @@ export default function SCSAboutPage() {
                             <div className="relative">
                                 <div className="absolute -inset-4 bg-blue-50 rounded-3xl rotate-2 z-0" />
                                 <div className="absolute -inset-4 bg-amber-50/60 rounded-3xl -rotate-1 z-0" />
-                                <img
+                                <Image
                                     src="/scs/city-of-claremont-recognition-ceremony.JPG"
                                     alt="City of Claremont Recognition Ceremony"
+                                    width={1600}
+                                    height={1067}
                                     className="relative z-10 w-full h-auto rounded-2xl shadow-2xl object-cover hover:scale-[1.02] transition-transform duration-500"
                                 />
                             </div>
@@ -407,11 +418,13 @@ export default function SCSAboutPage() {
                         </div>
 
                         {/* Featured image with stat overlay */}
-                        <div className="relative rounded-3xl overflow-hidden mb-8 group">
-                            <img
+                        <div className="relative rounded-3xl overflow-hidden mb-8 group h-[320px] md:h-[460px]">
+                            <Image
                                 src="/scs/sagehen-civic-scholars-cohort-group-photo.jpg"
                                 alt="SCS interns at work"
-                                className="w-full h-[320px] md:h-[460px] object-cover transition-transform duration-700 group-hover:scale-105"
+                                fill
+                                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                                sizes="100vw"
                             />
                             {/* Bottom-right stat card */}
                             <div className="absolute bottom-4 right-4 md:bottom-8 md:right-8 bg-white rounded-2xl p-5 md:p-6 shadow-2xl max-w-[260px]">
@@ -579,11 +592,13 @@ export default function SCSAboutPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                             <div className="group bg-white/5 border border-white/10 rounded-3xl overflow-hidden hover:bg-white/10 transition-all duration-300">
-                                <div className="aspect-video overflow-hidden">
-                                    <img
+                                <div className="aspect-video overflow-hidden relative">
+                                    <Image
                                         src="/scs/kickoff-2026-intern-panel.jpg"
                                         alt="Kickoff Luncheon"
-                                        className="w-full h-full object-cover group-hover:brightness-110 group-hover:scale-105 transition-all duration-300"
+                                        fill
+                                        className="object-cover group-hover:brightness-110 group-hover:scale-105 transition-all duration-300"
+                                        sizes="(max-width: 768px) 100vw, 50vw"
                                     />
                                 </div>
                                 <div className="p-8">
@@ -602,11 +617,13 @@ export default function SCSAboutPage() {
                             </div>
 
                             <div className="group bg-white/5 border border-white/10 rounded-3xl overflow-hidden hover:bg-white/10 transition-all duration-300">
-                                <div className="aspect-video overflow-hidden">
-                                    <img
+                                <div className="aspect-video overflow-hidden relative">
+                                    <Image
                                         src="/scs/fall-2025-closing-cohort-photo.JPG"
                                         alt="Closing Luncheon"
-                                        className="w-full h-full object-cover group-hover:brightness-110 group-hover:scale-105 transition-all duration-300"
+                                        fill
+                                        className="object-cover group-hover:brightness-110 group-hover:scale-105 transition-all duration-300"
+                                        sizes="(max-width: 768px) 100vw, 50vw"
                                     />
                                 </div>
                                 <div className="p-8">
@@ -650,10 +667,12 @@ export default function SCSAboutPage() {
                                     key={i}
                                     className="group relative aspect-square overflow-hidden rounded-2xl shadow-md"
                                 >
-                                    <img
+                                    <Image
                                         src={photo.src}
                                         alt={photo.caption}
-                                        className="w-full h-full object-cover group-hover:scale-105 group-hover:brightness-110 transition-all duration-300"
+                                        fill
+                                        className="object-cover group-hover:scale-105 group-hover:brightness-110 transition-all duration-300"
+                                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                     />
                                     <div className="absolute inset-0 bg-blue-900/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
                                         <span className="text-white text-sm font-semibold">
@@ -725,9 +744,11 @@ export default function SCSAboutPage() {
                         ref={ctaFade.ref}
                         className={`container mx-auto px-6 lg:px-20 text-center relative z-10 ${fadeClass(ctaFade.isVisible)}`}
                     >
-                        <img
+                        <Image
                             src="/scs/scholars-faculty-group-photo-outdoor.jpg"
                             alt="SCS Community"
+                            width={96}
+                            height={96}
                             className="w-24 h-24 object-cover rounded-full mx-auto mb-8 ring-4 ring-blue-400 shadow-xl"
                         />
                         <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight mb-4">

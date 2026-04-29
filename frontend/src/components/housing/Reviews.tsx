@@ -1,6 +1,7 @@
 'use client';
 import { useAuth } from '@/hooks/useAuth';
 import { ReviewFormProps } from '@/types';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 
@@ -319,15 +320,13 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
                         pictureURLs.length > 0 &&
                         pictureURLs.map((pictureURL, index) => (
                             <div key={index} className="picture-item">
-                                <img
+                                <Image
                                     src={pictureURL}
                                     alt={`Review image ${index + 1}`}
+                                    width={200}
+                                    height={200}
                                     className="object-cover"
-                                    style={{
-                                        width: '200px',
-                                        height: '200px',
-                                        objectFit: 'cover',
-                                    }}
+                                    unoptimized
                                 />
                             </div>
                         ))}
@@ -368,10 +367,13 @@ export const PictureModal = ({
                 >
                     &times;
                 </button>
-                <img
+                <Image
                     src={`${process.env.BACKEND_LINK}/api/campus/housing/review_pictures/${picture}`}
                     alt="Review picture"
-                    className="object-contain max-w-full max-h-screen"
+                    width={1600}
+                    height={1600}
+                    unoptimized
+                    className="object-contain max-w-full max-h-[min(90vh,1200px)] w-auto h-auto mx-auto"
                 />
             </div>
         </div>

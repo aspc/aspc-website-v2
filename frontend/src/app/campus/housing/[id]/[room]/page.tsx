@@ -7,6 +7,7 @@ import { StarRating, getRoomOccupancyType } from '@/components/housing/Rooms';
 import { useAuth } from '@/hooks/useAuth';
 import { Review, RoomWithReviews } from '@/types';
 import { FormattedReviewText } from '@/utils/textFormatting';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
@@ -382,21 +383,22 @@ const RoomPage = () => {
                                                                     key={index}
                                                                     className="picture-item"
                                                                 >
-                                                                    <img
+                                                                    <Image
                                                                         src={`${process.env.BACKEND_LINK}/api/campus/housing/review_pictures/${picture}`}
                                                                         alt={`Review image ${index + 1}`}
+                                                                        width={
+                                                                            200
+                                                                        }
+                                                                        height={
+                                                                            200
+                                                                        }
                                                                         className="object-cover cursor-pointer"
+                                                                        unoptimized
                                                                         onClick={() =>
                                                                             setSelectedPicture(
                                                                                 picture
                                                                             )
                                                                         }
-                                                                        style={{
-                                                                            width: '200px',
-                                                                            height: '200px',
-                                                                            objectFit:
-                                                                                'cover',
-                                                                        }}
                                                                     />
                                                                 </div>
                                                             )
