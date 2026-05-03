@@ -69,12 +69,15 @@ MONGODB_URI=... npx ts-node src/migration/rollback-recent.ts --live
 
 ## Ongoing sync — updateCourses.ts
 
-After migration, `src/services/updateCourses.ts` keeps data current each term:
+After migration, `src/services/updateCourses.ts` keeps data current each term. The term key is passed as a CLI argument (format: `YYYY;SP` or `YYYY;FA`):
 
 ```bash
 MONGODB_URI=...       # target database
 COURSE_API_KEY=...    # Pomona API key
-TERM_KEY=2026;SP      # format: YYYY;SP or YYYY;FA
+
+npm run sync:courses -- "2026;SP"
+# or directly:
+npx tsx src/services/updateCourses.ts "2026;SP"
 ```
 
 See `INSTRUCTOR_CXID_MIGRATE.md` for full context on the two-tier instructor lookup and course back-link fixes made to this service.

@@ -85,7 +85,7 @@ const GALLERY_PHOTOS = [
     },
     {
         src: '/scs/kickoff-dinner-keynote-speaker.jpg',
-        caption: 'Keynote Speaker',
+        caption: 'Welcome speech by former mayor Calaycay',
     },
     {
         src: '/scs/kickoff-2026-intern-panel.jpg',
@@ -181,7 +181,7 @@ export default function SCSAboutPage() {
                         </span>
                     </div>
                     <a
-                        href="mailto:communitypartnerships@aspc.pomona.edu"
+                        href="https://docs.google.com/forms/d/e/1FAIpQLSfuU36tdOUSWqpb_ZB__KosIauLr0Fvj6bBr6W97DzgugKaKA/viewform?usp=header"
                         className="bg-white text-red-600 px-5 py-1.5 rounded-full font-black text-xs hover:scale-105 transition-all shadow"
                     >
                         Apply Now &rarr;
@@ -191,7 +191,7 @@ export default function SCSAboutPage() {
 
             {/* ── FLOATING APPLY FAB ── */}
             <a
-                href="mailto:communitypartnerships@aspc.pomona.edu"
+                href="https://docs.google.com/forms/d/e/1FAIpQLSfuU36tdOUSWqpb_ZB__KosIauLr0Fvj6bBr6W97DzgugKaKA/viewform?usp=header"
                 aria-label="Apply Now"
                 className={`fixed bottom-6 right-6 z-50 group flex items-center gap-3 bg-gradient-to-r from-red-600 to-amber-500 text-white pl-5 pr-6 py-4 rounded-full font-bold shadow-2xl transition-all duration-300 hover:scale-105 ${
                     showFab
@@ -250,7 +250,7 @@ export default function SCSAboutPage() {
 
                                 <div className="flex flex-wrap gap-4 pt-2">
                                     <a
-                                        href="mailto:communitypartnerships@aspc.pomona.edu"
+                                        href="https://docs.google.com/forms/d/e/1FAIpQLSfuU36tdOUSWqpb_ZB__KosIauLr0Fvj6bBr6W97DzgugKaKA/viewform?usp=header"
                                         className="bg-blue-900 text-white px-8 py-3.5 rounded-full font-bold text-base hover:bg-blue-700 hover:scale-105 transition-all duration-200 shadow-lg"
                                     >
                                         Apply Now &rarr;
@@ -539,7 +539,7 @@ export default function SCSAboutPage() {
                                 )}
 
                                 <a
-                                    href="mailto:communitypartnerships@aspc.pomona.edu"
+                                    href="https://docs.google.com/forms/d/e/1FAIpQLSfuU36tdOUSWqpb_ZB__KosIauLr0Fvj6bBr6W97DzgugKaKA/viewform?usp=header"
                                     className="group inline-flex w-full items-center justify-between gap-3 bg-slate-900 text-white px-6 py-3.5 rounded-full font-black text-sm tracking-wider hover:bg-red-600 hover:scale-[1.02] transition-all duration-200 shadow-md"
                                 >
                                     <span>APPLY NOW</span>
@@ -744,13 +744,13 @@ export default function SCSAboutPage() {
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <a
-                                href="mailto:communitypartnerships@aspc.pomona.edu"
+                                href="https://docs.google.com/forms/d/e/1FAIpQLSfuU36tdOUSWqpb_ZB__KosIauLr0Fvj6bBr6W97DzgugKaKA/viewform?usp=header"
                                 className="bg-white text-blue-900 px-10 py-4 rounded-full font-black text-lg hover:bg-blue-50 hover:scale-105 transition-all duration-200 shadow-xl"
                             >
                                 Apply Now &rarr;
                             </a>
                             <a
-                                href="mailto:communitypartnerships@aspc.pomona.edu"
+                                href="https://docs.google.com/forms/d/e/1FAIpQLSfuU36tdOUSWqpb_ZB__KosIauLr0Fvj6bBr6W97DzgugKaKA/viewform?usp=header"
                                 className="border-2 border-white/30 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-white/10 hover:scale-105 transition-all duration-200"
                             >
                                 Contact Us
@@ -760,7 +760,7 @@ export default function SCSAboutPage() {
                         <p className="text-blue-400 text-sm mt-6">
                             Questions? Email{' '}
                             <a
-                                href="mailto:communitypartnerships@aspc.pomona.edu"
+                                href="https://docs.google.com/forms/d/e/1FAIpQLSfuU36tdOUSWqpb_ZB__KosIauLr0Fvj6bBr6W97DzgugKaKA/viewform?usp=header"
                                 className="underline hover:text-white transition-colors"
                             >
                                 communitypartnerships@aspc.pomona.edu
