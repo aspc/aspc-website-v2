@@ -17,6 +17,7 @@ type Event = {
 class EngageEventsService {
     private apiUrl: string;
     private apiKey: string;
+    private orgCache = new Map<number, string>();
 
     constructor() {
         if (!process.env.ENGAGE_API_URL || !process.env.ENGAGE_API_KEY) {
@@ -28,21 +29,55 @@ class EngageEventsService {
 
     async getEvents(startTime: number, endTime: number): Promise<Event[]> {
         try {
+            let page = 1;
+            const take = 100;
+
+            while (true) {
+                const response = await axios.get(
+                    `https://engage-api.campuslabs.com/api/v3.0/organizations/organization`,
+                    {
+                        headers: { 'X-Engage-Api-Key': this.apiKey },
+                        params: {
+                            skip: (page - 1) * take,
+                            take: take,
+                        },
+                    }
+                );
+
+                const items = response.data.items;
+                for (const org of items) {
+                    if (org.id && org.name) {
+                        this.orgCache.set(org.id, org.name);
+                    }
+                }
+
+                // stop when last page
+                if (items.length < take) break;
+
+                page++;
+            }
+        } catch (error) {
+            console.error('Failed to fetch organizations:', error);
+        }
+        try {
             const response = await axios.get(this.apiUrl, {
                 headers: {
                     Accept: 'application/json',
                     'X-Engage-Api-Key': this.apiKey,
                 },
                 params: {
-                    startDate: startTime,
-                    endDate: endTime,
+                    startsAfter: new Date(startTime).toISOString(),
+                    startsBefore: new Date(endTime).toISOString(),
+                    take: 100,
                 },
             });
 
-            const engageEvents = response.data.items;
-            return engageEvents
-                .filter((event: any) => !this.shouldSkipEvent(event))
-                .map((event: any) => this.formatEvent(event));
+            const engageEvents: any[] = response.data.items;
+            return Promise.all(
+                engageEvents
+                    .filter((event) => !this.shouldSkipEvent(event))
+                    .map((event) => this.formatEvent(event))
+            );
         } catch (error) {
             console.error('Error fetching Engage events:', error);
             throw error;
@@ -52,43 +87,32 @@ class EngageEventsService {
     private shouldSkipEvent(event: any): boolean {
         const filter = ['Sunday Practice', 'General Meetings'];
         return (
-            filter.includes(event.eventName.trim()) ||
-            event.typeName === 'Organization Only'
+            filter.includes(event.name?.trim()) ||
+            event.visibility === 'InstitutionOnly'
         );
     }
 
-    private formatEvent(event: any): Event {
-        // TODO: TEMPORARY SOLUTION Production environment: subtract 8 hours from start and end times
-        if (process.env.NODE_ENV === 'production') {
-            // Subtract 8 hours for production environment
-            const startDateTime = new Date(parseInt(event.startDateTime));
-            const endDateTime = new Date(parseInt(event.endDateTime));
-
-            startDateTime.setTime(startDateTime.getTime() - 7 * 60 * 60 * 1000);
-            endDateTime.setTime(endDateTime.getTime() - 7 * 60 * 60 * 1000);
-
-            return {
-                name: event.eventName,
-                location: event.otherLocation || 'N/A',
-                description: event.description,
-                host: event.organizationName,
-                details_url: event.eventUrl,
-                start: startDateTime.toLocaleString(),
-                end: endDateTime.toLocaleString(),
-                status: 'approved',
-            };
+    private async getOrgName(orgId: number): Promise<string> {
+        if (this.orgCache.has(orgId)) {
+            return this.orgCache.get(orgId)!;
         }
+        return '';
+    }
 
-        // Non-production environment
+    private async formatEvent(event: any): Promise<Event> {
+        const host = event.submittedByOrganizationId
+            ? await this.getOrgName(event.submittedByOrganizationId)
+            : '';
+
         return {
-            name: event.eventName,
-            location: event.otherLocation || 'N/A',
+            name: event.name,
+            location: event.address?.name || 'N/A',
             description: event.description,
-            host: event.organizationName,
-            details_url: event.eventUrl,
-            start: new Date(parseInt(event.startDateTime)).toLocaleString(),
-            end: new Date(parseInt(event.endDateTime)).toLocaleString(),
-            status: 'approved',
+            host,
+            details_url: `https://claremont.campuslabs.com/engage/event/${event.id}`,
+            start: new Date(event.startsOn).toLocaleString(),
+            end: new Date(event.endsOn).toLocaleString(),
+            status: event.state?.status?.toLowerCase() ?? 'approved',
         };
     }
 }
