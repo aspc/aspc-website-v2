@@ -41,51 +41,50 @@ const RoomPage = () => {
         }
     };
 
+    const fetchReviews = async () => {
+        try {
+            setLoading(true);
+
+            const [buildingResponse, reviewsResponse] = await Promise.all([
+                fetch(`${process.env.BACKEND_LINK}/api/campus/housing/${id}`, {
+                    credentials: 'include',
+                }),
+                fetch(
+                    `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`,
+                    {
+                        credentials: 'include',
+                    }
+                ),
+            ]);
+
+            if (!buildingResponse.ok)
+                throw new Error(
+                    `Failed to fetch building: ${buildingResponse.status}`
+                );
+            if (!reviewsResponse.ok)
+                throw new Error(
+                    `Failed to fetch reviews: ${reviewsResponse.status}`
+                );
+
+            const [buildingData, reviewsData] = await Promise.all([
+                buildingResponse.json(),
+                reviewsResponse.json(),
+            ]);
+
+            setBuildingName(buildingData.name);
+            setRoomReviews(reviewsData);
+        } catch (error) {
+            console.error('Error fetching room reviews:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchReviews = async () => {
-            try {
-                setLoading(true);
-
-                const [buildingResponse, reviewsResponse] = await Promise.all([
-                    fetch(
-                        `${process.env.BACKEND_LINK}/api/campus/housing/${id}`,
-                        {
-                            credentials: 'include',
-                        }
-                    ),
-                    fetch(
-                        `${process.env.BACKEND_LINK}/api/campus/housing/${id}/${room}/reviews`,
-                        {
-                            credentials: 'include',
-                        }
-                    ),
-                ]);
-
-                if (!buildingResponse.ok)
-                    throw new Error(
-                        `Failed to fetch building: ${buildingResponse.status}`
-                    );
-                if (!reviewsResponse.ok)
-                    throw new Error(
-                        `Failed to fetch reviews: ${reviewsResponse.status}`
-                    );
-
-                const [buildingData, reviewsData] = await Promise.all([
-                    buildingResponse.json(),
-                    reviewsResponse.json(),
-                ]);
-
-                setBuildingName(buildingData.name);
-                setRoomReviews(reviewsData);
-            } catch (error) {
-                console.error('Error fetching room reviews:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchReviews();
-    }, [id, room]);
+        if (!authLoading && user) {
+            fetchReviews();
+        }
+    }, [id, room, user, authLoading]);
 
     const targetRef = useRef<HTMLButtonElement | null>(null);
 
@@ -100,13 +99,15 @@ const RoomPage = () => {
         }, 0);
     };
 
-    if (loading || authLoading) {
+    if (authLoading || (user !== null && loading)) {
         return <Loading />;
     }
 
     if (!user) {
         return <LoginRequired />;
     }
+
+    const hasReviewed = roomReviews?.reviews.some((r) => r.isOwner) ?? false;
 
     const formatDate = (date: Date) => {
         const d = new Date(date);
@@ -115,12 +116,11 @@ const RoomPage = () => {
         return `${month} ${year}`;
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (reviewId: number) => {
         if (window.confirm('Are you sure you want to delete this review?')) {
             try {
-                setLoading(true);
                 const response = await fetch(
-                    `${process.env.BACKEND_LINK}/api/campus/housing/reviews/${id}`,
+                    `${process.env.BACKEND_LINK}/api/campus/housing/reviews/${reviewId}`,
                     {
                         method: 'DELETE',
                         credentials: 'include',
@@ -131,13 +131,11 @@ const RoomPage = () => {
                     throw new Error('Failed to delete review');
                 }
 
-                alert('Review deleted successfully!');
-                setTimeout(() => window.location.reload(), 1000);
+                setSelectedReview(null);
+                await fetchReviews();
             } catch (error) {
                 console.error('Error deleting review', error);
                 alert('Failed to delete review');
-            } finally {
-                setLoading(false);
             }
         }
     };
@@ -373,12 +371,10 @@ const RoomPage = () => {
                                             )}
 
                                             {/* Review Pictures */}
-                                            {review.pictures && (
-                                                <div className="pictures-container flex space-x-4">
-                                                    {review.pictures &&
-                                                        review.pictures.length >
-                                                            0 &&
-                                                        review.pictures.map(
+                                            {review.pictures &&
+                                                review.pictures.length > 0 && (
+                                                    <div className="pictures-container flex space-x-4">
+                                                        {review.pictures.map(
                                                             (
                                                                 picture,
                                                                 index
@@ -396,34 +392,19 @@ const RoomPage = () => {
                                                                         height={
                                                                             200
                                                                         }
-                                                                        className="object-cover"
+                                                                        className="object-cover cursor-pointer"
+                                                                        unoptimized
                                                                         onClick={() =>
                                                                             setSelectedPicture(
                                                                                 picture
                                                                             )
-                                                                        } // Open modal when image is clicked
-                                                                        style={{
-                                                                            height: '200px',
-                                                                            objectFit:
-                                                                                'cover',
-                                                                        }}
+                                                                        }
                                                                     />
                                                                 </div>
                                                             )
                                                         )}
-                                                </div>
-                                            )}
-
-                                            {/* If user clicks a picture, open a popup with enlarged image */}
-                                            {selectedPicture && (
-                                                <PictureModal
-                                                    isOpen={!!selectedPicture}
-                                                    onClose={() =>
-                                                        setSelectedPicture(null)
-                                                    }
-                                                    picture={selectedPicture}
-                                                />
-                                            )}
+                                                    </div>
+                                                )}
 
                                             {/* Date written, last updated */}
                                             <div className="flex space-x-16">
@@ -456,19 +437,42 @@ const RoomPage = () => {
                         )}
                     </div>
 
-                    <button
-                        className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
-                        onClick={handleAddNewReviewClick}
-                        ref={targetRef}
-                    >
-                        {selectedReview
-                            ? 'Cancel review edit'
-                            : 'Add new review'}
-                    </button>
+                    {selectedPicture && (
+                        <PictureModal
+                            isOpen={!!selectedPicture}
+                            onClose={() => setSelectedPicture(null)}
+                            picture={selectedPicture}
+                        />
+                    )}
+
+                    {(!hasReviewed || isCreatingNew || selectedReview) && (
+                        <button
+                            className="px-6 py-2 border border-blue-300 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4 mb-6"
+                            onClick={handleAddNewReviewClick}
+                            ref={targetRef}
+                        >
+                            {isCreatingNew
+                                ? 'Cancel'
+                                : selectedReview
+                                  ? 'Cancel review edit'
+                                  : 'Add new review'}
+                        </button>
+                    )}
 
                     {(isCreatingNew || selectedReview) && (
                         <div>
-                            <ReviewForm review={selectedReview} />
+                            <ReviewForm
+                                review={selectedReview}
+                                onSuccess={() => {
+                                    setIsCreatingNew(false);
+                                    setSelectedReview(null);
+                                    fetchReviews();
+                                }}
+                                onClose={() => {
+                                    setIsCreatingNew(false);
+                                    setSelectedReview(null);
+                                }}
+                            />
                         </div>
                     )}
                 </div>

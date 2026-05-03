@@ -76,7 +76,7 @@ export const isCourseReviewOwner = async (
         return;
     }
 
-    if (review.user_email != sessionUserEmail) {
+    if (review.user_email !== sessionUserEmail) {
         res.status(403).json({
             message: 'You are not authorized to modify this review',
         });
@@ -106,14 +106,14 @@ export const isHousingReviewOwner = async (
 
     const { reviewId } = req.params;
 
-    const review = await HousingReviews.findOne({ id: reviewId });
+    const review = await HousingReviews.findOne({ id: parseInt(reviewId, 10) });
 
     if (!review) {
         res.status(404).json({ message: 'Review not found' });
         return;
     }
 
-    if (review.user_email != sessionUserEmail) {
+    if (review.user_email !== sessionUserEmail) {
         res.status(403).json({
             message: 'You are not authorized to modify this review',
         });
