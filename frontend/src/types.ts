@@ -6,6 +6,24 @@ export interface PageContent {
     link?: string;
 }
 
+export type NavPagesKey = 'about' | 'members' | 'resources' | 'press';
+
+export type NavLink = { label: string; href: string };
+
+export type NavSubmenu = {
+    label: string;
+    links: NavLink[];
+    pagesKey?: NavPagesKey;
+};
+
+export type NavSectionConfig = {
+    label: string;
+    key: string;
+    pagesKey?: NavPagesKey;
+    extraLinks?: NavLink[];
+    submenu?: NavSubmenu;
+};
+
 export interface StaffMember {
     _id: string;
     id: string;
