@@ -38,7 +38,7 @@ jobs:
             - name: Run npm audit fix on frontend
               working-directory: ./frontend
               run: |
-                  npm audit fix --force > ../frontend-fix.log || true
+                  npm audit fix > ../frontend-fix.log || true
 
             - name: Run npm audit on backend
               working-directory: ./backend
@@ -50,7 +50,7 @@ jobs:
             - name: Run npm audit fix on backend
               working-directory: ./backend
               run: |
-                  npm audit fix --force > ../backend-fix.log || true
+                  npm audit fix > ../backend-fix.log || true
 
             - name: Generate Summary
               id: generate_summary
