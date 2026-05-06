@@ -15,7 +15,46 @@ import { housingReviewPictures } from '../server';
 const router = express.Router();
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({
+    storage,
+    limits: { fileSize: 15 * 1024 * 1024, files: 5 }, // limit to a max of 5 files, max 15 mb
+    fileFilter: (_req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed'));
+        }
+    },
+});
+
+const calcAverages = (
+    reviews: {
+        overall_rating?: number;
+        quiet_rating?: number;
+        layout_rating?: number;
+        temperature_rating?: number;
+    }[]
+) => {
+    const avg = (arr: number[]) =>
+        arr.length > 0
+            ? arr.reduce((sum, val) => sum + val, 0) / arr.length
+            : 0;
+    return {
+        overallAverage: avg(
+            reviews.map((r) => r.overall_rating).filter(Boolean) as number[]
+        ),
+        quietAverage: avg(
+            reviews.map((r) => r.quiet_rating).filter(Boolean) as number[]
+        ),
+        layoutAverage: avg(
+            reviews.map((r) => r.layout_rating).filter(Boolean) as number[]
+        ),
+        temperatureAverage: avg(
+            reviews.map((r) => r.temperature_rating).filter(Boolean) as number[]
+        ),
+        reviewCount: reviews.length,
+    };
+};
 
 /**
  * @route   GET /api/campus/housing
@@ -30,42 +69,6 @@ router.get('/', isAuthenticated, async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-
-/**
- * @route   GET /api/campus/housing/:building
- * @desc    Get housing building by id
- * @access  isAuthenticated
- */
-router.get(
-    '/:building',
-    isAuthenticated,
-    async (req: Request, res: Response) => {
-        try {
-            // Get building id
-            const buildingId = parseInt(req.params.building, 10);
-
-            // Check if conversion is valid
-            if (isNaN(buildingId)) {
-                res.status(400).json({ message: 'Invalid building ID format' });
-                return;
-            }
-
-            // Find building by id
-            const buildingData = await HousingBuildings.findOne({
-                id: buildingId,
-            });
-            if (!buildingData) {
-                res.status(404).json({ message: 'Building not found' });
-                return;
-            }
-
-            // Return building
-            res.json(buildingData);
-        } catch (error) {
-            res.status(500).json({ message: 'Server error' });
-        }
-    }
-);
 
 /**
  * @route   GET /campus/housing/:building/rooms
@@ -135,60 +138,21 @@ router.get(
                 housing_room_id: roomId,
             }).lean();
 
-            const sessionEmail = req.session.user!.email;
+            if (!req.session.user) {
+                res.status(401).json({ message: 'Authentication required' });
+                return;
+            }
+
+            const sessionEmail = req.session.user.email;
             const safeReviews = reviews.map(({ user_email, ...fields }) => ({
                 ...fields,
                 isOwner: user_email === sessionEmail,
             }));
 
-            // Calculate average ratings
-            if (reviews.length > 0) {
-                const overallRatings = reviews
-                    .map((r) => r.overall_rating)
-                    .filter(Boolean) as number[];
-                const quietRatings = reviews
-                    .map((r) => r.quiet_rating)
-                    .filter(Boolean) as number[];
-                const layoutRatings = reviews
-                    .map((r) => r.layout_rating)
-                    .filter(Boolean) as number[];
-                const temperatureRatings = reviews
-                    .map((r) => r.temperature_rating)
-                    .filter(Boolean) as number[];
-
-                const calcAverage = (arr: number[]) =>
-                    arr.length > 0
-                        ? arr.reduce((sum, val) => sum + val, 0) / arr.length
-                        : 0;
-
-                const averages = {
-                    overallAverage: calcAverage(overallRatings),
-                    quietAverage: calcAverage(quietRatings),
-                    layoutAverage: calcAverage(layoutRatings),
-                    temperatureAverage: calcAverage(temperatureRatings),
-                    reviewCount: reviews.length,
-                };
-
-                // Return reviews and averages as well as the room data itself
-                res.json({
-                    room: roomData,
-                    reviews: safeReviews,
-                    averages: averages,
-                });
-                return;
-            }
-
-            // Return reviews (even if empty)
             res.json({
                 room: roomData,
                 reviews: safeReviews,
-                averages: {
-                    overallAverage: 0,
-                    quietAverage: 0,
-                    layoutAverage: 0,
-                    temperatureAverage: 0,
-                    reviewCount: 0,
-                },
+                averages: calcAverages(reviews),
             });
         } catch (error) {
             res.status(500).json({ message: 'Server error' });
@@ -206,11 +170,9 @@ router.get(
     isAuthenticated,
     async (req: Request, res: Response) => {
         try {
-            // Get room id and convert it to a number
             const { buildingId, roomNumber } = req.params;
             const buildingIdNumber = parseInt(buildingId, 10);
 
-            // Find the room by building and room number
             if (isNaN(buildingIdNumber)) {
                 res.status(400).json({ message: 'Invalid building ID format' });
                 return;
@@ -226,65 +188,24 @@ router.get(
                 return;
             }
 
-            // Get all reviews for the room using room id
             const reviews = await HousingReviews.find({
                 housing_room_id: roomData.id,
             }).lean();
 
-            const sessionEmail = req.session.user!.email;
+            if (!req.session.user) {
+                res.status(401).json({ message: 'Authentication required' });
+                return;
+            }
+            const sessionEmail = req.session.user.email;
             const safeReviews = reviews.map(({ user_email, ...fields }) => ({
                 ...fields,
                 isOwner: user_email === sessionEmail,
             }));
 
-            // Calculate average ratings
-            if (reviews.length > 0) {
-                const overallRatings = reviews
-                    .map((r) => r.overall_rating)
-                    .filter(Boolean) as number[];
-                const quietRatings = reviews
-                    .map((r) => r.quiet_rating)
-                    .filter(Boolean) as number[];
-                const layoutRatings = reviews
-                    .map((r) => r.layout_rating)
-                    .filter(Boolean) as number[];
-                const temperatureRatings = reviews
-                    .map((r) => r.temperature_rating)
-                    .filter(Boolean) as number[];
-
-                const calcAverage = (arr: number[]) =>
-                    arr.length > 0
-                        ? arr.reduce((sum, val) => sum + val, 0) / arr.length
-                        : 0;
-
-                const averages = {
-                    overallAverage: calcAverage(overallRatings),
-                    quietAverage: calcAverage(quietRatings),
-                    layoutAverage: calcAverage(layoutRatings),
-                    temperatureAverage: calcAverage(temperatureRatings),
-                    reviewCount: reviews.length,
-                };
-
-                // Return reviews and averages as well as the room data itself
-                res.json({
-                    room: roomData,
-                    reviews: safeReviews,
-                    averages: averages,
-                });
-                return;
-            }
-
-            // Return reviews (even if empty)
             res.json({
                 room: roomData,
                 reviews: safeReviews,
-                averages: {
-                    overallAverage: 0,
-                    quietAverage: 0,
-                    layoutAverage: 0,
-                    temperatureAverage: 0,
-                    reviewCount: 0,
-                },
+                averages: calcAverages(reviews),
             });
         } catch (error) {
             res.status(500).json({ message: 'Server error' });
@@ -300,52 +221,24 @@ router.get(
 router.post(
     '/:buildingId/:roomNumber/reviews',
     isAuthenticated,
-    upload.array('pictures'),
+    (req, res, next) =>
+        upload.array('pictures')(req, res, (err) => {
+            if (err instanceof multer.MulterError) {
+                if (err.code === 'LIMIT_FILE_SIZE')
+                    return res
+                        .status(400)
+                        .json({ message: 'Each image must be under 15 MB' });
+                if (err.code === 'LIMIT_FILE_COUNT')
+                    return res
+                        .status(400)
+                        .json({ message: 'You can upload at most 5 images' });
+                return res.status(400).json({ message: err.message });
+            }
+            if (err) return res.status(400).json({ message: err.message });
+            next();
+        }),
     async (req: Request, res: Response) => {
         try {
-            const pictureIds: ObjectId[] = [];
-
-            // Upload each file to GridFS
-            if (Array.isArray(req.files)) {
-                for (let i = 0; i < req.files.length; i++) {
-                    const file = req.files[i] as Express.Multer.File;
-
-                    // Create a writable stream to upload to GridFS
-                    const uploadStream = housingReviewPictures.openUploadStream(
-                        file.originalname,
-                        {
-                            contentType: file.mimetype,
-                        }
-                    );
-
-                    // Upload the file buffer to GridFS
-                    uploadStream.end(file.buffer);
-
-                    // Wait for the file upload to finish and get the file ID
-                    uploadStream.on('finish', () => {
-                        pictureIds.push(uploadStream.id);
-                    });
-
-                    // Wait for the stream to finish before continuing
-                    await new Promise((resolve) => {
-                        uploadStream.on('finish', resolve);
-                    });
-                }
-            }
-
-            // need to find new max id for the new review
-            const result = await HousingReviews.aggregate([
-                {
-                    $group: {
-                        _id: null, // No need to group, so _id is null
-                        maxValue: { $max: '$id' }, // Find the max value of fieldName
-                    },
-                },
-            ]);
-
-            const maxId = result[0].maxValue + 1;
-
-            // Find room id by building and room number
             const { buildingId, roomNumber } = req.params;
             const buildingIdNumber = parseInt(buildingId, 10);
 
@@ -364,20 +257,70 @@ router.post(
                 return;
             }
 
+            if (!req.session.user) {
+                res.status(401).json({ message: 'Authentication required' });
+                return;
+            }
+
+            const existingReview = await HousingReviews.findOne({
+                housing_room_id: roomData.id,
+                user_email: req.session.user.email,
+            });
+
+            if (existingReview) {
+                res.status(409).json({
+                    message: 'You have already reviewed this room',
+                });
+                return;
+            }
+
+            const pictureIds: ObjectId[] = [];
+
+            if (Array.isArray(req.files)) {
+                for (let i = 0; i < req.files.length; i++) {
+                    const file = req.files[i] as Express.Multer.File;
+
+                    const uploadStream = housingReviewPictures.openUploadStream(
+                        file.originalname,
+                        { contentType: file.mimetype }
+                    );
+
+                    uploadStream.end(file.buffer);
+
+                    await new Promise<void>((resolve, reject) => {
+                        uploadStream.on('finish', () => {
+                            pictureIds.push(uploadStream.id);
+                            resolve();
+                        });
+                        uploadStream.on('error', reject);
+                    });
+                }
+            }
+
+            const result = await HousingReviews.aggregate([
+                { $group: { _id: null, maxValue: { $max: '$id' } } },
+            ]);
+
+            const maxId = result.length > 0 ? result[0].maxValue + 1 : 1;
+
             // parse review fields from request
-            const { overall, quiet, layout, temperature, comments, email } =
-                req.body;
+            const { overall, quiet, layout, temperature, comments } = req.body;
+
+            if (!req.session.user) {
+                res.status(401).json({ message: 'Authentication required' });
+                return;
+            }
 
             // construct review data
             const reviewData = {
                 id: maxId,
-                overall_rating: overall,
-                quiet_rating: quiet,
-                layout_rating: layout,
-                temperature_rating: temperature,
+                overall_rating: parseInt(overall, 10),
+                quiet_rating: parseInt(quiet, 10),
+                layout_rating: parseInt(layout, 10),
+                temperature_rating: parseInt(temperature, 10),
                 comments: comments,
                 housing_room_id: roomData.id,
-                user_email: email,
+                user_email: req.session.user.email,
                 pictures: pictureIds,
             };
 
@@ -387,7 +330,7 @@ router.post(
             req.files = undefined; // free up memory
             res.status(201).json({ message: 'Review saved successfully' });
         } catch (error) {
-            res.status(400).json({ message: 'Error creating member' });
+            res.status(400).json({ message: 'Error creating review' });
         }
     }
 );
@@ -400,18 +343,28 @@ router.post(
 router.patch(
     '/reviews/:reviewId',
     isHousingReviewOwner,
-    upload.array('pictures'),
+    (req, res, next) =>
+        upload.array('pictures')(req, res, (err) => {
+            if (err instanceof multer.MulterError) {
+                if (err.code === 'LIMIT_FILE_SIZE')
+                    return res
+                        .status(400)
+                        .json({ message: 'Each image must be under 15 MB' });
+                if (err.code === 'LIMIT_FILE_COUNT')
+                    return res
+                        .status(400)
+                        .json({ message: 'You can upload at most 5 images' });
+                return res.status(400).json({ message: err.message });
+            }
+            if (err) return res.status(400).json({ message: err.message });
+            next();
+        }),
     async (req: Request, res: Response) => {
         try {
-            if (!req.files && !req.body) {
-                return;
-            }
-
-            const reviewId = req.params.reviewId;
+            const reviewId = parseInt(req.params.reviewId, 10);
             const oldReview = await HousingReviews.findOne({ id: reviewId });
 
             if (!oldReview) {
-                console.log('cant find old review');
                 res.status(404).json({ message: 'Review not found' });
                 return;
             }
@@ -421,10 +374,10 @@ router.patch(
 
             // construct review data
             let updateData = {
-                overall_rating: overall,
-                quiet_rating: quiet,
-                layout_rating: layout,
-                temperature_rating: temperature,
+                overall_rating: parseInt(overall, 10),
+                quiet_rating: parseInt(quiet, 10),
+                layout_rating: parseInt(layout, 10),
+                temperature_rating: parseInt(temperature, 10),
                 comments: comments,
                 pictures: oldReview.pictures,
             };
@@ -436,14 +389,7 @@ router.patch(
                 if (oldReview.pictures && oldReview.pictures.length > 0) {
                     for (const pictureId of oldReview.pictures) {
                         const oldPictureId = new ObjectId(pictureId);
-                        console.log(
-                            `Deleting image with ObjectId: ${oldPictureId}`
-                        );
-
                         await housingReviewPictures.delete(oldPictureId);
-                        console.log(
-                            `Image with ObjectId ${oldPictureId} deleted from GridFS`
-                        );
                     }
                 }
 
@@ -461,14 +407,12 @@ router.patch(
                     // Upload the file buffer to GridFS
                     uploadStream.end(file.buffer);
 
-                    // Wait for the file upload to finish and get the file ID
-                    uploadStream.on('finish', () => {
-                        pictureIds.push(uploadStream.id);
-                    });
-
-                    // Wait for the stream to finish before continuing
-                    await new Promise((resolve) => {
-                        uploadStream.on('finish', resolve);
+                    await new Promise<void>((resolve, reject) => {
+                        uploadStream.on('finish', () => {
+                            pictureIds.push(uploadStream.id);
+                            resolve();
+                        });
+                        uploadStream.on('error', reject);
                     });
                 }
 
@@ -502,11 +446,18 @@ router.delete(
     async (req: Request, res: Response) => {
         try {
             const review = await HousingReviews.findOneAndDelete({
-                id: req.params.reviewId,
+                id: parseInt(req.params.reviewId, 10),
             });
 
             if (!review) {
                 res.status(404).json({ message: 'Review not found' });
+                return;
+            }
+
+            if (review.pictures && review.pictures.length > 0) {
+                for (const pictureId of review.pictures) {
+                    await housingReviewPictures.delete(new ObjectId(pictureId));
+                }
             }
 
             res.status(200).json({ message: 'Review deleted' });
@@ -554,6 +505,42 @@ router.get(
             });
         } catch (error) {
             res.status(400).json({ message: 'Invalid profile picture ID' });
+        }
+    }
+);
+
+/**
+ * @route   GET /api/campus/housing/:building
+ * @desc    Get housing building by id
+ * @access  isAuthenticated
+ */
+router.get(
+    '/:building',
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+        try {
+            // Get building id
+            const buildingId = parseInt(req.params.building, 10);
+
+            // Check if conversion is valid
+            if (isNaN(buildingId)) {
+                res.status(400).json({ message: 'Invalid building ID format' });
+                return;
+            }
+
+            // Find building by id
+            const buildingData = await HousingBuildings.findOne({
+                id: buildingId,
+            });
+            if (!buildingData) {
+                res.status(404).json({ message: 'Building not found' });
+                return;
+            }
+
+            // Return building
+            res.json(buildingData);
+        } catch (error) {
+            res.status(500).json({ message: 'Server error' });
         }
     }
 );
