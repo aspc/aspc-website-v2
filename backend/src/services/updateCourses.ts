@@ -1,8 +1,6 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import axios from 'axios';
-import * as fs from 'fs';
-import * as path from 'path';
 import { Courses } from '../models/Courses';
 import { Instructors } from '../models/People';
 import {
@@ -564,17 +562,17 @@ async function main() {
         process.exit(1);
     }
 
-    const TERM_KEY = process.env.TERM_KEY;
+    const TERM_KEY = process.argv[2];
     if (!TERM_KEY) {
         console.error(
-            'Error: TERM_KEY environment variable is not set (e.g. "2026;SP")'
+            'Error: term key argument is required (e.g. `tsx updateCourses.ts "2026;SP"`)'
         );
         process.exit(1);
     }
 
     try {
         const MONGODB_URI =
-            process.env.MONGODB_TEST_URI ||
+            process.env.MONGODB_URI_PROD ||
             'mongodb://localhost:27017/school-platform';
         await mongoose.connect(MONGODB_URI);
         console.log('Connected to MongoDB');
@@ -588,13 +586,7 @@ async function main() {
         );
 
         console.log('\nProcessing courses...');
-        const summary = await updateCoursesFromAPI(coursesWithSource, TERM_KEY);
-
-        // Save summary to file
-        const fileName = `sync_summary_${TERM_KEY.replace(';', '_')}.json`;
-        const filePath = path.join(process.cwd(), fileName);
-        fs.writeFileSync(filePath, JSON.stringify(summary, null, 2));
-        console.log(`\n✓ Summary saved to ${fileName}`);
+        await updateCoursesFromAPI(coursesWithSource, TERM_KEY);
 
         console.log('\n✓ Script completed successfully');
     } catch (error: any) {
