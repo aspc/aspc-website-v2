@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { ObjectId } from 'mongodb';
 
 interface IPageContent extends Document {
     id: string;
@@ -6,6 +7,7 @@ interface IPageContent extends Document {
     header: string;
     content?: string;
     link?: string;
+    pdfId?: ObjectId;
 }
 
 const PageContentSchema = new Schema<IPageContent>({
@@ -34,6 +36,10 @@ const PageContentSchema = new Schema<IPageContent>({
         type: String,
         required: false,
         trim: true,
+    },
+    pdfId: {
+        type: Schema.Types.ObjectId,
+        required: false,
     },
 });
 

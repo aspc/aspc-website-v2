@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import Loading from '@/components/Loading';
 import { PageContent } from '@/types';
+import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function DynamicPage() {
     const params = useParams();
@@ -64,6 +64,23 @@ export default function DynamicPage() {
             <div className="container mx-auto p-6">
                 <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>
                 <p>The requested page could not be found.</p>
+            </div>
+        );
+    }
+
+    if (pageData.pdfId != null) {
+        return (
+            <div className="container mx-auto p-6">
+                <h1 className="text-3xl font-bold mb-6">{pageData.name}</h1>
+                {pageData.pdfId ? (
+                    <iframe
+                        src={`${process.env.BACKEND_LINK}/api/admin/pages/pdf/${pageid}`}
+                        className="w-full border rounded"
+                        style={{ height: '80vh' }}
+                    />
+                ) : (
+                    <p className="text-gray-500">No PDF available yet.</p>
+                )}
             </div>
         );
     }
