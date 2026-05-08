@@ -119,6 +119,36 @@ local-ssl-proxy --source 3001 --target 3000
 
 This will make the frontend available at https://localhost:3001
 
+#### Alternate: Start Everything With One Command
+
+Helper scripts in [scripts/](./scripts/) wrap the steps above so you don't have to open multiple terminals manually. They install missing dependencies (`backend`, `frontend`, and the global `local-ssl-proxy`) on first run.
+
+- **Windows (three separate terminals)** — from the repo root:
+
+    ```
+    scripts\start.cmd
+    ```
+
+    Spawns three labeled `cmd` windows: `ASPC Backend`, `ASPC Frontend`, `ASPC SSL Proxy`.
+
+- **macOS (three separate Terminal.app windows)** — from the repo root:
+
+    ```bash
+    bash scripts/start-mac.sh
+    ```
+
+    Uses `osascript` to spawn three labeled Terminal windows, mirroring the Windows behavior.
+
+- **macOS / Linux / Git Bash (single terminal, multiplexed output)** — from the repo root:
+
+    ```bash
+    bash scripts/start.sh
+    ```
+
+    Runs all three processes in the background of the current shell. `Ctrl+C` shuts them all down together.
+
+All scripts assume backend and frontend `.env` files and SSL certificates have already been set up as described above.
+
 ### Environment Variables
 
 Create a `.env` file in both the frontend and backend directories with the following variables:
