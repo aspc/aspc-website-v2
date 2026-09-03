@@ -1,5 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+function hasPublicStaticExtension(pathname: string): boolean {
+    const lower = pathname.toLowerCase();
+    return (
+        lower.endsWith('.ico') ||
+        lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.gif') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.svg') ||
+        lower.endsWith('.avif')
+    );
+}
+
 export function middleware(request: NextRequest) {
     // Get current path
     const path = request.nextUrl.pathname;
@@ -11,9 +25,7 @@ export function middleware(request: NextRequest) {
         path.includes('/login/saml') ||
         path.includes('/logout/saml') ||
         path.startsWith('/_next/') ||
-        path.includes('.ico') ||
-        path.includes('.png') ||
-        path.includes('.jpg');
+        hasPublicStaticExtension(path);
 
     // If it's a public path, allow access
     if (isPublicPath) {

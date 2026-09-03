@@ -1,12 +1,15 @@
 'use client';
-import React from 'react';
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { ReviewFormProps } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
+import { ReviewFormProps } from '@/types';
 import Image from 'next/image';
+import { useParams } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
 
-export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
+export const ReviewForm: React.FC<ReviewFormProps> = ({
+    review,
+    onSuccess,
+    onClose,
+}) => {
     const { user } = useAuth();
     const params = useParams();
     const { id, room } = params;
@@ -85,14 +88,13 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
 
     const handlePicturesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setPictures(e.target.files);
-
-        const urlList: string[] = [];
-        if (e.target.files) {
-            for (const file of e.target.files) {
-                urlList.push(URL.createObjectURL(file));
-            }
-        }
-        setPictureURLs(urlList);
+        setPictureURLs((prev) => {
+            prev?.forEach((url) => URL.revokeObjectURL(url));
+            if (!e.target.files) return null;
+            return Array.from(e.target.files).map((file) =>
+                URL.createObjectURL(file)
+            );
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -129,7 +131,6 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
             formData.append('layout', ratings.layout.toString());
             formData.append('temperature', ratings.temperature.toString());
             formData.append('comments', comments);
-            formData.append('email', user.email);
 
             if (pictures) {
                 Array.from(pictures).forEach((file) => {
@@ -149,14 +150,24 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
                 credentials: 'include',
             });
 
-            if (!response.ok) {
-                throw new Error('Error submitting review');
+            if (response.status === 409) {
+                alert('You have already reviewed this room.');
+                onClose();
+                return;
             }
 
-            alert('Review submitted successfully!');
-            window.location.reload();
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || 'Error submitting review');
+            }
+
+            onSuccess();
         } catch (error) {
-            alert('Error submitting review');
+            alert(
+                error instanceof Error
+                    ? error.message
+                    : 'Error submitting review'
+            );
             console.error(error);
         }
     };
@@ -315,10 +326,7 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({ review }) => {
                                     width={200}
                                     height={200}
                                     className="object-cover"
-                                    style={{
-                                        height: '200px',
-                                        objectFit: 'cover',
-                                    }}
+                                    unoptimized
                                 />
                             </div>
                         ))}
@@ -349,7 +357,7 @@ export const PictureModal = ({
 
     return (
         <div
-            className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-10 flex justify-center items-center z-50"
+            className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
             onClick={onClose}
         >
             <div className="bg-white p-4 rounded max-w-4xl max-h-screen overflow-auto relative">
@@ -361,10 +369,11 @@ export const PictureModal = ({
                 </button>
                 <Image
                     src={`${process.env.BACKEND_LINK}/api/campus/housing/review_pictures/${picture}`}
-                    width={800}
-                    height={800}
                     alt="Review picture"
-                    className="object-contain"
+                    width={1600}
+                    height={1600}
+                    unoptimized
+                    className="object-contain max-w-full max-h-[min(90vh,1200px)] w-auto h-auto mx-auto"
                 />
             </div>
         </div>

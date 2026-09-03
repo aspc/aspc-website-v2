@@ -22,19 +22,15 @@ export const StarRating = ({ rating }: { rating: number }) => {
 };
 
 export const getRoomOccupancyType = (occupancy_type: number | undefined) => {
-    if (occupancy_type) {
-        switch (occupancy_type) {
-            case 1:
-                return 'Single';
-            case 2:
-                return 'Double';
-            case 3:
-                return 'Triple';
-            default:
-                return occupancy_type;
-        }
-    } else {
-        return 'Unknown';
+    switch (occupancy_type) {
+        case 1:
+            return 'Single';
+        case 2:
+            return 'Double';
+        case 3:
+            return 'Triple';
+        default:
+            return 'Unknown';
     }
 };
 
