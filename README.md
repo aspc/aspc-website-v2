@@ -157,6 +157,7 @@ Create a `.env` file in both the frontend and backend directories with the follo
 
 ```
 NODE_ENV=development
+PORT=5000                      # optional, defaults to 5000; see Troubleshooting if taken
 SESSION_SECRET=your_secret_key_here
 ENTITY_ID=<backend_server_url>
 IDP_METADATA_URL=<url_from_ITS>
@@ -224,19 +225,54 @@ For production deployment:
 
 ### Common Issues
 
-1. **SSL Certificate Problems**
+1. **Backend won't start on macOS: port 5000 already in use**
+
+    macOS **AirPlay Receiver** listens on ports 5000 and 7000. If it is on, the
+    backend cannot bind port 5000 and fails with `EADDRINUSE`. macOS turns this
+    setting back on after some system updates, so it can reappear on a machine
+    where local development previously worked.
+
+    The start scripts detect this and print the fix, but to resolve it:
+
+    **Option A (recommended) - turn AirPlay Receiver off:**
+
+    System Settings > General > AirDrop & Handoff > AirPlay Receiver
+
+    **Option B - run the backend on a different port:**
+
+    ```
+    # backend/.env
+    PORT=4000
+    ```
+
+    ```
+    # frontend/.env
+    BACKEND_LINK="https://localhost:4000"
+    ```
+
+    Both values must match. Everything derives the port from these two
+    variables, so no code changes are needed.
+
+    > **Caveat:** local SAML login only works on port 5000, because
+    > `https://localhost:5000/api/auth/saml/consume` is the callback URL
+    > registered with ITS in Microsoft Entra. On any other port, login fails
+    > with a reply-URL mismatch while the rest of the app works normally. To
+    > use a different port for login too, ask ITS to register the new callback
+    > URL as an additional Reply URL on the app registration.
+
+2. **SSL Certificate Problems**
 
     - Ensure certificates are properly generated
     - Check that certificate paths are correct in config files
     - Verify Common Name is set to 'localhost' for local development
 
-2. **SAML Authentication Issues**
+3. **SAML Authentication Issues**
 
     - Verify IDP metadata is correctly downloaded and saved
     - Check entity ID and ACS URL configuration
     - Ensure HTTPS is working correctly on both frontend and backend
 
-3. **Docker Issues**
+4. **Docker Issues**
     - Check if ports are already in use
     - Verify environment variables in docker-compose.yml
     - Ensure MongoDB volume has correct permissions

@@ -5,6 +5,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { GridFSBucket } from 'mongodb';
 import authRoutes from './routes/AuthRoutes';
+import { serverConfig } from './config/samlConfig';
 import pageRoutes from './routes/admin/PagesRoutes';
 import staffRoutes from './routes/admin/StaffRoutes';
 import electionsDashboardRoutes from './routes/admin/VotingAdminRoutes';
@@ -129,7 +130,7 @@ app.use('/api/openforum', forumRoutes);
 app.use('/api/admin/elections', electionsDashboardRoutes);
 app.use('/api/voting', votingRoutes);
 
-const PORT = process.env.PORT || 5000;
+const PORT = serverConfig.port;
 
 // Check environment to determine server type
 if (process.env.NODE_ENV === 'development') {

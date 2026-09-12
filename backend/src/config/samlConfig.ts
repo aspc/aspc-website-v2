@@ -47,7 +47,7 @@ export const initializeSAML = () => {
                     Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
                     Location: `${
                         process.env.NODE_ENV === 'development'
-                            ? 'https://localhost:5000'
+                            ? `https://localhost:${serverConfig.port}`
                             : process.env.ENTITY_ID
                     }/api/auth/saml/consume`,
                 },
