@@ -1,5 +1,6 @@
 'use client';
 import HomepageEvents from '@/components/ui/HomepageEvents';
+import OfficerFinder from '@/components/ui/OfficerFinder';
 import BallotCountdown from '@/components/vote/BallotCountdown';
 import { useElection } from '@/hooks/useElection';
 import { Event } from '@/types';
@@ -176,6 +177,8 @@ export default function HomePage() {
                     </section>
                 </div>
             </div>
+
+            <OfficerFinder />
         </div>
     );
 }
