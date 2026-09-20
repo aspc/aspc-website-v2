@@ -20,10 +20,8 @@ port_listener() {
   lsof -iTCP:"$1" -sTCP:LISTEN -P -n -F c 2>/dev/null | sed -n 's/^c//p' | head -1
 }
 
-# Fails with an actionable message when the backend port is already taken.
-# macOS AirPlay Receiver squats on 5000 and 7000, and re-enables itself across
-# OS updates, so call that case out by name instead of leaving an EADDRINUSE
-# buried in a log file.
+# Fails with an actionable message when the backend port is already taken,
+# rather than letting an EADDRINUSE get buried in a log file.
 assert_port_free() {
   local port="$1" listener
   listener="$(port_listener "$port")"
@@ -31,24 +29,11 @@ assert_port_free() {
 
   echo "ERROR: port $port is already in use by \"$listener\"." >&2
   echo "" >&2
-  if [ "$listener" = "ControlCenter" ]; then
-    echo "That is macOS AirPlay Receiver, which claims ports 5000 and 7000." >&2
-    echo "Fix it with either option:" >&2
-    echo "" >&2
-    echo "  1. Turn AirPlay Receiver off:" >&2
-    echo "     System Settings > General > AirDrop & Handoff > AirPlay Receiver" >&2
-    echo "     (macOS re-enables this after some updates, so it may come back.)" >&2
-    echo "" >&2
-    echo "  2. Run the backend on another port - add this to backend/.env:" >&2
-    echo "         PORT=4000" >&2
-    echo "     and set this in frontend/.env:" >&2
-    echo "         BACKEND_LINK=\"https://localhost:4000\"" >&2
-    echo "     Note: local SAML login will fail on any port other than 5000" >&2
-    echo "     until ITS registers the new callback URL. Everything else works." >&2
-  else
-    echo "Stop that process, or pick another port by setting PORT in backend/.env" >&2
-    echo "and matching BACKEND_LINK in frontend/.env." >&2
-  fi
+  echo "Stop that process, or run the backend on another port by setting" >&2
+  echo "PORT in backend/.env and matching BACKEND_LINK in frontend/.env." >&2
+  echo "" >&2
+  echo "Note: local SAML login only works on ports registered as callback URLs" >&2
+  echo "with ITS (currently 4000). Other ports break login but not the rest." >&2
   echo "" >&2
   return 1
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Starts backend, frontend, and the local SSL proxy together.
-# Backend:  https://localhost:$PORT (PORT from backend/.env, default 5000)
+# Backend:  https://localhost:$PORT (PORT from backend/.env, default 4000)
 # Frontend: https://localhost:3001 (proxied to http://localhost:3000)
 
 set -e
@@ -10,7 +10,7 @@ cd "$(dirname "$0")/.."
 . "$(dirname "$0")/lib-preflight.sh"
 
 BACKEND_PORT="$(read_env_var backend/.env PORT)"
-BACKEND_PORT="${BACKEND_PORT:-5000}"
+BACKEND_PORT="${BACKEND_PORT:-4000}"
 BACKEND_URL="https://localhost:$BACKEND_PORT"
 
 # Fail fast with a readable reason rather than an EADDRINUSE stack trace.

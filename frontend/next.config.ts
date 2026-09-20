@@ -1,12 +1,12 @@
 import type { NextConfig } from 'next';
 
-// The backend port is configurable (backend/.env PORT), because macOS AirPlay
-// Receiver claims port 5000. Derive the allowed localhost image host from
-// BACKEND_LINK so images keep loading whatever port the backend runs on.
+// The backend port is configurable (backend/.env PORT). Derive the allowed
+// localhost image host from BACKEND_LINK so images keep loading whatever port
+// the backend runs on.
 const localhostImagePatterns = (() => {
     try {
         const { hostname, port, protocol } = new URL(
-            process.env.BACKEND_LINK ?? 'https://localhost:5000'
+            process.env.BACKEND_LINK ?? 'https://localhost:4000'
         );
         if (hostname !== 'localhost') return [];
         const resolvedPort = port || (protocol === 'https:' ? '443' : '80');

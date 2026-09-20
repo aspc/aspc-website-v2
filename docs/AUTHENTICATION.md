@@ -55,11 +55,11 @@ The ASPC Student Platform implements SAML (Security Assertion Markup Language) a
 
 - **Entity ID**:
   - Production: `https://api.pomonastudents.org/`
-  - Development: `https://localhost:5000`
+  - Development: `https://localhost:4000`
   
 - **Assertion Consumer Service (ACS) URL**:
   - Production: `https://api.pomonastudents.org/api/auth/saml/consume`
-  - Development: `https://localhost:5000/saml/consume`
+  - Development: `https://localhost:4000/saml/consume`
 
 ### Identity Provider (ITS) Configuration
 

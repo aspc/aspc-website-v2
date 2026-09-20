@@ -1,6 +1,6 @@
 @echo off
 REM Opens backend, frontend, and the local SSL proxy in three separate terminals.
-REM Backend:  https://localhost:5000
+REM Backend:  https://localhost:4000
 REM Frontend: https://localhost:3001 (proxied to http://localhost:3000)
 
 cd /d "%~dp0.."
@@ -32,5 +32,5 @@ start "ASPC SSL Proxy" cmd /k "local-ssl-proxy --source 3001 --target 3000"
 
 echo.
 echo Launched backend, frontend, and SSL proxy in separate terminals.
-echo Backend:  https://localhost:5000
+echo Backend:  https://localhost:4000
 echo Frontend: https://localhost:3001

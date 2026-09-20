@@ -2,7 +2,7 @@
 # Starts backend, frontend, and local SSL proxy in the background (no Terminal.app windows).
 # Logs: .logs/*.log
 # Stop all services: press Ctrl+C in this shell, or close this terminal session.
-# Backend:  https://localhost:$PORT (PORT from backend/.env, default 5000)
+# Backend:  https://localhost:$PORT (PORT from backend/.env, default 4000)
 # Frontend: https://localhost:3001 (proxied to http://localhost:3000)
 
 set -e
@@ -14,7 +14,7 @@ LOG_DIR="$REPO_ROOT/.logs"
 . "$REPO_ROOT/scripts/lib-preflight.sh"
 
 BACKEND_PORT="$(read_env_var backend/.env PORT)"
-BACKEND_PORT="${BACKEND_PORT:-5000}"
+BACKEND_PORT="${BACKEND_PORT:-4000}"
 BACKEND_URL="https://localhost:$BACKEND_PORT"
 
 # This script sends backend output to a log file, so a port clash would
