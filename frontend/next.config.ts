@@ -1,5 +1,34 @@
 import type { NextConfig } from 'next';
 
+// The backend port is configurable (backend/.env PORT). Derive the allowed
+// localhost image host from BACKEND_LINK so images keep loading whatever port
+// the backend runs on.
+const localhostImagePatterns = (() => {
+    try {
+        const { hostname, port, protocol } = new URL(
+            process.env.BACKEND_LINK ?? 'https://localhost:4000'
+        );
+        if (hostname !== 'localhost') return [];
+        const resolvedPort = port || (protocol === 'https:' ? '443' : '80');
+        return [
+            {
+                protocol: 'http' as const,
+                hostname: 'localhost',
+                port: resolvedPort,
+                pathname: '/api/**',
+            },
+            {
+                protocol: 'https' as const,
+                hostname: 'localhost',
+                port: resolvedPort,
+                pathname: '/api/**',
+            },
+        ];
+    } catch {
+        return [];
+    }
+})();
+
 const nextConfig: NextConfig = {
     async rewrites() {
         return [
@@ -13,18 +42,7 @@ const nextConfig: NextConfig = {
     },
     images: {
         remotePatterns: [
-            {
-                protocol: 'http',
-                hostname: 'localhost',
-                port: '5000',
-                pathname: '/api/**',
-            },
-            {
-                protocol: 'https',
-                hostname: 'localhost',
-                port: '5000',
-                pathname: '/api/**',
-            },
+            ...localhostImagePatterns,
             {
                 protocol: 'https',
                 hostname:

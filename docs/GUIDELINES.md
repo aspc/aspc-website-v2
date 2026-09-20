@@ -64,7 +64,7 @@ Every PR must include:
 ```bash
 #!/bin/bash
 # Note: Using -k flag for local HTTPS with self-signed certificates
-BASE_URL="https://localhost:5000"
+BASE_URL="https://localhost:4000"
 
 # Test authentication
 curl -k -X GET "$BASE_URL/api/auth/current_user"
@@ -125,20 +125,20 @@ Use this checklist when creating your PR:
 ## Development Environment Notes
 
 ### Backend Server
-- **Development**: HTTPS on `https://localhost:5000` with self-signed certificates
+- **Development**: HTTPS on `https://localhost:4000` with self-signed certificates
 - **Production**: HTTP (SSL terminated at load balancer)
 - **API Testing**: Use provided script at `backend/src/__tests__/api-routes.sh`
 
 ### Common Commands
 ```bash
 # Test single endpoint
-curl -k https://localhost:5000/api/courses
+curl -k https://localhost:4000/api/courses
 
 # Run full API test suite (not needed for now, future implementation)
 ./backend/src/__tests__/api-routes.sh
 
 # Check server connectivity
-curl -k -v https://localhost:5000
+curl -k -v https://localhost:4000
 ```
 
 ---

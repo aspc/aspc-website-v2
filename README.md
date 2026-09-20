@@ -103,7 +103,7 @@ npm install
 npm run dev
 ```
 
-This will start the backend server at https://localhost:5000
+This will start the backend server at https://localhost:4000
 
 2. **Frontend Setup**
 
@@ -157,6 +157,7 @@ Create a `.env` file in both the frontend and backend directories with the follo
 
 ```
 NODE_ENV=development
+PORT=4000                      # optional, defaults to 4000 for local development
 SESSION_SECRET=your_secret_key_here
 ENTITY_ID=<backend_server_url>
 IDP_METADATA_URL=<url_from_ITS>
@@ -169,7 +170,7 @@ Note: last four are only needed for events pulling or authentication, and applic
 **Frontend .env**
 
 ```
-BACKEND_LINK=https://localhost:5000
+BACKEND_LINK=https://localhost:4000
 ```
 
 ## Docker Setup

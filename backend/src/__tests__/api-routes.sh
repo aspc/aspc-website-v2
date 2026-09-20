@@ -10,7 +10,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-BASE_URL="https://localhost:5000"
+BASE_URL="https://localhost:4000"
 API_BASE="$BASE_URL/api"
 
 # Authentication variables
@@ -74,7 +74,7 @@ setup_manual_session() {
     echo -e "\n${BLUE}Manual Session Setup:${NC}"
     echo -e "1. Go to: ${GREEN}${BASE_URL}/api/auth/login/saml${NC}"
     echo -e "2. Complete SAML login"
-    echo -e "3. Open Dev Tools (F12) → Application → Cookies → https://localhost:5000"
+    echo -e "3. Open Dev Tools (F12) → Application → Cookies → https://localhost:4000"
     echo -e "4. Copy the ${YELLOW}'connect.sid'${NC} cookie value"
     echo -e ""
     

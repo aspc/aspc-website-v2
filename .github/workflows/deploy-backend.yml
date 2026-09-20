@@ -67,6 +67,7 @@ jobs:
                 "SESSION_SECRET": "${{ secrets.SESSION_SECRET }}",
                 "MONGODB_URI": "${{ secrets.MONGODB_URI }}",
                 "NODE_ENV": "production",
+                "PORT": "5000",
                 "IDP_METADATA_URL": "${{ secrets.IDP_METADATA_URL }}",
                 "ENGAGE_API_KEY": "${{ secrets.ENGAGE_API_KEY }}",
                 "ENGAGE_API_URL": "${{ secrets.ENGAGE_API_URL }}"

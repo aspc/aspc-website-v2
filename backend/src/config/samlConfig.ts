@@ -28,7 +28,9 @@ export const fetchAndSaveMetadata = async () => {
 };
 
 export const serverConfig = {
-    port: process.env.PORT || 5000,
+    // Local development defaults to 4000. Production sets PORT explicitly in
+    // the Lightsail deployment config.
+    port: process.env.PORT || 4000,
 };
 
 export const initializeSAML = () => {
@@ -47,7 +49,7 @@ export const initializeSAML = () => {
                     Binding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
                     Location: `${
                         process.env.NODE_ENV === 'development'
-                            ? 'https://localhost:5000'
+                            ? `https://localhost:${serverConfig.port}`
                             : process.env.ENTITY_ID
                     }/api/auth/saml/consume`,
                 },

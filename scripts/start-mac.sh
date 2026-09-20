@@ -2,13 +2,24 @@
 # Starts backend, frontend, and local SSL proxy in the background (no Terminal.app windows).
 # Logs: .logs/*.log
 # Stop all services: press Ctrl+C in this shell, or close this terminal session.
-# Backend:  https://localhost:5000
+# Backend:  https://localhost:$PORT (PORT from backend/.env, default 4000)
 # Frontend: https://localhost:3001 (proxied to http://localhost:3000)
 
 set -e
 cd "$(dirname "$0")/.."
 REPO_ROOT="$(pwd)"
 LOG_DIR="$REPO_ROOT/.logs"
+
+# shellcheck source=scripts/lib-preflight.sh
+. "$REPO_ROOT/scripts/lib-preflight.sh"
+
+BACKEND_PORT="$(read_env_var backend/.env PORT)"
+BACKEND_PORT="${BACKEND_PORT:-4000}"
+BACKEND_URL="https://localhost:$BACKEND_PORT"
+
+# This script sends backend output to a log file, so a port clash would
+# otherwise look like a successful start followed by a dead server. Check first.
+assert_port_free "$BACKEND_PORT"
 
 if ! command -v local-ssl-proxy >/dev/null 2>&1; then
   echo "Installing local-ssl-proxy globally..."
@@ -50,7 +61,7 @@ echo ""
 (cd "$REPO_ROOT/frontend" && npm run dev) >>"$LOG_DIR/frontend.log" 2>&1 &
 (cd "$REPO_ROOT" && local-ssl-proxy --source 3001 --target 3000) >>"$LOG_DIR/ssl-proxy.log" 2>&1 &
 
-echo "Backend:  https://localhost:5000"
+echo "Backend:  $BACKEND_URL"
 echo "Frontend: https://localhost:3001"
 echo ""
 
