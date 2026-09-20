@@ -70,12 +70,7 @@ export default function OfficerFinder() {
                 className="group flex items-center gap-3 rounded-full bg-white py-2 pl-2 pr-4 text-left shadow-xl ring-1 ring-blue-900/10 transition hover:-translate-y-0.5 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
                 <span className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 ring-2 ring-white">
-                    <Image
-                        src="/cecil.jpg"
-                        alt="Cecil"
-                        fill
-                        sizes="44px"
-                    />
+                    <Image src="/cecil.jpg" alt="Cecil" fill sizes="44px" />
                 </span>
                 <span className="flex items-center gap-2 text-sm font-semibold text-blue-900">
                     Find an officer
