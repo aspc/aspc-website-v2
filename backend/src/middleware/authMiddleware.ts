@@ -35,8 +35,8 @@ export const isAdmin = async (
         // Find the user in the database
         const user = await SAMLUser.findOne({ id: azureId });
 
-        // Check if user exists and is an admin
-        if (!user || !user.isAdmin) {
+        // Check if user exists and is an admin (super admins are also admins)
+        if (!user || !(user.isAdmin || user.isSuperAdmin)) {
             res.status(403).json({ message: 'Admin access required' });
             return;
         }
@@ -45,6 +45,38 @@ export const isAdmin = async (
         next();
     } catch (error) {
         console.error('Admin verification error:', error);
+        res.status(500).json({ message: 'Server error' });
+        return;
+    }
+};
+
+export const isSuperAdmin = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    // First check if user is authenticated
+    if (!req.session.user) {
+        res.status(401).json({ message: 'Authentication required' });
+        return;
+    }
+
+    const azureId = req.session.user.id;
+
+    try {
+        // Find the user in the database
+        const user = await SAMLUser.findOne({ id: azureId });
+
+        // Check if user exists and is a super admin
+        if (!user || !user.isSuperAdmin) {
+            res.status(403).json({ message: 'Super admin access required' });
+            return;
+        }
+
+        // User is authenticated and is a super admin
+        next();
+    } catch (error) {
+        console.error('Super admin verification error:', error);
         res.status(500).json({ message: 'Server error' });
         return;
     }

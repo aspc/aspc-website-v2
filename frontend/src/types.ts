@@ -60,6 +60,17 @@ export interface User {
     firstName: string;
     lastName: string;
     isAdmin: boolean;
+    isSuperAdmin?: boolean;
+}
+
+// Shape returned by GET /api/admin/users/admins
+export interface AdminUser {
+    _id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    isAdmin: boolean;
+    isSuperAdmin: boolean;
 }
 
 export interface Building {
