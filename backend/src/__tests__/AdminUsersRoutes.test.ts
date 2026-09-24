@@ -273,6 +273,78 @@ describe('DELETE /api/admin/users/admins/:id', () => {
     });
 });
 
+describe('GET /api/admin/users/search', () => {
+    it('returns 401 when not logged in', async () => {
+        const res = await request(buildApp()).get(
+            '/api/admin/users/search?q=uma'
+        );
+        expect(res.status).toBe(401);
+    });
+
+    it('returns 403 for a normal admin', async () => {
+        const res = await request(buildApp(ADMIN_SESSION)).get(
+            '/api/admin/users/search?q=uma'
+        );
+        expect(res.status).toBe(403);
+    });
+
+    it('finds users by first name, case-insensitively', async () => {
+        const res = await request(buildApp(SUPER_SESSION)).get(
+            '/api/admin/users/search?q=UMA'
+        );
+        expect(res.status).toBe(200);
+        expect(res.body).toHaveLength(1);
+        expect(res.body[0].email).toBe('user@pomona.edu');
+        expect(res.body[0].isAdmin).toBe(false);
+        expect(res.body[0]).not.toHaveProperty('id');
+    });
+
+    it('finds users by last name and by email', async () => {
+        const byLast = await request(buildApp(SUPER_SESSION)).get(
+            '/api/admin/users/search?q=admin'
+        );
+        expect(byLast.status).toBe(200);
+        const emails = byLast.body.map((u: { email: string }) => u.email);
+        // Matches "Al Admin" by last name and admin@pomona.edu by email
+        expect(emails).toContain('admin@pomona.edu');
+
+        const byEmail = await request(buildApp(SUPER_SESSION)).get(
+            '/api/admin/users/search?q=super@pomona'
+        );
+        expect(byEmail.status).toBe(200);
+        expect(byEmail.body).toHaveLength(1);
+        expect(byEmail.body[0].email).toBe('super@pomona.edu');
+    });
+
+    it('returns an empty list when nothing matches', async () => {
+        const res = await request(buildApp(SUPER_SESSION)).get(
+            '/api/admin/users/search?q=zzzz'
+        );
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual([]);
+    });
+
+    it('returns 400 for missing or too-short search text', async () => {
+        const missing = await request(buildApp(SUPER_SESSION)).get(
+            '/api/admin/users/search'
+        );
+        expect(missing.status).toBe(400);
+
+        const short = await request(buildApp(SUPER_SESSION)).get(
+            '/api/admin/users/search?q=u'
+        );
+        expect(short.status).toBe(400);
+    });
+
+    it('treats regex metacharacters as literal text', async () => {
+        const res = await request(buildApp(SUPER_SESSION)).get(
+            '/api/admin/users/search?q=' + encodeURIComponent('.*')
+        );
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual([]);
+    });
+});
+
 describe('existing isAdmin middleware', () => {
     it('still allows a normal admin', async () => {
         const res = await request(buildApp(ADMIN_SESSION)).get(

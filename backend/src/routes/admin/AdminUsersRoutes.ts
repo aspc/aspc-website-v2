@@ -9,6 +9,45 @@ const router = express.Router();
 const ADMIN_FIELDS = 'firstName lastName email isAdmin isSuperAdmin';
 
 /**
+ * @route   GET /api/admin/users/search?q=<text>
+ * @desc    Find users by first name, last name, or email so a super admin
+ *          can pick the right person before granting admin
+ * @access  isSuperAdmin
+ */
+router.get('/search', isSuperAdmin, async (req: Request, res: Response) => {
+    try {
+        const raw = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+
+        if (raw.length < 2) {
+            res.status(400).json({
+                message: 'Search text must be at least 2 characters',
+            });
+            return;
+        }
+
+        // Escape regex metacharacters so user input is matched literally
+        const escaped = raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = new RegExp(escaped, 'i');
+
+        const users = await SAMLUser.find({
+            $or: [
+                { firstName: pattern },
+                { lastName: pattern },
+                { email: pattern },
+            ],
+        })
+            .select(ADMIN_FIELDS)
+            .sort({ lastName: 1, firstName: 1 })
+            .limit(10);
+
+        res.json(users);
+    } catch (error) {
+        console.error('Error searching users:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+/**
  * @route   GET /api/admin/users/admins
  * @desc    List all users with admin privileges
  * @access  isSuperAdmin
