@@ -12,6 +12,39 @@ const router = Router();
 let idp: IdentityProvider | undefined;
 let sp: ServiceProvider | undefined;
 
+/**
+ * A SAML claim the session depends on was absent from the assertion
+ */
+class SamlClaimError extends Error {}
+
+/**
+ * samlify types every extracted claim as `string | string[]`, because SAML
+ * attributes are multi-valued by definition. Collapse to the first value.
+ */
+const singleValue = (
+    value: string | string[] | undefined
+): string | undefined => (Array.isArray(value) ? value[0] : value);
+
+/**
+ * Read a claim that is unsafe to leave unset, failing closed when it is
+ * missing. `/current_user` looks the user up by `id` and then by `email`,
+ * and Mongoose strips undefined filter values, so `findOne({ id: undefined })`
+ * degrades to `findOne({})` and matches an arbitrary user. Only those two
+ * claims get this treatment; the rest keep their previous lenient handling.
+ */
+const requiredClaim = (
+    value: string | string[] | undefined,
+    name: string
+): string => {
+    const single = singleValue(value);
+    if (!single) {
+        throw new SamlClaimError(
+            `SAML response is missing required claim: ${name}`
+        );
+    }
+    return single;
+};
+
 // check if metadata file exists, if not fetch and save it
 const metadataPath = path.join(__dirname, '../../idp_metadata.xml');
 (!fs.existsSync(metadataPath)
@@ -105,15 +138,29 @@ router.post(
             const baseLink =
                 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/';
 
+            const attributes = extract.attributes;
             req.session.user = {
-                id: extract.attributes[
-                    'http://schemas.microsoft.com/identity/claims/objectidentifier'
-                ],
-                email: extract.attributes[baseLink + 'emailaddress'],
-                firstName: extract.attributes[baseLink + 'givenname'],
-                lastName: extract.attributes[baseLink + 'surname'],
-                sessionIndex: extract.sessionIndex,
-                nameID: extract.nameID,
+                id: requiredClaim(
+                    attributes?.[
+                        'http://schemas.microsoft.com/identity/claims/objectidentifier'
+                    ],
+                    'objectidentifier'
+                ),
+                email: requiredClaim(
+                    attributes?.[baseLink + 'emailaddress'],
+                    'emailaddress'
+                ),
+                firstName:
+                    singleValue(attributes?.[baseLink + 'givenname']) ?? '',
+                lastName: singleValue(attributes?.[baseLink + 'surname']) ?? '',
+                sessionIndex: {
+                    authnInstant: singleValue(
+                        extract.sessionIndex?.authnInstant
+                    ),
+                    sessionIndex:
+                        singleValue(extract.sessionIndex?.sessionIndex) ?? '',
+                },
+                nameID: singleValue(extract.nameID) ?? '',
             };
 
             req.session.save((err) => {
@@ -127,6 +174,11 @@ router.post(
                 );
             });
         } catch (error) {
+            if (error instanceof SamlClaimError) {
+                console.error('SAML consume error:', error.message);
+                res.status(403).json({ message: error.message });
+                return;
+            }
             console.error('SAML consume error:', error);
             res.status(500).json({
                 message: 'SAML authentication failed',
