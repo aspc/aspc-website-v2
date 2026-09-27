@@ -3,6 +3,10 @@ import express from 'express';
 import session from 'express-session';
 import router from '../routes/AuthRoutes';
 
+const CLAIMS = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/';
+const OBJECT_ID =
+    'http://schemas.microsoft.com/identity/claims/objectidentifier';
+
 // Mock samlConfig so tests don't need real IdP metadata
 jest.mock('../config/samlConfig', () => ({
     fetchAndSaveMetadata: jest.fn().mockResolvedValue(null),
@@ -179,5 +183,116 @@ describe('GET /api/auth/current_user', () => {
 
         expect(res.status).toBe(200);
         expect(res.body.user.email).toBe('test@pomona.edu');
+    });
+});
+
+describe('POST /api/auth/saml/consume claim handling', () => {
+    const fullAttributes = {
+        [OBJECT_ID]: 'azure-id-123',
+        [CLAIMS + 'emailaddress']: 'test@pomona.edu',
+        [CLAIMS + 'givenname']: 'Test',
+        [CLAIMS + 'surname']: 'User',
+    };
+
+    const mockExtract = (overrides: Record<string, unknown>) => {
+        const { sp } = require('../config/samlConfig').initializeSAML();
+        sp.parseLoginResponse.mockResolvedValueOnce({
+            extract: {
+                response: { inResponseTo: 'test-request-id' },
+                attributes: fullAttributes,
+                sessionIndex: { sessionIndex: 'session-idx-1' },
+                nameID: 'test-name-id',
+                ...overrides,
+            },
+        });
+    };
+
+    beforeEach(() => {
+        process.env.NODE_ENV = 'development';
+        jest.clearAllMocks();
+    });
+
+    // `id` and `email` are the two claims that must never reach the session
+    // unset: /current_user filters on them, and Mongoose drops undefined
+    // filter values, turning findOne({ id: undefined }) into findOne({}).
+    it.each([
+        ['objectidentifier', OBJECT_ID],
+        ['emailaddress', CLAIMS + 'emailaddress'],
+    ])('rejects the login when %s is missing', async (name, claimKey) => {
+        const attributes = { ...fullAttributes };
+        delete (attributes as Record<string, string>)[claimKey];
+        mockExtract({ attributes });
+
+        const agent = request.agent(buildApp());
+        const res = await agent
+            .post('/api/auth/saml/consume')
+            .send('SAMLResponse=mockresponse');
+
+        expect(res.status).toBe(403);
+        expect(res.body.message).toContain(name);
+
+        // No session may be established by a rejected assertion.
+        const { SAMLUser } = require('../models/People');
+        const after = await agent.get('/api/auth/current_user');
+        expect(after.status).toBe(401);
+        expect(SAMLUser.findOne).not.toHaveBeenCalled();
+    });
+
+    // Guards the deliberate decision to keep these lenient: they are not
+    // security relevant, so absence must not start blocking logins.
+    it('still logs in when only optional claims are missing', async () => {
+        mockExtract({
+            attributes: {
+                [OBJECT_ID]: 'azure-id-123',
+                [CLAIMS + 'emailaddress']: 'test@pomona.edu',
+            },
+            sessionIndex: {},
+            nameID: undefined,
+        });
+
+        const res = await request(buildApp())
+            .post('/api/auth/saml/consume')
+            .send('SAMLResponse=mockresponse');
+
+        expect(res.status).toBe(302);
+    });
+
+    it('unwraps multi-valued claims to a single string', async () => {
+        const { SAMLUser } = require('../models/People');
+        SAMLUser.findOne.mockResolvedValue({
+            _id: 'mongo-id',
+            toObject: () => ({ id: 'azure-id-123', isAdmin: false }),
+        });
+
+        mockExtract({
+            attributes: {
+                [OBJECT_ID]: ['azure-id-123'],
+                [CLAIMS + 'emailaddress']: ['test@pomona.edu'],
+                [CLAIMS + 'givenname']: ['Test'],
+                [CLAIMS + 'surname']: ['User'],
+            },
+            sessionIndex: { sessionIndex: ['session-idx-1', 'session-idx-2'] },
+        });
+
+        const agent = request.agent(buildApp());
+        expect(
+            (
+                await agent
+                    .post('/api/auth/saml/consume')
+                    .send('SAMLResponse=mockresponse')
+            ).status
+        ).toBe(302);
+
+        expect((await agent.get('/api/auth/current_user')).status).toBe(200);
+        // The array must have been unwrapped, not stored as an array.
+        expect(SAMLUser.findOne).toHaveBeenCalledWith({ id: 'azure-id-123' });
+
+        await agent.get('/api/auth/logout/saml');
+        const { sp } = require('../config/samlConfig').initializeSAML();
+        expect(sp.createLogoutRequest).toHaveBeenCalledWith(
+            expect.anything(),
+            'redirect',
+            { sessionIndex: 'session-idx-1', nameID: 'test-name-id' }
+        );
     });
 });

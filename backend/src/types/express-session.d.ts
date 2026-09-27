@@ -9,7 +9,8 @@ declare module 'express-session' {
             firstName: string;
             lastName: string;
             sessionIndex: {
-                authnInstant: string;
+                // Not every IdP emits AuthnInstant, and nothing reads it.
+                authnInstant?: string;
                 sessionIndex: string;
             };
             nameID: string;
