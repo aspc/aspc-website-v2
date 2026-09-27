@@ -4,14 +4,20 @@
 
 This repository contains the ASPC Student Platform, a web application for Pomona College students. The platform provides authentication through Pomona's ITS system using SAML, and serves as a central hub for student resources.
 
-### Software Developer Team:
+### Current Team
+
+- **Vadym Musiienko** - Lead Software Engineer
+- **Prince Bashangezi** - Product Manager
+- **Khai Mohammad** - Software Engineer
+- **Stephanie Nguyen** - Software Engineer
+- **Philippe Essama** - Software Engineer
+
+### Past Contributors
 
 Haram Yoon,
 Cole Uyematsu,
 Kartika Santoso,
-Prince Bashangezi,
 Ella Zhu,
-Vadym Musiienko,
 Abrar Yaser
 
 # Deployment Information
