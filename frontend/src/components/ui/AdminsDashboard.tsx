@@ -14,6 +14,7 @@ const AdminsDashboard = () => {
     const [pendingRemoval, setPendingRemoval] = useState<AdminUser | null>(
         null
     );
+    const [showEmailForm, setShowEmailForm] = useState(false);
 
     const fetchAdmins = async () => {
         try {
@@ -224,29 +225,39 @@ const AdminsDashboard = () => {
                 )}
             </form>
 
-            {/* Add by email */}
-            <form onSubmit={handleAddByEmail} className="mb-6">
-                <label className="block text-sm font-medium mb-2">
-                    Or add by Pomona email
-                </label>
-                <div className="flex gap-2">
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="student@pomona.edu"
-                        required
-                        className="flex-1 p-2 border border-gray-300 rounded"
-                    />
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
-                    >
-                        Add Admin
-                    </button>
-                </div>
-            </form>
+            {/* Add by email, hidden until requested */}
+            {showEmailForm ? (
+                <form onSubmit={handleAddByEmail} className="mb-6">
+                    <label className="block text-sm font-medium mb-2">
+                        Add by Pomona email
+                    </label>
+                    <div className="flex gap-2">
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="student@pomona.edu"
+                            required
+                            className="flex-1 p-2 border border-gray-300 rounded"
+                        />
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+                        >
+                            Add Admin
+                        </button>
+                    </div>
+                </form>
+            ) : (
+                <button
+                    type="button"
+                    onClick={() => setShowEmailForm(true)}
+                    className="text-sm text-blue-600 hover:underline mb-6"
+                >
+                    Or add by email
+                </button>
+            )}
 
             {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
