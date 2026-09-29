@@ -11,6 +11,7 @@ const AdminsDashboard = () => {
     );
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string>('');
+    const [successMessage, setSuccessMessage] = useState<string>('');
     const [pendingRemoval, setPendingRemoval] = useState<AdminUser | null>(
         null
     );
@@ -40,6 +41,7 @@ const AdminsDashboard = () => {
 
     const grantAdmin = async (targetEmail: string) => {
         setError('');
+        setSuccessMessage('');
 
         try {
             setIsLoading(true);
@@ -70,19 +72,13 @@ const AdminsDashboard = () => {
         }
     };
 
-    const handleAddByEmail = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const ok = await grantAdmin(email);
-        if (ok) setEmail('');
-    };
-
-    const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const searchUsers = async (query: string) => {
         setError('');
+        setSuccessMessage('');
 
         try {
             setIsLoading(true);
-            const params = new URLSearchParams({ q: nameQuery.trim() });
+            const params = new URLSearchParams({ q: query.trim() });
             const response = await fetch(
                 `${process.env.BACKEND_LINK}/api/admin/users/search?${params}`,
                 {
@@ -105,15 +101,27 @@ const AdminsDashboard = () => {
         }
     };
 
+    const handleSearchByName = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        await searchUsers(nameQuery);
+    };
+
+    const handleSearchByEmail = async (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        await searchUsers(email);
+    };
+
     const handleAddFromSearch = async (user: AdminUser) => {
         const ok = await grantAdmin(user.email);
         if (ok) {
-            // Reflect the change in the search results without re-searching
-            setSearchResults(
-                (prev) =>
-                    prev?.map((u) =>
-                        u._id === user._id ? { ...u, isAdmin: true } : u
-                    ) ?? null
+            // Reset the lookup so the section returns to its starting state.
+            // grantAdmin already refreshed the current admins list.
+            setSearchResults(null);
+            setNameQuery('');
+            setEmail('');
+            setShowEmailForm(false);
+            setSuccessMessage(
+                `You added ${user.firstName} ${user.lastName} as an admin!`
             );
         }
     };
@@ -122,6 +130,7 @@ const AdminsDashboard = () => {
         if (!pendingRemoval) return;
         const admin = pendingRemoval;
         setError('');
+        setSuccessMessage('');
 
         try {
             setIsLoading(true);
@@ -160,7 +169,7 @@ const AdminsDashboard = () => {
             <h2 className="text-2xl font-bold mb-6">Manage Admins</h2>
 
             {/* Find by name */}
-            <form onSubmit={handleSearch} className="mb-6">
+            <form onSubmit={handleSearchByName} className="mb-6">
                 <label className="block text-sm font-medium mb-2">
                     Find by name
                 </label>
@@ -182,62 +191,26 @@ const AdminsDashboard = () => {
                         Search
                     </button>
                 </div>
-
-                {searchResults && (
-                    <ul className="mt-3 divide-y divide-gray-200 border border-gray-200 rounded">
-                        {searchResults.map((user) => (
-                            <li
-                                key={user._id}
-                                className="flex items-center justify-between p-3"
-                            >
-                                <div>
-                                    <p className="font-medium">
-                                        {user.firstName} {user.lastName}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        {user.email}
-                                    </p>
-                                </div>
-                                {user.isAdmin ? (
-                                    <span className="text-sm text-gray-500">
-                                        Already admin
-                                    </span>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            handleAddFromSearch(user)
-                                        }
-                                        disabled={isLoading}
-                                        className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 disabled:opacity-50 text-sm"
-                                    >
-                                        Add
-                                    </button>
-                                )}
-                            </li>
-                        ))}
-                        {searchResults.length === 0 && (
-                            <li className="p-3 text-gray-500">
-                                No matching users found.
-                            </li>
-                        )}
-                    </ul>
-                )}
             </form>
 
-            {/* Add by email, hidden until requested */}
+            {successMessage && (
+                <p className="text-green-600 text-sm mb-4">{successMessage}</p>
+            )}
+
+            {/* Find by email, hidden until requested */}
             {showEmailForm ? (
-                <form onSubmit={handleAddByEmail} className="mb-6">
+                <form onSubmit={handleSearchByEmail} className="mb-6">
                     <label className="block text-sm font-medium mb-2">
-                        Add by Pomona email
+                        Find by Pomona email
                     </label>
                     <div className="flex gap-2">
                         <input
-                            type="email"
+                            type="text"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="student@pomona.edu"
+                            placeholder="student@mymail.pomona.edu"
                             required
+                            minLength={2}
                             className="flex-1 p-2 border border-gray-300 rounded"
                         />
                         <button
@@ -245,7 +218,7 @@ const AdminsDashboard = () => {
                             disabled={isLoading}
                             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
                         >
-                            Add Admin
+                            Search
                         </button>
                     </div>
                 </form>
@@ -255,8 +228,48 @@ const AdminsDashboard = () => {
                     onClick={() => setShowEmailForm(true)}
                     className="text-sm text-blue-600 hover:underline mb-6"
                 >
-                    Or add by email
+                    Or find by email
                 </button>
+            )}
+
+            {/* Search results, shared by both lookups */}
+            {searchResults && (
+                <ul className="mb-6 divide-y divide-gray-200 border border-gray-200 rounded">
+                    {searchResults.map((user) => (
+                        <li
+                            key={user._id}
+                            className="flex items-center justify-between p-3"
+                        >
+                            <div>
+                                <p className="font-medium">
+                                    {user.firstName} {user.lastName}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                    {user.email}
+                                </p>
+                            </div>
+                            {user.isAdmin ? (
+                                <span className="text-sm text-gray-500">
+                                    Already admin
+                                </span>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => handleAddFromSearch(user)}
+                                    disabled={isLoading}
+                                    className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 disabled:opacity-50 text-sm"
+                                >
+                                    Add
+                                </button>
+                            )}
+                        </li>
+                    ))}
+                    {searchResults.length === 0 && (
+                        <li className="p-3 text-gray-500">
+                            No matching users found.
+                        </li>
+                    )}
+                </ul>
             )}
 
             {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
