@@ -62,3 +62,30 @@ body {
         align-items: flex-start;
     }
 }
+
+/* Cecil loading spinner (see components/Loading.tsx).
+   The arc is a single dash anchored at dashoffset 0, so it grows and shrinks
+   from one point and can never render as two disconnected pieces. */
+.cecil-arc {
+    transform-box: view-box;
+    transform-origin: 324.07px 345.71px;
+    animation:
+        cecil-arc-spin 1.6s linear infinite,
+        cecil-arc-grow 2.2s ease-in-out infinite;
+}
+
+@keyframes cecil-arc-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes cecil-arc-grow {
+    0%,
+    100% {
+        stroke-dasharray: 216 1442;
+    }
+    50% {
+        stroke-dasharray: 937 1442;
+    }
+}
