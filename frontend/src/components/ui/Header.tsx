@@ -9,6 +9,7 @@ import { PageContent } from '@/types';
 import Image from 'next/image';
 import { Button } from './Button';
 import NavSection from './NavSection';
+import MobileAuthControl from './MobileAuthControl';
 import { EMPTY_PAGES_MAP, NAV_SECTIONS } from './navSections';
 
 const Header = () => {
@@ -122,8 +123,8 @@ const Header = () => {
             {/* Desktop Header */}
             <header className="bg-blue-900 backdrop-blur-sm shadow text-white sticky top-0 left-0 w-full z-50">
                 <div className="px-4 lg:px-16">
-                    <div className="flex items-wrap justify-between h-16">
-                        <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="flex justify-between h-16">
+                        <div className="flex min-w-0 items-center space-x-2 sm:space-x-3">
                             <Link
                                 href="/"
                                 className="flex items-center space-x-2 group"
@@ -135,7 +136,13 @@ const Header = () => {
                                     height={50}
                                     className="ml-2 transition duration-200 group-hover:opacity-80"
                                 />
-                                <div className="flex flex-col leading-tight text-white text-lg font-semibold whitespace-nowrap">
+                                {/*
+                                    The wordmark shares the mobile bar with the
+                                    auth control, so it steps down a size on
+                                    phones and drops out entirely on the
+                                    narrowest ones. Unchanged from `sm` up.
+                                */}
+                                <div className="hidden min-[360px]:flex flex-col text-white text-sm/tight sm:text-lg/tight font-semibold whitespace-nowrap">
                                     <span className="text-white group-hover:text-blue-400 transition duration-200">
                                         Associated Students
                                     </span>
@@ -198,17 +205,27 @@ const Header = () => {
                             )}
                         </nav>
 
-                        {/* Mobile Menu Button */}
-                        <button
-                            className="lg:hidden p-2"
-                            onClick={() => setIsMobileMenuOpen(true)}
-                        >
-                            <div className="space-y-1.5">
-                                <div className="w-6 h-0.5 bg-white"></div>
-                                <div className="w-6 h-0.5 bg-white"></div>
-                                <div className="w-6 h-0.5 bg-white"></div>
-                            </div>
-                        </button>
+                        {/* Mobile Auth + Menu Button */}
+                        <div className="flex shrink-0 items-center gap-1 lg:hidden">
+                            <MobileAuthControl
+                                user={user}
+                                sidebarOpen={isMobileMenuOpen}
+                                onLogin={handleLogin}
+                                onLogout={handleLogout}
+                            />
+
+                            <button
+                                className="p-2"
+                                onClick={() => setIsMobileMenuOpen(true)}
+                                aria-label="Open navigation menu"
+                            >
+                                <div className="space-y-1.5">
+                                    <div className="w-6 h-0.5 bg-white"></div>
+                                    <div className="w-6 h-0.5 bg-white"></div>
+                                    <div className="w-6 h-0.5 bg-white"></div>
+                                </div>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -236,8 +253,9 @@ const Header = () => {
                             <button
                                 onClick={() => setIsMobileMenuOpen(false)}
                                 className="text-white p-2"
+                                aria-label="Close navigation menu"
                             >
-                                <h1 className="text-2xl">X</h1>
+                                <span className="text-2xl">X</span>
                             </button>
                         </div>
 
@@ -279,25 +297,6 @@ const Header = () => {
                                 >
                                     Dashboard
                                 </Link>
-                            )}
-
-                            {user ? (
-                                <button
-                                    onClick={handleLogout}
-                                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-                                >
-                                    Logout
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={() => {
-                                        handleLogin();
-                                        setIsMobileMenuOpen(false);
-                                    }}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 w-fit"
-                                >
-                                    Log in
-                                </button>
                             )}
                         </nav>
                     </div>
