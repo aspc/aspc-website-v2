@@ -288,16 +288,6 @@ const Header = () => {
                             >
                                 <span>Events</span>
                             </Link>
-
-                            {user?.isAdmin && (
-                                <Link
-                                    href="/dashboard"
-                                    className="text-lg text-yellow-400"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    Dashboard
-                                </Link>
-                            )}
                         </nav>
                     </div>
                 </div>
