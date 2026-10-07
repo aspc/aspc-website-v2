@@ -3,7 +3,7 @@ import multer from 'multer';
 import { ObjectId } from 'mongodb';
 import { Staff } from '../../models/People';
 import { bucket } from '../../server';
-import { isAdmin, isAuthenticated } from '../../middleware/authMiddleware';
+import { isAdmin } from '../../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -27,9 +27,9 @@ router.get('/', async (req: Request, res: Response) => {
 /**
  * @route   GET /api/members/:id
  * @desc    Get staff member info by id
- * @access  isAuthenticated
+ * @access
  */
-router.get('/:id', isAuthenticated, async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const staff = await Staff.findOne({ id: id });
@@ -47,27 +47,23 @@ router.get('/:id', isAuthenticated, async (req: Request, res: Response) => {
 /**
  * @route   GET /api/members/:group
  * @desc    Get staff members by group
- * @access  isAuthenticated
+ * @access
  */
-router.get(
-    '/group/:group',
-    isAuthenticated,
-    async (req: Request, res: Response) => {
-        try {
-            const { group } = req.params;
-            const staff = await Staff.find({ group: group });
-            staff.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+router.get('/group/:group', async (req: Request, res: Response) => {
+    try {
+        const { group } = req.params;
+        const staff = await Staff.find({ group: group });
+        staff.sort((a, b) => parseInt(a.id) - parseInt(b.id));
 
-            if (!staff) {
-                res.status(404).json({ message: 'Members not found' });
-                return;
-            }
-            res.json(staff);
-        } catch (error) {
-            res.status(500).json({ message: 'Server error' });
+        if (!staff) {
+            res.status(404).json({ message: 'Members not found' });
+            return;
         }
+        res.json(staff);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
     }
-);
+});
 
 /**
  * @route   POST /api/members
