@@ -39,39 +39,6 @@ const AdminsDashboard = () => {
         fetchAdmins();
     }, []);
 
-    const grantAdmin = async (targetEmail: string) => {
-        setError('');
-        setSuccessMessage('');
-
-        try {
-            setIsLoading(true);
-            const response = await fetch(
-                `${process.env.BACKEND_LINK}/api/admin/users/admins`,
-                {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: targetEmail }),
-                }
-            );
-            const data = await response.json();
-
-            if (!response.ok) {
-                setError(data.message || 'Failed to add admin');
-                return false;
-            }
-
-            await fetchAdmins();
-            return true;
-        } catch (error) {
-            console.error('Error adding admin:', error);
-            setError('Failed to add admin');
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const searchUsers = async (query: string) => {
         setError('');
         setSuccessMessage('');
@@ -100,22 +67,36 @@ const AdminsDashboard = () => {
             setIsLoading(false);
         }
     };
-
-    const handleSearchByName = async (e: FormEvent<HTMLFormElement>) => {
+    const handleSearch = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        await searchUsers(nameQuery);
+        const query = new FormData(e.currentTarget).get('q');
+        await searchUsers(typeof query == 'string' ? query : '');
     };
 
-    const handleSearchByEmail = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        await searchUsers(email);
-    };
+    const handleAddAdmin = async (user: AdminUser) => {
+        setError('');
+        setSuccessMessage('');
 
-    const handleAddFromSearch = async (user: AdminUser) => {
-        const ok = await grantAdmin(user.email);
-        if (ok) {
-            // Reset the lookup so the section returns to its starting state.
-            // grantAdmin already refreshed the current admins list.
+        try {
+            setIsLoading(true);
+            const response = await fetch(
+                `${process.env.BACKEND_LINK}/api/admin/users/admins`,
+                {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email }),
+                }
+            );
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(data.message || 'Failed to add admin');
+            }
+
+            await fetchAdmins();
+
+            // Reset the lookup so the section returns to its starting state
             setSearchResults(null);
             setNameQuery('');
             setEmail('');
@@ -123,6 +104,13 @@ const AdminsDashboard = () => {
             setSuccessMessage(
                 `You added ${user.firstName} ${user.lastName} as an admin!`
             );
+        } catch (error) {
+            console.error('Error adding admin:', error);
+            setError(
+                error instanceof Error ? error.message : 'Failed to add admin'
+            );
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -169,13 +157,14 @@ const AdminsDashboard = () => {
             <h2 className="text-2xl font-bold mb-6">Manage Admins</h2>
 
             {/* Find by name */}
-            <form onSubmit={handleSearchByName} className="mb-6">
+            <form onSubmit={handleSearch} className="mb-6">
                 <label className="block text-sm font-medium mb-2">
                     Find by name
                 </label>
                 <div className="flex gap-2">
                     <input
                         type="text"
+                        name="q"
                         value={nameQuery}
                         onChange={(e) => setNameQuery(e.target.value)}
                         placeholder="First or last name"
@@ -199,13 +188,14 @@ const AdminsDashboard = () => {
 
             {/* Find by email, hidden until requested */}
             {showEmailForm ? (
-                <form onSubmit={handleSearchByEmail} className="mb-6">
+                <form onSubmit={handleSearch} className="mb-6">
                     <label className="block text-sm font-medium mb-2">
                         Find by Pomona email
                     </label>
                     <div className="flex gap-2">
                         <input
                             type="text"
+                            name="q"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="student@mymail.pomona.edu"
@@ -255,7 +245,7 @@ const AdminsDashboard = () => {
                             ) : (
                                 <button
                                     type="button"
-                                    onClick={() => handleAddFromSearch(user)}
+                                    onClick={() => handleAddAdmin(user)}
                                     disabled={isLoading}
                                     className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 disabled:opacity-50 text-sm"
                                 >

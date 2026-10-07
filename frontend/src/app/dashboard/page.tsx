@@ -95,7 +95,7 @@ const Dashboard = () => {
                     {activeTab === 'staff' && <StaffDashboard />}
                     {activeTab === 'openforum' && <ForumDashboard />}
                     {activeTab === 'elections' && <ElectionsDashboard />}
-                    {activeTab === 'admins' && user.isSuperAdmin && (
+                    {activeTab === 'admins' && (
                         <AdminsDashboard />
                     )}
                 </div>
