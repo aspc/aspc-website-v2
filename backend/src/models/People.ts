@@ -7,6 +7,7 @@ interface ISAMLUser extends Document {
     firstName: string;
     lastName: string;
     isAdmin: boolean;
+    isSuperAdmin: boolean;
 }
 
 const SAMLUserSchema = new Schema<ISAMLUser>(
@@ -33,6 +34,10 @@ const SAMLUserSchema = new Schema<ISAMLUser>(
             trim: true,
         },
         isAdmin: {
+            type: Boolean,
+            default: false,
+        },
+        isSuperAdmin: {
             type: Boolean,
             default: false,
         },
