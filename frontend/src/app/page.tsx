@@ -105,7 +105,7 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-orange-500/30 mix-blend-multiply" />
 
                 <div className="relative z-10 px-6">
-                    <h1 className="text-6xl font-extrabold tracking-wider leading-snug font-[Playfair Display]">
+                    <h1 className="text-4xl/snug sm:text-6xl/snug font-extrabold tracking-wider font-[Playfair Display]">
                         Associated Students <br /> of Pomona College
                     </h1>
                 </div>
