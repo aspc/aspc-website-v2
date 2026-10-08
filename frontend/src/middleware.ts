@@ -1,41 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-function hasPublicStaticExtension(pathname: string): boolean {
-    const lower = pathname.toLowerCase();
-    return (
-        lower.endsWith('.ico') ||
-        lower.endsWith('.png') ||
-        lower.endsWith('.jpg') ||
-        lower.endsWith('.jpeg') ||
-        lower.endsWith('.gif') ||
-        lower.endsWith('.webp') ||
-        lower.endsWith('.svg') ||
-        lower.endsWith('.avif')
-    );
-}
-
 export function middleware(request: NextRequest) {
-    // Get current path
-    const path = request.nextUrl.pathname;
-
-    // Define public paths that don't need authentication
-    const isPublicPath =
-        path === '/' ||
-        path.startsWith('/api/') ||
-        path.includes('/login/saml') ||
-        path.includes('/logout/saml') ||
-        path.startsWith('/_next/') ||
-        hasPublicStaticExtension(path);
-
-    // If it's a public path, allow access
-    if (isPublicPath) {
-        return NextResponse.next();
-    }
-
     // Check for session cookie - adjust name to match your actual cookie
     const hasSessionCookie = request.cookies.has('connect.sid');
 
-    // Redirect logic
     if (!hasSessionCookie) {
         // Create redirect URL with login message
         const redirectUrl = new URL('/', request.url);
@@ -47,7 +15,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
 }
 
-// Configure which paths should trigger this middleware
+// Sections that only verified (logged-in) students can access.
+// Everything else on the site is public.
+// `:path*` matches the section root and everything below it.
 export const config = {
-    matcher: ['/((?!_next/static|_next/image|favicon.ico|logo|public).*)'],
+    matcher: [
+        '/campus/:path*', // Course, instructor and housing reviews
+        '/open-forum/:path*', // Event reviews
+        '/vote/:path*',
+        '/dashboard/:path*', // Admin dashboard (backend also enforces admin role)
+    ],
 };

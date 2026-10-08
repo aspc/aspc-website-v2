@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
 import multer from 'multer';
-import { isAdmin, isAuthenticated } from '../../middleware/authMiddleware';
+import { isAdmin } from '../../middleware/authMiddleware';
 import PageContent from '../../models/PageContent';
 import { pagePdfs } from '../../server';
 
@@ -36,9 +36,9 @@ router.get('/', async (req: Request, res: Response) => {
 /**
  * @route   GET /api/admin/pages/:id
  * @desc    Get page by id
- * @access  isAuthenticated
+ * @access
  */
-router.get('/:id', isAuthenticated, async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const page = await PageContent.findOne({ id });

@@ -1,16 +1,16 @@
 import express, { Request, Response, Router } from 'express';
 import { Instructors } from '../models/People';
 import { CourseReviews } from '../models/Courses';
-import { isAuthenticated } from '../middleware/authMiddleware';
+import { isAdmin, isAuthenticated } from '../middleware/authMiddleware';
 
 const router: Router = express.Router();
 
 /**
  * @route   GET /api/instructors
  * @desc    Get all instructors with optional filters (search )
- * @access  Public
+ * @access  isAuthenticated
  */
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', isAuthenticated, async (req: Request, res: Response) => {
     try {
         const { search } = req.query;
 
@@ -36,9 +36,9 @@ router.get('/', async (req: Request, res: Response) => {
 /**
  * @route   GET /api/instructors/bulk
  * @desc    Get multiple instructors by IDs
- * @access  Public
+ * @access  isAuthenticated
  */
-router.get('/bulk', async (req: Request, res: Response) => {
+router.get('/bulk', isAuthenticated, async (req: Request, res: Response) => {
     try {
         const { ids, cxids } = req.query;
 
@@ -88,9 +88,9 @@ router.get('/bulk', async (req: Request, res: Response) => {
 /**
  * @route   GET /api/instructors/:id
  * @desc    Get instructor information by ID
- * @access  Public
+ * @access  isAuthenticated
  */
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', isAuthenticated, async (req: Request, res: Response) => {
     try {
         const instructorId = parseInt(req.params.id);
 
@@ -119,9 +119,9 @@ router.get('/:id', async (req: Request, res: Response) => {
 /**
  * @route   POST /api/instructors
  * @desc    Create new instructor
- * @access  Private (Admin)
+ * @access  isAdmin
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', isAdmin, async (req: Request, res: Response) => {
     try {
         const {
             id,
@@ -159,9 +159,9 @@ router.post('/', async (req: Request, res: Response) => {
 /**
  * @route   PUT /api/instructors/:id
  * @desc    Update instructor
- * @access  Private (Admin)
+ * @access  isAdmin
  */
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', isAdmin, async (req: Request, res: Response) => {
     try {
         const instructorId = parseInt(req.params.id);
 
@@ -196,100 +196,112 @@ router.put('/:id', async (req: Request, res: Response) => {
 /**
  * @route   GET /api/instructors/:id/reviews
  * @desc    Get all reviews for a specific instructor
- * @access  Public
+ * @access  isAuthenticated
  */
-router.get('/:id/reviews', async (req: Request, res: Response) => {
-    try {
-        const instructorId = parseInt(req.params.id);
+router.get(
+    '/:id/reviews',
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+        try {
+            const instructorId = parseInt(req.params.id);
 
-        // Check if conversion is valid
-        if (isNaN(instructorId)) {
-            res.status(400).json({ message: 'Invalid instructor ID format' });
-            return;
+            // Check if conversion is valid
+            if (isNaN(instructorId)) {
+                res.status(400).json({
+                    message: 'Invalid instructor ID format',
+                });
+                return;
+            }
+
+            // Verify instructor exists
+            const instructor = await Instructors.findOne({
+                id: instructorId,
+            })
+                .lean()
+                .exec();
+
+            if (!instructor) {
+                res.status(404).json({ message: 'Instructor not found' });
+                return;
+            }
+
+            const cxidsOnInstructor = instructor.cxids ?? [];
+            const reviewMatch =
+                cxidsOnInstructor.length > 0
+                    ? {
+                          $or: [
+                              { instructor_id: instructorId },
+                              { instructor_cxid: { $in: cxidsOnInstructor } },
+                          ],
+                      }
+                    : { instructor_id: instructorId };
+
+            const reviews = await CourseReviews.find(reviewMatch)
+                .sort({ updatedAt: -1 })
+                .lean()
+                .exec();
+
+            const sessionEmail = req.session.user?.email;
+            const safeReviews = reviews.map(({ user_email, ...fields }) => ({
+                ...fields,
+                isOwner: user_email === sessionEmail,
+            }));
+
+            res.json(safeReviews);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Server error' });
         }
-
-        // Verify instructor exists
-        const instructor = await Instructors.findOne({
-            id: instructorId,
-        })
-            .lean()
-            .exec();
-
-        if (!instructor) {
-            res.status(404).json({ message: 'Instructor not found' });
-            return;
-        }
-
-        const cxidsOnInstructor = instructor.cxids ?? [];
-        const reviewMatch =
-            cxidsOnInstructor.length > 0
-                ? {
-                      $or: [
-                          { instructor_id: instructorId },
-                          { instructor_cxid: { $in: cxidsOnInstructor } },
-                      ],
-                  }
-                : { instructor_id: instructorId };
-
-        const reviews = await CourseReviews.find(reviewMatch)
-            .sort({ updatedAt: -1 })
-            .lean()
-            .exec();
-
-        const sessionEmail = req.session.user?.email;
-        const safeReviews = reviews.map(({ user_email, ...fields }) => ({
-            ...fields,
-            isOwner: user_email === sessionEmail,
-        }));
-
-        res.json(safeReviews);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
     }
-});
+);
 
 /**
  * @route   GET /api/instructors/:id/courses
  * @desc    Get all courses for a specific instructor
- * @access  Public
+ * @access  isAuthenticated
  */
-router.get('/:id/courses', async (req: Request, res: Response) => {
-    try {
-        const instructorId = parseInt(req.params.id);
+router.get(
+    '/:id/courses',
+    isAuthenticated,
+    async (req: Request, res: Response) => {
+        try {
+            const instructorId = parseInt(req.params.id);
 
-        // Check if conversion is valid
-        if (isNaN(instructorId)) {
-            res.status(400).json({ message: 'Invalid instructor ID format' });
-            return;
-        }
+            // Check if conversion is valid
+            if (isNaN(instructorId)) {
+                res.status(400).json({
+                    message: 'Invalid instructor ID format',
+                });
+                return;
+            }
 
-        // Verify instructor exists
-        const instructor = await Instructors.findOne({
-            id: instructorId,
-        });
-
-        if (!instructor) {
-            res.status(404).json({ message: 'Instructor not found' });
-            return;
-        }
-
-        // Get all courses for this instructor
-        const courses = instructor.courses;
-
-        // Check if courses exist
-        if (!courses || courses.length === 0) {
-            res.status(404).json({
-                message: 'No courses found for this instructor',
+            // Verify instructor exists
+            const instructor = await Instructors.findOne({
+                id: instructorId,
             });
-            return;
-        }
 
-        res.json(courses);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error' });
+            if (!instructor) {
+                res.status(404).json({ message: 'Instructor not found' });
+                return;
+            }
+
+            // Get all courses for this instructor
+            const courses = instructor.courses;
+
+            // Check if courses exist
+            if (!courses || courses.length === 0) {
+                res.status(404).json({
+                    message: 'No courses found for this instructor',
+                });
+                return;
+            }
+
+            res.json(courses);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Server error' });
+        }
     }
-});
+);
 
 export default router;
