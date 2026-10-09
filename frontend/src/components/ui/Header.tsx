@@ -30,10 +30,7 @@ const Header = () => {
                 const response = await fetch(
                     `${process.env.BACKEND_LINK}/api/admin/pages`
                 );
-                let data: PageContent[] = await response.json();
-                if (!user) {
-                    data = data.filter((page) => page.content !== null);
-                }
+                const data: PageContent[] = await response.json();
 
                 const pagesByHeader: Record<string, PageContent[]> = {
                     about: [],
@@ -59,7 +56,7 @@ const Header = () => {
         };
 
         fetchPages();
-    }, [user]);
+    }, []);
 
     const handleToggleDropdown = (dropdownId: string) => {
         setOpenDropdown((prev) => (prev === dropdownId ? null : dropdownId));
