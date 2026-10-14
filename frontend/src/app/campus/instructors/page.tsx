@@ -125,6 +125,7 @@ const InstructorSearch = () => {
                     },
                     timeout: 5000,
                     cancelToken: source.token,
+                    withCredentials: true,
                 }
             );
 
