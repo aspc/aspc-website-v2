@@ -8,12 +8,13 @@ import StaffDashboard from '@/components/ui/StaffDashboard';
 import ForumDashboard from '@/components/ui/ForumDashboard';
 import ElectionsDashboard from '@/components/ui/ElectionsDashboard';
 import AdminsDashboard from '@/components/ui/AdminsDashboard';
+import RidesDashboard from '@/components/ui/RidesDashboard';
 
 const Dashboard = () => {
     const { user, loading } = useAuth(true);
-    const [activeTab, setActiveTab] = useState<
-        'pages' | 'staff' | 'openforum' | 'elections' | 'admins'
-    >('pages');
+    type DashboardTab =
+        'pages' | 'staff' | 'openforum' | 'elections' | 'rides' | 'admins';
+    const [activeTab, setActiveTab] = useState<DashboardTab>('pages');
 
     if (loading) return <Loading />;
 
@@ -32,62 +33,41 @@ const Dashboard = () => {
         );
     }
 
+    const tabOptions: { value: DashboardTab; label: string }[] = [
+        { value: 'pages', label: 'Pages' },
+        { value: 'staff', label: 'Staff' },
+        { value: 'openforum', label: 'Open Forum' },
+        { value: 'elections', label: 'Elections' },
+        { value: 'rides', label: 'Rides' },
+        ...(user.isSuperAdmin
+            ? [{ value: 'admins' as const, label: 'Admins' }]
+            : []),
+    ];
+
     return (
         <div className="min-h-screen bg-gray-100 text-gray-900">
             <div className="p-8">
-                <div className="flex space-x-4 mb-6">
-                    <button
-                        onClick={() => setActiveTab('pages')}
-                        className={`px-4 py-2 rounded ${
-                            activeTab === 'pages'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-gray-200'
-                        }`}
+                <div className="mb-6">
+                    <label
+                        htmlFor="dashboard-section"
+                        className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                        Pages
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('staff')}
-                        className={`px-4 py-2 rounded ${
-                            activeTab === 'staff'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-gray-200'
-                        }`}
+                        Section
+                    </label>
+                    <select
+                        id="dashboard-section"
+                        value={activeTab}
+                        onChange={(e) =>
+                            setActiveTab(e.target.value as DashboardTab)
+                        }
+                        className="px-4 py-2 rounded border border-gray-300 bg-white font-medium"
                     >
-                        Staff
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('openforum')}
-                        className={`px-4 py-2 rounded ${
-                            activeTab === 'openforum'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-gray-200'
-                        }`}
-                    >
-                        Open Forum
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('elections')}
-                        className={`px-4 py-2 rounded ${
-                            activeTab === 'elections'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-gray-200'
-                        }`}
-                    >
-                        Elections
-                    </button>
-                    {user.isSuperAdmin && (
-                        <button
-                            onClick={() => setActiveTab('admins')}
-                            className={`px-4 py-2 rounded ${
-                                activeTab === 'admins'
-                                    ? 'bg-blue-500 text-white'
-                                    : 'bg-gray-200'
-                            }`}
-                        >
-                            Admins
-                        </button>
-                    )}
+                        {tabOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className="bg-white rounded-lg shadow p-6">
@@ -95,6 +75,7 @@ const Dashboard = () => {
                     {activeTab === 'staff' && <StaffDashboard />}
                     {activeTab === 'openforum' && <ForumDashboard />}
                     {activeTab === 'elections' && <ElectionsDashboard />}
+                    {activeTab === 'rides' && <RidesDashboard />}
                     {activeTab === 'admins' && <AdminsDashboard />}
                 </div>
             </div>

@@ -301,3 +301,82 @@ export interface IRankingState {
     candidateIds: string[];
     isComplete: boolean;
 }
+
+// Shape returned by GET /api/admin/rides/status
+export interface RideMatchServiceStatus {
+    configured: boolean;
+    reachable: boolean;
+    supabaseConfigured?: boolean;
+    message?: string;
+}
+
+export interface RideMatchRider {
+    user_id: string;
+    flight_id: number;
+    name: string | null;
+}
+
+// A hand-entered test rider for POST /api/admin/rides/run — sent straight
+// through to the ML service instead of it fetching real riders from Supabase.
+export interface RideMatchRiderInput {
+    user_id: string;
+    flight_id: number;
+    date: string;
+    earliest_time: string;
+    latest_time: string;
+    airport: string;
+    to_airport: boolean;
+    school: string;
+    terminal?: string;
+    name?: string;
+    bags_no?: number;
+    bags_no_large?: number;
+    bag_no_personal?: number;
+}
+
+// One shared-ride group proposed by the matching run
+export interface RideMatchGroup {
+    ride_id: number;
+    bucket_key: string;
+    date: string;
+    num_riders: number;
+    suggested_time: string;
+    earliest_time: string;
+    latest_time: string;
+    considered_bags: number;
+    bags_total: number;
+    riders: RideMatchRider[];
+    subsidized: boolean;
+    ride_type: string | null;
+    uber_type: string | null;
+}
+
+// A rider the matching run couldn't place into a group, with why
+export interface UnmatchedRider {
+    user_id: string;
+    flight_id: number;
+    name: string | null;
+    airport: string;
+    to_airport: boolean;
+    date: string;
+    earliest_time: string;
+    latest_time: string;
+    bucket_key: string;
+    reason: string;
+    details: Record<string, unknown>;
+}
+
+export interface RideMatchSummary {
+    buckets: number;
+    groups: number;
+    matched_riders: number;
+    unmatched_riders: number;
+}
+
+// Shape returned by POST /api/admin/rides/run
+export interface RideMatchResponse {
+    status: string;
+    summary: RideMatchSummary;
+    matches: RideMatchGroup[];
+    unmatched: UnmatchedRider[];
+}
