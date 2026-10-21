@@ -25,18 +25,24 @@ router.get('/', async (req, res) => {
         res.json(response.data);
     } catch (error) {
         console.error('ml-service unreachable:', error);
-        res.status(502).json({ message: 'Could not reach the matching service.' });
+        res.status(502).json({
+            message: 'Could not reach the matching service.',
+        });
     }
 });
 
 router.post('/match', async (req, res) => {
     const expectedKey = process.env.ML_PROXY_API_KEY;
     if (!expectedKey) {
-        res.status(503).json({ message: 'ML_PROXY_API_KEY is not configured on the server.' });
+        res.status(503).json({
+            message: 'ML_PROXY_API_KEY is not configured on the server.',
+        });
         return;
     }
     if (req.headers['x-api-key'] !== expectedKey) {
-        res.status(401).json({ message: 'Missing or invalid X-API-Key header.' });
+        res.status(401).json({
+            message: 'Missing or invalid X-API-Key header.',
+        });
         return;
     }
 
@@ -52,7 +58,9 @@ router.post('/match', async (req, res) => {
             return;
         }
         console.error('ml-service match request failed:', error);
-        res.status(502).json({ message: 'Failed to reach the matching service.' });
+        res.status(502).json({
+            message: 'Failed to reach the matching service.',
+        });
     }
 });
 
