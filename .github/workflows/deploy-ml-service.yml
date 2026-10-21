@@ -1,0 +1,94 @@
+name: Deploy ML Service to AWS Lightsail
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+    paths:
+      - 'ml_microservice/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: false
+        default: 'test'
+jobs:
+  build-and-deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push ML service image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ml_microservice
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/aspc-ml-service:latest
+          platforms: linux/amd64
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Install Lightsail Control plugin
+        run: |
+          curl "https://s3.us-west-2.amazonaws.com/lightsailctl/latest/linux-amd64/lightsailctl" -o "lightsailctl"
+          chmod +x ./lightsailctl
+          sudo mv ./lightsailctl /usr/local/bin/lightsailctl
+
+      - name: Create deployment configuration
+        run: |
+          cat > containers.json << EOF
+          {
+            "ml-service": {
+              "image": "${{ secrets.DOCKERHUB_USERNAME }}/aspc-ml-service:latest",
+              "ports": {
+                "8000": "HTTP"
+              },
+              "environment": {
+                "SUPABASE_URL": "${{ secrets.SUPABASE_URL }}",
+                "SUPABASE_SECRET_KEY": "${{ secrets.SUPABASE_SECRET_KEY }}",
+                "SERVICE_API_KEY": "${{ secrets.ML_SERVICE_API_KEY }}"
+              }
+            }
+          }
+          EOF
+
+          cat > public-endpoint.json << EOF
+          {
+            "containerName": "ml-service",
+            "containerPort": 8000,
+            "healthCheck": {
+              "path": "/health",
+              "timeoutSeconds": 2,
+              "intervalSeconds": 5,
+              "successCodes": "200-499",
+              "healthyThreshold": 2,
+              "unhealthyThreshold": 2
+            }
+          }
+          EOF
+
+      - name: Deploy to Lightsail
+        run: |
+          aws lightsail create-container-service-deployment \
+            --service-name aspc-ml-service \
+            --containers file://containers.json \
+            --public-endpoint file://public-endpoint.json
+
+          echo "Deployment initiated. Check the AWS Lightsail console for status."

@@ -10,7 +10,6 @@ import pageRoutes from './routes/admin/PagesRoutes';
 import staffRoutes from './routes/admin/StaffRoutes';
 import electionsDashboardRoutes from './routes/admin/VotingAdminRoutes';
 import adminUsersRoutes from './routes/admin/AdminUsersRoutes';
-import ridesRoutes from './routes/admin/RidesRoutes';
 import eventRoutes from './routes/EventsRoutes';
 import housingRoutes from './routes/HousingRoutes';
 import coursesRoutes from './routes/CoursesRoutes';
@@ -32,7 +31,7 @@ const app: Express = express();
 app.use(
     cors({
         origin: [
-            'http://localhost:3000',
+            'http://localhost:3001',
             'https://localhost:3001',
             'https://aspc-website-v2.vercel.app',
             'https://pomonastudents.org',
@@ -131,7 +130,6 @@ app.use('/api/reviews', reviewsRoutes);
 app.use('/api/openforum', forumRoutes);
 app.use('/api/admin/elections', electionsDashboardRoutes);
 app.use('/api/admin/users', adminUsersRoutes);
-app.use('/api/admin/rides', ridesRoutes);
 app.use('/api/voting', votingRoutes);
 
 const PORT = serverConfig.port;

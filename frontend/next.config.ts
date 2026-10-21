@@ -6,7 +6,7 @@ import type { NextConfig } from 'next';
 const localhostImagePatterns = (() => {
     try {
         const { hostname, port, protocol } = new URL(
-            process.env.BACKEND_LINK ?? 'https://localhost:4000'
+            process.env.BACKEND_LINK ?? 'https://localhost:5000'
         );
         if (hostname !== 'localhost') return [];
         const resolvedPort = port || (protocol === 'https:' ? '443' : '80');

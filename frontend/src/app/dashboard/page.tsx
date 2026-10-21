@@ -8,13 +8,12 @@ import StaffDashboard from '@/components/ui/StaffDashboard';
 import ForumDashboard from '@/components/ui/ForumDashboard';
 import ElectionsDashboard from '@/components/ui/ElectionsDashboard';
 import AdminsDashboard from '@/components/ui/AdminsDashboard';
-import RidesDashboard from '@/components/ui/RidesDashboard';
 
 const Dashboard = () => {
     const { user, loading } = useAuth(true);
-    type DashboardTab =
-        'pages' | 'staff' | 'openforum' | 'elections' | 'rides' | 'admins';
-    const [activeTab, setActiveTab] = useState<DashboardTab>('pages');
+    const [activeTab, setActiveTab] = useState<
+        'pages' | 'staff' | 'openforum' | 'elections' | 'admins'
+    >('pages');
 
     if (loading) return <Loading />;
 
@@ -77,16 +76,6 @@ const Dashboard = () => {
                     >
                         Elections
                     </button>
-                    <button
-                        onClick={() => setActiveTab('rides')}
-                        className={`px-4 py-2 rounded ${
-                            activeTab === 'rides'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-gray-200'
-                        }`}
-                    >
-                        Rides
-                    </button>
                     {user.isSuperAdmin && (
                         <button
                             onClick={() => setActiveTab('admins')}
@@ -106,7 +95,6 @@ const Dashboard = () => {
                     {activeTab === 'staff' && <StaffDashboard />}
                     {activeTab === 'openforum' && <ForumDashboard />}
                     {activeTab === 'elections' && <ElectionsDashboard />}
-                    {activeTab === 'rides' && <RidesDashboard />}
                     {activeTab === 'admins' && <AdminsDashboard />}
                 </div>
             </div>
@@ -115,5 +103,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-

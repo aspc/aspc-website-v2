@@ -170,7 +170,7 @@ router.post(
                     return;
                 }
                 res.redirect(
-                    process.env.FRONTEND_LINK || 'http://localhost:3000'
+                    process.env.FRONTEND_LINK || 'http://localhost:3001'
                 );
             });
         } catch (error) {
