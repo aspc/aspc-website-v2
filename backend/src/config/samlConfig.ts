@@ -28,9 +28,9 @@ export const fetchAndSaveMetadata = async () => {
 };
 
 export const serverConfig = {
-    // Local development defaults to 4000. Production sets PORT explicitly in
+    // Local development defaults to 5000. Production sets PORT explicitly in
     // the Lightsail deployment config.
-    port: process.env.PORT || 4000,
+    port: process.env.PORT || 5000,
 };
 
 export const initializeSAML = () => {

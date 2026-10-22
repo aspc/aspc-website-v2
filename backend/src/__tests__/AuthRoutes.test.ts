@@ -93,7 +93,7 @@ describe('POST /api/auth/saml/consume', () => {
             .post('/api/auth/saml/consume')
             .send('SAMLResponse=mockresponse');
         expect(res.status).toBe(302);
-        expect(res.headers.location).toContain('localhost:3000');
+        expect(res.headers.location).toContain('localhost:3001');
     });
 
     it('rejects in production if no pending auth request', async () => {

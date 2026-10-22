@@ -17,6 +17,7 @@ import instructorsRoutes from './routes/InstructorsRoutes';
 import reviewsRoutes from './routes/ReviewsRoutes';
 import forumRoutes from './routes/ForumRoutes';
 import votingRoutes from './routes/VotingRoutes';
+import mlProxyRoutes from './routes/MlProxyRoutes';
 import session from 'express-session';
 import https from 'https';
 import http from 'http';
@@ -31,7 +32,7 @@ const app: Express = express();
 app.use(
     cors({
         origin: [
-            'http://localhost:3000',
+            'http://localhost:3001',
             'https://localhost:3001',
             'https://aspc-website-v2.vercel.app',
             'https://pomonastudents.org',
@@ -131,6 +132,7 @@ app.use('/api/openforum', forumRoutes);
 app.use('/api/admin/elections', electionsDashboardRoutes);
 app.use('/api/admin/users', adminUsersRoutes);
 app.use('/api/voting', votingRoutes);
+app.use('/api/ml', mlProxyRoutes);
 
 const PORT = serverConfig.port;
 
