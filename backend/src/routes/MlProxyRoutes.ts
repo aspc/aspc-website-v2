@@ -64,4 +64,40 @@ router.post('/match', async (req, res) => {
     }
 });
 
+// Writes to production (Rides/Matches, voucher consumption, Flights status)
+// via ml-service's /run, which calls the commit_matching_run RPC. Same key
+// as /match above guards this — be mindful that key now gates a real write.
+router.post('/run', async (req, res) => {
+    const expectedKey = process.env.ML_PROXY_API_KEY;
+    if (!expectedKey) {
+        res.status(503).json({
+            message: 'ML_PROXY_API_KEY is not configured on the server.',
+        });
+        return;
+    }
+    if (req.headers['x-api-key'] !== expectedKey) {
+        res.status(401).json({
+            message: 'Missing or invalid X-API-Key header.',
+        });
+        return;
+    }
+
+    try {
+        const response = await axios.post(`${ML_SERVICE_URL}/run`, req.body, {
+            headers: mlServiceHeaders(),
+            timeout: 60000,
+        });
+        res.json(response.data);
+    } catch (error) {
+        if (axios.isAxiosError(error) && error.response) {
+            res.status(error.response.status).json(error.response.data);
+            return;
+        }
+        console.error('ml-service run request failed:', error);
+        res.status(502).json({
+            message: 'Failed to reach the matching service.',
+        });
+    }
+});
+
 export default router;

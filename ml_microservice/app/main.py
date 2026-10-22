@@ -9,7 +9,14 @@ from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from .auth import require_api_key
-from .matching import rider_lite_from_input, run_matching, serialize_result
+from .matching import (
+    MatchingCommitError,
+    build_matching_commit_payload,
+    commit_matching_run,
+    rider_lite_from_input,
+    run_matching,
+    serialize_result,
+)
 from .rider_fetch import fetch_unmatched_riders
 from .supabase_client import SupabaseNotConfigured, get_client, is_configured
 
@@ -89,6 +96,15 @@ class MatchRequest(BaseModel):
     )
 
 
+class RunRequest(BaseModel):
+    days_ahead: Optional[int] = Field(
+        10, description="Include flights through today + N days."
+    )
+    days_ahead_start: Optional[int] = Field(
+        None, description="Start of window (0 = include today)."
+    )
+
+
 @app.get("/")
 async def service_info():
     return {
@@ -99,6 +115,7 @@ async def service_info():
             "health": "/health",
             "readiness": "/ready",
             "match": "/match",
+            "run": "/run",
             "docs": "/docs",
         },
     }
@@ -141,6 +158,62 @@ async def match_riders(payload: MatchRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f"Matching error: {exc}") from exc
 
     return serialize_result(result)
+
+
+@app.post("/run", status_code=200, dependencies=[Depends(require_api_key)])
+async def run_and_commit(payload: RunRequest) -> Dict[str, Any]:
+    """Fetch unmatched riders, match them, and commit the result to Supabase
+    for real — unlike /match, this writes Rides/Matches and consumes
+    vouchers via the commit_matching_run RPC. Always reads from the
+    database; there's no "supply riders directly" mode here."""
+    try:
+        sb = get_client()
+    except SupabaseNotConfigured as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    try:
+        riders = fetch_unmatched_riders(
+            sb,
+            max_days_ahead=payload.days_ahead,
+            min_days_ahead=payload.days_ahead_start,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Supabase fetch failed: {exc}") from exc
+
+    if not riders:
+        return {
+            "status": "success",
+            "run_id": None,
+            "commit": None,
+            "summary": {"buckets": 0, "groups": 0, "matched_riders": 0, "unmatched_riders": 0},
+            "matches": [],
+            "unmatched": [],
+        }
+
+    try:
+        result = run_matching(riders)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Matching error: {exc}") from exc
+
+    run_id = str(uuid.uuid4())
+    try:
+        commit_payload = build_matching_commit_payload(
+            run_id=run_id,
+            matches=result.matches,
+            all_riders=riders,
+        )
+        commit_result = commit_matching_run(sb, run_id=run_id, payload=commit_payload)
+    except MatchingCommitError as exc:
+        raise HTTPException(status_code=400, detail=f"Commit payload invalid: {exc}") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Commit failed: {exc}") from exc
+
+    response = serialize_result(result)
+    response["run_id"] = run_id
+    response["commit"] = commit_result
+    return response
 
 
 @app.get("/health")
