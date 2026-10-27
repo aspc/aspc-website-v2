@@ -7,6 +7,7 @@ import LoginRequired from '@/components/LoginRequired';
 import { StarRating } from '@/components/housing/Rooms';
 import { ReviewForm } from '@/components/courses/Review';
 import { FormattedReviewText } from '@/utils/textFormatting';
+import { buildRmpSearchUrl } from '@/utils/rateMyProfessors';
 import {
     CourseReview,
     //Course,
@@ -320,6 +321,17 @@ const InstructorPage = (): JSX.Element => {
                                                 instructorSchool
                                             )}
                                         </p>
+                                        <a
+                                            href={buildRmpSearchUrl(
+                                                instructorName,
+                                                instructorSchool
+                                            )}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center px-3 py-1.5 mb-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50"
+                                        >
+                                            Search on Rate My Professors
+                                        </a>
                                         <div className="text-gray-700">
                                             <details className="mt-2">
                                                 <summary className="cursor-pointer text-indigo-600 hover:underline">
