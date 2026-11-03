@@ -6,10 +6,10 @@ import { useEffect, useState } from 'react';
 import { ArrowRight, MessageCircle, X } from 'lucide-react';
 
 const officerGroups = [
-    { label: 'Student Senate', href: '/staff/Senate' },
-    { label: 'ASPC Staff', href: '/staff/Staff' },
+    { label: 'Senate', href: '/staff/Senate' },
+    { label: 'Staff', href: '/staff/Staff' },
     { label: 'College Staff', href: '/staff/CollegeStaff' },
-    { label: 'Software Team', href: '/staff/Software' },
+    { label: 'Software', href: '/staff/Software' },
 ];
 
 export default function OfficerFinder() {

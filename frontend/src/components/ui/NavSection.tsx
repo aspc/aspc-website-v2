@@ -185,7 +185,7 @@ const NavSection: React.FC<NavSectionProps> = ({
                                 <div
                                     className={
                                         mode === 'desktop'
-                                            ? 'absolute left-full top-0 ml-1 w-44 bg-white rounded-md shadow-lg py-1 z-50'
+                                            ? 'absolute left-full top-0 w-44 bg-white rounded-md shadow-lg py-1 z-50'
                                             : 'ml-4 mt-1'
                                     }
                                 >
