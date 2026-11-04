@@ -6,6 +6,7 @@
         "test": "jest",
         "test:courses": "jest --runInBand courseInstructors CoursesAndInstructors",
         "sync:courses": "tsx src/services/updateCourses.ts",
+        "sync:rmp": "tsx src/services/syncRmp.ts",
         "dev": "nodemon",
         "build": "tsc",
         "start": "node dist/server.js"

@@ -1,8 +1,8 @@
 /**
  * Helpers for linking out to Rate My Professors.
  *
- * There is no official RMP API, so this only builds deep links to RMP's
- * own search page. Nothing is fetched from RMP.
+ * There is no official RMP API, so this only builds links to RMP's
+ * own pages. Nothing is fetched from RMP by the frontend.
  */
 
 const RMP_BASE_URL = 'https://www.ratemyprofessors.com';
@@ -50,4 +50,28 @@ export function buildRmpSearchUrl(name: string, schoolCode?: string): string {
         ? `/search/professors/${schoolId}`
         : '/search/professors';
     return `${RMP_BASE_URL}${path}?q=${query}`;
+}
+
+/** Direct link to a professor's RMP page. */
+export function buildRmpProfessorUrl(rmpId: number): string {
+    return `${RMP_BASE_URL}/professor/${rmpId}`;
+}
+
+/**
+ * Pull a professor id out of whatever an admin pastes: a bare number
+ * ("131915") or a full RMP URL ("https://www.ratemyprofessors.com/professor/131915").
+ * Returns null when no positive integer id can be found.
+ */
+export function parseRmpProfessorId(input: string): number | null {
+    const trimmed = input.trim();
+    if (/^\d+$/.test(trimmed)) {
+        const id = parseInt(trimmed, 10);
+        return id > 0 ? id : null;
+    }
+    const match = trimmed.match(/\/professor\/(\d+)/);
+    if (match) {
+        const id = parseInt(match[1], 10);
+        return id > 0 ? id : null;
+    }
+    return null;
 }

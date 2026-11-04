@@ -208,6 +208,10 @@ export type Instructor = {
         courseName: string;
     }>;
     numReviews: number;
+    /** Rate My Professors professor id. null means checked and not found. */
+    rmpId?: number | null;
+    /** ISO date of the last attempt to resolve rmpId; unset means never checked. */
+    rmpCheckedAt?: string | null;
 };
 
 export interface InstructorWithReviews {
