@@ -8,12 +8,16 @@ import StaffDashboard from '@/components/ui/StaffDashboard';
 import ForumDashboard from '@/components/ui/ForumDashboard';
 import ElectionsDashboard from '@/components/ui/ElectionsDashboard';
 import AdminsDashboard from '@/components/ui/AdminsDashboard';
+import { AdminUser } from '@/types';
 
 const Dashboard = () => {
     const { user, loading } = useAuth(true);
     const [activeTab, setActiveTab] = useState<
         'pages' | 'staff' | 'openforum' | 'elections' | 'admins'
     >('pages');
+    // Set once the viewer hands their super admin role to someone else, so
+    // the Admins tab disappears without waiting for a page reload.
+    const [transferredTo, setTransferredTo] = useState<AdminUser | null>(null);
 
     if (loading) return <Loading />;
 
@@ -32,9 +36,28 @@ const Dashboard = () => {
         );
     }
 
+    const isSuperAdmin = Boolean(user.isSuperAdmin) && !transferredTo;
+
+    const handleSuperAdminTransferred = (newSuperAdmin: AdminUser) => {
+        setTransferredTo(newSuperAdmin);
+        setActiveTab('pages');
+    };
+
     return (
         <div className="min-h-screen bg-gray-100 text-gray-900">
             <div className="p-8">
+                {transferredTo && (
+                    <div
+                        role="status"
+                        className="mb-6 rounded border border-green-300 bg-green-50 p-4 text-green-800"
+                    >
+                        You transferred super admin to{' '}
+                        <span className="font-semibold">
+                            {transferredTo.firstName} {transferredTo.lastName}
+                        </span>
+                        . You are now a regular admin.
+                    </div>
+                )}
                 <div className="flex space-x-4 mb-6">
                     <button
                         onClick={() => setActiveTab('pages')}
@@ -76,7 +99,7 @@ const Dashboard = () => {
                     >
                         Elections
                     </button>
-                    {user.isSuperAdmin && (
+                    {isSuperAdmin && (
                         <button
                             onClick={() => setActiveTab('admins')}
                             className={`px-4 py-2 rounded ${
@@ -95,7 +118,13 @@ const Dashboard = () => {
                     {activeTab === 'staff' && <StaffDashboard />}
                     {activeTab === 'openforum' && <ForumDashboard />}
                     {activeTab === 'elections' && <ElectionsDashboard />}
-                    {activeTab === 'admins' && <AdminsDashboard />}
+                    {activeTab === 'admins' && isSuperAdmin && (
+                        <AdminsDashboard
+                            onSuperAdminTransferred={
+                                handleSuperAdminTransferred
+                            }
+                        />
+                    )}
                 </div>
             </div>
         </div>

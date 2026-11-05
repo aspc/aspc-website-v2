@@ -273,6 +273,202 @@ describe('DELETE /api/admin/users/admins/:id', () => {
     });
 });
 
+describe('POST /api/admin/users/superadmin/transfer', () => {
+    const TRANSFER = '/api/admin/users/superadmin/transfer';
+
+    it('moves super admin to an existing admin and steps the caller down', async () => {
+        const res = await request(buildApp(SUPER_SESSION))
+            .post(TRANSFER)
+            .send({ targetId: adminId });
+        expect(res.status).toBe(200);
+        expect(res.body.user.email).toBe('admin@pomona.edu');
+        expect(res.body.user.isSuperAdmin).toBe(true);
+        expect(res.body.user.id).toBeUndefined();
+
+        const newSuper = await SAMLUser.findById(adminId);
+        expect(newSuper?.isAdmin).toBe(true);
+        expect(newSuper?.isSuperAdmin).toBe(true);
+
+        const oldSuper = await SAMLUser.findById(superAdminId);
+        expect(oldSuper?.isAdmin).toBe(true);
+        expect(oldSuper?.isSuperAdmin).toBe(false);
+    });
+
+    it('takes effect on the very next request for both people', async () => {
+        await request(buildApp(SUPER_SESSION))
+            .post(TRANSFER)
+            .send({ targetId: adminId });
+
+        const asOldSuper = await request(buildApp(SUPER_SESSION)).get(
+            '/api/admin/users/admins'
+        );
+        expect(asOldSuper.status).toBe(403);
+
+        const asNewSuper = await request(buildApp(ADMIN_SESSION)).get(
+            '/api/admin/users/admins'
+        );
+        expect(asNewSuper.status).toBe(200);
+
+        // The old super admin is still a regular admin
+        const probe = await request(buildApp(SUPER_SESSION)).get(
+            '/api/probe/admin'
+        );
+        expect(probe.status).toBe(200);
+    });
+
+    it('lets the new super admin remove the old one afterwards', async () => {
+        await request(buildApp(SUPER_SESSION))
+            .post(TRANSFER)
+            .send({ targetId: adminId });
+
+        const res = await request(buildApp(ADMIN_SESSION)).delete(
+            `/api/admin/users/admins/${superAdminId}`
+        );
+        expect(res.status).toBe(200);
+        const oldSuper = await SAMLUser.findById(superAdminId);
+        expect(oldSuper?.isAdmin).toBe(false);
+    });
+
+    it('keeps the caller an admin even if their isAdmin flag was never set', async () => {
+        await SAMLUser.updateOne(
+            { _id: superAdminId },
+            { $set: { isAdmin: false } }
+        );
+
+        const res = await request(buildApp(SUPER_SESSION))
+            .post(TRANSFER)
+            .send({ targetId: adminId });
+        expect(res.status).toBe(200);
+
+        const oldSuper = await SAMLUser.findById(superAdminId);
+        expect(oldSuper?.isAdmin).toBe(true);
+        expect(oldSuper?.isSuperAdmin).toBe(false);
+    });
+
+    it('leaves other super admins untouched', async () => {
+        const other = await SAMLUser.create({
+            id: 'azure-other-super',
+            email: 'other@pomona.edu',
+            firstName: 'Olga',
+            lastName: 'Other',
+            isAdmin: true,
+            isSuperAdmin: true,
+        });
+
+        const res = await request(buildApp(SUPER_SESSION))
+            .post(TRANSFER)
+            .send({ targetId: adminId });
+        expect(res.status).toBe(200);
+
+        const stillSuper = await SAMLUser.findById(other._id);
+        expect(stillSuper?.isSuperAdmin).toBe(true);
+    });
+
+    it('returns 400 when the target is a normal user and changes nothing', async () => {
+        const res = await request(buildApp(SUPER_SESSION))
+            .post(TRANSFER)
+            .send({ targetId: userId });
+        expect(res.status).toBe(400);
+
+        const user = await SAMLUser.findById(userId);
+        expect(user?.isAdmin).toBe(false);
+        expect(user?.isSuperAdmin).toBe(false);
+        const superAdmin = await SAMLUser.findById(superAdminId);
+        expect(superAdmin?.isSuperAdmin).toBe(true);
+    });
+
+    it('returns 400 when transferring to yourself', async () => {
+        const res = await request(buildApp(SUPER_SESSION))
+            .post(TRANSFER)
+            .send({ targetId: superAdminId });
+        expect(res.status).toBe(400);
+
+        const superAdmin = await SAMLUser.findById(superAdminId);
+        expect(superAdmin?.isSuperAdmin).toBe(true);
+    });
+
+    it('returns 400 when the target is already a super admin', async () => {
+        const other = await SAMLUser.create({
+            id: 'azure-other-super',
+            email: 'other@pomona.edu',
+            firstName: 'Olga',
+            lastName: 'Other',
+            isAdmin: true,
+            isSuperAdmin: true,
+        });
+
+        const res = await request(buildApp(SUPER_SESSION))
+            .post(TRANSFER)
+            .send({ targetId: String(other._id) });
+        expect(res.status).toBe(400);
+
+        const superAdmin = await SAMLUser.findById(superAdminId);
+        expect(superAdmin?.isSuperAdmin).toBe(true);
+    });
+
+    it('returns 404 for a well-formed id that does not exist', async () => {
+        const res = await request(buildApp(SUPER_SESSION))
+            .post(TRANSFER)
+            .send({ targetId: String(new mongoose.Types.ObjectId()) });
+        expect(res.status).toBe(404);
+
+        const superAdmin = await SAMLUser.findById(superAdminId);
+        expect(superAdmin?.isSuperAdmin).toBe(true);
+    });
+
+    it('returns 400 for a missing, malformed, or non-string id', async () => {
+        const app = buildApp(SUPER_SESSION);
+
+        const missing = await request(app).post(TRANSFER).send({});
+        expect(missing.status).toBe(400);
+
+        const malformed = await request(app)
+            .post(TRANSFER)
+            .send({ targetId: 'not-an-id' });
+        expect(malformed.status).toBe(400);
+
+        const wrongType = await request(app)
+            .post(TRANSFER)
+            .send({ targetId: { $ne: null } });
+        expect(wrongType.status).toBe(400);
+
+        const superAdmin = await SAMLUser.findById(superAdminId);
+        expect(superAdmin?.isSuperAdmin).toBe(true);
+    });
+
+    it('returns 401 when not logged in and changes nothing', async () => {
+        const res = await request(buildApp())
+            .post(TRANSFER)
+            .send({ targetId: adminId });
+        expect(res.status).toBe(401);
+
+        const admin = await SAMLUser.findById(adminId);
+        expect(admin?.isSuperAdmin).toBe(false);
+    });
+
+    it('returns 403 for a normal admin trying to take the role', async () => {
+        const res = await request(buildApp(ADMIN_SESSION))
+            .post(TRANSFER)
+            .send({ targetId: adminId });
+        expect(res.status).toBe(403);
+
+        const admin = await SAMLUser.findById(adminId);
+        expect(admin?.isSuperAdmin).toBe(false);
+        const superAdmin = await SAMLUser.findById(superAdminId);
+        expect(superAdmin?.isSuperAdmin).toBe(true);
+    });
+
+    it('returns 403 for a normal user', async () => {
+        const res = await request(buildApp(USER_SESSION))
+            .post(TRANSFER)
+            .send({ targetId: adminId });
+        expect(res.status).toBe(403);
+
+        const admin = await SAMLUser.findById(adminId);
+        expect(admin?.isSuperAdmin).toBe(false);
+    });
+});
+
 describe('GET /api/admin/users/search', () => {
     it('returns 401 when not logged in', async () => {
         const res = await request(buildApp()).get(

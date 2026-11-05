@@ -80,8 +80,8 @@ router.post('/admins', isSuperAdmin, async (req: Request, res: Response) => {
 
         const normalizedEmail = email.trim().toLowerCase();
 
-        // Only isAdmin is ever written here. isSuperAdmin is managed in the
-        // database directly and is never settable through the API.
+        // Only isAdmin is ever written here. isSuperAdmin only ever changes
+        // through the transfer route below.
         const user = await SAMLUser.findOneAndUpdate(
             { email: normalizedEmail },
             { $set: { isAdmin: true } },
@@ -130,8 +130,8 @@ router.delete(
                 return;
             }
 
-            // Super admin status is managed in the database, not the API,
-            // so super admins cannot be demoted here (including yourself).
+            // Super admins cannot be demoted here (including yourself). The
+            // role only moves through the transfer route below.
             if (target.isSuperAdmin) {
                 res.status(403).json({
                     message: 'Super admins cannot be demoted through the API',
@@ -148,6 +148,115 @@ router.delete(
             res.json({ message: 'Admin privileges revoked', user: target });
         } catch (error) {
             console.error('Error revoking admin:', error);
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
+);
+
+/**
+ * @route   POST /api/admin/users/superadmin/transfer
+ * @desc    Hand the caller's super admin role to an existing admin. The
+ *          caller steps down to a regular admin. Other super admins are
+ *          left untouched.
+ * @access  isSuperAdmin
+ */
+router.post(
+    '/superadmin/transfer',
+    isSuperAdmin,
+    async (req: Request, res: Response) => {
+        try {
+            const { targetId } = req.body;
+
+            if (
+                typeof targetId !== 'string' ||
+                !mongoose.Types.ObjectId.isValid(targetId)
+            ) {
+                res.status(400).json({ message: 'Invalid user id' });
+                return;
+            }
+
+            const actor = await SAMLUser.findOne({
+                id: req.session.user?.id,
+            });
+
+            // The middleware already checked this, but the role could have
+            // moved between that check and now.
+            if (!actor || !actor.isSuperAdmin) {
+                res.status(403).json({
+                    message: 'Super admin access required',
+                });
+                return;
+            }
+
+            if (String(actor._id) === targetId) {
+                res.status(400).json({
+                    message: 'You cannot transfer super admin to yourself',
+                });
+                return;
+            }
+
+            const target =
+                await SAMLUser.findById(targetId).select(ADMIN_FIELDS);
+
+            if (!target) {
+                res.status(404).json({ message: 'User not found' });
+                return;
+            }
+
+            if (target.isSuperAdmin) {
+                res.status(400).json({
+                    message: 'That user is already a super admin',
+                });
+                return;
+            }
+
+            if (!target.isAdmin) {
+                res.status(400).json({
+                    message:
+                        'Super admin can only be transferred to a current admin',
+                });
+                return;
+            }
+
+            // Promote first, demote second. If the second write fails we end
+            // up with one extra super admin, which can be fixed from the
+            // dashboard. The reverse order could leave the role with nobody.
+            // The filter re-checks the target so a concurrent revoke or
+            // transfer cannot slip through.
+            const promoted = await SAMLUser.findOneAndUpdate(
+                {
+                    _id: targetId,
+                    isAdmin: true,
+                    isSuperAdmin: { $ne: true },
+                },
+                { $set: { isSuperAdmin: true } },
+                { new: true }
+            ).select(ADMIN_FIELDS);
+
+            if (!promoted) {
+                res.status(409).json({
+                    message:
+                        'That user changed while transferring. Please try again.',
+                });
+                return;
+            }
+
+            // isAdmin is set explicitly so a super admin whose isAdmin flag
+            // was never set by hand still keeps dashboard access.
+            await SAMLUser.updateOne(
+                { _id: actor._id },
+                { $set: { isSuperAdmin: false, isAdmin: true } }
+            );
+
+            console.log(
+                `Super admin transferred from ${actor.email} to ${promoted.email}`
+            );
+            res.json({
+                message: 'Super admin transferred',
+                user: promoted,
+            });
+        } catch (error) {
+            console.error('Error transferring super admin:', error);
             res.status(500).json({ message: 'Server error' });
         }
     }

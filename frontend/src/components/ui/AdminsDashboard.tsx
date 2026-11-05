@@ -2,7 +2,13 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { AdminUser } from '@/types';
 
-const AdminsDashboard = () => {
+interface AdminsDashboardProps {
+    // Called after the viewer hands their super admin role to someone else.
+    // The viewer can no longer use this tab, so the parent should leave it.
+    onSuperAdminTransferred: (newSuperAdmin: AdminUser) => void;
+}
+
+const AdminsDashboard = ({ onSuperAdminTransferred }: AdminsDashboardProps) => {
     const [admins, setAdmins] = useState<AdminUser[]>([]);
     const [email, setEmail] = useState<string>('');
     const [nameQuery, setNameQuery] = useState<string>('');
@@ -13,6 +19,9 @@ const AdminsDashboard = () => {
     const [error, setError] = useState<string>('');
     const [successMessage, setSuccessMessage] = useState<string>('');
     const [pendingRemoval, setPendingRemoval] = useState<AdminUser | null>(
+        null
+    );
+    const [pendingTransfer, setPendingTransfer] = useState<AdminUser | null>(
         null
     );
     const [showEmailForm, setShowEmailForm] = useState(false);
@@ -152,6 +161,47 @@ const AdminsDashboard = () => {
         }
     };
 
+    const handleConfirmTransfer = async () => {
+        if (!pendingTransfer) return;
+        const admin = pendingTransfer;
+        let transferred = false;
+        setError('');
+        setSuccessMessage('');
+
+        try {
+            setIsLoading(true);
+            const response = await fetch(
+                `${process.env.BACKEND_LINK}/api/admin/users/superadmin/transfer`,
+                {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ targetId: admin._id }),
+                }
+            );
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                setError(data.message || 'Failed to transfer super admin');
+                // The list may be stale if someone else changed roles
+                await fetchAdmins();
+                return;
+            }
+
+            transferred = true;
+        } catch (error) {
+            console.error('Error transferring super admin:', error);
+            setError('Failed to transfer super admin');
+        } finally {
+            setIsLoading(false);
+            setPendingTransfer(null);
+        }
+
+        if (transferred) {
+            onSuperAdminTransferred(admin);
+        }
+    };
+
     return (
         <div>
             <h2 className="text-2xl font-bold mb-6">Manage Admins</h2>
@@ -284,13 +334,24 @@ const AdminsDashboard = () => {
                                 Super admin
                             </span>
                         ) : (
-                            <button
-                                onClick={() => setPendingRemoval(admin)}
-                                disabled={isLoading}
-                                className="bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 disabled:opacity-50 text-sm"
-                            >
-                                Remove
-                            </button>
+                            <div className="flex shrink-0 gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setPendingTransfer(admin)}
+                                    disabled={isLoading}
+                                    className="border border-gray-300 text-gray-700 px-3 py-1.5 rounded hover:bg-gray-100 disabled:opacity-50 text-sm"
+                                >
+                                    Transfer super admin
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPendingRemoval(admin)}
+                                    disabled={isLoading}
+                                    className="bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 disabled:opacity-50 text-sm"
+                                >
+                                    Remove
+                                </button>
+                            </div>
                         )}
                     </li>
                 ))}
@@ -298,6 +359,48 @@ const AdminsDashboard = () => {
                     <li className="p-3 text-gray-500">No admins found.</li>
                 )}
             </ul>
+
+            {/* Transfer confirmation */}
+            {pendingTransfer && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4">
+                            Transfer super admin
+                        </h2>
+                        <p className="text-gray-700 mb-3">
+                            Are you sure you want to make{' '}
+                            <span className="font-semibold">
+                                {pendingTransfer.firstName}{' '}
+                                {pendingTransfer.lastName}
+                            </span>{' '}
+                            ({pendingTransfer.email}) a super admin in your
+                            place?
+                        </p>
+                        <p className="text-gray-700 mb-6">
+                            You will become a regular admin and lose access to
+                            this Admins tab. You cannot undo this yourself.
+                        </p>
+                        <div className="flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setPendingTransfer(null)}
+                                disabled={isLoading}
+                                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmTransfer}
+                                disabled={isLoading}
+                                className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50"
+                            >
+                                Transfer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Remove confirmation */}
             {pendingRemoval && (
