@@ -1,11 +1,18 @@
 'use client';
 import { useState, useEffect, FormEvent } from 'react';
-import { AdminUser } from '@/types';
+import { AdminRoleOption, AdminUser } from '@/types';
 
-const AdminsDashboard = () => {
+const AdminsDashboard = ({
+    currentUserEmail,
+}: {
+    currentUserEmail: string;
+}) => {
     const [admins, setAdmins] = useState<AdminUser[]>([]);
+    const [roles, setRoles] = useState<AdminRoleOption[]>([]);
     const [email, setEmail] = useState<string>('');
     const [nameQuery, setNameQuery] = useState<string>('');
+    const [selectedRole, setSelectedRole] = useState<string>('');
+    const [assigningUserId, setAssigningUserId] = useState<string | null>(null);
     const [searchResults, setSearchResults] = useState<AdminUser[] | null>(
         null
     );
@@ -16,6 +23,9 @@ const AdminsDashboard = () => {
         null
     );
     const [showEmailForm, setShowEmailForm] = useState(false);
+
+    const roleLabel = (roleId?: string) =>
+        roles.find((role) => role.id === roleId)?.label ?? roleId ?? 'No role';
 
     const fetchAdmins = async () => {
         try {
@@ -34,9 +44,26 @@ const AdminsDashboard = () => {
         }
     };
 
-    // Fetch existing admins
+    const fetchRoles = async () => {
+        try {
+            const response = await fetch(
+                `${process.env.BACKEND_LINK}/api/admin/users/roles`,
+                {
+                    credentials: 'include',
+                }
+            );
+            if (response.ok) {
+                const data: AdminRoleOption[] = await response.json();
+                setRoles(data);
+            }
+        } catch (error) {
+            console.error('Error fetching roles:', error);
+        }
+    };
+
     useEffect(() => {
         fetchAdmins();
+        fetchRoles();
     }, []);
 
     const searchUsers = async (query: string) => {
@@ -73,9 +100,20 @@ const AdminsDashboard = () => {
         await searchUsers(typeof query == 'string' ? query : '');
     };
 
-    const handleAddAdmin = async (user: AdminUser) => {
+    const handleAssignRole = async (user: AdminUser) => {
         setError('');
         setSuccessMessage('');
+
+        if (assigningUserId !== user._id) {
+            setAssigningUserId(user._id);
+            setSelectedRole('');
+            return;
+        }
+
+        if (!selectedRole) {
+            setError('Select a role before assigning');
+            return;
+        }
 
         try {
             setIsLoading(true);
@@ -85,33 +123,43 @@ const AdminsDashboard = () => {
                     method: 'POST',
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: user.email }),
+                    body: JSON.stringify({
+                        email: user.email,
+                        role: selectedRole,
+                    }),
                 }
             );
 
             if (!response.ok) {
                 const data = await response.json().catch(() => ({}));
-                throw new Error(data.message || 'Failed to add admin');
+                throw new Error(data.message || 'Failed to assign role');
             }
 
-            await fetchAdmins();
+            await Promise.all([fetchAdmins(), fetchRoles()]);
 
-            // Reset the lookup so the section returns to its starting state
             setSearchResults(null);
+            setAssigningUserId(null);
+            setSelectedRole('');
             setNameQuery('');
             setEmail('');
             setShowEmailForm(false);
             setSuccessMessage(
-                `You added ${user.firstName} ${user.lastName} as an admin!`
+                `You assigned ${roleLabel(selectedRole)} to ${user.firstName} ${user.lastName}.`
             );
         } catch (error) {
-            console.error('Error adding admin:', error);
+            console.error('Error assigning role:', error);
             setError(
-                error instanceof Error ? error.message : 'Failed to add admin'
+                error instanceof Error ? error.message : 'Failed to assign role'
             );
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleCancelAssign = () => {
+        setAssigningUserId(null);
+        setSelectedRole('');
+        setError('');
     };
 
     const handleConfirmRemove = async () => {
@@ -132,20 +180,27 @@ const AdminsDashboard = () => {
 
             if (!response.ok) {
                 const data = await response.json();
-                setError(data.message || 'Failed to remove admin');
+                setError(data.message || 'Failed to remove role');
                 return;
             }
 
-            await fetchAdmins();
+            await Promise.all([fetchAdmins(), fetchRoles()]);
             setSearchResults(
                 (prev) =>
                     prev?.map((u) =>
-                        u._id === admin._id ? { ...u, isAdmin: false } : u
+                        u._id === admin._id
+                            ? {
+                                  ...u,
+                                  isAdmin: false,
+                                  isSuperAdmin: false,
+                                  role: undefined,
+                              }
+                            : u
                     ) ?? null
             );
         } catch (error) {
-            console.error('Error removing admin:', error);
-            setError('Failed to remove admin');
+            console.error('Error removing role:', error);
+            setError('Failed to remove role');
         } finally {
             setIsLoading(false);
             setPendingRemoval(null);
@@ -154,7 +209,7 @@ const AdminsDashboard = () => {
 
     return (
         <div>
-            <h2 className="text-2xl font-bold mb-6">Manage Admins</h2>
+            <h2 className="text-2xl font-bold mb-6">Manage Roles</h2>
 
             {/* Find by name */}
             <form onSubmit={handleSearch} className="mb-6">
@@ -237,19 +292,65 @@ const AdminsDashboard = () => {
                                 <p className="text-sm text-gray-600">
                                     {user.email}
                                 </p>
+                                {user.role && (
+                                    <p className="text-sm text-gray-500">
+                                        {roleLabel(user.role)}
+                                    </p>
+                                )}
                             </div>
-                            {user.isAdmin ? (
-                                <span className="text-sm text-gray-500">
-                                    Already admin
-                                </span>
-                            ) : (
+                            {assigningUserId === user._id && (
+                                <select
+                                    value={selectedRole}
+                                    onChange={(e) =>
+                                        setSelectedRole(e.target.value)
+                                    }
+                                    className="p-2 border border-gray-300 rounded"
+                                    aria-label={`Role for ${user.firstName} ${user.lastName}`}
+                                >
+                                    <option value="">Select a role</option>
+                                    {roles.map((role) => (
+                                        <option
+                                            key={role.id}
+                                            value={role.id}
+                                            disabled={
+                                                Boolean(role.takenBy) &&
+                                                !role.multiple &&
+                                                role.takenBy?.email !==
+                                                    currentUserEmail
+                                            }
+                                        >
+                                            {role.label}
+                                            {role.superAdmin
+                                                ? ' (super admin)'
+                                                : ''}
+                                            {role.takenBy
+                                                ? ` — taken by ${role.takenBy.firstName} ${role.takenBy.lastName}`
+                                                : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => handleAssignRole(user)}
+                                disabled={
+                                    isLoading ||
+                                    (assigningUserId === user._id &&
+                                        (!selectedRole ||
+                                            user.role === selectedRole))
+                                }
+                                className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 disabled:opacity-50 text-sm"
+                            >
+                                Assign role
+                            </button>
+                            {assigningUserId === user._id && (
                                 <button
                                     type="button"
-                                    onClick={() => handleAddAdmin(user)}
+                                    onClick={handleCancelAssign}
                                     disabled={isLoading}
-                                    className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 disabled:opacity-50 text-sm"
+                                    className="px-3 py-1.5 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 text-sm"
                                 >
-                                    Add
+                                    Cancel
                                 </button>
                             )}
                         </li>
@@ -278,20 +379,19 @@ const AdminsDashboard = () => {
                             <p className="text-sm text-gray-600">
                                 {admin.email}
                             </p>
+                            <p className="text-sm text-gray-500">
+                                {roleLabel(admin.role)}
+                                {admin.isSuperAdmin ? ' · Super admin' : ''}
+                            </p>
                         </div>
-                        {admin.isSuperAdmin ? (
-                            <span className="text-sm text-gray-500">
-                                Super admin
-                            </span>
-                        ) : (
-                            <button
-                                onClick={() => setPendingRemoval(admin)}
-                                disabled={isLoading}
-                                className="bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 disabled:opacity-50 text-sm"
-                            >
-                                Remove
-                            </button>
-                        )}
+                        <button
+                            type="button"
+                            onClick={() => setPendingRemoval(admin)}
+                            disabled={isLoading}
+                            className="bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 disabled:opacity-50 text-sm"
+                        >
+                            Remove
+                        </button>
                     </li>
                 ))}
                 {admins.length === 0 && (
@@ -304,15 +404,19 @@ const AdminsDashboard = () => {
                 <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
                     <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
                         <h2 className="text-xl font-bold text-gray-800 mb-4">
-                            Remove admin
+                            Remove role
                         </h2>
                         <p className="text-gray-700 mb-6">
                             Are you sure you want to remove{' '}
                             <span className="font-semibold">
+                                {roleLabel(pendingRemoval.role)}
+                            </span>{' '}
+                            from{' '}
+                            <span className="font-semibold">
                                 {pendingRemoval.firstName}{' '}
                                 {pendingRemoval.lastName}
-                            </span>{' '}
-                            as an admin?
+                            </span>
+                            ?
                         </p>
                         <div className="flex justify-end gap-2">
                             <button

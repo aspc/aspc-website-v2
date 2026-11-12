@@ -3,7 +3,7 @@ import multer from 'multer';
 import { ObjectId } from 'mongodb';
 import { Staff } from '../../models/People';
 import { bucket } from '../../server';
-import { isAdmin } from '../../middleware/authMiddleware';
+import { isRoleAllowed } from '../../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -72,7 +72,7 @@ router.get('/group/:group', async (req: Request, res: Response) => {
  */
 router.post(
     '/',
-    isAdmin,
+    isRoleAllowed('chief_of_staff', 'director_of_public_relations'),
     upload.single('file'),
     async (req: Request, res: Response) => {
         if (!req.file) {
@@ -124,7 +124,7 @@ router.post(
  */
 router.patch(
     '/:id',
-    isAdmin,
+    isRoleAllowed('chief_of_staff', 'director_of_public_relations'),
     upload.single('file'),
     async (req: Request, res: Response) => {
         try {
@@ -233,18 +233,22 @@ router.get('/profile-pic/:id', async (req: Request, res: Response) => {
  * @desc    Delete member by id
  * @access  isAdmin
  */
-router.delete('/:id', isAdmin, async (req: Request, res: Response) => {
-    try {
-        const staff = await Staff.findOneAndDelete({ id: req.params.id });
+router.delete(
+    '/:id',
+    isRoleAllowed('chief_of_staff', 'director_of_public_relations'),
+    async (req: Request, res: Response) => {
+        try {
+            const staff = await Staff.findOneAndDelete({ id: req.params.id });
 
-        if (!staff) {
-            res.status(404).json({ message: 'Member not found' });
+            if (!staff) {
+                res.status(404).json({ message: 'Member not found' });
+            }
+
+            res.status(200).json({ message: 'Member deleted' });
+        } catch (error) {
+            res.status(500).json({ message: 'Server error' });
         }
-
-        res.status(200).json({ message: 'Member deleted' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
     }
-});
+);
 
 export default router;

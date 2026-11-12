@@ -82,6 +82,35 @@ export const isSuperAdmin = async (
     }
 };
 
+export const isRoleAllowed =
+    (...allowedRoles: string[]) =>
+    async (req: Request, res: Response, next: NextFunction) => {
+        if (!req.session.user) {
+            res.status(401).json({ message: 'Authentication required' });
+            return;
+        }
+
+        try {
+            const user = await SAMLUser.findOne({
+                id: req.session.user.id,
+            }).select('role isSuperAdmin');
+
+            if (
+                !user ||
+                (!user.isSuperAdmin &&
+                    (!user.role || !allowedRoles.includes(user.role)))
+            ) {
+                res.status(403).json({ message: 'Insufficient role access' });
+                return;
+            }
+
+            next();
+        } catch (error) {
+            console.error('Role authorization error:', error);
+            res.status(500).json({ message: 'Server error' });
+        }
+    };
+
 export const isCourseReviewOwner = async (
     req: Request,
     res: Response,

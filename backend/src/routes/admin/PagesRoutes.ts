@@ -2,7 +2,9 @@ import express, { Request, Response } from 'express';
 import { ObjectId } from 'mongodb';
 import multer from 'multer';
 import { isAdmin } from '../../middleware/authMiddleware';
-import PageContent from '../../models/PageContent';
+import PageContent, { IPageContent } from '../../models/PageContent';
+import { SAMLUser } from '../../models/People';
+import { ADMIN_ROLES, isKnownAdminRole } from '../../constants/adminRoles';
 import { pagePdfs } from '../../server';
 
 const router = express.Router();
@@ -19,6 +21,38 @@ const upload = multer({
     },
 });
 
+const getCurrentUser = async (req: Request) =>
+    req.session.user
+        ? SAMLUser.findOne({ id: req.session.user.id }).select(
+              '_id role isSuperAdmin'
+          )
+        : null;
+
+const canEditPage = (page: IPageContent, user: any) =>
+    Boolean(
+        user &&
+            (user.isSuperAdmin ||
+                (user.role && page.editRoles.includes(user.role)))
+    );
+
+const pageForResponse = (page: IPageContent, user: any) => ({
+    ...page.toObject(),
+    canEdit: canEditPage(page, user),
+    canManageAccess: Boolean(
+        user &&
+            (user.isSuperAdmin ||
+                (page.createdBy && String(page.createdBy) === String(user._id)))
+    ),
+});
+
+const requirePageEditor = (page: IPageContent, user: any, res: Response) => {
+    if (!canEditPage(page, user)) {
+        res.status(403).json({ message: 'You cannot edit this page' });
+        return false;
+    }
+    return true;
+};
+
 /**
  * @route   GET /api/admin/pages
  * @desc    Get all pages
@@ -27,10 +61,15 @@ const upload = multer({
 router.get('/', async (req: Request, res: Response) => {
     try {
         const pages = await PageContent.find({});
-        res.json(pages);
+        const user = await getCurrentUser(req);
+        res.json(pages.map((page) => pageForResponse(page, user)));
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }
+});
+
+router.get('/roles', isAdmin, (_req: Request, res: Response) => {
+    res.json(ADMIN_ROLES.map(({ id, label }) => ({ id, label })));
 });
 
 /**
@@ -48,7 +87,8 @@ router.get('/:id', async (req: Request, res: Response) => {
             return;
         }
 
-        res.json(page);
+        const user = await getCurrentUser(req);
+        res.json(pageForResponse(page, user));
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }
@@ -76,6 +116,12 @@ router.get('/header/:header', async (req: Request, res: Response) => {
  */
 router.post('/', isAdmin, async (req: Request, res: Response) => {
     try {
+        const user = await getCurrentUser(req);
+        if (!user) {
+            res.status(403).json({ message: 'User not found' });
+            return;
+        }
+
         const { id, name, content, header, link } = req.body;
 
         if (!id || !name || !header) {
@@ -100,14 +146,83 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
             content: content ?? null,
             link: link ?? null,
             pdfId: null,
+            createdBy: user._id,
+            editRoles: user.role ? [user.role] : [],
         });
         await newPage.save();
 
-        res.status(201).json({ message: 'Page successfully created' });
+        res.status(201).json({
+            message: 'Page successfully created',
+            page: pageForResponse(newPage, user),
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
+router.patch(
+    '/:id/edit-access',
+    isAdmin,
+    async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const { roles } = req.body;
+            const user = await getCurrentUser(req);
+            const page = await PageContent.findOne({ id });
+
+            if (!page) {
+                res.status(404).json({ message: 'Page not found' });
+                return;
+            }
+
+            const canManage = Boolean(
+                user &&
+                    (user.isSuperAdmin ||
+                        (page.createdBy &&
+                            String(page.createdBy) === String(user._id)))
+            );
+            if (!canManage) {
+                res.status(403).json({
+                    message:
+                        'Only the page creator or a super admin can manage access',
+                });
+                return;
+            }
+
+            if (
+                !Array.isArray(roles) ||
+                roles.some(
+                    (role): role is string =>
+                        typeof role !== 'string' || !isKnownAdminRole(role)
+                )
+            ) {
+                res.status(400).json({
+                    message: 'A valid role list is required',
+                });
+                return;
+            }
+
+            const uniqueRoles = [...new Set(roles)];
+            if (user && !user.isSuperAdmin && user.role) {
+                uniqueRoles.push(user.role);
+            }
+
+            const updatedPage = await PageContent.findOneAndUpdate(
+                { id },
+                { editRoles: [...new Set(uniqueRoles)] },
+                { new: true }
+            );
+
+            res.json({
+                message: 'Page edit access updated',
+                page: pageForResponse(updatedPage!, user),
+            });
+        } catch (error) {
+            console.error('Error updating page access:', error);
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
+);
 
 /**
  * @route   PUT /api/admin/pages/:id
@@ -118,6 +233,14 @@ router.put('/:id', isAdmin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { newId, name, content, header, link } = req.body;
+        const user = await getCurrentUser(req);
+        const existingPage = await PageContent.findOne({ id });
+
+        if (!existingPage) {
+            res.status(404).json('Page not found');
+            return;
+        }
+        if (!requirePageEditor(existingPage, user, res)) return;
 
         if (!name && !content && !header && !link) {
             res.status(400).json({
@@ -158,6 +281,15 @@ router.put('/:id', isAdmin, async (req: Request, res: Response) => {
 router.delete('/:id', isAdmin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const user = await getCurrentUser(req);
+        const existingPage = await PageContent.findOne({ id });
+
+        if (!existingPage) {
+            res.status(404).json({ message: 'Page not found' });
+            return;
+        }
+        if (!requirePageEditor(existingPage, user, res)) return;
+
         const page = await PageContent.findOneAndDelete({ id });
 
         if (!page) {
@@ -199,11 +331,13 @@ router.post(
         try {
             const { id } = req.params;
             const page = await PageContent.findOne({ id });
+            const user = await getCurrentUser(req);
 
             if (!page) {
                 res.status(404).json({ message: 'Page not found' });
                 return;
             }
+            if (!requirePageEditor(page, user, res)) return;
 
             // Delete existing PDF from GridFS if one already exists
             if (page.pdfId) {
@@ -287,11 +421,13 @@ router.delete('/:id/pdf', isAdmin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const page = await PageContent.findOne({ id });
+        const user = await getCurrentUser(req);
 
         if (!page) {
             res.status(404).json({ message: 'Page not found' });
             return;
         }
+        if (!requirePageEditor(page, user, res)) return;
 
         if (!page.pdfId) {
             res.status(404).json({ message: 'No PDF attached to this page' });
