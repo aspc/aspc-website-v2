@@ -32,6 +32,16 @@ const Dashboard = () => {
         );
     }
 
+    const canEdit = (roles: string[]) =>
+        Boolean(user.isSuperAdmin || (user.role && roles.includes(user.role)));
+
+    const canEditStaff = canEdit([
+        'chief_of_staff',
+        'director_of_public_relations',
+    ]);
+    const canEditForum = canEdit(['commissioner_campus_events']);
+    const canEditElections = canEdit(['director_of_elections']);
+
     return (
         <div className="min-h-screen bg-gray-100 text-gray-900">
             <div className="p-8">
@@ -46,37 +56,43 @@ const Dashboard = () => {
                     >
                         Pages
                     </button>
-                    <button
-                        onClick={() => setActiveTab('staff')}
-                        className={`px-4 py-2 rounded ${
-                            activeTab === 'staff'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-gray-200'
-                        }`}
-                    >
-                        Staff
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('openforum')}
-                        className={`px-4 py-2 rounded ${
-                            activeTab === 'openforum'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-gray-200'
-                        }`}
-                    >
-                        Open Forum
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('elections')}
-                        className={`px-4 py-2 rounded ${
-                            activeTab === 'elections'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-gray-200'
-                        }`}
-                    >
-                        Elections
-                    </button>
-                    {user.isSuperAdmin && (
+                    {canEditStaff && (
+                        <button
+                            onClick={() => setActiveTab('staff')}
+                            className={`px-4 py-2 rounded ${
+                                activeTab === 'staff'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-gray-200'
+                            }`}
+                        >
+                            Staff
+                        </button>
+                    )}
+                    {canEditForum && (
+                        <button
+                            onClick={() => setActiveTab('openforum')}
+                            className={`px-4 py-2 rounded ${
+                                activeTab === 'openforum'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-gray-200'
+                            }`}
+                        >
+                            Open Forum
+                        </button>
+                    )}
+                    {canEditElections && (
+                        <button
+                            onClick={() => setActiveTab('elections')}
+                            className={`px-4 py-2 rounded ${
+                                activeTab === 'elections'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-gray-200'
+                            }`}
+                        >
+                            Elections
+                        </button>
+                    )}
+                    {(user.isSuperAdmin || user.role !== 'sdg') && (
                         <button
                             onClick={() => setActiveTab('admins')}
                             className={`px-4 py-2 rounded ${
@@ -85,17 +101,29 @@ const Dashboard = () => {
                                     : 'bg-gray-200'
                             }`}
                         >
-                            Admins
+                            {user.isSuperAdmin ? 'Admins' : 'Transfer role'}
                         </button>
                     )}
                 </div>
 
                 <div className="bg-white rounded-lg shadow p-6">
                     {activeTab === 'pages' && <PageDashboard />}
-                    {activeTab === 'staff' && <StaffDashboard />}
-                    {activeTab === 'openforum' && <ForumDashboard />}
-                    {activeTab === 'elections' && <ElectionsDashboard />}
-                    {activeTab === 'admins' && <AdminsDashboard />}
+                    {activeTab === 'staff' && canEditStaff && (
+                        <StaffDashboard />
+                    )}
+                    {activeTab === 'openforum' && canEditForum && (
+                        <ForumDashboard />
+                    )}
+                    {activeTab === 'elections' && canEditElections && (
+                        <ElectionsDashboard />
+                    )}
+                    {activeTab === 'admins' && (
+                        <AdminsDashboard
+                            canManageAll={Boolean(user.isSuperAdmin)}
+                            currentUserEmail={user.email}
+                            currentUserRole={user.role}
+                        />
+                    )}
                 </div>
             </div>
         </div>

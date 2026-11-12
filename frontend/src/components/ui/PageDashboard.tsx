@@ -23,6 +23,11 @@ const PageDashboard = () => {
     const [pdfFile, setPdfFile] = useState<File | null>(null);
     const [hasPdf, setHasPdf] = useState(false);
     const [pdfLoading, setPdfLoading] = useState(false);
+    const [availableRoles, setAvailableRoles] = useState<
+        { id: string; label: string }[]
+    >([]);
+    const [editRoles, setEditRoles] = useState<string[]>([]);
+    const [canManageAccess, setCanManageAccess] = useState(false);
 
     const pageSections = ['about', 'members', 'resources', 'press'];
 
@@ -30,18 +35,33 @@ const PageDashboard = () => {
         try {
             setLoading(true);
             const response = await fetch(
-                `${process.env.BACKEND_LINK}/api/admin/pages`
+                `${process.env.BACKEND_LINK}/api/admin/pages`,
+                { credentials: 'include' }
             );
             if (response.ok) {
                 const data: PageContent[] = await response.json();
 
                 setLinkPages(
-                    data.filter((page) => page.link && page.link !== null)
+                    data.filter(
+                        (page) =>
+                            page.link &&
+                            page.link !== null &&
+                            page.canEdit !== false
+                    )
                 );
                 setStaticPages(
-                    data.filter((page) => page.content && page.content !== null)
+                    data.filter(
+                        (page) =>
+                            page.content &&
+                            page.content !== null &&
+                            page.canEdit !== false
+                    )
                 );
-                setPdfPages(data.filter((page) => page.pdfId != null));
+                setPdfPages(
+                    data.filter(
+                        (page) => page.pdfId != null && page.canEdit !== false
+                    )
+                );
             }
         } catch (error) {
             console.error('Error fetching pages:', error);
@@ -53,6 +73,14 @@ const PageDashboard = () => {
 
     useEffect(() => {
         fetchPages();
+        fetch(`${process.env.BACKEND_LINK}/api/admin/pages/roles`, {
+            credentials: 'include',
+        })
+            .then((response) => (response.ok ? response.json() : []))
+            .then(setAvailableRoles)
+            .catch((error) =>
+                console.error('Error fetching page roles:', error)
+            );
     }, []);
 
     const resetForm = () => {
@@ -61,6 +89,8 @@ const PageDashboard = () => {
         setPageLink('');
         setContent('<p>Add your content here...</p>');
         setPageSection('about');
+        setEditRoles([]);
+        setCanManageAccess(false);
     };
 
     // Update page ID when link changes for link-type pages
@@ -115,6 +145,8 @@ const PageDashboard = () => {
                 setContent(pageData.content || '');
                 setPageLink(pageData.link || '');
                 setPageSection(pageData.header);
+                setEditRoles(pageData.editRoles || []);
+                setCanManageAccess(Boolean(pageData.canManageAccess));
 
                 // Detect page type
                 if (pageData.link) {
@@ -136,6 +168,33 @@ const PageDashboard = () => {
         } finally {
             window.scrollTo({ top: 0, behavior: 'smooth' });
             setLoading(false);
+        }
+    };
+
+    const handleSaveEditAccess = async () => {
+        if (!selectedPage) return;
+
+        try {
+            const response = await fetch(
+                `${process.env.BACKEND_LINK}/api/admin/pages/${selectedPage}/edit-access`,
+                {
+                    method: 'PATCH',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roles: editRoles }),
+                }
+            );
+            const data = await response.json();
+            if (!response.ok)
+                throw new Error(data.message || 'Failed to update edit access');
+            setEditRoles(data.page.editRoles || []);
+            alert('Page edit access updated!');
+        } catch (error) {
+            alert(
+                error instanceof Error
+                    ? error.message
+                    : 'Error updating page edit access'
+            );
         }
     };
 
@@ -549,6 +608,44 @@ const PageDashboard = () => {
                     required
                 />
             </div>
+
+            {selectedPage && canManageAccess && (
+                <div className="bg-white rounded-lg shadow p-6 mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                        Edit Access
+                    </h2>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                        {availableRoles.map((role) => (
+                            <label
+                                key={role.id}
+                                className="flex items-center gap-2"
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={editRoles.includes(role.id)}
+                                    onChange={(event) =>
+                                        setEditRoles((current) =>
+                                            event.target.checked
+                                                ? [...current, role.id]
+                                                : current.filter(
+                                                      (id) => id !== role.id
+                                                  )
+                                        )
+                                    }
+                                />
+                                {role.label}
+                            </label>
+                        ))}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={handleSaveEditAccess}
+                        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    >
+                        Save Edit Access
+                    </button>
+                </div>
+            )}
 
             {/* Page Type */}
             {isCreatingNew && (

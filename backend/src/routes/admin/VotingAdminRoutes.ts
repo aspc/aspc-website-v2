@@ -1,5 +1,5 @@
 import express from 'express';
-import { isAdmin } from '../../middleware/authMiddleware';
+import { isAdmin, isRoleAllowed } from '../../middleware/authMiddleware';
 import {
     getAllElections,
     getElectionById,
@@ -17,14 +17,26 @@ const router = express.Router();
 // ELECTION ROUTES
 router.get('/', isAdmin, getAllElections);
 router.get('/:id', isAdmin, getElectionById);
-router.post('/', isAdmin, createElection);
-router.put('/:id', isAdmin, updateElection);
-router.delete('/:id', isAdmin, deleteElection);
+router.post('/', isRoleAllowed('director_of_elections'), createElection);
+router.put('/:id', isRoleAllowed('director_of_elections'), updateElection);
+router.delete('/:id', isRoleAllowed('director_of_elections'), deleteElection);
 
 // CANDIDATE ROUTES
 router.get('/:electionId/candidates', isAdmin, getCandidatesByElection);
-router.post('/:electionId/candidates', isAdmin, createCandidate);
-router.put('/:electionId/candidates/:candidateId', isAdmin, updateCandidate);
-router.delete('/:electionId/candidates/:candidateId', isAdmin, deleteCandidate);
+router.post(
+    '/:electionId/candidates',
+    isRoleAllowed('director_of_elections'),
+    createCandidate
+);
+router.put(
+    '/:electionId/candidates/:candidateId',
+    isRoleAllowed('director_of_elections'),
+    updateCandidate
+);
+router.delete(
+    '/:electionId/candidates/:candidateId',
+    isRoleAllowed('director_of_elections'),
+    deleteCandidate
+);
 
 export default router;

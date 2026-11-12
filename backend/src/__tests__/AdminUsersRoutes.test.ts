@@ -62,6 +62,7 @@ beforeEach(async () => {
             email: 'super@pomona.edu',
             firstName: 'Sue',
             lastName: 'Super',
+            role: 'sdg',
             isAdmin: true,
             isSuperAdmin: true,
         },
@@ -70,6 +71,7 @@ beforeEach(async () => {
             email: 'admin@pomona.edu',
             firstName: 'Al',
             lastName: 'Admin',
+            role: 'vp_finance',
             isAdmin: true,
         },
         {
@@ -117,64 +119,217 @@ describe('GET /api/admin/users/admins', () => {
         const emails = res.body.map((u: { email: string }) => u.email);
         expect(emails).toEqual(['admin@pomona.edu', 'super@pomona.edu']);
         expect(res.body[0].id).toBeUndefined();
+        expect(res.body.map((u: { role: string }) => u.role)).toEqual([
+            'vp_finance',
+            'sdg',
+        ]);
+    });
+});
+
+describe('GET /api/admin/users/roles', () => {
+    it('allows a normal admin to load roles for a transfer', async () => {
+        const res = await request(buildApp(ADMIN_SESSION)).get(
+            '/api/admin/users/roles'
+        );
+        expect(res.status).toBe(200);
+    });
+
+    it('lists catalog roles and who holds them', async () => {
+        const res = await request(buildApp(SUPER_SESSION)).get(
+            '/api/admin/users/roles'
+        );
+        expect(res.status).toBe(200);
+        const sdg = res.body.find((role: { id: string }) => role.id === 'sdg');
+        const finance = res.body.find(
+            (role: { id: string }) => role.id === 'vp_finance'
+        );
+        const welfare = res.body.find(
+            (role: { id: string }) => role.id === 'commissioner_welfare'
+        );
+        expect(sdg.superAdmin).toBe(true);
+        expect(sdg.multiple).toBe(true);
+        expect(sdg.takenBy.email).toBe('super@pomona.edu');
+        expect(finance.takenBy.email).toBe('admin@pomona.edu');
+        expect(welfare.takenBy).toBeNull();
+        expect(
+            res.body.some((role: { id: string }) => role.id === 'class_name')
+        ).toBe(false);
+        expect(
+            res.body.some(
+                (role: { id: string }) => role.id === 'commencement_speaker'
+            )
+        ).toBe(false);
+        expect(
+            [
+                'director_of_elections',
+                'director_of_operations',
+                'director_of_public_relations',
+                'director_of_community_partnerships',
+                'senate_secretary',
+                'senior_treasurer',
+                'junior_treasurer',
+                'aspc_advisor',
+            ].every((id) =>
+                res.body.some((role: { id: string }) => role.id === id)
+            )
+        ).toBe(true);
     });
 });
 
 describe('POST /api/admin/users/admins', () => {
-    it('lets a super admin promote a user by email', async () => {
+    it('lets a super admin assign a unique role by email', async () => {
         const res = await request(buildApp(SUPER_SESSION))
             .post('/api/admin/users/admins')
-            .send({ email: 'user@pomona.edu' });
+            .send({ email: 'user@pomona.edu', role: 'commissioner_welfare' });
         expect(res.status).toBe(200);
         expect(res.body.user.isAdmin).toBe(true);
+        expect(res.body.user.role).toBe('commissioner_welfare');
 
         const user = await SAMLUser.findById(userId);
         expect(user?.isAdmin).toBe(true);
         expect(user?.isSuperAdmin).toBe(false);
+        expect(user?.role).toBe('commissioner_welfare');
+    });
+
+    it('makes president, chief of staff, and SDG super admins', async () => {
+        const res = await request(buildApp(SUPER_SESSION))
+            .post('/api/admin/users/admins')
+            .send({ email: 'user@pomona.edu', role: 'president' });
+        expect(res.status).toBe(200);
+        expect(res.body.user.isSuperAdmin).toBe(true);
+
+        const user = await SAMLUser.findById(userId);
+        expect(user?.isAdmin).toBe(true);
+        expect(user?.isSuperAdmin).toBe(true);
+        expect(user?.role).toBe('president');
+    });
+
+    it('allows SDG to be assigned to multiple users', async () => {
+        const res = await request(buildApp(SUPER_SESSION))
+            .post('/api/admin/users/admins')
+            .send({ email: 'user@pomona.edu', role: 'sdg' });
+        expect(res.status).toBe(200);
+        expect(res.body.user.role).toBe('sdg');
+        expect(res.body.user.isSuperAdmin).toBe(true);
+    });
+
+    it('rejects a role that is already taken', async () => {
+        const res = await request(buildApp(SUPER_SESSION))
+            .post('/api/admin/users/admins')
+            .send({ email: 'user@pomona.edu', role: 'vp_finance' });
+        expect(res.status).toBe(409);
+        const user = await SAMLUser.findById(userId);
+        expect(user?.isAdmin).toBe(false);
+        expect(user?.role).toBeUndefined();
+    });
+
+    it('lets the current super admin transfer their role to a replacement', async () => {
+        await SAMLUser.findByIdAndUpdate(superAdminId, {
+            role: 'president',
+            isAdmin: true,
+            isSuperAdmin: true,
+        });
+
+        const res = await request(buildApp(SUPER_SESSION))
+            .post('/api/admin/users/admins')
+            .send({ email: 'user@pomona.edu', role: 'president' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.user.email).toBe('user@pomona.edu');
+        expect(res.body.user.isSuperAdmin).toBe(true);
+
+        const formerSuperAdmin = await SAMLUser.findById(superAdminId);
+        expect(formerSuperAdmin?.role).toBeUndefined();
+        expect(formerSuperAdmin?.isAdmin).toBe(false);
+        expect(formerSuperAdmin?.isSuperAdmin).toBe(false);
+    });
+
+    it('lets a normal admin transfer only their own non-SDG role', async () => {
+        const res = await request(buildApp(ADMIN_SESSION))
+            .post('/api/admin/users/admins')
+            .send({ email: 'user@pomona.edu', role: 'vp_finance' });
+
+        expect(res.status).toBe(200);
+        expect((await SAMLUser.findById(adminId))?.isAdmin).toBe(false);
+        expect((await SAMLUser.findById(userId))?.role).toBe('vp_finance');
+    });
+
+    it('does not let a normal admin assign another role or SDG', async () => {
+        const otherRole = await request(buildApp(ADMIN_SESSION))
+            .post('/api/admin/users/admins')
+            .send({ email: 'user@pomona.edu', role: 'president' });
+        const sdg = await request(buildApp(ADMIN_SESSION))
+            .post('/api/admin/users/admins')
+            .send({ email: 'user@pomona.edu', role: 'sdg' });
+
+        expect(otherRole.status).toBe(403);
+        expect(sdg.status).toBe(403);
     });
 
     it('normalizes email case and whitespace', async () => {
         const res = await request(buildApp(SUPER_SESSION))
             .post('/api/admin/users/admins')
-            .send({ email: '  USER@Pomona.edu ' });
+            .send({
+                email: '  USER@Pomona.edu ',
+                role: 'commissioner_welfare',
+            });
         expect(res.status).toBe(200);
         const user = await SAMLUser.findById(userId);
         expect(user?.isAdmin).toBe(true);
+        expect(user?.role).toBe('commissioner_welfare');
     });
 
-    it('is idempotent when the user is already an admin', async () => {
+    it('is idempotent when the user already has that role', async () => {
         const res = await request(buildApp(SUPER_SESSION))
             .post('/api/admin/users/admins')
-            .send({ email: 'admin@pomona.edu' });
+            .send({ email: 'admin@pomona.edu', role: 'vp_finance' });
         expect(res.status).toBe(200);
         const admin = await SAMLUser.findById(adminId);
         expect(admin?.isAdmin).toBe(true);
+        expect(admin?.role).toBe('vp_finance');
     });
 
     it('returns 404 for an unknown email', async () => {
         const res = await request(buildApp(SUPER_SESSION))
             .post('/api/admin/users/admins')
-            .send({ email: 'nobody@pomona.edu' });
+            .send({
+                email: 'nobody@pomona.edu',
+                role: 'commissioner_welfare',
+            });
         expect(res.status).toBe(404);
     });
 
-    it('returns 400 when email is missing or not a string', async () => {
+    it('returns 400 when email or role is missing or invalid', async () => {
         const app = buildApp(SUPER_SESSION);
         const missing = await request(app)
             .post('/api/admin/users/admins')
             .send({});
         expect(missing.status).toBe(400);
 
+        const missingRole = await request(app)
+            .post('/api/admin/users/admins')
+            .send({ email: 'user@pomona.edu' });
+        expect(missingRole.status).toBe(400);
+
+        const unknownRole = await request(app)
+            .post('/api/admin/users/admins')
+            .send({ email: 'user@pomona.edu', role: 'mascot' });
+        expect(unknownRole.status).toBe(400);
+
         const wrongType = await request(app)
             .post('/api/admin/users/admins')
-            .send({ email: { $ne: null } });
+            .send({ email: { $ne: null }, role: 'commissioner_welfare' });
         expect(wrongType.status).toBe(400);
     });
 
-    it('ignores isSuperAdmin in the request body', async () => {
+    it('derives super admin from the role, not the request body', async () => {
         const res = await request(buildApp(SUPER_SESSION))
             .post('/api/admin/users/admins')
-            .send({ email: 'user@pomona.edu', isSuperAdmin: true });
+            .send({
+                email: 'user@pomona.edu',
+                role: 'commissioner_welfare',
+                isSuperAdmin: true,
+            });
         expect(res.status).toBe(200);
         const user = await SAMLUser.findById(userId);
         expect(user?.isSuperAdmin).toBe(false);
@@ -209,18 +364,20 @@ describe('POST /api/admin/users/admins', () => {
 });
 
 describe('DELETE /api/admin/users/admins/:id', () => {
-    it('lets a super admin revoke admin from a normal admin', async () => {
+    it('lets a super admin revoke a role from a normal admin', async () => {
         const res = await request(buildApp(SUPER_SESSION)).delete(
             `/api/admin/users/admins/${adminId}`
         );
         expect(res.status).toBe(200);
         expect(res.body.user.isAdmin).toBe(false);
+        expect(res.body.user.role).toBeUndefined();
 
         const admin = await SAMLUser.findById(adminId);
         expect(admin?.isAdmin).toBe(false);
+        expect(admin?.role).toBeUndefined();
     });
 
-    it('refuses to demote a super admin, including yourself', async () => {
+    it('refuses to let a super admin remove their own role', async () => {
         const res = await request(buildApp(SUPER_SESSION)).delete(
             `/api/admin/users/admins/${superAdminId}`
         );
@@ -229,6 +386,7 @@ describe('DELETE /api/admin/users/admins/:id', () => {
         const superAdmin = await SAMLUser.findById(superAdminId);
         expect(superAdmin?.isAdmin).toBe(true);
         expect(superAdmin?.isSuperAdmin).toBe(true);
+        expect(superAdmin?.role).toBe('sdg');
     });
 
     it('returns 404 for a well-formed id that does not exist', async () => {
@@ -281,11 +439,12 @@ describe('GET /api/admin/users/search', () => {
         expect(res.status).toBe(401);
     });
 
-    it('returns 403 for a normal admin', async () => {
+    it('allows a normal admin to search for a replacement', async () => {
         const res = await request(buildApp(ADMIN_SESSION)).get(
             '/api/admin/users/search?q=uma'
         );
-        expect(res.status).toBe(403);
+        expect(res.status).toBe(200);
+        expect(res.body[0].email).toBe('user@pomona.edu');
     });
 
     it('finds users by first name, case-insensitively', async () => {
@@ -296,6 +455,7 @@ describe('GET /api/admin/users/search', () => {
         expect(res.body).toHaveLength(1);
         expect(res.body[0].email).toBe('user@pomona.edu');
         expect(res.body[0].isAdmin).toBe(false);
+        expect(res.body[0].role).toBeUndefined();
         expect(res.body[0]).not.toHaveProperty('id');
     });
 
