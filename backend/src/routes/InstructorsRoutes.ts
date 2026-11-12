@@ -157,6 +157,50 @@ router.post('/', isAdmin, async (req: Request, res: Response) => {
 });
 
 /**
+ * @route   PUT /api/instructors/:id/rmp
+ * @desc    Set or clear an instructor's Rate My Professors id by hand.
+ *          Body: { rmpId: number | null }. null means "checked, not on RMP".
+ *          Deliberately narrower than PUT /:id so a bad client can only
+ *          touch the RMP fields.
+ * @access  isAdmin
+ */
+router.put('/:id/rmp', isAdmin, async (req: Request, res: Response) => {
+    try {
+        const instructorId = parseInt(req.params.id);
+        if (isNaN(instructorId)) {
+            res.status(400).json({ message: 'Invalid instructor ID format' });
+            return;
+        }
+
+        const { rmpId } = req.body ?? {};
+        const isClear = rmpId === null;
+        const isValidId = Number.isInteger(rmpId) && rmpId > 0;
+        if (!isClear && !isValidId) {
+            res.status(400).json({
+                message: 'rmpId must be a positive integer or null',
+            });
+            return;
+        }
+
+        const updatedInstructor = await Instructors.findOneAndUpdate(
+            { id: instructorId },
+            { $set: { rmpId: isClear ? null : rmpId, rmpCheckedAt: new Date() } },
+            { new: true }
+        );
+
+        if (!updatedInstructor) {
+            res.status(404).json({ message: 'Instructor not found' });
+            return;
+        }
+
+        res.json(updatedInstructor);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+/**
  * @route   PUT /api/instructors/:id
  * @desc    Update instructor
  * @access  isAdmin

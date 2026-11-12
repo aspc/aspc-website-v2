@@ -7,6 +7,7 @@ import LoginRequired from '@/components/LoginRequired';
 import { StarRating } from '@/components/housing/Rooms';
 import { ReviewForm } from '@/components/courses/Review';
 import { FormattedReviewText } from '@/utils/textFormatting';
+import { RmpLink } from '@/components/instructors/RmpLink';
 import {
     CourseReview,
     //Course,
@@ -29,6 +30,8 @@ const InstructorPage = (): JSX.Element => {
     const [loading, setLoading] = useState<boolean>(true);
     const [instructorName, setInstructorName] = useState<string>('');
     const [instructorSchool, setInstructorSchool] = useState<string>('');
+    const [rmpId, setRmpId] = useState<number | null>(null);
+    const [rmpCheckedAt, setRmpCheckedAt] = useState<string | null>(null);
     const [instructorCourses, setInstructorCourses] = useState<
         Array<{ courseId: number; courseCode: string; courseName: string }>
     >([]);
@@ -157,6 +160,8 @@ const InstructorPage = (): JSX.Element => {
                     await instructorResponse.json();
                 setInstructorName(instructorData.name);
                 setInstructorSchool(instructorData.school || 'N/A');
+                setRmpId(instructorData.rmpId ?? null);
+                setRmpCheckedAt(instructorData.rmpCheckedAt ?? null);
                 setInstructorCourses(instructorData.courses || []);
 
                 // Fetch instructor reviews
@@ -320,6 +325,18 @@ const InstructorPage = (): JSX.Element => {
                                                 instructorSchool
                                             )}
                                         </p>
+                                        <RmpLink
+                                            instructorId={instructorId}
+                                            instructorName={instructorName}
+                                            instructorSchool={instructorSchool}
+                                            rmpId={rmpId}
+                                            rmpCheckedAt={rmpCheckedAt}
+                                            isAdmin={Boolean(user?.isAdmin)}
+                                            onChange={(id, checkedAt) => {
+                                                setRmpId(id);
+                                                setRmpCheckedAt(checkedAt);
+                                            }}
+                                        />
                                         <div className="text-gray-700">
                                             <details className="mt-2">
                                                 <summary className="cursor-pointer text-indigo-600 hover:underline">
