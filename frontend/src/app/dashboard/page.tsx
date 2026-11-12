@@ -92,7 +92,7 @@ const Dashboard = () => {
                             Elections
                         </button>
                     )}
-                    {user.isSuperAdmin && (
+                    {(user.isSuperAdmin || user.role !== 'sdg') && (
                         <button
                             onClick={() => setActiveTab('admins')}
                             className={`px-4 py-2 rounded ${
@@ -101,7 +101,7 @@ const Dashboard = () => {
                                     : 'bg-gray-200'
                             }`}
                         >
-                            Admins
+                            {user.isSuperAdmin ? 'Admins' : 'Transfer role'}
                         </button>
                     )}
                 </div>
@@ -118,7 +118,11 @@ const Dashboard = () => {
                         <ElectionsDashboard />
                     )}
                     {activeTab === 'admins' && (
-                        <AdminsDashboard currentUserEmail={user.email} />
+                        <AdminsDashboard
+                            canManageAll={Boolean(user.isSuperAdmin)}
+                            currentUserEmail={user.email}
+                            currentUserRole={user.role}
+                        />
                     )}
                 </div>
             </div>

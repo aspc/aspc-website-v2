@@ -127,11 +127,11 @@ describe('GET /api/admin/users/admins', () => {
 });
 
 describe('GET /api/admin/users/roles', () => {
-    it('returns 403 for a normal admin', async () => {
+    it('allows a normal admin to load roles for a transfer', async () => {
         const res = await request(buildApp(ADMIN_SESSION)).get(
             '/api/admin/users/roles'
         );
-        expect(res.status).toBe(403);
+        expect(res.status).toBe(200);
     });
 
     it('lists catalog roles and who holds them', async () => {
@@ -242,6 +242,28 @@ describe('POST /api/admin/users/admins', () => {
         expect(formerSuperAdmin?.role).toBeUndefined();
         expect(formerSuperAdmin?.isAdmin).toBe(false);
         expect(formerSuperAdmin?.isSuperAdmin).toBe(false);
+    });
+
+    it('lets a normal admin transfer only their own non-SDG role', async () => {
+        const res = await request(buildApp(ADMIN_SESSION))
+            .post('/api/admin/users/admins')
+            .send({ email: 'user@pomona.edu', role: 'vp_finance' });
+
+        expect(res.status).toBe(200);
+        expect((await SAMLUser.findById(adminId))?.isAdmin).toBe(false);
+        expect((await SAMLUser.findById(userId))?.role).toBe('vp_finance');
+    });
+
+    it('does not let a normal admin assign another role or SDG', async () => {
+        const otherRole = await request(buildApp(ADMIN_SESSION))
+            .post('/api/admin/users/admins')
+            .send({ email: 'user@pomona.edu', role: 'president' });
+        const sdg = await request(buildApp(ADMIN_SESSION))
+            .post('/api/admin/users/admins')
+            .send({ email: 'user@pomona.edu', role: 'sdg' });
+
+        expect(otherRole.status).toBe(403);
+        expect(sdg.status).toBe(403);
     });
 
     it('normalizes email case and whitespace', async () => {
@@ -417,11 +439,12 @@ describe('GET /api/admin/users/search', () => {
         expect(res.status).toBe(401);
     });
 
-    it('returns 403 for a normal admin', async () => {
+    it('allows a normal admin to search for a replacement', async () => {
         const res = await request(buildApp(ADMIN_SESSION)).get(
             '/api/admin/users/search?q=uma'
         );
-        expect(res.status).toBe(403);
+        expect(res.status).toBe(200);
+        expect(res.body[0].email).toBe('user@pomona.edu');
     });
 
     it('finds users by first name, case-insensitively', async () => {

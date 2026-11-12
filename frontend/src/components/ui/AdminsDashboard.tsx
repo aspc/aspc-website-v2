@@ -3,9 +3,13 @@ import { useState, useEffect, FormEvent } from 'react';
 import { AdminRoleOption, AdminUser } from '@/types';
 
 const AdminsDashboard = ({
+    canManageAll,
     currentUserEmail,
+    currentUserRole,
 }: {
+    canManageAll: boolean;
     currentUserEmail: string;
+    currentUserRole?: string;
 }) => {
     const [admins, setAdmins] = useState<AdminUser[]>([]);
     const [roles, setRoles] = useState<AdminRoleOption[]>([]);
@@ -62,9 +66,9 @@ const AdminsDashboard = ({
     };
 
     useEffect(() => {
-        fetchAdmins();
+        if (canManageAll) fetchAdmins();
         fetchRoles();
-    }, []);
+    }, [canManageAll]);
 
     const searchUsers = async (query: string) => {
         setError('');
@@ -209,7 +213,9 @@ const AdminsDashboard = ({
 
     return (
         <div>
-            <h2 className="text-2xl font-bold mb-6">Manage Roles</h2>
+            <h2 className="text-2xl font-bold mb-6">
+                {canManageAll ? 'Manage Roles' : 'Transfer your role'}
+            </h2>
 
             {/* Find by name */}
             <form onSubmit={handleSearch} className="mb-6">
@@ -308,26 +314,32 @@ const AdminsDashboard = ({
                                     aria-label={`Role for ${user.firstName} ${user.lastName}`}
                                 >
                                     <option value="">Select a role</option>
-                                    {roles.map((role) => (
-                                        <option
-                                            key={role.id}
-                                            value={role.id}
-                                            disabled={
-                                                Boolean(role.takenBy) &&
-                                                !role.multiple &&
-                                                role.takenBy?.email !==
-                                                    currentUserEmail
-                                            }
-                                        >
-                                            {role.label}
-                                            {role.superAdmin
-                                                ? ' (super admin)'
-                                                : ''}
-                                            {role.takenBy
-                                                ? ` — taken by ${role.takenBy.firstName} ${role.takenBy.lastName}`
-                                                : ''}
-                                        </option>
-                                    ))}
+                                    {roles
+                                        .filter(
+                                            (role) =>
+                                                canManageAll ||
+                                                role.id === currentUserRole
+                                        )
+                                        .map((role) => (
+                                            <option
+                                                key={role.id}
+                                                value={role.id}
+                                                disabled={
+                                                    Boolean(role.takenBy) &&
+                                                    !role.multiple &&
+                                                    role.takenBy?.email !==
+                                                        currentUserEmail
+                                                }
+                                            >
+                                                {role.label}
+                                                {role.superAdmin
+                                                    ? ' (super admin)'
+                                                    : ''}
+                                                {role.takenBy
+                                                    ? ` — taken by ${role.takenBy.firstName} ${role.takenBy.lastName}`
+                                                    : ''}
+                                            </option>
+                                        ))}
                                 </select>
                             )}
                             <button
@@ -365,39 +377,49 @@ const AdminsDashboard = ({
 
             {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
-            <h3 className="text-lg font-semibold mb-3">Current admins</h3>
-            <ul className="divide-y divide-gray-200 border border-gray-200 rounded">
-                {admins.map((admin) => (
-                    <li
-                        key={admin._id}
-                        className="flex items-center justify-between p-3"
-                    >
-                        <div>
-                            <p className="font-medium">
-                                {admin.firstName} {admin.lastName}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                                {admin.email}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                                {roleLabel(admin.role)}
-                                {admin.isSuperAdmin ? ' · Super admin' : ''}
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setPendingRemoval(admin)}
-                            disabled={isLoading}
-                            className="bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 disabled:opacity-50 text-sm"
-                        >
-                            Remove
-                        </button>
-                    </li>
-                ))}
-                {admins.length === 0 && (
-                    <li className="p-3 text-gray-500">No admins found.</li>
-                )}
-            </ul>
+            {canManageAll && (
+                <>
+                    <h3 className="text-lg font-semibold mb-3">
+                        Current admins
+                    </h3>
+                    <ul className="divide-y divide-gray-200 border border-gray-200 rounded">
+                        {admins.map((admin) => (
+                            <li
+                                key={admin._id}
+                                className="flex items-center justify-between p-3"
+                            >
+                                <div>
+                                    <p className="font-medium">
+                                        {admin.firstName} {admin.lastName}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                        {admin.email}
+                                    </p>
+                                    <p className="text-sm text-gray-500">
+                                        {roleLabel(admin.role)}
+                                        {admin.isSuperAdmin
+                                            ? ' · Super admin'
+                                            : ''}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setPendingRemoval(admin)}
+                                    disabled={isLoading}
+                                    className="bg-red-500 text-white px-3 py-1.5 rounded hover:bg-red-600 disabled:opacity-50 text-sm"
+                                >
+                                    Remove
+                                </button>
+                            </li>
+                        ))}
+                        {admins.length === 0 && (
+                            <li className="p-3 text-gray-500">
+                                No admins found.
+                            </li>
+                        )}
+                    </ul>
+                </>
+            )}
 
             {/* Remove confirmation */}
             {pendingRemoval && (

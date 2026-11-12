@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { SAMLUser } from '../../models/People';
-import { isSuperAdmin } from '../../middleware/authMiddleware';
+import { isAdmin, isSuperAdmin } from '../../middleware/authMiddleware';
 import {
     ADMIN_ROLES,
     MULTI_ADMIN_ROLE_IDS,
@@ -25,9 +25,9 @@ const isDuplicateRoleError = (error: unknown) =>
 /**
  * @route   GET /api/admin/users/roles
  * @desc    List assignable roles and which ones are already taken
- * @access  isSuperAdmin
+ * @access  isAdmin
  */
-router.get('/roles', isSuperAdmin, async (_req: Request, res: Response) => {
+router.get('/roles', isAdmin, async (_req: Request, res: Response) => {
     try {
         const holders = await SAMLUser.find({
             role: { $exists: true, $ne: '' },
@@ -60,9 +60,9 @@ router.get('/roles', isSuperAdmin, async (_req: Request, res: Response) => {
  * @route   GET /api/admin/users/search?q=<text>
  * @desc    Find users by first name, last name, or email so a super admin
  *          can pick the right person before granting a role
- * @access  isSuperAdmin
+ * @access  isAdmin
  */
-router.get('/search', isSuperAdmin, async (req: Request, res: Response) => {
+router.get('/search', isAdmin, async (req: Request, res: Response) => {
     try {
         const raw = typeof req.query.q === 'string' ? req.query.q.trim() : '';
 
@@ -98,7 +98,7 @@ router.get('/search', isSuperAdmin, async (req: Request, res: Response) => {
 /**
  * @route   GET /api/admin/users/admins
  * @desc    List all users with a role (admins)
- * @access  isSuperAdmin
+ * @access  isAdmin (restricted to own non-SDG role for normal admins)
  */
 router.get('/admins', isSuperAdmin, async (req: Request, res: Response) => {
     try {
@@ -119,9 +119,18 @@ router.get('/admins', isSuperAdmin, async (req: Request, res: Response) => {
  *          and SDG are super admins.
  * @access  isSuperAdmin
  */
-router.post('/admins', isSuperAdmin, async (req: Request, res: Response) => {
+router.post('/admins', isAdmin, async (req: Request, res: Response) => {
     try {
         const { email, role } = req.body;
+
+        const requester = await SAMLUser.findOne({
+            id: req.session.user?.id,
+        }).select('email role isSuperAdmin');
+
+        if (!requester) {
+            res.status(403).json({ message: 'Admin access required' });
+            return;
+        }
 
         if (!email || typeof email !== 'string') {
             res.status(400).json({ message: 'Email is required' });
@@ -130,6 +139,16 @@ router.post('/admins', isSuperAdmin, async (req: Request, res: Response) => {
 
         if (!role || typeof role !== 'string' || !isKnownAdminRole(role)) {
             res.status(400).json({ message: 'A valid role is required' });
+            return;
+        }
+
+        if (
+            !requester.isSuperAdmin &&
+            (role === 'sdg' || role !== requester.role)
+        ) {
+            res.status(403).json({
+                message: 'You can only transfer your own non-SDG role',
+            });
             return;
         }
 
