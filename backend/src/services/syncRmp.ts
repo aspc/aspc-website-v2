@@ -94,9 +94,19 @@ async function syncRmp() {
     if (limit) console.log(`Limit: ${limit}`);
     console.log('='.repeat(80));
 
-    await mongoose.connect(
-        process.env.MONGODB_URI ?? 'mongodb://localhost:27017/coursereview'
-    );
+    // Same selection as server.ts: production hits the real database,
+    // anything else hits the test database.
+    const mongoUri =
+        process.env.NODE_ENV === 'production'
+            ? process.env.MONGODB_URI
+            : process.env.MONGODB_TEST_URI;
+    if (!mongoUri) {
+        throw new Error(
+            'MONGODB_URI / MONGODB_TEST_URI is not defined. Check backend/.env.'
+        );
+    }
+    await mongoose.connect(mongoUri);
+    console.log(`Database: ${mongoose.connection.name}`);
     console.log('Connected to MongoDB\n');
 
     const recheckBefore = new Date(

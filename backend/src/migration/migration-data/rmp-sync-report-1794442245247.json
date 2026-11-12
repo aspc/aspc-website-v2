@@ -1,0 +1,122 @@
+{
+  "mode": "live",
+  "all": false,
+  "limit": 5,
+  "timestamp": "2026-11-12T00:10:45.243Z",
+  "stats": {
+    "matched": 5,
+    "no_candidates": 0,
+    "no_exact_match": 0,
+    "multiple_exact_matches": 0,
+    "error": 0
+  },
+  "unmatched": [],
+  "matched": [
+    {
+      "instructorId": 293,
+      "name": "Johal, Malkiat S.",
+      "school": "PO",
+      "searchText": "Malkiat Johal",
+      "reason": "matched",
+      "rmpId": 926263,
+      "candidates": [
+        {
+          "legacyId": 926263,
+          "name": "Malkiat Johal",
+          "department": "Chemistry",
+          "school": "Pomona College",
+          "numRatings": 24
+        }
+      ]
+    },
+    {
+      "instructorId": 583,
+      "name": "Radunskaya, Ami E.",
+      "school": "PO",
+      "searchText": "Ami Radunskaya",
+      "reason": "matched",
+      "rmpId": 159523,
+      "candidates": [
+        {
+          "legacyId": 159523,
+          "name": "Ami Radunskaya",
+          "department": "Mathematics",
+          "school": "Pomona College",
+          "numRatings": 23
+        }
+      ]
+    },
+    {
+      "instructorId": 594,
+      "name": "Rumbos, Adolfo J.",
+      "school": "PO",
+      "searchText": "Adolfo Rumbos",
+      "reason": "matched",
+      "rmpId": 2499307,
+      "candidates": [
+        {
+          "legacyId": 2499307,
+          "name": "Adolfo Rumbos",
+          "department": "Mathematics",
+          "school": "Pomona College",
+          "numRatings": 5
+        }
+      ]
+    },
+    {
+      "instructorId": 216,
+      "name": "Yamashita, Samuel H.",
+      "school": "PO",
+      "searchText": "Samuel Yamashita",
+      "reason": "matched",
+      "rmpId": 197730,
+      "candidates": [
+        {
+          "legacyId": 197730,
+          "name": "Samuel Yamashita",
+          "department": "History",
+          "school": "Pomona College",
+          "numRatings": 19
+        }
+      ]
+    },
+    {
+      "instructorId": 311,
+      "name": "O'Leary, Daniel J.",
+      "school": "PO",
+      "searchText": "Daniel O'Leary",
+      "reason": "matched",
+      "rmpId": 766885,
+      "candidates": [
+        {
+          "legacyId": 766885,
+          "name": "Dan O'Leary",
+          "department": "Chemistry",
+          "school": "Pomona College",
+          "numRatings": 12
+        },
+        {
+          "legacyId": 3002233,
+          "name": "Daniel Watling",
+          "department": "Religion",
+          "school": "Pomona College",
+          "numRatings": 9
+        },
+        {
+          "legacyId": 290935,
+          "name": "Daniel Martinez",
+          "department": "Biology",
+          "school": "Pomona College",
+          "numRatings": 14
+        },
+        {
+          "legacyId": 2641478,
+          "name": "Daniel Wellman",
+          "department": "Chemistry",
+          "school": "Pomona College",
+          "numRatings": 3
+        }
+      ]
+    }
+  ]
+}
