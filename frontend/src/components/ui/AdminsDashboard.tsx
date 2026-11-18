@@ -335,7 +335,8 @@ const AdminsDashboard = ({
                                                 {role.superAdmin
                                                     ? ' (super admin)'
                                                     : ''}
-                                                {role.takenBy
+                                                {role.takenBy &&
+                                                role.id !== 'sdg'
                                                     ? ` — taken by ${role.takenBy.firstName} ${role.takenBy.lastName}`
                                                     : ''}
                                             </option>
