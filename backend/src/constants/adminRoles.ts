@@ -35,6 +35,11 @@ export const ADMIN_ROLES: AdminRole[] = [
         multiple: true,
     },
     {
+        id: 'aspc_advisor',
+        label: 'ASPC Advisor',
+        superAdmin: false,
+    },
+    {
         id: 'director_of_elections',
         label: 'Director of Elections',
         superAdmin: false,

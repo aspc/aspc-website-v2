@@ -137,18 +137,23 @@ router.post('/admins', isAdmin, async (req: Request, res: Response) => {
             return;
         }
 
-        if (!role || typeof role !== 'string' || !isKnownAdminRole(role)) {
-            res.status(400).json({ message: 'A valid role is required' });
-            return;
-        }
-
+        // Normal admins may only transfer their own existing non-SDG role.
+        // Perform this authorization check before role-shape validation so an
+        // unauthorized request cannot be reframed as a client validation error.
         if (
             !requester.isSuperAdmin &&
-            (role === 'sdg' || role !== requester.role)
+            (typeof role !== 'string' ||
+                role === 'sdg' ||
+                role !== requester.role)
         ) {
             res.status(403).json({
                 message: 'You can only transfer your own non-SDG role',
             });
+            return;
+        }
+
+        if (!role || typeof role !== 'string' || !isKnownAdminRole(role)) {
+            res.status(400).json({ message: 'A valid role is required' });
             return;
         }
 
