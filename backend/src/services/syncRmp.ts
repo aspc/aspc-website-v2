@@ -16,6 +16,8 @@
  *   npm run sync:rmp -- --live       write results
  *   npm run sync:rmp -- --all        re-check instructors checked < 30 days ago
  *   npm run sync:rmp -- --limit 50   stop after 50 instructors (for testing)
+ *
+ * Uses MONGODB_TEST_URI unless NODE_ENV=production, then MONGODB_URI.
  */
 
 import fs from 'fs';
@@ -82,7 +84,9 @@ async function findCandidates(
         return searchRmpTeachers(searchText, schoolId);
     }
     const all = await searchRmpTeachers(searchText, undefined, 50);
-    return all.filter((t) => CLAREMONT_RMP_SCHOOL_IDS.includes(t.school.legacyId));
+    return all.filter((t) =>
+        CLAREMONT_RMP_SCHOOL_IDS.includes(t.school.legacyId)
+    );
 }
 
 async function syncRmp() {
@@ -216,7 +220,10 @@ async function syncRmp() {
         console.log(`  ${reason.padEnd(24)} ${count}`);
     }
     console.log(`\nReport: ${reportPath}`);
-    if (!live) console.log('Dry run: nothing written to MongoDB. Re-run with --live to save.');
+    if (!live)
+        console.log(
+            'Dry run: nothing written to MongoDB. Re-run with --live to save.'
+        );
 
     await mongoose.disconnect();
 }
