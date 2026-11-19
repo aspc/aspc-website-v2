@@ -3,7 +3,7 @@ import { SAMLUser } from '../models/People';
 import { ForumEvent, EventReview } from '../models/Forum';
 import {
     isAuthenticated,
-    isAdmin,
+    isRoleAllowed,
     hasNotRatedEvent,
     isEventReviewOwner,
 } from '../middleware/authMiddleware';
@@ -275,101 +275,123 @@ router.delete(
  * @desc    Add new open forum event
  * @access  Admin
  */
-router.post('/', isAdmin, async (req: Request, res: Response) => {
-    try {
-        const {
-            title,
-            description,
-            staffHost,
-            eventDate,
-            location,
-            ratingUntil,
-            customQuestions,
-            engageEventId,
-        } = req.body;
+router.post(
+    '/',
+    isRoleAllowed('commissioner_campus_events'),
+    async (req: Request, res: Response) => {
+        try {
+            const {
+                title,
+                description,
+                staffHost,
+                eventDate,
+                location,
+                ratingUntil,
+                customQuestions,
+                engageEventId,
+            } = req.body;
 
-        if (!title || !description || !eventDate || !location || !ratingUntil) {
-            res.status(400).json({ message: 'Missing required fields.' });
-            return;
-        }
+            if (
+                !title ||
+                !description ||
+                !eventDate ||
+                !location ||
+                !ratingUntil
+            ) {
+                res.status(400).json({ message: 'Missing required fields.' });
+                return;
+            }
 
-        const azureId = req.session.user?.id;
-        const user = await SAMLUser.findOne({ id: azureId });
+            const azureId = req.session.user?.id;
+            const user = await SAMLUser.findOne({ id: azureId });
 
-        if (!user) {
-            res.status(403).json({ message: 'User not found' });
-            return;
-        }
+            if (!user) {
+                res.status(403).json({ message: 'User not found' });
+                return;
+            }
 
-        const event = new ForumEvent({
-            title: title,
-            description: description,
-            createdBy: user._id,
-            staffHost: staffHost,
-            eventDate: eventDate,
-            location: location,
-            ratingUntil: ratingUntil,
-            customQuestions: customQuestions || [],
-            engageEventId: engageEventId,
-        });
-
-        const savedEvent = await event.save();
-
-        res.status(201).json(savedEvent);
-    } catch (error) {
-        res.status(400).json({ message: 'Error creating new custom event' });
-    }
-});
-
-/**
- * @route   PUT /api/openforum/:id
- * @desc    Update existing open forum event by id
- * @access  Admin
- */
-router.put('/:id', isAdmin, async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const {
-            title,
-            description,
-            staffHost,
-            eventDate,
-            location,
-            ratingUntil,
-            customQuestions,
-            engageEventId,
-        } = req.body;
-
-        if (!title || !description || !eventDate || !location || !ratingUntil) {
-            res.status(400).json({ message: 'Missing required fields.' });
-            return;
-        }
-
-        const updatedEvent = await ForumEvent.findByIdAndUpdate(
-            id,
-            {
+            const event = new ForumEvent({
                 title: title,
                 description: description,
+                createdBy: user._id,
                 staffHost: staffHost,
                 eventDate: eventDate,
                 location: location,
                 ratingUntil: ratingUntil,
                 customQuestions: customQuestions || [],
                 engageEventId: engageEventId,
-            },
-            { new: true, runValidators: true }
-        );
+            });
 
-        if (!updatedEvent) {
-            res.status(404).json({ message: 'Forum event not found.' });
-            return;
+            const savedEvent = await event.save();
+
+            res.status(201).json(savedEvent);
+        } catch (error) {
+            res.status(400).json({
+                message: 'Error creating new custom event',
+            });
         }
-
-        res.status(201).json(updatedEvent);
-    } catch (error) {
-        res.status(400).json({ message: 'Error updating event' });
     }
-});
+);
+
+/**
+ * @route   PUT /api/openforum/:id
+ * @desc    Update existing open forum event by id
+ * @access  Admin
+ */
+router.put(
+    '/:id',
+    isRoleAllowed('commissioner_campus_events'),
+    async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const {
+                title,
+                description,
+                staffHost,
+                eventDate,
+                location,
+                ratingUntil,
+                customQuestions,
+                engageEventId,
+            } = req.body;
+
+            if (
+                !title ||
+                !description ||
+                !eventDate ||
+                !location ||
+                !ratingUntil
+            ) {
+                res.status(400).json({ message: 'Missing required fields.' });
+                return;
+            }
+
+            const updatedEvent = await ForumEvent.findByIdAndUpdate(
+                id,
+                {
+                    title: title,
+                    description: description,
+                    staffHost: staffHost,
+                    eventDate: eventDate,
+                    location: location,
+                    ratingUntil: ratingUntil,
+                    customQuestions: customQuestions || [],
+                    engageEventId: engageEventId,
+                },
+                { new: true, runValidators: true }
+            );
+
+            if (!updatedEvent) {
+                res.status(404).json({ message: 'Forum event not found.' });
+                return;
+            }
+
+            res.status(201).json(updatedEvent);
+        } catch (error) {
+            res.status(400).json({ message: 'Error updating event' });
+        }
+    }
+);
 
 /**
  * @route   PATCH /api/openforum/comments/:id/hide
@@ -378,7 +400,7 @@ router.put('/:id', isAdmin, async (req: Request, res: Response) => {
  */
 router.patch(
     '/comments/:id/hide',
-    isAdmin,
+    isRoleAllowed('commissioner_campus_events'),
     async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
@@ -411,20 +433,24 @@ router.patch(
  * @desc    Delete openforum event
  * @access  Admin
  */
-router.delete('/:eventId', isAdmin, async (req: Request, res: Response) => {
-    try {
-        const event = await ForumEvent.findOneAndDelete({
-            _id: req.params.eventId,
-        });
+router.delete(
+    '/:eventId',
+    isRoleAllowed('commissioner_campus_events'),
+    async (req: Request, res: Response) => {
+        try {
+            const event = await ForumEvent.findOneAndDelete({
+                _id: req.params.eventId,
+            });
 
-        if (!event) {
-            res.status(404).json({ message: 'Event not found' });
+            if (!event) {
+                res.status(404).json({ message: 'Event not found' });
+            }
+
+            res.status(200).json({ message: 'Event deleted' });
+        } catch (error) {
+            res.status(500).json({ message: 'Server error' });
         }
-
-        res.status(200).json({ message: 'Event deleted' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
     }
-});
+);
 
 export default router;

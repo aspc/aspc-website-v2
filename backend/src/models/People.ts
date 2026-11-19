@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { MULTI_ADMIN_ROLE_IDS } from '../constants/adminRoles';
 
 // Schema for SAML Authenticated Users
 interface ISAMLUser extends Document {
@@ -6,6 +7,7 @@ interface ISAMLUser extends Document {
     email: string;
     firstName: string;
     lastName: string;
+    role?: string;
     isAdmin: boolean;
     isSuperAdmin: boolean;
 }
@@ -33,6 +35,12 @@ const SAMLUserSchema = new Schema<ISAMLUser>(
             required: true,
             trim: true,
         },
+        // Uniqueness is enforced by the partial index below. SDG is allowed
+        // on multiple users while all other assigned roles remain unique.
+        role: {
+            type: String,
+            trim: true,
+        },
         isAdmin: {
             type: Boolean,
             default: false,
@@ -44,6 +52,17 @@ const SAMLUserSchema = new Schema<ISAMLUser>(
     },
     {
         timestamps: true,
+    }
+);
+
+SAMLUserSchema.index(
+    { role: 1 },
+    {
+        unique: true,
+        name: 'unique_non_sdg_role',
+        partialFilterExpression: {
+            role: { $exists: true, $nin: ['', ...MULTI_ADMIN_ROLE_IDS] },
+        },
     }
 );
 

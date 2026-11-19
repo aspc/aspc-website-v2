@@ -17,6 +17,7 @@ import instructorsRoutes from './routes/InstructorsRoutes';
 import reviewsRoutes from './routes/ReviewsRoutes';
 import forumRoutes from './routes/ForumRoutes';
 import votingRoutes from './routes/VotingRoutes';
+import { SAMLUser } from './models/People';
 import session from 'express-session';
 import https from 'https';
 import http from 'http';
@@ -90,6 +91,11 @@ mongoose
     .connect(MONGODB_URI)
     .then(() => {
         console.log(`Connected to ${process.env.NODE_ENV} MongoDB`);
+
+        SAMLUser.syncIndexes().catch((error) =>
+            console.error('Failed to sync admin role indexes:', error)
+        );
+
         const db = mongoose.connection.db;
 
         if (!db) {

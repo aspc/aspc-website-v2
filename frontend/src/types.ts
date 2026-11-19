@@ -5,6 +5,10 @@ export interface PageContent {
     header: string;
     link?: string;
     pdfId?: string;
+    editRoles?: string[];
+    createdBy?: string;
+    canEdit?: boolean;
+    canManageAccess?: boolean;
 }
 
 export type NavPagesKey = 'about' | 'members' | 'resources' | 'press';
@@ -59,8 +63,21 @@ export interface User {
     email: string;
     firstName: string;
     lastName: string;
+    role?: string;
     isAdmin: boolean;
     isSuperAdmin?: boolean;
+}
+
+export interface AdminRoleOption {
+    id: string;
+    label: string;
+    superAdmin: boolean;
+    multiple?: boolean;
+    takenBy: {
+        email: string;
+        firstName: string;
+        lastName: string;
+    } | null;
 }
 
 // Shape returned by GET /api/admin/users/admins
@@ -69,6 +86,7 @@ export interface AdminUser {
     email: string;
     firstName: string;
     lastName: string;
+    role?: string;
     isAdmin: boolean;
     isSuperAdmin: boolean;
 }
