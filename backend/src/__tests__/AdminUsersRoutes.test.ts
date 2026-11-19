@@ -266,6 +266,20 @@ describe('POST /api/admin/users/admins', () => {
         expect(sdg.status).toBe(403);
     });
 
+    it('does not let a normal admin transfer their role to someone who already has a role', async () => {
+        const res = await request(buildApp(ADMIN_SESSION))
+            .post('/api/admin/users/admins')
+            .send({ email: 'super@pomona.edu', role: 'vp_finance' });
+
+        expect(res.status).toBe(409);
+        const superAdmin = await SAMLUser.findById(superAdminId);
+        expect(superAdmin?.role).toBe('sdg');
+        expect(superAdmin?.isSuperAdmin).toBe(true);
+        const admin = await SAMLUser.findById(adminId);
+        expect(admin?.role).toBe('vp_finance');
+        expect(admin?.isAdmin).toBe(true);
+    });
+
     it('normalizes email case and whitespace', async () => {
         const res = await request(buildApp(SUPER_SESSION))
             .post('/api/admin/users/admins')

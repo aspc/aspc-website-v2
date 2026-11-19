@@ -188,6 +188,15 @@ router.post('/admins', isAdmin, async (req: Request, res: Response) => {
             return;
         }
 
+        // A normal admin's transfer must not overwrite the target's existing
+        // role, otherwise it could demote another admin or a super admin.
+        if (!requester.isSuperAdmin && user.role && user.role !== role) {
+            res.status(409).json({
+                message: `${user.email} already has a role. Pick someone without one.`,
+            });
+            return;
+        }
+
         // A super admin may hand off their own unique role while assigning it
         // to the replacement. The old role must be released first because of
         // the unique role index; restore it if assigning the replacement
