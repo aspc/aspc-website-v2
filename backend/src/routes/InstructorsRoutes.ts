@@ -184,7 +184,12 @@ router.put('/:id/rmp', isAdmin, async (req: Request, res: Response) => {
 
         const updatedInstructor = await Instructors.findOneAndUpdate(
             { id: instructorId },
-            { $set: { rmpId: isClear ? null : rmpId, rmpCheckedAt: new Date() } },
+            {
+                $set: {
+                    rmpId: isClear ? null : rmpId,
+                    rmpCheckedAt: new Date(),
+                },
+            },
             { new: true }
         );
 

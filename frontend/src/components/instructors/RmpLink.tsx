@@ -55,7 +55,9 @@ export const RmpLink = ({
             );
             if (!response.ok) {
                 const data = await response.json().catch(() => null);
-                throw new Error(data?.message || `Request failed (${response.status})`);
+                throw new Error(
+                    data?.message || `Request failed (${response.status})`
+                );
             }
             const updated = await response.json();
             onChange(updated.rmpId ?? null, updated.rmpCheckedAt);
