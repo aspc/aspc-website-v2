@@ -116,6 +116,10 @@ interface IInstructors extends Document {
         courseName: string;
     }>;
     numReviews: number;
+    /** Rate My Professors professor id. null means checked and not found. */
+    rmpId?: number | null;
+    /** When we last tried to resolve rmpId (by sync script or admin). */
+    rmpCheckedAt?: Date | null;
 }
 
 const InstructorsSchema = new Schema<IInstructors>({
@@ -156,6 +160,14 @@ const InstructorsSchema = new Schema<IInstructors>({
         type: Number,
         default: 0,
         index: true,
+    },
+    rmpId: {
+        type: Number,
+        default: null,
+    },
+    rmpCheckedAt: {
+        type: Date,
+        default: null,
     },
 });
 
